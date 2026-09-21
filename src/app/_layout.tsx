@@ -22,6 +22,10 @@ export default function RootLayout() {
     Roboto_700Bold,
   });
 
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
+
   return (
     <ThemeProvider value={theme}>
       <StatusBar style={theme.dark ? "light" : "dark"} />
