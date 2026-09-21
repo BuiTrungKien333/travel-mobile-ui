@@ -16,9 +16,12 @@ import {
   type LoginFormValues,
 } from "@/features/auth/schemas/auth-schemas";
 import { useAppTheme } from "@/hooks/use-app-theme";
+import { useI18n } from "@/hooks/use-i18n";
+import { translateError } from "@/i18n/translations";
 
 export function LoginScreen() {
   const theme = useAppTheme();
+  const { locale, t } = useI18n();
   const passwordInputRef = useRef<TextInput>(null);
   const {
     control,
@@ -38,14 +41,14 @@ export function LoginScreen() {
     <AuthScaffold
       footer={
         <AuthFooterLink
-          action="Đăng ký"
-          label="Chưa có tài khoản?"
+          action={t("auth.login.register")}
+          label={t("auth.login.noAccount")}
           onPress={() => router.push("/(auth)/register")}
         />
       }
       showLogo
-      subtitle="Đăng nhập để tiếp tục hành trình của bạn."
-      title="Chào mừng bạn trở lại"
+      subtitle={t("auth.login.subtitle")}
+      title={t("auth.login.title")}
     >
       <View style={{ gap: theme.spacing.lg }}>
         <Controller
@@ -57,9 +60,9 @@ export function LoginScreen() {
               autoCapitalize="none"
               autoComplete="email"
               autoCorrect={false}
-              error={error?.message}
+              error={translateError(locale, error?.message)}
               keyboardType="email-address"
-              label="Email"
+              label={t("common.email")}
               onBlur={onBlur}
               onChangeText={onChange}
               onSubmitEditing={() => passwordInputRef.current?.focus()}
@@ -79,13 +82,13 @@ export function LoginScreen() {
               ref={passwordInputRef}
               autoCapitalize="none"
               autoComplete="current-password"
-              error={error?.message}
-              label="Mật khẩu"
+              error={translateError(locale, error?.message)}
+              label={t("common.password")}
               onBlur={onBlur}
               onChangeText={onChange}
               onSubmitEditing={handleLogin}
               password
-              placeholder="Nhập mật khẩu"
+              placeholder={t("auth.login.passwordPlaceholder")}
               returnKeyType="done"
               textContentType="password"
               value={value}
@@ -104,12 +107,12 @@ export function LoginScreen() {
           ]}
         >
           <AppText tone="primary" variant="link">
-            Quên mật khẩu?
+            {t("auth.login.forgotPassword")}
           </AppText>
         </Pressable>
 
         <AppButton loading={isSubmitting} onPress={handleLogin}>
-          Đăng nhập
+          {t("auth.login.submit")}
         </AppButton>
 
         <AuthDivider />

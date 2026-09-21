@@ -16,9 +16,12 @@ import {
   type RegisterFormValues,
 } from "@/features/auth/schemas/auth-schemas";
 import { useAppTheme } from "@/hooks/use-app-theme";
+import { useI18n } from "@/hooks/use-i18n";
+import { translateError } from "@/i18n/translations";
 
 export function RegisterScreen() {
   const theme = useAppTheme();
+  const { locale, t } = useI18n();
   const emailInputRef = useRef<TextInput>(null);
   const passwordInputRef = useRef<TextInput>(null);
   const {
@@ -39,13 +42,13 @@ export function RegisterScreen() {
     <AuthScaffold
       footer={
         <AuthFooterLink
-          action="Đăng nhập"
-          label="Đã có tài khoản?"
+          action={t("auth.register.login")}
+          label={t("auth.register.hasAccount")}
           onPress={() => router.replace("/(auth)/login")}
         />
       }
-      subtitle="Bắt đầu lên kế hoạch cho hành trình của bạn."
-      title="Tạo tài khoản"
+      subtitle={t("auth.register.subtitle")}
+      title={t("auth.register.title")}
     >
       <View style={{ gap: theme.spacing.lg }}>
         <Controller
@@ -56,12 +59,12 @@ export function RegisterScreen() {
               ref={ref}
               autoCapitalize="words"
               autoComplete="name"
-              error={error?.message}
-              label="Họ và tên"
+              error={translateError(locale, error?.message)}
+              label={t("auth.register.fullName")}
               onBlur={onBlur}
               onChangeText={onChange}
               onSubmitEditing={() => emailInputRef.current?.focus()}
-              placeholder="Nguyễn Văn An"
+              placeholder={t("auth.register.fullNamePlaceholder")}
               returnKeyType="next"
               textContentType="name"
               value={value}
@@ -78,9 +81,9 @@ export function RegisterScreen() {
               autoCapitalize="none"
               autoComplete="email"
               autoCorrect={false}
-              error={error?.message}
+              error={translateError(locale, error?.message)}
               keyboardType="email-address"
-              label="Email"
+              label={t("common.email")}
               onBlur={onBlur}
               onChangeText={onChange}
               onSubmitEditing={() => passwordInputRef.current?.focus()}
@@ -100,14 +103,14 @@ export function RegisterScreen() {
               ref={passwordInputRef}
               autoCapitalize="none"
               autoComplete="new-password"
-              error={error?.message}
-              helperText="Sử dụng ít nhất 8 ký tự."
-              label="Mật khẩu"
+              error={translateError(locale, error?.message)}
+              helperText={t("auth.register.passwordHelper")}
+              label={t("common.password")}
               onBlur={onBlur}
               onChangeText={onChange}
               onSubmitEditing={handleRegister}
               password
-              placeholder="Tạo mật khẩu"
+              placeholder={t("auth.register.passwordPlaceholder")}
               returnKeyType="done"
               textContentType="newPassword"
               value={value}
@@ -116,7 +119,7 @@ export function RegisterScreen() {
         />
 
         <AppButton loading={isSubmitting} onPress={handleRegister}>
-          Tạo tài khoản
+          {t("auth.register.submit")}
         </AppButton>
 
         <AuthDivider />
@@ -124,10 +127,15 @@ export function RegisterScreen() {
         <GoogleButton onPress={Keyboard.dismiss} />
 
         <AppText style={styles.legal} tone="muted" variant="caption">
-          Bằng việc tạo tài khoản, bạn đồng ý với{" "}
-          <AppText tone="primary" variant="caption">Điều khoản sử dụng</AppText>{" "}
-          và{" "}
-          <AppText tone="primary" variant="caption">Chính sách quyền riêng tư</AppText>{"."}
+          {t("auth.register.termsPrefix")}{" "}
+          <AppText tone="primary" variant="caption">
+            {t("auth.register.terms")}
+          </AppText>{" "}
+          {t("auth.register.termsJoin")}{" "}
+          <AppText tone="primary" variant="caption">
+            {t("auth.register.privacy")}
+          </AppText>
+          {"."}
         </AppText>
       </View>
     </AuthScaffold>

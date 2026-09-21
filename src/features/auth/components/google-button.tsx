@@ -2,12 +2,15 @@ import { Image } from "expo-image";
 import { StyleSheet } from "react-native";
 
 import { AppButton } from "@/components/ui/app-button";
+import { useI18n } from "@/hooks/use-i18n";
 
 type GoogleButtonProps = {
   onPress: () => void;
 };
 
 export function GoogleButton({ onPress }: GoogleButtonProps) {
+  const { t } = useI18n();
+
   return (
     <AppButton
       leadingIcon={
@@ -21,7 +24,7 @@ export function GoogleButton({ onPress }: GoogleButtonProps) {
       onPress={onPress}
       variant="outline"
     >
-      Tiếp tục với Google
+      {t("common.continueWithGoogle")}
     </AppButton>
   );
 }

@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, TextInput, View } from "react-native";
 
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
+import { useI18n } from "@/hooks/use-i18n";
 
 type AppInputProps = ComponentProps<typeof TextInput> & {
   error?: string;
@@ -18,6 +19,7 @@ export const AppInput = forwardRef<TextInput, AppInputProps>(function AppInput(
   ref,
 ) {
   const theme = useAppTheme();
+  const { t } = useI18n();
   const [focused, setFocused] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const supportingText = error ?? helperText;
@@ -70,7 +72,9 @@ export const AppInput = forwardRef<TextInput, AppInputProps>(function AppInput(
         />
         {password ? (
           <Pressable
-            accessibilityLabel={passwordVisible ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+            accessibilityLabel={
+              passwordVisible ? t("common.hidePassword") : t("common.showPassword")
+            }
             accessibilityRole="button"
             accessibilityState={{ expanded: passwordVisible }}
             hitSlop={8}

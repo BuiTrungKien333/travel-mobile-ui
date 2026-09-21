@@ -9,7 +9,9 @@ import {
 } from "react-native";
 
 import { AppText } from "@/components/ui/app-text";
+import { LanguageSwitcher } from "@/components/common/language-switcher";
 import { useAppTheme } from "@/hooks/use-app-theme";
+import { useI18n } from "@/hooks/use-i18n";
 
 type AuthScaffoldProps = {
   children: ReactNode;
@@ -27,6 +29,7 @@ export function AuthScaffold({
   title,
 }: AuthScaffoldProps) {
   const theme = useAppTheme();
+  const { t } = useI18n();
 
   return (
     <KeyboardAvoidingView
@@ -48,6 +51,9 @@ export function AuthScaffold({
         showsVerticalScrollIndicator={false}
       >
         <View style={[styles.container, { gap: theme.spacing.xxl }]}>
+          <View style={styles.languageRow}>
+            <LanguageSwitcher />
+          </View>
           <View style={[styles.header, { gap: theme.spacing.sm }]}>
             {showLogo ? (
               <View
@@ -62,7 +68,7 @@ export function AuthScaffold({
                 ]}
               >
                 <Image
-                  accessibilityLabel="Logo Tripzy"
+                  accessibilityLabel={t("common.logoAccessibility")}
                   contentFit="contain"
                   source={require("@/assets/images/react-logo.png")}
                   style={styles.logo}
@@ -101,6 +107,9 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
+  },
+  languageRow: {
+    alignItems: "flex-end",
   },
   logoFrame: {
     width: 72,
