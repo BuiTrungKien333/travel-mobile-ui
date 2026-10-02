@@ -3,16 +3,22 @@ import { StyleSheet } from "react-native";
 
 import { AppButton } from "@/components/ui/app-button";
 import { useI18n } from "@/hooks/use-i18n";
+import type { GoogleCredential } from "../types/auth-types";
 
-type GoogleButtonProps = {
+export type GoogleButtonProps = {
   onPress: () => void;
+  disabled?: boolean;
+  loading?: boolean;
+  onCredential?: (credential: GoogleCredential) => Promise<unknown>;
 };
 
-export function GoogleButton({ onPress }: GoogleButtonProps) {
+export function GoogleButton({ onPress, disabled, loading }: GoogleButtonProps) {
   const { t } = useI18n();
 
   return (
     <AppButton
+      disabled={disabled}
+      loading={loading}
       leadingIcon={
         <Image
           accessible={false}

@@ -12,6 +12,7 @@ import { AppText } from "@/components/ui/app-text";
 import { LanguageSwitcher } from "@/components/common/language-switcher";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useI18n } from "@/hooks/use-i18n";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type AuthScaffoldProps = {
   children: ReactNode;
@@ -30,6 +31,7 @@ export function AuthScaffold({
 }: AuthScaffoldProps) {
   const theme = useAppTheme();
   const { t } = useI18n();
+  const insets = useSafeAreaInsets();
 
   return (
     <KeyboardAvoidingView
@@ -37,13 +39,13 @@ export function AuthScaffold({
       style={[styles.screen, { backgroundColor: theme.colors.background }]}
     >
       <ScrollView
-        automaticallyAdjustKeyboardInsets
-        contentInsetAdjustmentBehavior="automatic"
+        contentInsetAdjustmentBehavior="never"
         contentContainerStyle={[
           styles.scrollContent,
           {
             paddingHorizontal: theme.spacing.xl,
-            paddingVertical: theme.spacing.xxl,
+            paddingTop: theme.spacing.xxl + insets.top,
+            paddingBottom: theme.spacing.xxl + insets.bottom,
           },
         ]}
         keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}

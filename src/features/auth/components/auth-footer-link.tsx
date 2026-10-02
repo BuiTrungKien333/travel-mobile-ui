@@ -7,9 +7,10 @@ type AuthFooterLinkProps = {
   action: string;
   label: string;
   onPress: () => void;
+  disabled?: boolean;
 };
 
-export function AuthFooterLink({ action, label, onPress }: AuthFooterLinkProps) {
+export function AuthFooterLink({ action, label, onPress, disabled = false }: AuthFooterLinkProps) {
   const theme = useAppTheme();
 
   return (
@@ -19,6 +20,8 @@ export function AuthFooterLink({ action, label, onPress }: AuthFooterLinkProps) 
       </AppText>
       <Pressable
         accessibilityRole="link"
+        accessibilityState={{ disabled }}
+        disabled={disabled}
         hitSlop={8}
         onPress={onPress}
         style={({ pressed }) => pressed && styles.pressed}

@@ -5,7 +5,7 @@ import { useAppTheme } from "@/hooks/use-app-theme";
 import { useI18n } from "@/hooks/use-i18n";
 import type { AppLocale } from "@/i18n/translations";
 
-const languageOptions: ReadonlyArray<{ label: string; value: AppLocale }> = [
+const languageOptions: readonly { label: string; value: AppLocale }[] = [
   { label: "VI", value: "vi" },
   { label: "EN", value: "en" },
 ];
