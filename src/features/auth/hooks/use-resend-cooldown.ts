@@ -13,5 +13,11 @@ export function useResendCooldown(initialSeconds: number) {
     }, 1000);
     return () => clearInterval(timer);
   }, [until]);
-  return { remaining, start: (seconds: number) => { setNow(Date.now()); setUntil(Date.now() + seconds * 1000); } };
+  return {
+    remaining,
+    start: (seconds: number) => {
+      setNow(Date.now());
+      setUntil(Date.now() + seconds * 1000);
+    },
+  };
 }

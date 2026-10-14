@@ -1,11 +1,11 @@
-import { View } from "react-native";
-import { router } from "expo-router";
 import { AppButton } from "@/components/ui/app-button";
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useI18n } from "@/hooks/use-i18n";
-import { AuthScaffold } from "../components/auth-scaffold";
+import { router } from "expo-router";
+import { View } from "react-native";
 import { AuthReturnButton } from "../components/auth-return-button";
+import { AuthScaffold } from "../components/auth-scaffold";
 import { MagicLinkLoading } from "../components/magic-link-loading";
 import { useGoogleEmailConfirmation } from "../hooks/use-google-login";
 import { useMagicLinkToken } from "../hooks/use-magic-link-token";
@@ -22,14 +22,41 @@ function GoogleLinkConfirmation({ token }: { token: string | null }) {
   const mutation = useGoogleEmailConfirmation();
   const confirm = async () => {
     if (!token || mutation.isPending || mutation.isSuccess) return;
-    try { await mutation.mutateAsync(token); router.replace("/"); } catch { /* Translated mutation error below. */ }
+    try {
+      await mutation.mutateAsync(token);
+      router.replace("/");
+    } catch {
+      /* Translated mutation error below. */
+    }
   };
-  return <AuthScaffold title={t("auth.google.confirmTitle")} subtitle={t("auth.google.confirmHint")} footer={<AuthReturnButton />}>
-    <View style={{ gap: theme.spacing.lg }}>
-      {!token ? <AppText accessibilityRole="alert" tone="error">{t("auth.error.invalidLink")}</AppText> : <>
-        {mutation.error ? <AppText accessibilityRole="alert" tone="error">{authErrorMessage(mutation.error, t)}</AppText> : null}
-        <AppButton loading={mutation.isPending} disabled={mutation.isSuccess} onPress={() => void confirm()}>{t("common.continueWithGoogle")}</AppButton>
-      </>}
-    </View>
-  </AuthScaffold>;
+  return (
+    <AuthScaffold
+      title={t("auth.google.confirmTitle")}
+      subtitle={t("auth.google.confirmHint")}
+      footer={<AuthReturnButton />}
+    >
+      <View style={{ gap: theme.spacing.lg }}>
+        {!token ? (
+          <AppText accessibilityRole="alert" tone="error">
+            {t("auth.error.invalidLink")}
+          </AppText>
+        ) : (
+          <>
+            {mutation.error ? (
+              <AppText accessibilityRole="alert" tone="error">
+                {authErrorMessage(mutation.error, t)}
+              </AppText>
+            ) : null}
+            <AppButton
+              loading={mutation.isPending}
+              disabled={mutation.isSuccess}
+              onPress={() => void confirm()}
+            >
+              {t("common.continueWithGoogle")}
+            </AppButton>
+          </>
+        )}
+      </View>
+    </AuthScaffold>
+  );
 }

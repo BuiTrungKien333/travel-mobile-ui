@@ -18,11 +18,11 @@ import {
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useI18n } from "@/hooks/use-i18n";
 import { translateError } from "@/i18n/translations";
-import { useGoogleLogin } from "../hooks/use-google-login";
+import { normalizeApiError } from "@/services/api/api-error";
 import { GoogleFeedback } from "../components/google-feedback";
 import { useLogin } from "../hooks/use-auth";
+import { useGoogleLogin } from "../hooks/use-google-login";
 import { authErrorMessage } from "../utils/auth-error-message";
-import { normalizeApiError } from "@/services/api/api-error";
 
 export function LoginScreen() {
   const theme = useAppTheme();
@@ -47,11 +47,17 @@ export function LoginScreen() {
     Keyboard.dismiss();
     google.reset();
     clearErrors();
-    try { await login.mutateAsync(values); }
-    catch (error) {
+    try {
+      await login.mutateAsync(values);
+    } catch (error) {
       const failure = normalizeApiError(error);
       if (failure.code === "AUTH_003" || failure.fields?.email) {
-        setError("email", { message: failure.code === "AUTH_003" ? "auth.error.emailExists" : "validation.emailInvalid" });
+        setError("email", {
+          message:
+            failure.code === "AUTH_003"
+              ? "auth.error.emailExists"
+              : "validation.emailInvalid",
+        });
       }
     }
   });
@@ -71,14 +77,26 @@ export function LoginScreen() {
       title={t("auth.login.title")}
     >
       <View style={{ gap: theme.spacing.lg }}>
-        {login.error ? <AppText accessibilityRole="alert" tone="error">{authErrorMessage(login.error, t)}</AppText> : null}
+        {login.error ? (
+          <AppText accessibilityRole="alert" tone="error">
+            {authErrorMessage(login.error, t)}
+          </AppText>
+        ) : null}
         {login.error && normalizeApiError(login.error).code === "AUTH_008" ? (
-          <AppButton variant="outline" onPress={() => router.push("/verify-email")}>{t("auth.verify.request")}</AppButton>
+          <AppButton
+            variant="outline"
+            onPress={() => router.push("/verify-email")}
+          >
+            {t("auth.verify.request")}
+          </AppButton>
         ) : null}
         <Controller
           control={control}
           name="email"
-          render={({ field: { onBlur, onChange, ref, value }, fieldState: { error } }) => (
+          render={({
+            field: { onBlur, onChange, ref, value },
+            fieldState: { error },
+          }) => (
             <AppInput
               ref={ref}
               autoCapitalize="none"
@@ -102,7 +120,10 @@ export function LoginScreen() {
         <Controller
           control={control}
           name="password"
-          render={({ field: { onBlur, onChange, value }, fieldState: { error } }) => (
+          render={({
+            field: { onBlur, onChange, value },
+            fieldState: { error },
+          }) => (
             <AppInput
               ref={passwordInputRef}
               autoCapitalize="none"
@@ -127,7 +148,10 @@ export function LoginScreen() {
           accessibilityRole="link"
           hitSlop={8}
           disabled={isSubmitting || google.isPending}
-          onPress={() => { Keyboard.dismiss(); router.push("/forgot-password"); }}
+          onPress={() => {
+            Keyboard.dismiss();
+            router.push("/forgot-password");
+          }}
           style={({ pressed }) => [
             styles.forgotPassword,
             { marginVertical: -theme.spacing.sm },
@@ -139,15 +163,31 @@ export function LoginScreen() {
           </AppText>
         </Pressable>
 
-        <AppButton disabled={google.isPending} loading={isSubmitting} onPress={handleLogin}>
+        <AppButton
+          disabled={google.isPending}
+          loading={isSubmitting}
+          onPress={handleLogin}
+        >
           {t("auth.login.submit")}
         </AppButton>
 
         <AuthDivider />
 
-        <GoogleButton disabled={isSubmitting} loading={google.isPending}
-          onPress={() => { Keyboard.dismiss(); login.reset(); clearErrors(); google.mutate(undefined); }}
-          onCredential={(credential) => { login.reset(); clearErrors(); return google.mutateAsync(credential); }} />
+        <GoogleButton
+          disabled={isSubmitting}
+          loading={google.isPending}
+          onPress={() => {
+            Keyboard.dismiss();
+            login.reset();
+            clearErrors();
+            google.mutate(undefined);
+          }}
+          onCredential={(credential) => {
+            login.reset();
+            clearErrors();
+            return google.mutateAsync(credential);
+          }}
+        />
         <GoogleFeedback error={google.error} outcome={google.data} />
       </View>
     </AuthScaffold>

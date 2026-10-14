@@ -1,4 +1,7 @@
-import { ApiError, normalizeApiError } from "../../../services/api/api-error.ts";
+import {
+  ApiError,
+  normalizeApiError,
+} from "../../../services/api/api-error.ts";
 import type { AuthData, AuthStatus, AuthUser } from "../types/auth-types.ts";
 
 type SessionDependencies = {
@@ -23,7 +26,9 @@ export class SessionManager {
   private restoreError: ApiError | null = null;
 
   private readonly dependencies: SessionDependencies;
-  constructor(dependencies: SessionDependencies) { this.dependencies = dependencies; }
+  constructor(dependencies: SessionDependencies) {
+    this.dependencies = dependencies;
+  }
   getAccessToken = () => this.accessToken;
   getVersion = () => this.version;
   getRestoreError = () => this.restoreError;
@@ -38,7 +43,9 @@ export class SessionManager {
     if (version !== this.version) throw new ApiError("CANCELLED");
     try {
       await this.storage(() => this.dependencies.write(data.refreshToken));
-    } catch { throw new ApiError("STORAGE"); }
+    } catch {
+      throw new ApiError("STORAGE");
+    }
     if (version !== this.version) throw new ApiError("CANCELLED");
     this.accessToken = data.accessToken;
     this.refreshToken = data.refreshToken;
@@ -53,7 +60,10 @@ export class SessionManager {
   }
 
   /** Google can require email confirmation; only an outcome with credentials grants a session. */
-  async authenticateOutcome<T>(request: () => Promise<T>, credentials: (outcome: T) => AuthData | null): Promise<T> {
+  async authenticateOutcome<T>(
+    request: () => Promise<T>,
+    credentials: (outcome: T) => AuthData | null,
+  ): Promise<T> {
     const version = ++this.version;
     const outcome = await request();
     const data = credentials(outcome);
@@ -61,17 +71,25 @@ export class SessionManager {
       if (version !== this.version) throw new ApiError("CANCELLED");
       return outcome;
     }
-    try { await this.accept(data, version); return outcome; }
-    catch (error) {
+    try {
+      await this.accept(data, version);
+      return outcome;
+    } catch (error) {
       // Credential cấp trên server nhưng không lưu được/stale phải được thu hồi.
-      try { await this.dependencies.requestLogout(data.refreshToken); } catch { /* TTL giới hạn phiên mồ côi. */ }
+      try {
+        await this.dependencies.requestLogout(data.refreshToken);
+      } catch {
+        /* TTL giới hạn phiên mồ côi. */
+      }
       throw error;
     }
   }
 
   restore = (): Promise<void> => {
     if (this.restorePromise) return this.restorePromise;
-    this.restorePromise = this.restoreSession().finally(() => { this.restorePromise = undefined; });
+    this.restorePromise = this.restoreSession().finally(() => {
+      this.restorePromise = undefined;
+    });
     return this.restorePromise;
   };
 
@@ -80,10 +98,18 @@ export class SessionManager {
     this.restoreError = null;
     this.dependencies.onStatus("restoring");
     try {
-      const token = await this.dependencies.read().catch(() => { throw new ApiError("STORAGE"); });
+      const token = await this.dependencies.read().catch(() => {
+        throw new ApiError("STORAGE");
+      });
       if (version !== this.version) return;
-      if (!token) { this.dependencies.onStatus("anonymous"); return; }
-      if (token.length > 4096 || token.length === 0) { await this.expire(); return; }
+      if (!token) {
+        this.dependencies.onStatus("anonymous");
+        return;
+      }
+      if (token.length > 4096 || token.length === 0) {
+        await this.expire();
+        return;
+      }
       this.refreshToken = token;
       await this.refresh();
     } catch (error) {
@@ -98,19 +124,30 @@ export class SessionManager {
     const version = this.version;
     const token = this.refreshToken;
     if (!token) return Promise.reject(new ApiError("AUTH_001", 401));
-    const pending = this.dependencies.requestRefresh(token)
+    const pending = this.dependencies
+      .requestRefresh(token)
       .then(async (data) => {
-        try { return await this.accept(data, version); }
-        catch (error) {
+        try {
+          return await this.accept(data, version);
+        } catch (error) {
           // Thu hồi cả token được rotate trong lúc logout hoặc khi SecureStore lỗi.
-          try { await this.dependencies.requestLogout(data.refreshToken); } catch { /* TTL giới hạn phiên mồ côi. */ }
+          try {
+            await this.dependencies.requestLogout(data.refreshToken);
+          } catch {
+            /* TTL giới hạn phiên mồ côi. */
+          }
           throw error;
         }
       })
       .catch(async (error: unknown) => {
         const failure = normalizeApiError(error);
-        if (version === this.version && (failure.status === 401 || failure.code === "AUTH_007" ||
-          failure.code === "STORAGE" || failure.code === "INVALID_RESPONSE")) {
+        if (
+          version === this.version &&
+          (failure.status === 401 ||
+            failure.code === "AUTH_007" ||
+            failure.code === "STORAGE" ||
+            failure.code === "INVALID_RESPONSE")
+        ) {
           await this.expire();
         }
         throw failure;
@@ -128,8 +165,9 @@ export class SessionManager {
     this.refreshToken = null;
     this.refreshPromise = undefined;
     this.dependencies.onClear();
-    try { await this.storage(this.dependencies.remove); }
-    catch {
+    try {
+      await this.storage(this.dependencies.remove);
+    } catch {
       this.restoreError = new ApiError("STORAGE");
       this.dependencies.onStatus("restore-error");
       throw this.restoreError;
@@ -141,7 +179,11 @@ export class SessionManager {
     const token = this.refreshToken;
     await this.expire();
     if (!token) return true;
-    try { await this.dependencies.requestLogout(token); return true; }
-    catch { return false; } // caller hiển thị thông báo thu hồi phía server chưa thành công.
+    try {
+      await this.dependencies.requestLogout(token);
+      return true;
+    } catch {
+      return false;
+    } // caller hiển thị thông báo thu hồi phía server chưa thành công.
   };
 }

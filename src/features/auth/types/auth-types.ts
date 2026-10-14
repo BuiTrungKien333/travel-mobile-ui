@@ -20,19 +20,34 @@ export const authDataSchema = z.object({
 
 export type AuthData = z.infer<typeof authDataSchema>;
 export type AuthUser = z.infer<typeof authUserSchema>;
-export type AuthStatus = "restoring" | "authenticated" | "anonymous" | "restore-error";
+export type AuthStatus =
+  | "restoring"
+  | "authenticated"
+  | "anonymous"
+  | "restore-error";
 
-export const emailRequestResultSchema = z.object({ resendAfterSeconds: z.number().int().positive().safe() });
-export const registrationResultSchema = emailRequestResultSchema.extend({ verificationRequired: z.literal(true) });
+export const emailRequestResultSchema = z.object({
+  resendAfterSeconds: z.number().int().positive().safe(),
+});
+export const registrationResultSchema = emailRequestResultSchema.extend({
+  verificationRequired: z.literal(true),
+});
 
 export const googleChallengeSchema = z.object({
-  challengeId: z.guid(), nonce: z.string().regex(/^[a-f0-9]{64}$/),
-  webClientId: z.string().regex(/^[A-Za-z0-9_-]+\.apps\.googleusercontent\.com$/),
+  challengeId: z.guid(),
+  nonce: z.string().regex(/^[a-f0-9]{64}$/),
+  webClientId: z
+    .string()
+    .regex(/^[A-Za-z0-9_-]+\.apps\.googleusercontent\.com$/),
   expiresIn: z.number().int().positive().max(600000),
 });
 export const googleLoginSchema = z.discriminatedUnion("status", [
   z.object({ status: z.literal("AUTHENTICATED"), auth: authDataSchema }),
-  z.object({ status: z.literal("VERIFICATION_REQUIRED"), email: z.email(), resendAfterSeconds: z.number().int().positive().safe() }),
+  z.object({
+    status: z.literal("VERIFICATION_REQUIRED"),
+    email: z.email(),
+    resendAfterSeconds: z.number().int().positive().safe(),
+  }),
 ]);
 export type GoogleChallenge = z.infer<typeof googleChallengeSchema>;
 export type GoogleLoginOutcome = z.infer<typeof googleLoginSchema>;

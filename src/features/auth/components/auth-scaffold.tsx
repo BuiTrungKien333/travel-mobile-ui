@@ -8,8 +8,8 @@ import {
   View,
 } from "react-native";
 
-import { AppText } from "@/components/ui/app-text";
 import { LanguageSwitcher } from "@/components/common/language-switcher";
+import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useI18n } from "@/hooks/use-i18n";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -77,7 +77,11 @@ export function AuthScaffold({
                 />
               </View>
             ) : null}
-            <AppText accessibilityRole="header" style={styles.title} variant="heading">
+            <AppText
+              accessibilityRole="header"
+              style={styles.title}
+              variant="heading"
+            >
               {title}
             </AppText>
             <AppText style={styles.subtitle} tone="muted">

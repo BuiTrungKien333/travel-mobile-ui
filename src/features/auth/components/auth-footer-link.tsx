@@ -10,7 +10,12 @@ type AuthFooterLinkProps = {
   disabled?: boolean;
 };
 
-export function AuthFooterLink({ action, label, onPress, disabled = false }: AuthFooterLinkProps) {
+export function AuthFooterLink({
+  action,
+  label,
+  onPress,
+  disabled = false,
+}: AuthFooterLinkProps) {
   const theme = useAppTheme();
 
   return (

@@ -56,7 +56,9 @@ export function LanguageSwitcher() {
             >
               <AppText
                 style={{
-                  color: selected ? theme.colors.onPrimary : theme.colors.textSecondary,
+                  color: selected
+                    ? theme.colors.onPrimary
+                    : theme.colors.textSecondary,
                   fontFamily: theme.typography.fontFamily.medium,
                 }}
                 variant="caption"

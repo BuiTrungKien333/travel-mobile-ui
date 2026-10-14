@@ -12,18 +12,25 @@ export function SessionGate({ failed }: { failed: boolean }) {
   const theme = useAppTheme();
   const { t } = useI18n();
   return (
-    <SafeAreaView style={[styles.screen, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView
+      style={[styles.screen, { backgroundColor: theme.colors.background }]}
+    >
       <View style={{ padding: theme.spacing.xl, gap: theme.spacing.lg }}>
         {failed ? (
           <>
             <AppText accessibilityRole="alert" tone="error">
               {authErrorMessage(authSession.getRestoreError(), t)}
             </AppText>
-            <AppButton onPress={() => void authSession.restore()}>{t("common.retry")}</AppButton>
+            <AppButton onPress={() => void authSession.restore()}>
+              {t("common.retry")}
+            </AppButton>
           </>
         ) : (
           <>
-            <ActivityIndicator accessibilityLabel={t("auth.session.restoring")} color={theme.colors.primary} />
+            <ActivityIndicator
+              accessibilityLabel={t("auth.session.restoring")}
+              color={theme.colors.primary}
+            />
             <AppText>{t("auth.session.restoring")}</AppText>
           </>
         )}
@@ -31,4 +38,6 @@ export function SessionGate({ failed }: { failed: boolean }) {
     </SafeAreaView>
   );
 }
-const styles = StyleSheet.create({ screen: { flex: 1, justifyContent: "center" } });
+const styles = StyleSheet.create({
+  screen: { flex: 1, justifyContent: "center" },
+});

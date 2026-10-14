@@ -37,8 +37,12 @@ export function AppButton({
       style={({ pressed }) => [
         styles.button,
         {
-          backgroundColor: isPrimary ? theme.colors.primary : theme.colors.surface,
-          borderColor: isPrimary ? theme.colors.primary : theme.colors.borderStrong,
+          backgroundColor: isPrimary
+            ? theme.colors.primary
+            : theme.colors.surface,
+          borderColor: isPrimary
+            ? theme.colors.primary
+            : theme.colors.borderStrong,
           borderRadius: theme.radius.md,
           opacity: isDisabled ? 0.55 : pressed ? 0.82 : 1,
           paddingHorizontal: theme.spacing.xl,
@@ -48,7 +52,9 @@ export function AppButton({
       <View style={[styles.content, { gap: theme.spacing.sm }]}>
         {loading ? (
           <ActivityIndicator
-            color={isPrimary ? theme.colors.onPrimary : theme.colors.primaryText}
+            color={
+              isPrimary ? theme.colors.onPrimary : theme.colors.primaryText
+            }
           />
         ) : (
           leadingIcon

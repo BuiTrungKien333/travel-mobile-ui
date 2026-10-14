@@ -1,11 +1,11 @@
-import { useState } from "react";
-import { View } from "react-native";
 import { AppButton } from "@/components/ui/app-button";
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useI18n } from "@/hooks/use-i18n";
-import { AuthScaffold } from "../components/auth-scaffold";
+import { useState } from "react";
+import { View } from "react-native";
 import { AuthReturnButton } from "../components/auth-return-button";
+import { AuthScaffold } from "../components/auth-scaffold";
 import { MagicLinkLoading } from "../components/magic-link-loading";
 import { useVerifyEmail } from "../hooks/use-auth";
 import { useMagicLinkToken } from "../hooks/use-magic-link-token";
@@ -27,18 +27,41 @@ function VerifyEmailConfirmation({ token }: { token: string }) {
   if (requestNew) return <EmailRequestScreen purpose="verify" />;
   const confirm = async () => {
     if (verify.isPending || verify.isSuccess) return;
-    try { await verify.mutateAsync(token); }
-    catch { /* Mutation error appears below. GET/link preview never redeems the token. */ }
+    try {
+      await verify.mutateAsync(token);
+    } catch {
+      /* Mutation error appears below. GET/link preview never redeems the token. */
+    }
   };
   return (
-    <AuthScaffold title={t("auth.verify.title")} subtitle={t("auth.verify.subtitle")}
-      footer={<AuthReturnButton />}>
+    <AuthScaffold
+      title={t("auth.verify.title")}
+      subtitle={t("auth.verify.subtitle")}
+      footer={<AuthReturnButton />}
+    >
       <View style={{ gap: theme.spacing.lg }}>
-        {verify.isSuccess ? <AppText accessibilityLiveRegion="polite">{t("auth.verify.success")}</AppText> : (
+        {verify.isSuccess ? (
+          <AppText accessibilityLiveRegion="polite">
+            {t("auth.verify.success")}
+          </AppText>
+        ) : (
           <>
-            {verify.error ? <AppText accessibilityRole="alert" tone="error">{authErrorMessage(verify.error, t)}</AppText> : null}
-            <AppButton loading={verify.isPending} onPress={() => void confirm()}>{t("auth.verify.confirm")}</AppButton>
-            {verify.error ? <AppButton variant="outline" onPress={() => setRequestNew(true)}>{t("auth.reset.requestNew")}</AppButton> : null}
+            {verify.error ? (
+              <AppText accessibilityRole="alert" tone="error">
+                {authErrorMessage(verify.error, t)}
+              </AppText>
+            ) : null}
+            <AppButton
+              loading={verify.isPending}
+              onPress={() => void confirm()}
+            >
+              {t("auth.verify.confirm")}
+            </AppButton>
+            {verify.error ? (
+              <AppButton variant="outline" onPress={() => setRequestNew(true)}>
+                {t("auth.reset.requestNew")}
+              </AppButton>
+            ) : null}
           </>
         )}
       </View>

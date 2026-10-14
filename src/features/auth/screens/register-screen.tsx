@@ -18,18 +18,21 @@ import {
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useI18n } from "@/hooks/use-i18n";
 import { translateError } from "@/i18n/translations";
-import { useGoogleLogin } from "../hooks/use-google-login";
-import { GoogleFeedback } from "../components/google-feedback";
-import { useRegister } from "../hooks/use-auth";
-import { authErrorMessage } from "../utils/auth-error-message";
 import { normalizeApiError } from "@/services/api/api-error";
 import { CheckEmail } from "../components/check-email";
+import { GoogleFeedback } from "../components/google-feedback";
+import { useRegister } from "../hooks/use-auth";
+import { useGoogleLogin } from "../hooks/use-google-login";
+import { authErrorMessage } from "../utils/auth-error-message";
 
 export function RegisterScreen() {
   const theme = useAppTheme();
   const { locale, t } = useI18n();
   const register = useRegister();
-  const [pendingEmail, setPendingEmail] = useState<{ email: string; resendAfterSeconds: number } | null>(null);
+  const [pendingEmail, setPendingEmail] = useState<{
+    email: string;
+    resendAfterSeconds: number;
+  } | null>(null);
   const google = useGoogleLogin();
   const emailInputRef = useRef<TextInput>(null);
   const passwordInputRef = useRef<TextInput>(null);
@@ -53,24 +56,39 @@ export function RegisterScreen() {
     clearErrors();
     try {
       const result = await register.mutateAsync(values);
-      setPendingEmail({ email: values.email, resendAfterSeconds: result.resendAfterSeconds });
+      setPendingEmail({
+        email: values.email,
+        resendAfterSeconds: result.resendAfterSeconds,
+      });
       reset();
-    }
-    catch (error) {
+    } catch (error) {
       const failure = normalizeApiError(error);
-      if (failure.code === "AUTH_003") setError("email", { message: "auth.error.emailExists" });
+      if (failure.code === "AUTH_003")
+        setError("email", { message: "auth.error.emailExists" });
       for (const field of ["email", "password", "fullName"] as const) {
-        if (failure.fields?.[field]) setError(field, { message: "auth.error.fieldInvalid" });
+        if (failure.fields?.[field])
+          setError(field, { message: "auth.error.fieldInvalid" });
       }
     }
   });
 
-  if (pendingEmail) return (
-    <AuthScaffold title={t("auth.email.title")} subtitle={t("auth.email.subtitle")}
-      footer={<AppButton variant="outline" onPress={() => router.replace("/(auth)/login")}>{t("auth.register.login")}</AppButton>}>
-      <CheckEmail {...pendingEmail} purpose="verify" />
-    </AuthScaffold>
-  );
+  if (pendingEmail)
+    return (
+      <AuthScaffold
+        title={t("auth.email.title")}
+        subtitle={t("auth.email.subtitle")}
+        footer={
+          <AppButton
+            variant="outline"
+            onPress={() => router.replace("/(auth)/login")}
+          >
+            {t("auth.register.login")}
+          </AppButton>
+        }
+      >
+        <CheckEmail {...pendingEmail} purpose="verify" />
+      </AuthScaffold>
+    );
 
   return (
     <AuthScaffold
@@ -86,11 +104,18 @@ export function RegisterScreen() {
       title={t("auth.register.title")}
     >
       <View style={{ gap: theme.spacing.lg }}>
-        {register.error ? <AppText accessibilityRole="alert" tone="error">{authErrorMessage(register.error, t)}</AppText> : null}
+        {register.error ? (
+          <AppText accessibilityRole="alert" tone="error">
+            {authErrorMessage(register.error, t)}
+          </AppText>
+        ) : null}
         <Controller
           control={control}
           name="fullName"
-          render={({ field: { onBlur, onChange, ref, value }, fieldState: { error } }) => (
+          render={({
+            field: { onBlur, onChange, ref, value },
+            fieldState: { error },
+          }) => (
             <AppInput
               ref={ref}
               autoCapitalize="words"
@@ -112,7 +137,10 @@ export function RegisterScreen() {
         <Controller
           control={control}
           name="email"
-          render={({ field: { onBlur, onChange, value }, fieldState: { error } }) => (
+          render={({
+            field: { onBlur, onChange, value },
+            fieldState: { error },
+          }) => (
             <AppInput
               ref={emailInputRef}
               autoCapitalize="none"
@@ -136,7 +164,10 @@ export function RegisterScreen() {
         <Controller
           control={control}
           name="password"
-          render={({ field: { onBlur, onChange, value }, fieldState: { error } }) => (
+          render={({
+            field: { onBlur, onChange, value },
+            fieldState: { error },
+          }) => (
             <AppInput
               ref={passwordInputRef}
               autoCapitalize="none"
@@ -158,15 +189,31 @@ export function RegisterScreen() {
           )}
         />
 
-        <AppButton disabled={google.isPending} loading={isSubmitting} onPress={handleRegister}>
+        <AppButton
+          disabled={google.isPending}
+          loading={isSubmitting}
+          onPress={handleRegister}
+        >
           {t("auth.register.submit")}
         </AppButton>
 
         <AuthDivider />
 
-        <GoogleButton disabled={isSubmitting} loading={google.isPending}
-          onPress={() => { Keyboard.dismiss(); register.reset(); clearErrors(); google.mutate(undefined); }}
-          onCredential={(credential) => { register.reset(); clearErrors(); return google.mutateAsync(credential); }} />
+        <GoogleButton
+          disabled={isSubmitting}
+          loading={google.isPending}
+          onPress={() => {
+            Keyboard.dismiss();
+            register.reset();
+            clearErrors();
+            google.mutate(undefined);
+          }}
+          onCredential={(credential) => {
+            register.reset();
+            clearErrors();
+            return google.mutateAsync(credential);
+          }}
+        />
         <GoogleFeedback error={google.error} outcome={google.data} />
 
         <AppText style={styles.legal} tone="muted" variant="caption">

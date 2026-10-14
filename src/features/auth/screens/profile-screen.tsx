@@ -1,4 +1,10 @@
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { LanguageSwitcher } from "@/components/common/language-switcher";
@@ -18,39 +24,70 @@ export function ProfileScreen() {
     if (logout.isPending) return;
     try {
       const revoked = await logout.mutateAsync();
-      if (!revoked) Alert.alert(t("auth.session.logout"), t("auth.session.localLogout"));
-    } catch (error) { Alert.alert(t("auth.session.logout"), authErrorMessage(error, t)); }
+      if (!revoked)
+        Alert.alert(t("auth.session.logout"), t("auth.session.localLogout"));
+    } catch (error) {
+      Alert.alert(t("auth.session.logout"), authErrorMessage(error, t));
+    }
   };
   return (
-    <SafeAreaView style={[styles.screen, { backgroundColor: theme.colors.background }]}>
-      <ScrollView contentContainerStyle={[styles.content, { padding: theme.spacing.xl }]}>
+    <SafeAreaView
+      style={[styles.screen, { backgroundColor: theme.colors.background }]}
+    >
+      <ScrollView
+        contentContainerStyle={[styles.content, { padding: theme.spacing.xl }]}
+      >
         <View style={[styles.container, { gap: theme.spacing.xl }]}>
-          <View style={styles.language}><LanguageSwitcher /></View>
-          <AppText accessibilityRole="header" variant="heading">{t("auth.profile.title")}</AppText>
+          <View style={styles.language}>
+            <LanguageSwitcher />
+          </View>
+          <AppText accessibilityRole="header" variant="heading">
+            {t("auth.profile.title")}
+          </AppText>
           {profile.isPending ? (
-            <ActivityIndicator color={theme.colors.primary} accessibilityLabel={t("auth.profile.loading")} />
+            <ActivityIndicator
+              color={theme.colors.primary}
+              accessibilityLabel={t("auth.profile.loading")}
+            />
           ) : null}
           {profile.isError ? (
             <View style={{ gap: theme.spacing.md }}>
-              <AppText accessibilityRole="alert" tone="error">{authErrorMessage(profile.error, t)}</AppText>
-              <AppButton loading={profile.isFetching} onPress={() => void profile.refetch()} variant="outline">
+              <AppText accessibilityRole="alert" tone="error">
+                {authErrorMessage(profile.error, t)}
+              </AppText>
+              <AppButton
+                loading={profile.isFetching}
+                onPress={() => void profile.refetch()}
+                variant="outline"
+              >
                 {t("common.retry")}
               </AppButton>
             </View>
           ) : null}
           {profile.data ? (
-            <View style={[
-              styles.card,
-              { backgroundColor: theme.colors.surface, borderColor: theme.colors.border,
-                borderRadius: theme.radius.lg, padding: theme.spacing.xl, gap: theme.spacing.md },
-            ]}>
+            <View
+              style={[
+                styles.card,
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                  borderRadius: theme.radius.lg,
+                  padding: theme.spacing.xl,
+                  gap: theme.spacing.md,
+                },
+              ]}
+            >
               <AppText variant="label">{t("auth.register.fullName")}</AppText>
               <AppText>{profile.data.fullName}</AppText>
               <AppText variant="label">{t("common.email")}</AppText>
               <AppText>{profile.data.email}</AppText>
             </View>
           ) : null}
-          <AppButton loading={logout.isPending} onPress={() => void handleLogout()} variant="outline">
+          <AppButton
+            loading={logout.isPending}
+            onPress={() => void handleLogout()}
+            variant="outline"
+          >
             {t("auth.session.logout")}
           </AppButton>
         </View>
@@ -59,6 +96,9 @@ export function ProfileScreen() {
   );
 }
 const styles = StyleSheet.create({
-  screen: { flex: 1 }, content: { flexGrow: 1, alignItems: "center" },
-  container: { width: "100%", maxWidth: 480 }, language: { alignItems: "flex-end" }, card: { borderWidth: 1 },
+  screen: { flex: 1 },
+  content: { flexGrow: 1, alignItems: "center" },
+  container: { width: "100%", maxWidth: 480 },
+  language: { alignItems: "flex-end" },
+  card: { borderWidth: 1 },
 });

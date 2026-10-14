@@ -53,7 +53,9 @@ export function AppText({
     error: theme.colors.error,
   }[tone];
 
-  return <Text {...props} style={[styles.base, variantStyle, { color }, style]} />;
+  return (
+    <Text {...props} style={[styles.base, variantStyle, { color }, style]} />
+  );
 }
 
 const styles = StyleSheet.create({

@@ -12,7 +12,11 @@ export type GoogleButtonProps = {
   onCredential?: (credential: GoogleCredential) => Promise<unknown>;
 };
 
-export function GoogleButton({ onPress, disabled, loading }: GoogleButtonProps) {
+export function GoogleButton({
+  onPress,
+  disabled,
+  loading,
+}: GoogleButtonProps) {
   const { t } = useI18n();
 
   return (

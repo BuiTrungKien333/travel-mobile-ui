@@ -13,21 +13,32 @@ const refreshTokenKey = "tripzy.auth.refresh-token";
 let webRefreshToken: string | null = null;
 
 export const authSession = new SessionManager({
-  read: () => Platform.OS === "web" ? Promise.resolve(webRefreshToken) : SecureStore.getItemAsync(refreshTokenKey),
+  read: () =>
+    Platform.OS === "web"
+      ? Promise.resolve(webRefreshToken)
+      : SecureStore.getItemAsync(refreshTokenKey),
   write: async (token) => {
-    if (Platform.OS === "web") { webRefreshToken = token; return; }
+    if (Platform.OS === "web") {
+      webRefreshToken = token;
+      return;
+    }
     await SecureStore.setItemAsync(refreshTokenKey, token, {
       keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
     });
   },
   remove: async () => {
-    if (Platform.OS === "web") { webRefreshToken = null; return; }
+    if (Platform.OS === "web") {
+      webRefreshToken = null;
+      return;
+    }
     await SecureStore.deleteItemAsync(refreshTokenKey);
   },
   requestRefresh: authApi.refresh,
   requestLogout: authApi.logout,
   onStatus: (status) => useAuthStore.setState({ status }),
-  onUser: (user) => { queryClient.setQueryData(authQueryKeys.profile, user, { updatedAt: 0 }); },
+  onUser: (user) => {
+    queryClient.setQueryData(authQueryKeys.profile, user, { updatedAt: 0 });
+  },
   onClear: () => queryClient.clear(),
 });
 

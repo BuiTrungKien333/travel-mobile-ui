@@ -9,7 +9,10 @@ export function AuthDivider() {
   const { t } = useI18n();
 
   return (
-    <View accessibilityRole="text" style={[styles.row, { gap: theme.spacing.md }]}>
+    <View
+      accessibilityRole="text"
+      style={[styles.row, { gap: theme.spacing.md }]}
+    >
       <View style={[styles.line, { backgroundColor: theme.colors.border }]} />
       <AppText tone="muted" variant="caption">
         {t("common.or")}

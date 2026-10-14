@@ -1,6 +1,6 @@
 import { SymbolView } from "expo-symbols";
-import { forwardRef, useState } from "react";
 import type { ComponentProps } from "react";
+import { forwardRef, useState } from "react";
 import { Pressable, StyleSheet, TextInput, View } from "react-native";
 
 import { AppText } from "@/components/ui/app-text";
@@ -15,7 +15,16 @@ type AppInputProps = ComponentProps<typeof TextInput> & {
 };
 
 export const AppInput = forwardRef<TextInput, AppInputProps>(function AppInput(
-  { error, helperText, label, onBlur, onFocus, password = false, style, ...props },
+  {
+    error,
+    helperText,
+    label,
+    onBlur,
+    onFocus,
+    password = false,
+    style,
+    ...props
+  },
   ref,
 ) {
   const theme = useAppTheme();
@@ -73,13 +82,18 @@ export const AppInput = forwardRef<TextInput, AppInputProps>(function AppInput(
         {password ? (
           <Pressable
             accessibilityLabel={
-              passwordVisible ? t("common.hidePassword") : t("common.showPassword")
+              passwordVisible
+                ? t("common.hidePassword")
+                : t("common.showPassword")
             }
             accessibilityRole="button"
             accessibilityState={{ expanded: passwordVisible }}
             hitSlop={8}
             onPress={() => setPasswordVisible((visible) => !visible)}
-            style={({ pressed }) => [styles.passwordAction, pressed && styles.pressed]}
+            style={({ pressed }) => [
+              styles.passwordAction,
+              pressed && styles.pressed,
+            ]}
           >
             <SymbolView
               name={{

@@ -14,7 +14,15 @@ export const authEndpoints = {
 } as const;
 
 export const publicAuthEndpoints: ReadonlySet<string> = new Set([
-  authEndpoints.login, authEndpoints.register, authEndpoints.refresh, authEndpoints.logout,
-  authEndpoints.resendVerification, authEndpoints.verifyEmail, authEndpoints.forgotPassword, authEndpoints.resetPassword,
-  authEndpoints.googleChallenge, authEndpoints.googleLogin, authEndpoints.googleVerifyLink,
+  authEndpoints.login,
+  authEndpoints.register,
+  authEndpoints.refresh,
+  authEndpoints.logout,
+  authEndpoints.resendVerification,
+  authEndpoints.verifyEmail,
+  authEndpoints.forgotPassword,
+  authEndpoints.resetPassword,
+  authEndpoints.googleChallenge,
+  authEndpoints.googleLogin,
+  authEndpoints.googleVerifyLink,
 ]);

@@ -1,13 +1,13 @@
+import { QueryClientProvider, focusManager } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { ThemeProvider } from "expo-router/react-navigation";
 import { StatusBar } from "expo-status-bar";
-import { QueryClientProvider, focusManager } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { AppState, Platform } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
-import { authSession } from "@/features/auth/services/auth-session";
 import { MagicLinkProvider } from "@/features/auth/components/magic-link-provider";
+import { authSession } from "@/features/auth/services/auth-session";
 import { queryClient } from "@/services/api/query-client";
 import { useAuthStore } from "@/store/use-auth-store";
 
@@ -25,7 +25,9 @@ export default function RootLayout() {
   useEffect(() => {
     void authSession.restore();
     if (Platform.OS === "web") return;
-    const subscription = AppState.addEventListener("change", (state) => focusManager.setFocused(state === "active"));
+    const subscription = AppState.addEventListener("change", (state) =>
+      focusManager.setFocused(state === "active"),
+    );
     return () => subscription.remove();
   }, []);
   const [fontsLoaded, fontError] = useFonts({
