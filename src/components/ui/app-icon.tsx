@@ -50,6 +50,7 @@ const symbols = {
   rain: { ios: "cloud.rain", android: "rainy", web: "rainy" },
   sun: { ios: "sun.max.fill", android: "light_mode", web: "light_mode" },
   cloud: { ios: "cloud.fill", android: "cloud", web: "cloud" },
+  umbrella: { ios: "umbrella.fill", android: "umbrella", web: "umbrella" },
   camera: { ios: "camera", android: "photo_camera", web: "photo_camera" },
   tune: { ios: "slider.horizontal.3", android: "tune", web: "tune" },
   sparkles: { ios: "sparkles", android: "auto_awesome", web: "auto_awesome" },

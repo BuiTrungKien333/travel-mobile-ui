@@ -7,6 +7,7 @@ import {
 import { darkColors, lightColors, type AppColorTokens } from "./colors";
 import {
   elevation,
+  glass,
   layout,
   motion,
   radius,
@@ -22,6 +23,7 @@ export type AppTheme = Omit<NavigationTheme, "colors"> & {
   layout: typeof layout;
   motion: typeof motion;
   elevation: typeof elevation;
+  glass: typeof glass;
 };
 
 export const lightTheme: AppTheme = {
@@ -41,6 +43,7 @@ export const lightTheme: AppTheme = {
   layout,
   motion,
   elevation,
+  glass,
 };
 
 export const darkTheme: AppTheme = {
@@ -60,4 +63,5 @@ export const darkTheme: AppTheme = {
   layout,
   motion,
   elevation,
+  glass,
 };

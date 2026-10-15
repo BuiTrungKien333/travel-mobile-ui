@@ -78,8 +78,40 @@ export type AppColorTokens = {
   navigationActive: string;
   navigationInactive: string;
   navigationShadow: string;
+  navigationFallback: string;
+  navigationTint: string;
+  navigationBorder: string;
+  navigationIndicatorBorder: string;
   weatherSun: string;
   weatherCloud: string;
+  glassSurface: string;
+  glassFallback: string;
+  glassTint: string;
+  glassBorder: string;
+  glassInset: string;
+  glassGlow: string;
+  glassShadow: string;
+  glassClockSurface: string;
+  glassClockFallback: string;
+  glassClockTint: string;
+  glassClockInset: string;
+  glassClockBorder: string;
+  softActionSurface: string;
+  softActionPressed: string;
+  softActionBorder: string;
+  onSoftAction: string;
+  gradientActionStart: string;
+  gradientActionEnd: string;
+  onGradientAction: string;
+  stopChipSurface: string;
+  achievementWarmSurface: string;
+  packingSurface: string;
+  weatherDepthShadow: string;
+  raisedActionSurface: string;
+  raisedActionPressed: string;
+  raisedActionBorder: string;
+  onRaisedAction: string;
+  raisedActionHighlight: string;
 };
 
 export const lightColors: AppColorTokens = {
@@ -129,13 +161,45 @@ export const lightColors: AppColorTokens = {
   heroSurface: palette.primary900,
   onHero: palette.white,
   onHeroMuted: palette.primary100,
-  navigationSurface: palette.white,
-  navigationIndicator: "#F0F0F0",
-  navigationActive: palette.black,
-  navigationInactive: "#555555",
-  navigationShadow: "rgba(0, 0, 0, 0.08)",
+  navigationSurface: "rgba(255, 255, 255, 0.82)",
+  navigationIndicator: "rgba(33, 181, 195, 0.16)",
+  navigationActive: palette.primary800,
+  navigationInactive: "#365F69",
+  navigationShadow: "rgba(13, 72, 78, 0.12)",
+  navigationFallback: "rgba(255, 255, 255, 0.94)",
+  navigationTint: "rgba(255, 255, 255, 0.36)",
+  navigationBorder: "rgba(255, 255, 255, 0.78)",
+  navigationIndicatorBorder: "rgba(33, 181, 195, 0.22)",
   weatherSun: palette.yellow500,
   weatherCloud: palette.gray400,
+  glassSurface: "rgba(255, 255, 255, 0.45)",
+  glassFallback: "rgba(255, 255, 255, 0.88)",
+  glassTint: "rgba(255, 255, 255, 0.20)",
+  glassBorder: "rgba(255, 255, 255, 0.45)",
+  glassInset: "rgba(255, 255, 255, 0.35)",
+  glassGlow: "rgba(33, 181, 195, 0.25)",
+  glassShadow: "rgba(13, 72, 78, 0.12)",
+  glassClockSurface: "rgba(255, 255, 255, 0.24)",
+  glassClockFallback: "rgba(255, 255, 255, 0.36)",
+  glassClockTint: "rgba(255, 255, 255, 0.12)",
+  glassClockInset: "rgba(255, 255, 255, 0.08)",
+  glassClockBorder: "rgba(255, 255, 255, 0.88)",
+  softActionSurface: palette.primary100,
+  softActionPressed: palette.primary200,
+  softActionBorder: palette.primary200,
+  onSoftAction: palette.primary800,
+  gradientActionStart: palette.primary800,
+  gradientActionEnd: "#156068",
+  onGradientAction: palette.white,
+  stopChipSurface: "rgba(33, 181, 195, 0.10)",
+  achievementWarmSurface: "#F9DFA1",
+  packingSurface: "rgba(255, 255, 255, 0.74)",
+  weatherDepthShadow: "rgba(13, 72, 78, 0.18)",
+  raisedActionSurface: palette.primary500,
+  raisedActionPressed: palette.primary600,
+  raisedActionBorder: palette.primary600,
+  onRaisedAction: palette.white,
+  raisedActionHighlight: "rgba(255, 255, 255, 0.28)",
 };
 
 export const darkColors: AppColorTokens = {
@@ -182,11 +246,43 @@ export const darkColors: AppColorTokens = {
   heroSurface: palette.primary900,
   onHero: palette.white,
   onHeroMuted: palette.primary100,
-  navigationSurface: "#102024",
-  navigationIndicator: "#2B4146",
-  navigationActive: palette.white,
-  navigationInactive: palette.gray300,
-  navigationShadow: "rgba(0, 0, 0, 0.08)",
+  navigationSurface: "rgba(16, 32, 36, 0.88)",
+  navigationIndicator: "rgba(78, 207, 217, 0.18)",
+  navigationActive: palette.primary200,
+  navigationInactive: "#B2CFD4",
+  navigationShadow: "rgba(0, 0, 0, 0.20)",
+  navigationFallback: "rgba(16, 32, 36, 0.96)",
+  navigationTint: "rgba(16, 32, 36, 0.42)",
+  navigationBorder: "rgba(167, 231, 236, 0.20)",
+  navigationIndicatorBorder: "rgba(78, 207, 217, 0.26)",
   weatherSun: palette.yellow500,
   weatherCloud: palette.gray300,
+  glassSurface: "rgba(16, 32, 36, 0.80)",
+  glassFallback: "rgba(16, 32, 36, 0.95)",
+  glassTint: "rgba(16, 32, 36, 0.42)",
+  glassBorder: "rgba(255, 255, 255, 0.20)",
+  glassInset: "rgba(255, 255, 255, 0.08)",
+  glassGlow: "rgba(78, 207, 217, 0.24)",
+  glassShadow: "rgba(0, 0, 0, 0.20)",
+  glassClockSurface: "rgba(16, 32, 36, 0.48)",
+  glassClockFallback: "rgba(16, 32, 36, 0.68)",
+  glassClockTint: "rgba(16, 32, 36, 0.24)",
+  glassClockInset: "rgba(255, 255, 255, 0.04)",
+  glassClockBorder: "rgba(255, 255, 255, 0.24)",
+  softActionSurface: palette.primary900,
+  softActionPressed: palette.primary800,
+  softActionBorder: palette.primary700,
+  onSoftAction: palette.primary100,
+  gradientActionStart: palette.primary800,
+  gradientActionEnd: "#156068",
+  onGradientAction: palette.white,
+  stopChipSurface: "rgba(78, 207, 217, 0.10)",
+  achievementWarmSurface: "#5C3C13",
+  packingSurface: "rgba(16, 32, 36, 0.74)",
+  weatherDepthShadow: "rgba(0, 0, 0, 0.28)",
+  raisedActionSurface: palette.primary600,
+  raisedActionPressed: palette.primary700,
+  raisedActionBorder: palette.primary700,
+  onRaisedAction: palette.white,
+  raisedActionHighlight: "rgba(255, 255, 255, 0.20)",
 };

@@ -1,3 +1,4 @@
+import { useBottomTabBarHeight } from "expo-router/js-tabs";
 import { FlatList, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -16,6 +17,7 @@ import { isPastTrip, selectHome } from "../utils/select-home";
 
 export function MemoriesScreen() {
   const theme = useAppTheme();
+  const tabBarHeight = useBottomTabBarHeight();
   const { copy } = useHomeCopy();
   const { trips, memories, today, openPanel } = useTripPreview((state) => ({
     trips: state.trips,
@@ -49,6 +51,7 @@ export function MemoriesScreen() {
           {
             maxWidth: theme.layout.contentMaxWidth,
             padding: theme.spacing.lg,
+            paddingBottom: tabBarHeight + theme.spacing.lg,
             gap: theme.spacing.lg,
           },
         ]}

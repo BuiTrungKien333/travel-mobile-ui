@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useBottomTabBarHeight } from "expo-router/js-tabs";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import Animated, { FadeInDown, ReduceMotion } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -11,6 +12,7 @@ import { useTripPreview } from "../providers/trip-preview-provider";
 
 export function HomePage({ children }: { children: ReactNode }) {
   const theme = useAppTheme();
+  const tabBarHeight = useBottomTabBarHeight();
   return (
     <SafeAreaView
       edges={["top", "left", "right"]}
@@ -21,7 +23,10 @@ export function HomePage({ children }: { children: ReactNode }) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.scroll,
-          { padding: theme.spacing.lg, paddingBottom: theme.spacing.xxl },
+          {
+            padding: theme.spacing.lg,
+            paddingBottom: tabBarHeight + theme.spacing.lg,
+          },
         ]}
       >
         <View
@@ -37,15 +42,22 @@ export function HomePage({ children }: { children: ReactNode }) {
   );
 }
 
-export function EnterSection({ children }: { children: ReactNode }) {
+export function EnterSection({
+  children,
+  animated = true,
+}: {
+  children: ReactNode;
+  animated?: boolean;
+}) {
   const theme = useAppTheme();
+  const style = [styles.section, { gap: theme.spacing.lg }];
+  if (!animated) return <View style={style}>{children}</View>;
+
+  const entering = FadeInDown.duration(theme.motion.enterDuration).reduceMotion(
+    ReduceMotion.System,
+  );
   return (
-    <Animated.View
-      entering={FadeInDown.duration(theme.motion.enterDuration).reduceMotion(
-        ReduceMotion.System,
-      )}
-      style={{ gap: theme.spacing.lg }}
-    >
+    <Animated.View entering={entering} style={style}>
       {children}
     </Animated.View>
   );
@@ -251,6 +263,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   scroll: { alignItems: "center", flexGrow: 1 },
   width: { width: "100%" },
+  section: { width: "100%", flexShrink: 0 },
   card: { borderWidth: StyleSheet.hairlineWidth, borderCurve: "continuous" },
   badge: {
     flexDirection: "row",

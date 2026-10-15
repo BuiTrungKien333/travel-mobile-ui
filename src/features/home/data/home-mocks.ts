@@ -1,4 +1,9 @@
-import type { HomeScenario, Trip, TripStop } from "../types/home-types";
+import type {
+  HomeScenario,
+  LocalizedText,
+  Trip,
+  TripStop,
+} from "../types/home-types";
 
 // Fixed mock clock keeps all four previews reproducible, regardless of device date.
 export const MOCK_TODAY = "2026-10-21";
@@ -8,10 +13,12 @@ export const mockProfile = {
 };
 export const homeImages = {
   forest: require("@/assets/images/home/forest.jpg"),
+  upcomingPhoto: require("@/assets/images/home/dalat-upcoming.jpg"),
   firstTripLandscape: require("@/assets/images/home/first-trip-landscape.svg"),
   xuanHuongLake: require("@/assets/images/home/xuan-huong-lake.jpg"),
   lamVienSquare: require("@/assets/images/home/lam-vien-square.jpg"),
   lamDongMuseum: require("@/assets/images/home/lam-dong-museum.jpg"),
+  rainCloud: require("@/assets/icons/weather/rain-cloud.svg"),
 };
 export const exampleStops: TripStop[] = [
   {
@@ -41,6 +48,29 @@ export const sampleItineraryStops = [
 
 export const sampleItineraryDate = "2026-10-24";
 export const sampleWeatherTemperature = 22;
+
+// Forecasts belong to these fixtures only; newly created drafts have no forecast.
+export const mockUpcomingWeather: Partial<
+  Record<
+    string,
+    {
+      low: number;
+      high: number;
+      summary: LocalizedText;
+      packingHint: LocalizedText;
+    }
+  >
+> = {
+  dalat: {
+    low: 16,
+    high: 24,
+    summary: { vi: "Mưa nhẹ", en: "Light showers" },
+    packingHint: {
+      vi: "Áo ấm & dù",
+      en: "Warm layer & umbrella",
+    },
+  },
+};
 
 export const samplePhotoCredits = [
   {

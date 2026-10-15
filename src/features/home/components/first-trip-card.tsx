@@ -68,7 +68,17 @@ export function FirstTripCard() {
         </View>
       </View>
       <View style={{ marginTop: theme.spacing.sm }}>
-        <AppButton variant="hero" onPress={() => openPanel({ kind: "create" })}>
+        <AppButton
+          variant="raised"
+          onPress={() => openPanel({ kind: "create" })}
+          trailingIcon={
+            <AppIcon
+              name="arrow"
+              color={theme.colors.onRaisedAction}
+              size={theme.layout.iconSmall}
+            />
+          }
+        >
           {copy.create}
         </AppButton>
       </View>

@@ -28,11 +28,18 @@ export const layout = {
   iconMedium: 22,
   iconLarge: 28,
   heroImageHeight: 156,
+  upcomingHeroImageHeight: 128,
+  countdownClockSize: 20,
+  footprintWatermarkSize: 128,
   firstTripIconFrameSize: 56,
   sampleStopImageSize: 64,
   sampleStopNumberSize: 24,
   compactTextActionPaddingVertical: 10,
   weatherArtworkSize: 40,
+  weatherGlassTileSize: 64,
+  weatherCloudImageWidth: 56,
+  weatherCloudImageHeight: 48,
+  weatherSummaryMinWidth: 80,
   headerLogoWidth: 120,
   headerLogoHeight: 40,
   tabBarHeight: 60,
@@ -47,10 +54,28 @@ export const motion = {
   pressOpacity: 0.72,
   tabTransitionDuration: 240,
   weatherDriftDuration: 2600,
+  tripCardAmbientDuration: 12000,
 } as const;
 
 export const elevation = {
+  raisedAction: { offsetX: 0, offsetY: 2, blurRadius: 0, spreadDistance: 0 },
+  raisedActionHighlight: {
+    inset: true,
+    offsetX: 0,
+    offsetY: 2,
+    blurRadius: 0,
+    spreadDistance: 0,
+  },
   floating: { offsetX: 0, offsetY: 4, blurRadius: 16, spreadDistance: 0 },
+  glass: { offsetX: 0, offsetY: 3, blurRadius: 12, spreadDistance: 0 },
+} as const;
+
+export const glass = {
+  blurRadius: 12,
+  clockBlurRadius: 18,
+  clockSaturation: 0.65,
+  navigationBlurRadius: 18,
+  saturation: 1.25,
 } as const;
 
 export const typography = {
@@ -62,6 +87,7 @@ export const typography = {
   },
 
   fontSize: {
+    compactAction: 13,
     navigationLabel: 11,
     xs: 12,
     sm: 14,
@@ -73,6 +99,7 @@ export const typography = {
   },
 
   lineHeight: {
+    compactAction: 18,
     navigationLabel: 14,
     xs: 16,
     sm: 20,

@@ -7,6 +7,7 @@ import Animated, {
 
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
+import { GlassBackdrop } from "@/components/common/glass-backdrop";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { sampleItineraryDate, sampleItineraryStops } from "../data/home-mocks";
 import { useHomeCopy } from "../i18n/home-copy";
@@ -38,18 +39,58 @@ export function ExampleItineraryCard() {
           paddingBottom: theme.spacing.xs,
           gap: theme.spacing.lg,
           borderRadius: theme.radius.md,
-          borderColor: theme.colors.border,
-          backgroundColor: theme.colors.surface,
+          borderColor: theme.colors.glassBorder,
+          backgroundColor: theme.colors.surfaceTint,
+          boxShadow: [
+            { ...theme.elevation.glass, color: theme.colors.glassShadow },
+          ],
         },
       ]}
     >
+      <View
+        aria-hidden
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        pointerEvents="none"
+        style={[
+          styles.coolGlow,
+          {
+            width: theme.layout.heroImageHeight,
+            height: theme.layout.heroImageHeight,
+            top: -theme.spacing.section,
+            right: -theme.spacing.xl,
+            borderRadius: theme.radius.full,
+            backgroundColor: theme.colors.glassGlow,
+          },
+        ]}
+      />
+      <View
+        aria-hidden
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        pointerEvents="none"
+        style={[
+          styles.warmGlow,
+          {
+            width: theme.layout.upcomingHeroImageHeight,
+            height: theme.layout.upcomingHeroImageHeight,
+            bottom: -theme.spacing.xxl,
+            left: -theme.spacing.section,
+            borderRadius: theme.radius.full,
+            backgroundColor: theme.colors.warningSurface,
+          },
+        ]}
+      />
+      <GlassBackdrop borderRadius={theme.radius.md} />
       <View style={{ gap: theme.spacing.sm }}>
         <View style={[homeStyles.row, { gap: theme.spacing.md }]}>
           <View style={[homeStyles.grow, { gap: theme.spacing.sm }]}>
             <AppText
               accessibilityRole="header"
               variant="heading"
+              tone="primary"
               style={{
+                fontFamily: theme.typography.fontFamily.semibold,
                 fontSize: theme.typography.fontSize.lg,
                 lineHeight: theme.typography.lineHeight.lg,
               }}
@@ -67,7 +108,17 @@ export function ExampleItineraryCard() {
               </AppText>
             </View>
           </View>
-          <SampleWeather />
+          <View
+            style={{
+              padding: theme.spacing.xs,
+              backgroundColor: theme.colors.glassInset,
+              borderRadius: theme.radius.sm,
+              borderWidth: StyleSheet.hairlineWidth,
+              borderColor: theme.colors.glassBorder,
+            }}
+          >
+            <SampleWeather />
+          </View>
         </View>
         <View
           style={[homeStyles.row, { gap: theme.spacing.md, flexWrap: "wrap" }]}
@@ -95,8 +146,11 @@ export function ExampleItineraryCard() {
       <View
         style={{
           borderTopWidth: StyleSheet.hairlineWidth,
-          borderColor: theme.colors.border,
-          paddingTop: theme.spacing.xs,
+          borderColor: theme.colors.glassBorder,
+          backgroundColor: theme.colors.glassInset,
+          paddingHorizontal: theme.spacing.lg,
+          marginHorizontal: -theme.spacing.lg,
+          marginBottom: -theme.spacing.xs,
         }}
       >
         <View style={styles.action}>
@@ -144,7 +198,7 @@ export function SampleStopList({
                   {
                     top: theme.layout.sampleStopNumberSize + theme.spacing.xs,
                     bottom: -theme.spacing.md,
-                    backgroundColor: theme.colors.border,
+                    backgroundColor: theme.colors.glassGlow,
                   },
                 ]}
               />
@@ -154,8 +208,10 @@ export function SampleStopList({
                 styles.number,
                 {
                   minHeight: theme.layout.sampleStopNumberSize,
-                  backgroundColor: theme.colors.surfaceTint,
+                  backgroundColor: theme.colors.softActionSurface,
                   borderRadius: theme.radius.sm,
+                  borderWidth: StyleSheet.hairlineWidth,
+                  borderColor: theme.colors.glassBorder,
                 },
               ]}
             >
@@ -168,39 +224,56 @@ export function SampleStopList({
               </AppText>
             </View>
           </View>
-          <View style={[homeStyles.grow, { gap: theme.spacing.xs }]}>
-            <AppText variant="caption" tone="primary">
-              {stop.time}
-            </AppText>
-            <AppText
-              variant="label"
-              style={{ fontFamily: theme.typography.fontFamily.semibold }}
-            >
-              {stop.name[locale]}
-            </AppText>
-            <AppText variant="caption" tone="muted">
-              {stop.kind[locale]}
-            </AppText>
-          </View>
           <View
             style={[
-              styles.photo,
+              homeStyles.row,
+              homeStyles.grow,
               {
-                width: theme.layout.sampleStopImageSize,
-                height: theme.layout.sampleStopImageSize,
+                gap: theme.spacing.sm,
+                padding: theme.spacing.xs,
+                backgroundColor: theme.colors.glassInset,
+                borderWidth: StyleSheet.hairlineWidth,
+                borderColor: theme.colors.glassBorder,
                 borderRadius: theme.radius.sm,
-                backgroundColor: theme.colors.surfaceVariant,
               },
             ]}
           >
-            <AppIcon name="pin" color={theme.colors.textSecondary} />
-            <Image
-              accessible={false}
-              source={stop.image}
-              contentFit="cover"
-              cachePolicy="memory-disk"
-              style={StyleSheet.absoluteFill}
-            />
+            <View style={[homeStyles.grow, { gap: theme.spacing.xs }]}>
+              <AppText variant="caption" tone="primary">
+                {stop.time}
+              </AppText>
+              <AppText
+                variant="label"
+                style={{ fontFamily: theme.typography.fontFamily.semibold }}
+              >
+                {stop.name[locale]}
+              </AppText>
+              <AppText variant="caption" tone="muted">
+                {stop.kind[locale]}
+              </AppText>
+            </View>
+            <View
+              style={[
+                styles.photo,
+                {
+                  width: theme.layout.sampleStopImageSize,
+                  height: theme.layout.sampleStopImageSize,
+                  borderRadius: theme.radius.sm,
+                  backgroundColor: theme.colors.surfaceVariant,
+                  borderWidth: StyleSheet.hairlineWidth,
+                  borderColor: theme.colors.glassBorder,
+                },
+              ]}
+            >
+              <AppIcon name="pin" color={theme.colors.textSecondary} />
+              <Image
+                accessible={false}
+                source={stop.image}
+                contentFit="cover"
+                cachePolicy="memory-disk"
+                style={StyleSheet.absoluteFill}
+              />
+            </View>
           </View>
         </Animated.View>
       ))}
@@ -209,7 +282,13 @@ export function SampleStopList({
 }
 
 const styles = StyleSheet.create({
-  card: { borderWidth: StyleSheet.hairlineWidth, borderCurve: "continuous" },
+  card: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderCurve: "continuous",
+    overflow: "hidden",
+  },
+  coolGlow: { position: "absolute" },
+  warmGlow: { position: "absolute", opacity: 0.35 },
   stop: { flexDirection: "row", alignItems: "stretch" },
   number: { alignItems: "center", justifyContent: "center" },
   connector: {

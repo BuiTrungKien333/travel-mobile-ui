@@ -43,6 +43,7 @@ function WorkspaceTabs() {
         screenOptions={{
           headerShown: false,
           tabBarHideOnKeyboard: true,
+          tabBarStyle: { position: "absolute" },
           sceneStyle: { backgroundColor: theme.colors.background },
         }}
       >

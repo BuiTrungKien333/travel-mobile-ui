@@ -11,6 +11,8 @@ Bundled locally so the Home UI does not depend on image-network availability. Re
 
 ## Sample itinerary photos
 
+`dalat-upcoming.jpg` is a 960px Wikimedia thumbnail of the real photograph [Lâm Viên Đà Lạt](https://commons.wikimedia.org/wiki/File:L%C3%A2m_Vi%C3%AAn_%C4%90%C3%A0_L%E1%BA%A1t.JPG) by EA, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), used for the upcoming-trip cover. Downloaded without further modifications; display uses a bottom-aligned cover crop. The same photograph's attribution is available in the sample itinerary panel.
+
 - `xuan-huong-lake.jpg`: [Da Lat - Xuan Huong Lake](https://commons.wikimedia.org/wiki/File:Da_Lat_-_Xuan_Huong_Lake.jpg), P. Hughes, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - `lam-vien-square.jpg`: [Lâm Viên Đà Lạt](https://commons.wikimedia.org/wiki/File:L%C3%A2m_Vi%C3%AAn_%C4%90%C3%A0_L%E1%BA%A1t.JPG), EA, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
 - `lam-dong-museum.jpg`: [Lam Dong Museum 17](https://commons.wikimedia.org/wiki/File:Lam_Dong_Museum_17.jpg), Diane Selwyn, [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/). Depicts Nguyen Huu Hao Villa, used as the museum stop's illustrative photograph.

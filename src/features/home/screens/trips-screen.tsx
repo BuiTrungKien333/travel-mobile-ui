@@ -1,3 +1,4 @@
+import { useBottomTabBarHeight } from "expo-router/js-tabs";
 import { FlatList, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -18,6 +19,7 @@ import { formatTripDates } from "../utils/select-home";
 /** Small supporting destination for Home links; trip editing stays in the preview panel. */
 export function TripsScreen() {
   const theme = useAppTheme();
+  const tabBarHeight = useBottomTabBarHeight();
   const { copy, locale } = useHomeCopy();
   const { trips, openPanel } = useTripPreview((state) => ({
     trips: state.trips,
@@ -36,6 +38,7 @@ export function TripsScreen() {
           {
             maxWidth: theme.layout.contentMaxWidth,
             padding: theme.spacing.lg,
+            paddingBottom: tabBarHeight + theme.spacing.lg,
             gap: theme.spacing.lg,
           },
         ]}

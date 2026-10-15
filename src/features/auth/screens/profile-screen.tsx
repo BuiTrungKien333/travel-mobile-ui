@@ -1,3 +1,4 @@
+import { useBottomTabBarHeight } from "expo-router/js-tabs";
 import {
   ActivityIndicator,
   Alert,
@@ -17,6 +18,7 @@ import { authErrorMessage } from "../utils/auth-error-message";
 
 export function ProfileScreen() {
   const theme = useAppTheme();
+  const tabBarHeight = useBottomTabBarHeight();
   const { t } = useI18n();
   const profile = useProfile();
   const logout = useLogout();
@@ -36,7 +38,13 @@ export function ProfileScreen() {
       style={[styles.screen, { backgroundColor: theme.colors.background }]}
     >
       <ScrollView
-        contentContainerStyle={[styles.content, { padding: theme.spacing.xl }]}
+        contentContainerStyle={[
+          styles.content,
+          {
+            padding: theme.spacing.xl,
+            paddingBottom: tabBarHeight + theme.spacing.xl,
+          },
+        ]}
       >
         <View style={[styles.container, { gap: theme.spacing.xl }]}>
           <View style={styles.language}>

@@ -1,5 +1,13 @@
 import type { ReactNode } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
+import { Image } from "expo-image";
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from "react-native";
 
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
@@ -9,9 +17,12 @@ type AppButtonProps = {
   children: ReactNode;
   disabled?: boolean;
   leadingIcon?: ReactNode;
+  trailingIcon?: ReactNode;
   loading?: boolean;
   onPress: () => void;
-  variant?: "primary" | "outline" | "hero";
+  style?: StyleProp<ViewStyle>;
+  size?: "default" | "small";
+  variant?: "primary" | "outline" | "hero" | "soft" | "raised" | "gradient";
 };
 
 export function AppButton({
@@ -19,24 +30,48 @@ export function AppButton({
   children,
   disabled = false,
   leadingIcon,
+  trailingIcon,
   loading = false,
   onPress,
+  style,
+  size = "default",
   variant = "primary",
 }: AppButtonProps) {
   const theme = useAppTheme();
   const isDisabled = disabled || loading;
   const isPrimary = variant === "primary";
   const isHero = variant === "hero";
-  const backgroundColor = isHero
-    ? theme.colors.heroSurface
-    : isPrimary
-      ? theme.colors.primary
-      : theme.colors.surface;
-  const foregroundColor = isHero
-    ? theme.colors.onHero
-    : isPrimary
-      ? theme.colors.onPrimary
-      : theme.colors.text;
+  const isSoft = variant === "soft";
+  const isRaised = variant === "raised";
+  const isGradient = variant === "gradient";
+  const isSmall = size === "small";
+  const gradientUri = isGradient
+    ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
+        `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100" preserveAspectRatio="none"><defs><linearGradient id="action" x1="0%" y1="0%" x2="100%" y2="0%"><stop stop-color="${theme.colors.gradientActionStart}"/><stop offset="1" stop-color="${theme.colors.gradientActionEnd}"/></linearGradient></defs><rect width="100" height="100" fill="url(#action)"/></svg>`,
+      )}`
+    : undefined;
+  const backgroundColor = isGradient
+    ? theme.colors.gradientActionStart
+    : isRaised
+      ? theme.colors.raisedActionSurface
+      : isSoft
+        ? theme.colors.softActionSurface
+        : isHero
+          ? theme.colors.heroSurface
+          : isPrimary
+            ? theme.colors.primary
+            : theme.colors.surface;
+  const foregroundColor = isGradient
+    ? theme.colors.onGradientAction
+    : isRaised
+      ? theme.colors.onRaisedAction
+      : isSoft
+        ? theme.colors.onSoftAction
+        : isHero
+          ? theme.colors.onHero
+          : isPrimary
+            ? theme.colors.onPrimary
+            : theme.colors.text;
 
   return (
     <Pressable
@@ -49,20 +84,71 @@ export function AppButton({
       style={({ pressed }) => [
         styles.button,
         {
-          backgroundColor,
-          borderColor:
-            isPrimary || isHero ? backgroundColor : theme.colors.borderStrong,
-          borderRadius: isHero ? theme.radius.xl : theme.radius.md,
+          backgroundColor:
+            isRaised && pressed
+              ? theme.colors.raisedActionPressed
+              : isSoft && pressed
+                ? theme.colors.softActionPressed
+                : backgroundColor,
+          borderColor: isRaised
+            ? theme.colors.raisedActionBorder
+            : isSoft
+              ? theme.colors.softActionBorder
+              : isPrimary || isHero || isGradient
+                ? backgroundColor
+                : theme.colors.borderStrong,
+          borderRadius: isRaised
+            ? theme.radius.lg
+            : isHero
+              ? theme.radius.xl
+              : theme.radius.md,
+          boxShadow: isRaised
+            ? [
+                {
+                  ...theme.elevation.raisedActionHighlight,
+                  color: theme.colors.raisedActionHighlight,
+                },
+                {
+                  ...theme.elevation.raisedAction,
+                  offsetY: pressed ? 0 : theme.elevation.raisedAction.offsetY,
+                  color: theme.colors.raisedActionBorder,
+                },
+              ]
+            : undefined,
           opacity: isDisabled ? 0.55 : pressed ? 0.82 : 1,
-          paddingHorizontal: theme.spacing.xl,
+          minHeight: isSmall
+            ? theme.layout.touchTarget
+            : styles.button.minHeight,
+          paddingHorizontal: isSmall ? theme.spacing.lg : theme.spacing.xl,
+          paddingVertical: isSmall ? theme.spacing.sm : theme.spacing.none,
         },
+        isGradient ? styles.clipped : null,
+        style,
       ]}
     >
-      <View style={[styles.content, { gap: theme.spacing.sm }]}>
+      {gradientUri ? (
+        <Image
+          accessible={false}
+          pointerEvents="none"
+          source={{ uri: gradientUri }}
+          contentFit="fill"
+          cachePolicy="memory"
+          style={StyleSheet.absoluteFill}
+        />
+      ) : null}
+      <View
+        style={[
+          styles.content,
+          trailingIcon && !isGradient ? styles.fullWidth : null,
+          { gap: theme.spacing.sm },
+        ]}
+      >
         {loading ? (
           <ActivityIndicator
             color={
-              isPrimary || isHero ? foregroundColor : theme.colors.primaryText
+              isPrimary || isHero || isSoft || isRaised || isGradient
+                ? foregroundColor
+                : theme.colors.primaryText
             }
           />
         ) : (
@@ -71,19 +157,41 @@ export function AppButton({
         <AppText
           style={{
             color: foregroundColor,
-            fontFamily: theme.typography.fontFamily.medium,
-            fontSize: theme.typography.fontSize.sm,
-            lineHeight: theme.typography.lineHeight.sm,
+            fontFamily: isGradient
+              ? theme.typography.fontFamily.semibold
+              : isRaised
+                ? theme.typography.fontFamily.bold
+                : isSoft
+                  ? theme.typography.fontFamily.semibold
+                  : theme.typography.fontFamily.medium,
+            flex: trailingIcon && !isGradient ? 1 : undefined,
+            textAlign: isRaised ? "center" : undefined,
+            paddingHorizontal:
+              isRaised && trailingIcon ? theme.spacing.xl : undefined,
+            fontSize: isSmall
+              ? theme.typography.fontSize.compactAction
+              : theme.typography.fontSize.sm,
+            lineHeight: isSmall
+              ? theme.typography.lineHeight.compactAction
+              : theme.typography.lineHeight.sm,
           }}
         >
           {children}
         </AppText>
+        {isRaised && trailingIcon ? (
+          <View style={styles.raisedTrailing}>{trailingIcon}</View>
+        ) : (
+          trailingIcon
+        )}
       </View>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
+  clipped: { overflow: "hidden" },
+  fullWidth: { width: "100%" },
+  raisedTrailing: { position: "absolute", right: 0 },
   button: {
     minHeight: 52,
     alignItems: "center",

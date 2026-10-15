@@ -9,34 +9,26 @@ import { homeImages } from "../data/home-mocks";
 import { useHomeCopy } from "../i18n/home-copy";
 import { useTripPreview } from "../providers/trip-preview-provider";
 import type { HomeSelection } from "../types/home-types";
-import {
-  dayDistance,
-  formatTripDates,
-  tripDuration,
-} from "../utils/select-home";
+import { tripDuration } from "../utils/select-home";
 import { Badge, homeStyles } from "./home-primitives";
 import { FirstTripCard } from "./first-trip-card";
+import { UpcomingTripCard } from "./upcoming-trip-card";
 
 export function TripHero({ selection }: { selection: HomeSelection }) {
   const theme = useAppTheme();
-  const { copy, locale } = useHomeCopy();
+  const { copy } = useHomeCopy();
   const { openPanel, today } = useTripPreview((state) => ({
     openPanel: state.openPanel,
     today: state.today,
   }));
 
   if (selection.kind === "new") return <FirstTripCard />;
+  if (selection.kind === "upcoming")
+    return <UpcomingTripCard trip={selection.trip} />;
 
   const trip = "trip" in selection ? selection.trip : null;
   const ongoing = selection.kind === "ongoing";
-  const countdown = trip?.startDate ? dayDistance(today, trip.startDate) : 0;
-  const label = ongoing
-    ? copy.ongoingBadge
-    : trip
-      ? copy.upcomingBadge
-      : copy.returningBadge;
-  const totalStops =
-    trip?.days.reduce((count, day) => count + day.stops.length, 0) ?? 0;
+  const label = ongoing ? copy.ongoingBadge : copy.returningBadge;
   const todayStops =
     selection.kind === "ongoing"
       ? (trip?.days.find((day) => day.date === today)?.stops.length ?? 0)
@@ -73,26 +65,6 @@ export function TripHero({ selection }: { selection: HomeSelection }) {
           >
             <Badge label={label} icon="sparkles" dark />
           </View>
-          {trip && !ongoing ? (
-            <View
-              style={[
-                styles.countdown,
-                {
-                  right: theme.spacing.lg,
-                  bottom: theme.spacing.md,
-                  padding: theme.spacing.sm,
-                  borderRadius: theme.radius.md,
-                  backgroundColor: theme.colors.surface,
-                },
-              ]}
-            >
-              <AppText tone="primary" variant="label">
-                {countdown === 0
-                  ? copy.today
-                  : `${countdown} ${copy.countdown}`}
-              </AppText>
-            </View>
-          ) : null}
         </View>
       ) : null}
       <View
@@ -117,23 +89,21 @@ export function TripHero({ selection }: { selection: HomeSelection }) {
           <>
             <View style={[homeStyles.row, { gap: theme.spacing.sm }]}>
               <AppIcon
-                name={ongoing ? "route" : "calendar"}
+                name="route"
                 color={theme.colors.onHeroMuted}
                 size={theme.layout.iconSmall}
               />
               <AppText style={{ color: theme.colors.onHeroMuted }}>
                 {selection.kind === "ongoing"
                   ? `${copy.day} ${selection.dayIndex + 1} / ${tripDuration(trip)}`
-                  : `${formatTripDates(trip, locale)} · ${tripDuration(trip)} ${copy.days}`}
+                  : ""}
               </AppText>
             </View>
             <AppText
               variant="caption"
               style={{ color: theme.colors.onHeroMuted }}
             >
-              {ongoing
-                ? `${todayStops} ${copy.stopsToday}`
-                : `${totalStops.toString().padStart(2, "0")} ${copy.placesAdded}`}
+              {todayStops} {copy.stopsToday}
             </AppText>
           </>
         ) : (
@@ -168,5 +138,4 @@ export function TripHero({ selection }: { selection: HomeSelection }) {
 const styles = StyleSheet.create({
   hero: { overflow: "hidden", borderCurve: "continuous" },
   imageBadge: { position: "absolute" },
-  countdown: { position: "absolute" },
 });

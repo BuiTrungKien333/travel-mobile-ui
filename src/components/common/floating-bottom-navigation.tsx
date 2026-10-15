@@ -14,8 +14,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
+import { GlassBackdrop } from "./glass-backdrop";
 
-/** Fixed below the scenes so the floating surface never covers scroll content. */
+/** Floating over scenes; scroll content reserves the measured tab-bar height. */
 export function FloatingBottomNavigation({
   state,
   descriptors,
@@ -75,6 +76,7 @@ export function FloatingBottomNavigation({
 
   return (
     <View
+      pointerEvents="box-none"
       onLayout={({ nativeEvent }) =>
         onHeightChange?.(nativeEvent.layout.height)
       }
@@ -88,7 +90,6 @@ export function FloatingBottomNavigation({
           ),
           paddingLeft: insets.left + theme.spacing.lg,
           paddingRight: insets.right + theme.spacing.lg,
-          backgroundColor: theme.colors.background,
         },
       ]}
     >
@@ -99,7 +100,6 @@ export function FloatingBottomNavigation({
             maxWidth: theme.layout.tabBarMaxWidth,
             padding: theme.layout.tabBarPadding,
             borderRadius: theme.radius.full,
-            backgroundColor: theme.colors.navigationSurface,
             boxShadow: [
               {
                 ...theme.elevation.floating,
@@ -109,6 +109,7 @@ export function FloatingBottomNavigation({
           },
         ]}
       >
+        <GlassBackdrop borderRadius={theme.radius.full} variant="navigation" />
         <View
           accessibilityRole="tablist"
           onLayout={({ nativeEvent }) => setRowWidth(nativeEvent.layout.width)}
@@ -126,6 +127,8 @@ export function FloatingBottomNavigation({
                   width: itemWidth + theme.spacing.xxs * 2,
                   borderRadius: theme.radius.full,
                   backgroundColor: theme.colors.navigationIndicator,
+                  borderWidth: StyleSheet.hairlineWidth,
+                  borderColor: theme.colors.navigationIndicatorBorder,
                 },
                 indicatorStyle,
               ]}
@@ -205,8 +208,14 @@ export function FloatingBottomNavigation({
 }
 
 const styles = StyleSheet.create({
-  dock: { alignItems: "center" },
-  shell: { width: "100%" },
+  dock: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: "center",
+  },
+  shell: { width: "100%", overflow: "hidden" },
   row: { flexDirection: "row", position: "relative", alignItems: "stretch" },
   tab: { flex: 1, minWidth: 0, alignItems: "center", justifyContent: "center" },
   indicator: {

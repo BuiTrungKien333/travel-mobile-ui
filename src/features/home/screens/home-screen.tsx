@@ -18,6 +18,8 @@ import {
 import { TripHero } from "../components/trip-hero";
 import { TripTimeline } from "../components/trip-timeline";
 import { ExampleItineraryCard } from "../components/example-itinerary-card";
+import { TripCompletionCard } from "../components/trip-completion-card";
+import { FootprintCard } from "../components/footprint-card";
 import { useHomeCopy } from "../i18n/home-copy";
 import { useTripPreview } from "../providers/trip-preview-provider";
 import { isPastTrip, selectHome } from "../utils/select-home";
@@ -122,55 +124,39 @@ export function HomeScreen() {
         </AppText>
         <AppText tone="muted">{subtitles[selection.kind]}</AppText>
       </View>
-      <EnterSection key={selection.kind}>
+      <EnterSection
+        key={selection.kind}
+        animated={selection.kind === "ongoing"}
+      >
         <View style={{ gap: theme.spacing.sm }}>
-          <SectionHeading
-            title={copy.yourTrip}
-            variant="eyebrow"
-            action={selection.kind === "new" ? undefined : copy.all}
-            onPress={() => router.push("/tabs/trips")}
-          />
+          {selection.kind !== "upcoming" ? (
+            <SectionHeading
+              title={copy.yourTrip}
+              variant="eyebrow"
+              action={selection.kind === "new" ? undefined : copy.all}
+              onPress={() => router.push("/tabs/trips")}
+            />
+          ) : null}
           <TripHero selection={selection} />
         </View>
         {selection.kind === "upcoming" &&
         trip &&
         (emptyDayIndex >= 0 || trip.status === "draft") ? (
-          <SurfaceCard>
-            <AppText variant="caption" tone="muted">
-              {copy.complete}
-            </AppText>
-            <View style={[homeStyles.row, { gap: theme.spacing.md }]}>
-              <View
-                style={[
-                  styles.iconTile,
-                  {
-                    backgroundColor: theme.colors.surfaceTint,
-                    padding: theme.spacing.md,
-                    borderRadius: theme.radius.lg,
-                  },
-                ]}
-              >
-                <AppIcon name="pin" />
-              </View>
-              <View style={homeStyles.grow}>
-                <AppText variant="label">
-                  {emptyDayIndex >= 0
-                    ? `${copy.day} ${emptyDayIndex + 1} ${copy.missingDay}`
-                    : copy.draftHint}
-                </AppText>
-                <TextAction
-                  label={emptyDayIndex >= 0 ? copy.addPlace : copy.finishDraft}
-                  onPress={() =>
-                    openPanel({
-                      kind: "plan",
-                      tripId: trip.id,
-                      dayIndex: Math.max(0, emptyDayIndex),
-                    })
-                  }
-                />
-              </View>
-            </View>
-          </SurfaceCard>
+          <TripCompletionCard
+            title={
+              emptyDayIndex >= 0
+                ? `${copy.day} ${emptyDayIndex + 1} ${copy.missingDay}`
+                : copy.draftHint
+            }
+            action={emptyDayIndex >= 0 ? copy.addPlace : copy.finishDraft}
+            onPress={() =>
+              openPanel({
+                kind: "plan",
+                tripId: trip.id,
+                dayIndex: Math.max(0, emptyDayIndex),
+              })
+            }
+          />
         ) : null}
         {selection.kind === "ongoing" ? (
           <>
@@ -254,55 +240,20 @@ export function HomeScreen() {
           </View>
         ) : null}
         {hasHistory && selection.kind !== "ongoing" ? (
-          <SurfaceCard>
-            <SectionHeading title={copy.footprint} />
-            <View style={[homeStyles.row, { gap: theme.spacing.lg }]}>
-              <View style={homeStyles.grow}>
-                <AppText variant="heading" tone="primary">
-                  {provinces.toString().padStart(2, "0")}
-                </AppText>
-                <AppText variant="caption" tone="muted">
-                  {copy.provinces}
-                </AppText>
-              </View>
-              <View
-                style={[
-                  homeStyles.grow,
-                  {
-                    borderLeftWidth: StyleSheet.hairlineWidth,
-                    borderColor: theme.colors.border,
-                    paddingLeft: theme.spacing.lg,
-                  },
-                ]}
-              >
-                <AppText variant="heading" tone="primary">
-                  {visitedPlaces.toString().padStart(2, "0")}
-                </AppText>
-                <AppText variant="caption" tone="muted">
-                  {copy.places}
-                </AppText>
-              </View>
-            </View>
-            <View
-              style={{
-                borderTopWidth: StyleSheet.hairlineWidth,
-                borderColor: theme.colors.border,
-              }}
-            >
-              <TextAction
-                label={copy.myJourney}
-                onPress={() => router.push("/tabs/memories")}
-              />
-            </View>
-          </SurfaceCard>
+          <FootprintCard
+            provinces={provinces}
+            visitedPlaces={visitedPlaces}
+            onPress={() => router.push("/tabs/memories")}
+          />
         ) : null}
+        <View style={{ paddingTop: theme.spacing.sm }}>
+          <PreviewNotice />
+        </View>
       </EnterSection>
-      <PreviewNotice />
     </HomePage>
   );
 }
 const styles = StyleSheet.create({
   avatar: { alignItems: "center", justifyContent: "center" },
-  iconTile: { alignItems: "center", justifyContent: "center" },
   weather: { flexDirection: "row", alignItems: "flex-start" },
 });
