@@ -11,7 +11,7 @@ type AppButtonProps = {
   leadingIcon?: ReactNode;
   loading?: boolean;
   onPress: () => void;
-  variant?: "primary" | "outline";
+  variant?: "primary" | "outline" | "hero";
 };
 
 export function AppButton({
@@ -26,10 +26,22 @@ export function AppButton({
   const theme = useAppTheme();
   const isDisabled = disabled || loading;
   const isPrimary = variant === "primary";
+  const isHero = variant === "hero";
+  const backgroundColor = isHero
+    ? theme.colors.heroSurface
+    : isPrimary
+      ? theme.colors.primary
+      : theme.colors.surface;
+  const foregroundColor = isHero
+    ? theme.colors.onHero
+    : isPrimary
+      ? theme.colors.onPrimary
+      : theme.colors.text;
 
   return (
     <Pressable
       accessibilityHint={accessibilityHint}
+      accessibilityLabel={typeof children === "string" ? children : undefined}
       accessibilityRole="button"
       accessibilityState={{ busy: loading, disabled: isDisabled }}
       disabled={isDisabled}
@@ -37,13 +49,10 @@ export function AppButton({
       style={({ pressed }) => [
         styles.button,
         {
-          backgroundColor: isPrimary
-            ? theme.colors.primary
-            : theme.colors.surface,
-          borderColor: isPrimary
-            ? theme.colors.primary
-            : theme.colors.borderStrong,
-          borderRadius: theme.radius.md,
+          backgroundColor,
+          borderColor:
+            isPrimary || isHero ? backgroundColor : theme.colors.borderStrong,
+          borderRadius: isHero ? theme.radius.xl : theme.radius.md,
           opacity: isDisabled ? 0.55 : pressed ? 0.82 : 1,
           paddingHorizontal: theme.spacing.xl,
         },
@@ -53,7 +62,7 @@ export function AppButton({
         {loading ? (
           <ActivityIndicator
             color={
-              isPrimary ? theme.colors.onPrimary : theme.colors.primaryText
+              isPrimary || isHero ? foregroundColor : theme.colors.primaryText
             }
           />
         ) : (
@@ -61,7 +70,7 @@ export function AppButton({
         )}
         <AppText
           style={{
-            color: isPrimary ? theme.colors.onPrimary : theme.colors.text,
+            color: foregroundColor,
             fontFamily: theme.typography.fontFamily.medium,
             fontSize: theme.typography.fontSize.sm,
             lineHeight: theme.typography.lineHeight.sm,

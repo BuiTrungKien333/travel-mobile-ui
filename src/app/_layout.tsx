@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { AppState, Platform } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
+import { UI_PREVIEW_ENABLED } from "@/constants/development";
 import { MagicLinkProvider } from "@/features/auth/components/magic-link-provider";
 import { authSession } from "@/features/auth/services/auth-session";
 import { queryClient } from "@/services/api/query-client";
@@ -16,6 +17,7 @@ import { lightTheme } from "@/theme";
 import {
   Roboto_400Regular,
   Roboto_500Medium,
+  Roboto_600SemiBold,
   Roboto_700Bold,
   useFonts,
 } from "@expo-google-fonts/roboto";
@@ -23,7 +25,8 @@ import {
 export default function RootLayout() {
   const status = useAuthStore((state) => state.status);
   useEffect(() => {
-    void authSession.restore();
+    // Tạm ngưng khôi phục phiên/gọi refresh API trong bản xem trước UI.
+    if (!UI_PREVIEW_ENABLED) void authSession.restore();
     if (Platform.OS === "web") return;
     const subscription = AppState.addEventListener("change", (state) =>
       focusManager.setFocused(state === "active"),
@@ -33,6 +36,7 @@ export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     Roboto_400Regular,
     Roboto_500Medium,
+    Roboto_600SemiBold,
     Roboto_700Bold,
   });
 
@@ -59,10 +63,14 @@ export default function RootLayout() {
               <Stack.Screen name="verify-email" />
               <Stack.Screen name="reset-password" />
               <Stack.Screen name="google-link" />
-              <Stack.Protected guard={status === "anonymous"}>
+              <Stack.Protected
+                guard={!UI_PREVIEW_ENABLED && status === "anonymous"}
+              >
                 <Stack.Screen name="(auth)" />
               </Stack.Protected>
-              <Stack.Protected guard={status === "authenticated"}>
+              <Stack.Protected
+                guard={UI_PREVIEW_ENABLED || status === "authenticated"}
+              >
                 <Stack.Screen name="tabs" />
               </Stack.Protected>
             </Stack>

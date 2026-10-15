@@ -69,6 +69,17 @@ export type AppColorTokens = {
   onInfoSurface: string;
 
   overlay: string;
+  surfaceTint: string;
+  heroSurface: string;
+  onHero: string;
+  onHeroMuted: string;
+  navigationSurface: string;
+  navigationIndicator: string;
+  navigationActive: string;
+  navigationInactive: string;
+  navigationShadow: string;
+  weatherSun: string;
+  weatherCloud: string;
 };
 
 export const lightColors: AppColorTokens = {
@@ -114,6 +125,17 @@ export const lightColors: AppColorTokens = {
   onInfoSurface: "#1E3A8A",
 
   overlay: "rgba(15, 23, 42, 0.45)",
+  surfaceTint: palette.primary50,
+  heroSurface: palette.primary900,
+  onHero: palette.white,
+  onHeroMuted: palette.primary100,
+  navigationSurface: palette.white,
+  navigationIndicator: "#F0F0F0",
+  navigationActive: palette.black,
+  navigationInactive: "#555555",
+  navigationShadow: "rgba(0, 0, 0, 0.08)",
+  weatherSun: palette.yellow500,
+  weatherCloud: palette.gray400,
 };
 
 export const darkColors: AppColorTokens = {
@@ -156,4 +178,15 @@ export const darkColors: AppColorTokens = {
   onInfoSurface: "#BFDBFE",
 
   overlay: "rgba(0, 0, 0, 0.65)",
+  surfaceTint: palette.primary900,
+  heroSurface: palette.primary900,
+  onHero: palette.white,
+  onHeroMuted: palette.primary100,
+  navigationSurface: "#102024",
+  navigationIndicator: "#2B4146",
+  navigationActive: palette.white,
+  navigationInactive: palette.gray300,
+  navigationShadow: "rgba(0, 0, 0, 0.08)",
+  weatherSun: palette.yellow500,
+  weatherCloud: palette.gray300,
 };

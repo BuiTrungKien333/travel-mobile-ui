@@ -32,6 +32,7 @@ export function ProfileScreen() {
   };
   return (
     <SafeAreaView
+      edges={["top", "left", "right"]}
       style={[styles.screen, { backgroundColor: theme.colors.background }]}
     >
       <ScrollView
