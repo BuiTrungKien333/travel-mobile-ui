@@ -57,6 +57,7 @@ export type AppColorTokens = {
   onSuccessSurface: string;
 
   warning: string;
+  onWarning: string;
   warningSurface: string;
   onWarningSurface: string;
 
@@ -110,6 +111,11 @@ export type AppColorTokens = {
   achievementWarmSurface: string;
   packingSurface: string;
   weatherDepthShadow: string;
+  weatherAuroraMint: string;
+  weatherAuroraLavender: string;
+  weatherAmberGlass: string;
+  weatherAmberBorder: string;
+  weatherUmbrellaAccent: string;
   raisedActionSurface: string;
   raisedActionPressed: string;
   raisedActionBorder: string;
@@ -148,6 +154,7 @@ export const lightColors: AppColorTokens = {
   onSuccessSurface: "#14532D",
 
   warning: "#A15C00",
+  onWarning: palette.white,
   warningSurface: "#FEF3C7",
   onWarningSurface: "#78350F",
 
@@ -201,6 +208,11 @@ export const lightColors: AppColorTokens = {
   achievementWarmSurface: "#F9DFA1",
   packingSurface: "rgba(255, 255, 255, 0.74)",
   weatherDepthShadow: "rgba(13, 72, 78, 0.18)",
+  weatherAuroraMint: "#91DCD1",
+  weatherAuroraLavender: "#B7B9E4",
+  weatherAmberGlass: "rgba(245, 158, 11, 0.10)",
+  weatherAmberBorder: "rgba(245, 158, 11, 0.30)",
+  weatherUmbrellaAccent: "#C87520",
   raisedActionSurface: palette.primary500,
   raisedActionPressed: palette.primary600,
   raisedActionBorder: palette.primary600,
@@ -236,6 +248,7 @@ export const darkColors: AppColorTokens = {
   onSuccessSurface: "#BBF7D0",
 
   warning: "#FBBF24",
+  onWarning: "#3A2A05",
   warningSurface: "#3A2A05",
   onWarningSurface: "#FDE68A",
 
@@ -289,6 +302,11 @@ export const darkColors: AppColorTokens = {
   achievementWarmSurface: "#5C3C13",
   packingSurface: "rgba(16, 32, 36, 0.74)",
   weatherDepthShadow: "rgba(0, 0, 0, 0.28)",
+  weatherAuroraMint: "#235E61",
+  weatherAuroraLavender: "#464568",
+  weatherAmberGlass: "rgba(245, 158, 11, 0.12)",
+  weatherAmberBorder: "rgba(251, 191, 36, 0.30)",
+  weatherUmbrellaAccent: "#F3C48B",
   raisedActionSurface: palette.primary600,
   raisedActionPressed: palette.primary700,
   raisedActionBorder: palette.primary700,

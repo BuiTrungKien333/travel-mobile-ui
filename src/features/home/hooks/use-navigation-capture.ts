@@ -25,7 +25,7 @@ export function useNavigationCapture() {
       kind: "camera",
       tripId: trip.id,
       date: today,
-      stopId: progress.nextStop?.id,
+      stopId: visited[`${trip.id}:${today}`]?.at(-1) ?? progress.nextStop?.id,
     });
   };
 }

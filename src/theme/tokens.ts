@@ -24,6 +24,7 @@ export const radius = {
 export const layout = {
   contentMaxWidth: 560,
   touchTarget: 48,
+  compactTouchTarget: 44,
   iconSmall: 18,
   iconMedium: 22,
   iconLarge: 28,
@@ -39,8 +40,13 @@ export const layout = {
   sampleStopNumberSize: 24,
   compactTextActionPaddingVertical: 10,
   weatherArtworkSize: 40,
+  ongoingHeaderWeatherArtworkSize: 24,
   weatherHeroArtworkSize: 72,
+  weatherModalArtworkSize: 104,
   weatherHourCardWidth: 96,
+  sheetDragHandleWidth: 40,
+  sheetDragHandleHeight: 6,
+  sheetDismissDistance: 80,
   packingBurstDistance: 64,
   packingSheetHeightRatio: 0.8,
   weatherGlassTileSize: 64,
@@ -72,6 +78,8 @@ export const motion = {
   firstTripIconTilt: 3,
   cameraFlashDuration: 180,
   liveBadgeMinimumOpacity: 0.45,
+  checkInPromptDuration: 2000,
+  sheetDismissVelocity: 700,
   shutterPressDuration: 160,
   shutterPressScale: 0.94,
   shutterPulseScale: 0.025,
@@ -130,6 +138,7 @@ export const typography = {
     xl: 20,
     xxl: 24,
     display: 32,
+    weatherDisplay: 48,
   },
 
   lineHeight: {
@@ -142,6 +151,7 @@ export const typography = {
     xl: 28,
     xxl: 32,
     display: 40,
+    weatherDisplay: 56,
   },
 
   fontWeight: {

@@ -1,11 +1,6 @@
 import { Image } from "expo-image";
 import { useState, type ReactNode } from "react";
 import { Linking, Pressable, ScrollView, StyleSheet, View } from "react-native";
-import Animated, {
-  LinearTransition,
-  ReduceMotion,
-} from "react-native-reanimated";
-
 import { AppButton } from "@/components/ui/app-button";
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
@@ -17,8 +12,15 @@ import type { getDayProgress } from "../utils/day-progress";
 import { directionsUrl } from "../utils/map-links";
 import { homeStyles, TextAction } from "./home-primitives";
 import { TripGlassBackdrop } from "./trip-glass-backdrop";
+import { ItineraryStopList } from "./itinerary-stop-list";
 
-export function JourneyCard({ children }: { children: ReactNode }) {
+export function JourneyCard({
+  children,
+  translucent = false,
+}: {
+  children: ReactNode;
+  translucent?: boolean;
+}) {
   const theme = useAppTheme();
   return (
     <View
@@ -28,14 +30,19 @@ export function JourneyCard({ children }: { children: ReactNode }) {
           padding: theme.spacing.lg,
           gap: theme.spacing.md,
           borderRadius: theme.radius.md,
-          backgroundColor: theme.colors.surface,
+          backgroundColor: translucent ? undefined : theme.colors.surfaceTint,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: theme.colors.glassBorder,
           boxShadow: [
             { ...theme.elevation.glass, color: theme.colors.glassShadow },
           ],
         },
       ]}
     >
-      <TripGlassBackdrop borderRadius={theme.radius.md} />
+      <TripGlassBackdrop
+        borderRadius={theme.radius.md}
+        variant={translucent ? "clock" : "default"}
+      />
       {children}
     </View>
   );
@@ -97,13 +104,18 @@ export function NextStopCard({
     );
   return (
     <JourneyCard>
-      <AppText
-        variant="caption"
-        tone="primary"
-        style={{ fontFamily: theme.typography.fontFamily.semibold }}
-      >
-        {copy.next}
-      </AppText>
+      <View style={[homeStyles.row, { gap: theme.spacing.sm }]}>
+        <AppText
+          variant="caption"
+          tone="primary"
+          style={[
+            homeStyles.grow,
+            { fontFamily: theme.typography.fontFamily.semibold },
+          ]}
+        >
+          {copy.next}
+        </AppText>
+      </View>
       <View
         style={[
           homeStyles.row,
@@ -115,8 +127,8 @@ export function NextStopCard({
             accessibilityRole="header"
             variant="heading"
             style={{
-              fontSize: theme.typography.fontSize.xl,
-              lineHeight: theme.typography.lineHeight.xl,
+              fontSize: theme.typography.fontSize.lg,
+              lineHeight: theme.typography.lineHeight.lg,
             }}
           >
             {stop.name[locale]}
@@ -148,19 +160,71 @@ export function NextStopCard({
           />
         ) : null}
       </View>
-      <View style={[homeStyles.row, { gap: theme.spacing.sm }]}>
+      {stop.quickInfo ? (
+        <View
+          style={[homeStyles.row, { flexWrap: "wrap", gap: theme.spacing.sm }]}
+        >
+          {stop.quickInfo.admission ? (
+            <View
+              style={[
+                homeStyles.row,
+                {
+                  gap: theme.spacing.xs,
+                  paddingHorizontal: theme.spacing.sm,
+                  paddingVertical: theme.spacing.xs,
+                  backgroundColor: theme.colors.glassInset,
+                  borderRadius: theme.radius.sm,
+                },
+              ]}
+            >
+              <AppIcon name="ticket" size={theme.layout.iconSmall} />
+              <AppText variant="caption" tone="primary">
+                {copy.admission}: {stop.quickInfo.admission[locale]}
+              </AppText>
+            </View>
+          ) : null}
+          {stop.quickInfo.closesAt ? (
+            <View
+              style={[
+                homeStyles.row,
+                {
+                  gap: theme.spacing.xs,
+                  paddingHorizontal: theme.spacing.sm,
+                  paddingVertical: theme.spacing.xs,
+                  backgroundColor: theme.colors.glassInset,
+                  borderRadius: theme.radius.sm,
+                },
+              ]}
+            >
+              <AppIcon name="clock" size={theme.layout.iconSmall} />
+              <AppText variant="caption" tone="primary">
+                {copy.closesAt}: {stop.quickInfo.closesAt}
+              </AppText>
+            </View>
+          ) : null}
+        </View>
+      ) : null}
+      <View
+        style={[
+          homeStyles.row,
+          { gap: theme.spacing.sm, alignItems: "stretch" },
+        ]}
+      >
         <AppButton
-          variant="soft"
+          variant="raised"
           size="small"
-          style={homeStyles.grow}
+          style={[
+            styles.actionColumn,
+            { flexGrow: 60, paddingHorizontal: theme.spacing.sm },
+          ]}
           loading={opening}
           onPress={handleDirections}
           accessibilityHint={copy.directionsHint}
           leadingIcon={
             <AppIcon
-              name="route"
+              name="navigation"
               size={theme.layout.iconSmall}
-              color={theme.colors.onSoftAction}
+              color={theme.colors.onRaisedAction}
             />
           }
         >
@@ -170,6 +234,15 @@ export function NextStopCard({
           variant="outline"
           size="small"
           onPress={onVisited}
+          style={[
+            styles.actionColumn,
+            {
+              flexGrow: 40,
+              paddingHorizontal: theme.spacing.sm,
+              backgroundColor: theme.colors.glassInset,
+              borderColor: theme.colors.softActionBorder,
+            },
+          ]}
           leadingIcon={<AppIcon name="check" size={theme.layout.iconSmall} />}
         >
           {copy.visited}
@@ -225,79 +298,13 @@ export function TodayTimeline({
           {copy.visited.toLocaleLowerCase(locale)}
         </AppText>
       </View>
-      <View style={{ gap: theme.spacing.xxs }}>
-        {visible.map((stop) => {
-          const visited = visitedIds.has(stop.id);
-          const next = stop.id === progress.nextStop?.id;
-          return (
-            <Animated.View
-              key={stop.id}
-              layout={LinearTransition.duration(
-                theme.motion.enterDuration,
-              ).reduceMotion(ReduceMotion.System)}
-            >
-              <Pressable
-                accessibilityRole="checkbox"
-                accessibilityState={{ checked: visited }}
-                accessibilityLabel={`${stop.time}, ${stop.name[locale]}. ${visited ? copy.visited : next ? copy.next : copy.upcoming}`}
-                accessibilityHint={visited ? copy.undoVisit : copy.markVisited}
-                onPress={() => onToggle(stop.id, !visited)}
-                style={({ pressed }) => [
-                  homeStyles.row,
-                  {
-                    minHeight: theme.layout.touchTarget,
-                    paddingVertical: theme.spacing.sm,
-                    paddingHorizontal: theme.spacing.sm,
-                    gap: theme.spacing.sm,
-                    borderRadius: theme.radius.sm,
-                    backgroundColor: next
-                      ? theme.colors.softActionSurface
-                      : undefined,
-                    opacity: pressed ? theme.motion.pressOpacity : 1,
-                  },
-                ]}
-              >
-                <View
-                  style={[
-                    styles.marker,
-                    {
-                      width: theme.spacing.xxl,
-                      height: theme.spacing.xxl,
-                      borderRadius: theme.radius.full,
-                      backgroundColor: visited
-                        ? theme.colors.successSurface
-                        : theme.colors.glassInset,
-                    },
-                  ]}
-                >
-                  <AppIcon
-                    name={visited ? "check" : next ? "pin" : "clock"}
-                    size={theme.layout.iconSmall}
-                    color={
-                      visited
-                        ? theme.colors.onSuccessSurface
-                        : theme.colors.primaryText
-                    }
-                  />
-                </View>
-                <View style={[homeStyles.grow, { gap: theme.spacing.xxs }]}>
-                  <AppText variant="label">{stop.name[locale]}</AppText>
-                  <AppText variant="caption" tone="muted">
-                    {visited ? copy.visited : next ? copy.next : copy.upcoming}
-                  </AppText>
-                </View>
-                <AppText
-                  variant="caption"
-                  tone="primary"
-                  style={{ fontFamily: theme.typography.fontFamily.semibold }}
-                >
-                  {stop.time}
-                </AppText>
-              </Pressable>
-            </Animated.View>
-          );
-        })}
-      </View>
+      <ItineraryStopList
+        stops={visible.map((stop) => ({
+          ...stop,
+          image: captureSamples.find((sample) => sample.id === stop.id)?.photo,
+        }))}
+        live={{ visitedIds, nextStopId: progress.nextStop?.id, onToggle }}
+      />
       <View
         style={[
           homeStyles.row,
@@ -406,6 +413,7 @@ export function TodayJournal({
 }
 
 const styles = StyleSheet.create({
+  actionColumn: { flex: 1, flexBasis: 0, minWidth: 0 },
   card: { overflow: "hidden", borderCurve: "continuous" },
   marker: { alignItems: "center", justifyContent: "center" },
 });

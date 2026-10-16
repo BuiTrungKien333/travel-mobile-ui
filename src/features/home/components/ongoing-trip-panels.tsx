@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Image } from "expo-image";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
   Keyboard,
@@ -12,7 +12,20 @@ import {
   StyleSheet,
   View,
 } from "react-native";
-import { useReducedMotion } from "react-native-reanimated";
+import {
+  Gesture,
+  GestureDetector,
+  GestureHandlerRootView,
+} from "react-native-gesture-handler";
+import Animated, {
+  cancelAnimation,
+  ReduceMotion,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
+import { scheduleOnRN } from "react-native-worklets";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { z } from "zod";
 
@@ -33,6 +46,7 @@ import { formatTripDates } from "../utils/select-home";
 import { CaptureMomentPreview } from "./capture-moment-preview";
 import { homeStyles, TextAction } from "./home-primitives";
 import { OngoingWeatherDetails } from "./ongoing-weather-details";
+import { WeatherAtmosphere } from "./weather-atmosphere";
 
 export function OngoingTripPanels({ panel }: { panel: JourneyPanel }) {
   const theme = useAppTheme();
@@ -60,9 +74,15 @@ export function OngoingTripPanels({ panel }: { panel: JourneyPanel }) {
   if (panel.kind === "camera")
     return <CaptureMomentPreview panel={panel} trip={trip} />;
   if (panel.kind === "current-weather")
-    return <JourneySheet title={copy.weatherNow} onClose={closePanel}>
-      <OngoingWeatherDetails tripId={trip.id} today={today} destination={trip.destination} />
-    </JourneySheet>;
+    return (
+      <JourneySheet title={copy.weatherNow} onClose={closePanel} glass>
+        <OngoingWeatherDetails
+          tripId={trip.id}
+          today={today}
+          destination={trip.destination}
+        />
+      </JourneySheet>
+    );
   const journal = memories.filter(
     (memory) => memory.tripId === trip.id && (!date || memory.date === date),
   );
@@ -340,104 +360,192 @@ function JourneySheet({
   title,
   onClose,
   children,
+  glass = false,
 }: {
   title: string;
   onClose: () => void;
   children: ReactNode;
+  glass?: boolean;
 }) {
   const theme = useAppTheme();
   const { copy } = useOngoingCopy();
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
+  const translateY = useSharedValue(0);
+  const dismissDistance = theme.layout.sheetDismissDistance;
+  const dismissVelocity = theme.motion.sheetDismissVelocity;
+  const snapDuration = theme.motion.tabTransitionDuration;
+  const minimumSwipe = theme.spacing.md;
+  const sheetMotion = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+  }));
+  useEffect(() => () => cancelAnimation(translateY), [translateY]);
+  const dragGesture = Gesture.Pan()
+    .enabled(glass)
+    .activeOffsetY(theme.spacing.sm)
+    .failOffsetX([-theme.spacing.lg, theme.spacing.lg])
+    .onUpdate((event) => {
+      translateY.value = Math.max(0, event.translationY);
+    })
+    .onEnd((event) => {
+      if (
+        event.translationY >= dismissDistance ||
+        (event.translationY > minimumSwipe &&
+          event.velocityY >= dismissVelocity)
+      ) {
+        scheduleOnRN(onClose);
+      } else {
+        translateY.value = withTiming(0, {
+          duration: snapDuration,
+          reduceMotion: ReduceMotion.System,
+        });
+      }
+    })
+    .onFinalize((_event, success) => {
+      if (!success)
+        translateY.value = withTiming(0, {
+          duration: snapDuration,
+          reduceMotion: ReduceMotion.System,
+        });
+    });
   return (
     <Modal
       visible
       transparent
-      animationType={reduceMotion ? "none" : "fade"}
+      animationType={reduceMotion ? "none" : glass ? "slide" : "fade"}
       statusBarTranslucent
       onRequestClose={onClose}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={[
-          styles.overlay,
-          {
-            backgroundColor: theme.colors.overlay,
-            paddingTop: insets.top + theme.spacing.lg,
-            paddingLeft: insets.left + theme.spacing.sm,
-            paddingRight: insets.right + theme.spacing.sm,
-          },
-        ]}
-      >
-        <Pressable
-          accessible={false}
-          style={StyleSheet.absoluteFill}
-          onPress={onClose}
-        />
-        <View
-          accessibilityViewIsModal
+      <GestureHandlerRootView style={styles.root}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={[
-            styles.sheet,
+            styles.overlay,
             {
-              maxWidth: theme.layout.contentMaxWidth,
-              backgroundColor: theme.colors.background,
-              borderTopLeftRadius: theme.radius.xl,
-              borderTopRightRadius: theme.radius.xl,
+              backgroundColor: theme.colors.overlay,
+              paddingTop: insets.top + theme.spacing.lg,
+              paddingLeft: insets.left + theme.spacing.sm,
+              paddingRight: insets.right + theme.spacing.sm,
             },
           ]}
         >
-          <View
+          <Pressable
+            accessible={false}
+            style={StyleSheet.absoluteFill}
+            onPress={onClose}
+          />
+          <Animated.View
+            accessibilityViewIsModal
+            onAccessibilityEscape={onClose}
             style={[
-              homeStyles.row,
+              styles.sheet,
+              sheetMotion,
               {
-                gap: theme.spacing.sm,
-                paddingHorizontal: theme.spacing.lg,
-                paddingTop: theme.spacing.sm,
+                maxWidth: theme.layout.contentMaxWidth,
+                backgroundColor: glass
+                  ? theme.colors.packingSurface
+                  : theme.colors.background,
+                borderTopLeftRadius: glass ? theme.radius.lg : theme.radius.xl,
+                borderTopRightRadius: glass ? theme.radius.lg : theme.radius.xl,
+                borderWidth: glass ? StyleSheet.hairlineWidth : 0,
+                borderColor: theme.colors.glassClockBorder,
+                boxShadow: glass
+                  ? [
+                      {
+                        ...theme.elevation.floating,
+                        color: theme.colors.glassShadow,
+                      },
+                    ]
+                  : undefined,
               },
             ]}
           >
-            <AppText
-              accessibilityRole="header"
-              variant="label"
-              style={homeStyles.grow}
+            {glass ? <WeatherAtmosphere /> : null}
+            <GestureDetector gesture={dragGesture}>
+              <View collapsable={false}>
+                {glass ? (
+                  <View
+                    pointerEvents="none"
+                    aria-hidden
+                    style={{
+                      alignSelf: "center",
+                      width: theme.layout.sheetDragHandleWidth,
+                      height: theme.layout.sheetDragHandleHeight,
+                      borderRadius: theme.radius.full,
+                      backgroundColor: theme.colors.textDisabled,
+                      marginTop: theme.spacing.sm,
+                      marginBottom: theme.spacing.xs,
+                    }}
+                  />
+                ) : null}
+                <View
+                  style={[
+                    homeStyles.row,
+                    {
+                      gap: theme.spacing.sm,
+                      paddingHorizontal: theme.spacing.lg,
+                      paddingTop: theme.spacing.sm,
+                    },
+                  ]}
+                >
+                  <AppText
+                    accessibilityRole="header"
+                    variant="label"
+                    style={[
+                      homeStyles.grow,
+                      glass
+                        ? {
+                            fontSize: theme.typography.fontSize.lg,
+                            lineHeight: theme.typography.lineHeight.lg,
+                          }
+                        : null,
+                    ]}
+                  >
+                    {title}
+                  </AppText>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={copy.close}
+                    onPress={onClose}
+                    style={({ pressed }) => [
+                      styles.center,
+                      {
+                        width: theme.layout.touchTarget,
+                        height: theme.layout.touchTarget,
+                        borderRadius: theme.radius.md,
+                        backgroundColor: glass
+                          ? theme.colors.glassInset
+                          : undefined,
+                        opacity: pressed ? theme.motion.pressOpacity : 1,
+                      },
+                    ]}
+                  >
+                    <AppIcon name="close" />
+                  </Pressable>
+                </View>
+              </View>
+            </GestureDetector>
+            <ScrollView
+              style={styles.body}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{
+                paddingHorizontal: theme.spacing.lg,
+                paddingTop: theme.spacing.sm,
+                paddingBottom: insets.bottom + theme.spacing.lg,
+                gap: theme.spacing.lg,
+              }}
             >
-              {title}
-            </AppText>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={copy.close}
-              onPress={onClose}
-              style={({ pressed }) => [
-                styles.center,
-                {
-                  width: theme.layout.touchTarget,
-                  height: theme.layout.touchTarget,
-                  opacity: pressed ? theme.motion.pressOpacity : 1,
-                },
-              ]}
-            >
-              <AppIcon name="close" />
-            </Pressable>
-          </View>
-          <ScrollView
-            style={styles.body}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{
-              paddingHorizontal: theme.spacing.lg,
-              paddingTop: theme.spacing.sm,
-              paddingBottom: insets.bottom + theme.spacing.lg,
-              gap: theme.spacing.lg,
-            }}
-          >
-            {children}
-          </ScrollView>
-        </View>
-      </KeyboardAvoidingView>
+              {children}
+            </ScrollView>
+          </Animated.View>
+        </KeyboardAvoidingView>
+      </GestureHandlerRootView>
     </Modal>
   );
 }
 const styles = StyleSheet.create({
+  root: { flex: 1 },
   overlay: { flex: 1, justifyContent: "flex-end", alignItems: "center" },
   sheet: { width: "100%", maxHeight: "92%", overflow: "hidden", flexShrink: 1 },
   body: { flexGrow: 0, flexShrink: 1 },

@@ -157,6 +157,7 @@ export function AppButton({
         <AppText
           style={{
             color: foregroundColor,
+            flexShrink: 1,
             fontFamily: isGradient
               ? theme.typography.fontFamily.semibold
               : isRaised
@@ -200,6 +201,7 @@ const styles = StyleSheet.create({
     borderCurve: "continuous",
   },
   content: {
+    maxWidth: "100%",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",

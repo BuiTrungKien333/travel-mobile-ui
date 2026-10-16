@@ -8,7 +8,7 @@ import { useAppTheme } from "@/hooks/use-app-theme";
 import { sampleItineraryStops, samplePhotoCredits } from "../data/home-mocks";
 import { useHomeCopy } from "../i18n/home-copy";
 import { useTripPreview } from "../providers/trip-preview-provider";
-import { SampleStopList } from "./example-itinerary-card";
+import { ItineraryStopList } from "./itinerary-stop-list";
 import { Badge, SurfaceCard } from "./home-primitives";
 
 export function SampleItineraryPanel() {
@@ -30,7 +30,7 @@ export function SampleItineraryPanel() {
       <Badge label={copy.example} icon="sparkles" />
       <AppText tone="muted">{copy.sampleTryHint}</AppText>
       <SurfaceCard>
-        <SampleStopList stops={stops} />
+        <ItineraryStopList stops={stops} />
       </SurfaceCard>
       <AppButton
         variant="outline"

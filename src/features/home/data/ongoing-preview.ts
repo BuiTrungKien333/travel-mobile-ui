@@ -9,9 +9,15 @@ export const ongoingWeatherSnapshot = {
   condition: "cloud",
   temperature: 18,
   feelsLike: 17,
+  indoorAlternative: { vi: "Bảo tàng Lâm Đồng", en: "Lam Dong Museum" },
   rainStartsAt: "14:00",
   rainEndsAt: "16:00",
   rainChance: 70,
+  hours: [
+    { time: "11:00", temperature: 19, rainChance: 10, condition: "sun" },
+    { time: "13:00", temperature: 18, rainChance: 30, condition: "cloud" },
+    { time: "15:00", temperature: 17, rainChance: 70, condition: "rain" },
+  ],
 } as const;
 
 export const captureSamples = [

@@ -14,9 +14,11 @@ import { HomeHeader } from "./home-header";
 export function HomePage({
   children,
   showHeader = false,
+  backdrop,
 }: {
   children: ReactNode;
   showHeader?: boolean;
+  backdrop?: ReactNode;
 }) {
   const theme = useAppTheme();
   const tabBarHeight = useBottomTabBarHeight();
@@ -25,6 +27,11 @@ export function HomePage({
       edges={["top", "left", "right"]}
       style={[styles.flex, { backgroundColor: theme.colors.background }]}
     >
+      {backdrop ? (
+        <View pointerEvents="none" aria-hidden style={StyleSheet.absoluteFill}>
+          {backdrop}
+        </View>
+      ) : null}
       <ScrollView
         contentInsetAdjustmentBehavior="never"
         showsVerticalScrollIndicator={false}

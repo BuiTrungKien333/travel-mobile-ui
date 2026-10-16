@@ -1,13 +1,11 @@
-import { Pressable, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Image } from "expo-image";
+import { View } from "react-native";
 
-import { AppIcon } from "@/components/ui/app-icon";
-import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
-import {
-  HomePage,
-  homeStyles,
-  TextAction,
-} from "../components/home-primitives";
+import { CheckInPrompt } from "../components/check-in-prompt";
+import { HomePage } from "../components/home-primitives";
+import { OngoingTripHeader } from "../components/ongoing-trip-header";
 import {
   NextStopCard,
   TodayJournal,
@@ -15,10 +13,8 @@ import {
 } from "../components/ongoing-trip-components";
 import { useOngoingCopy } from "../i18n/ongoing-copy";
 import { useTripPreview } from "../providers/trip-preview-provider";
-import type { Trip } from "../types/home-types";
+import type { Trip, TripStop } from "../types/home-types";
 import { getDayProgress } from "../utils/day-progress";
-import { tripDuration } from "../utils/select-home";
-
 export function OngoingHomeScreen({
   trip,
   dayIndex,
@@ -27,7 +23,17 @@ export function OngoingHomeScreen({
   dayIndex: number;
 }) {
   const theme = useAppTheme();
-  const { copy, locale } = useOngoingCopy();
+  const backdropUri = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100" preserveAspectRatio="none"><defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="${theme.colors.surfaceTint}"/><stop offset="1" stop-color="${theme.colors.background}"/></linearGradient></defs><rect width="100" height="100" fill="url(#sky)"/></svg>`,
+  )}`;
+  const [checkedInStop, setCheckedInStop] = useState<TripStop | null>(null);
+  const promptDuration = theme.motion.checkInPromptDuration;
+  useEffect(() => {
+    if (!checkedInStop) return;
+    const timeout = setTimeout(() => setCheckedInStop(null), promptDuration);
+    return () => clearTimeout(timeout);
+  }, [checkedInStop, promptDuration]);
+  const { locale } = useOngoingCopy();
   const { today, visited, memories, setVisited, openPanel } = useTripPreview(
     (state) => ({
       today: state.today,
@@ -51,92 +57,80 @@ export function OngoingHomeScreen({
       kind: "camera",
       tripId: trip.id,
       date: today,
-      stopId: progress.nextStop?.id,
+      stopId: visited[`${trip.id}:${today}`]?.at(-1) ?? progress.nextStop?.id,
     });
   const openJournal = () =>
     openPanel({ kind: "journal", tripId: trip.id, date: today });
   const openPlan = () => openPanel({ kind: "plan", tripId: trip.id, dayIndex });
+  const handleVisit = (id: string, value: boolean) => {
+    setVisited(trip.id, today, id, value);
+    if (value) setCheckedInStop(stops.find((stop) => stop.id === id) ?? null);
+    else if (checkedInStop?.id === id) setCheckedInStop(null);
+  };
 
   return (
-    <HomePage showHeader>
-      <View style={[homeStyles.row, { gap: theme.spacing.sm }]}>
-        <View style={[homeStyles.grow, { gap: theme.spacing.xs }]}>
-          <AppText
-            accessibilityRole="header"
-            variant="heading"
-            style={{
-              fontSize: theme.typography.fontSize.xl,
-              lineHeight: theme.typography.lineHeight.xl,
-            }}
-          >
-            {trip.destination}
-          </AppText>
-          <AppText variant="caption" tone="muted">
-            {copy.day} {dayIndex + 1}/{tripDuration(trip)} · {dateLabel}
-          </AppText>
-        </View>
-        <TextAction
-          label={copy.detailsShort}
-          onPress={() => openPanel({ kind: "trip-details", tripId: trip.id })}
-        />
-      </View>
-      <NextStopCard
-        key={progress.nextStop?.id ?? "finished"}
-        stop={progress.nextStop}
-        destination={trip.destination}
-        hasStops={stops.length > 0}
-        onVisited={() => {
-          if (progress.nextStop)
-            setVisited(trip.id, today, progress.nextStop.id, true);
-        }}
-        onJournal={openJournal}
-        onPlan={openPlan}
-      />
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`${copy.rain}. ${copy.weather}`}
-        onPress={() => openPanel({ kind: "weather" })}
-        style={({ pressed }) => [
-          homeStyles.row,
-          {
-            gap: theme.spacing.sm,
-            padding: theme.spacing.md,
-            minHeight: theme.layout.touchTarget,
-            borderRadius: theme.radius.sm,
-            backgroundColor: theme.colors.warningSurface,
-            opacity: pressed ? theme.motion.pressOpacity : 1,
-          },
-        ]}
+    <View style={{ flex: 1 }}>
+      <HomePage
+        showHeader
+        backdrop={
+          <Image
+            accessible={false}
+            source={{ uri: backdropUri }}
+            contentFit="fill"
+            cachePolicy="memory"
+            style={{ width: "100%", height: theme.layout.heroImageHeight * 2 }}
+          />
+        }
       >
-        <AppIcon
-          name="umbrella"
-          size={theme.layout.iconSmall}
-          color={theme.colors.onWarningSurface}
+        <OngoingTripHeader
+          trip={trip}
+          dayIndex={dayIndex}
+          dateLabel={dateLabel}
+          today={today}
+          onDetails={() => openPanel({ kind: "trip-details", tripId: trip.id })}
+          onWeather={() =>
+            openPanel({ kind: "current-weather", tripId: trip.id })
+          }
         />
-        <AppText
-          variant="caption"
-          style={[homeStyles.grow, { color: theme.colors.onWarningSurface }]}
-        >
-          {copy.rain}
-        </AppText>
-        <AppIcon
-          name="chevron"
-          size={theme.layout.iconSmall}
-          color={theme.colors.onWarningSurface}
+        <NextStopCard
+          key={progress.nextStop?.id ?? "finished"}
+          stop={progress.nextStop}
+          destination={trip.destination}
+          hasStops={stops.length > 0}
+          onVisited={() => {
+            if (progress.nextStop) handleVisit(progress.nextStop.id, true);
+          }}
+          onJournal={openJournal}
+          onPlan={openPlan}
         />
-      </Pressable>
-      {stops.length ? (
-        <TodayTimeline
-          progress={progress}
-          onToggle={(id, value) => setVisited(trip.id, today, id, value)}
-          onFullDay={openPlan}
+        {stops.length ? (
+          <TodayTimeline
+            progress={progress}
+            onToggle={handleVisit}
+            onFullDay={openPlan}
+          />
+        ) : null}
+        <TodayJournal
+          memories={todayMemories}
+          onOpen={openJournal}
+          onCapture={openCamera}
+        />
+      </HomePage>
+      {checkedInStop ? (
+        <CheckInPrompt
+          key={checkedInStop.id}
+          stop={checkedInStop}
+          onCapture={() => {
+            openPanel({
+              kind: "camera",
+              tripId: trip.id,
+              date: today,
+              stopId: checkedInStop.id,
+            });
+            setCheckedInStop(null);
+          }}
         />
       ) : null}
-      <TodayJournal
-        memories={todayMemories}
-        onOpen={openJournal}
-        onCapture={openCamera}
-      />
-    </HomePage>
+    </View>
   );
 }

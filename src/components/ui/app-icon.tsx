@@ -35,6 +35,11 @@ const symbols = {
     web: "calendar_today",
   },
   arrow: { ios: "arrow.right", android: "arrow_forward", web: "arrow_forward" },
+  navigation: {
+    ios: "location.north.fill",
+    android: "near_me",
+    web: "near_me",
+  },
   chevron: {
     ios: "chevron.right",
     android: "chevron_right",
@@ -56,6 +61,11 @@ const symbols = {
   sparkles: { ios: "sparkles", android: "auto_awesome", web: "auto_awesome" },
   clock: { ios: "clock", android: "schedule", web: "schedule" },
   flag: { ios: "flag", android: "flag", web: "flag" },
+  ticket: {
+    ios: "ticket",
+    android: "confirmation_number",
+    web: "confirmation_number",
+  },
 } as const satisfies Record<string, ComponentProps<typeof SymbolView>["name"]>;
 
 export type AppIconName = keyof typeof symbols;
