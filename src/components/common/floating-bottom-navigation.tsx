@@ -2,7 +2,7 @@ import {
   BottomTabBarHeightCallbackContext,
   type BottomTabBarProps,
 } from "expo-router/js-tabs";
-import { useContext, useEffect, useState } from "react";
+import { Fragment, useContext, useEffect, useState } from "react";
 import { Keyboard, Platform, Pressable, StyleSheet, View } from "react-native";
 import Animated, {
   Easing,
@@ -12,27 +12,47 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
-import { GlassBackdrop } from "./glass-backdrop";
+import { NavigationCameraButton } from "./navigation-camera-button";
+import { NotchedNavigationBackdrop } from "./notched-navigation-backdrop";
+
+type FloatingBottomNavigationProps = BottomTabBarProps & {
+  onCapture: () => void;
+  captureLabel: string;
+  animationEnabled?: boolean;
+};
 
 /** Floating over scenes; scroll content reserves the measured tab-bar height. */
 export function FloatingBottomNavigation({
   state,
   descriptors,
   navigation,
-}: BottomTabBarProps) {
+  onCapture,
+  captureLabel,
+  animationEnabled = true,
+}: FloatingBottomNavigationProps) {
   const theme = useAppTheme();
   const insets = useSafeAreaInsets();
   const onHeightChange = useContext(BottomTabBarHeightCallbackContext);
   const [rowWidth, setRowWidth] = useState(0);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const activeTab = state.index;
-  const tabGap = theme.spacing.sm;
-  const itemWidth = Math.max(
-    0,
-    (rowWidth - tabGap * (state.routes.length - 1)) / state.routes.length,
+  const cameraSize = theme.layout.tabBarCameraSize;
+  const itemWidth = theme.layout.touchTarget;
+  // Native layout clamps negative gaps to zero; keep indicator geometry in sync.
+  const groupGap = Math.max(0, theme.layout.tabBarGroupGap);
+  const groupWidth = itemWidth * 2 + groupGap;
+  // Fixed-size pairs stay compact; only the central clearance adapts on narrow screens.
+  const cameraSlotWidth = Math.min(
+    cameraSize + theme.layout.tabBarCameraSideSpacing * 2,
+    Math.max(0, rowWidth - groupWidth * 2),
   );
+  const sideWidth = (rowWidth - cameraSlotWidth) / 2;
+  const activeTabOffset =
+    activeTab < 2
+      ? sideWidth - groupWidth + activeTab * (itemWidth + groupGap)
+      : sideWidth + cameraSlotWidth + (activeTab - 2) * (itemWidth + groupGap);
+  const indicatorWidth = theme.layout.tabBarActiveDotSize;
   const duration = theme.motion.tabTransitionDuration;
   const hideOnKeyboard =
     descriptors[state.routes[activeTab].key].options.tabBarHideOnKeyboard;
@@ -61,7 +81,7 @@ export function FloatingBottomNavigation({
     () => ({
       transform: [
         {
-          translateX: withTiming(activeTab * (itemWidth + tabGap), {
+          translateX: withTiming(activeTabOffset, {
             duration,
             easing: Easing.out(Easing.cubic),
             reduceMotion: ReduceMotion.System,
@@ -69,7 +89,7 @@ export function FloatingBottomNavigation({
         },
       ],
     }),
-    [activeTab, itemWidth, tabGap, duration],
+    [activeTabOffset, duration],
   );
 
   if (hidden) return null;
@@ -83,7 +103,7 @@ export function FloatingBottomNavigation({
       style={[
         styles.dock,
         {
-          paddingTop: theme.spacing.xs,
+          paddingTop: theme.layout.tabBarCameraRise + theme.spacing.xs,
           paddingBottom: Math.max(
             theme.spacing.lg,
             insets.bottom + theme.spacing.xs,
@@ -100,20 +120,23 @@ export function FloatingBottomNavigation({
             maxWidth: theme.layout.tabBarMaxWidth,
             padding: theme.layout.tabBarPadding,
             borderRadius: theme.radius.full,
-            boxShadow: [
-              {
-                ...theme.elevation.floating,
-                color: theme.colors.navigationShadow,
-              },
-            ],
           },
         ]}
       >
-        <GlassBackdrop borderRadius={theme.radius.full} variant="navigation" />
+        <NotchedNavigationBackdrop
+          width={rowWidth ? rowWidth + theme.layout.tabBarPadding * 2 : 0}
+          height={
+            Math.max(
+              theme.layout.touchTarget,
+              theme.layout.tabBarHeight - theme.layout.tabBarPadding * 2,
+            ) +
+            theme.layout.tabBarPadding * 2
+          }
+        />
         <View
           accessibilityRole="tablist"
           onLayout={({ nativeEvent }) => setRowWidth(nativeEvent.layout.width)}
-          style={[styles.row, { gap: tabGap }]}
+          style={styles.row}
         >
           {rowWidth > 0 ? (
             <Animated.View
@@ -123,85 +146,119 @@ export function FloatingBottomNavigation({
               style={[
                 styles.indicator,
                 {
-                  left: -theme.spacing.xxs,
-                  width: itemWidth + theme.spacing.xxs * 2,
+                  left: (itemWidth - indicatorWidth) / 2,
+                  width: indicatorWidth,
+                  height: indicatorWidth,
+                  bottom: theme.layout.tabBarItemPaddingVertical,
                   borderRadius: theme.radius.full,
-                  backgroundColor: theme.colors.navigationIndicator,
-                  borderWidth: StyleSheet.hairlineWidth,
-                  borderColor: theme.colors.navigationIndicatorBorder,
+                  backgroundColor: theme.colors.navigationActive,
                 },
                 indicatorStyle,
               ]}
             />
           ) : null}
-          {state.routes.map((route, index) => {
-            const focused = activeTab === index;
-            const options = descriptors[route.key].options;
-            const label =
-              typeof options.tabBarLabel === "string"
-                ? options.tabBarLabel
-                : (options.title ?? route.name);
-            const color = focused
-              ? theme.colors.navigationActive
-              : theme.colors.navigationInactive;
-            return (
-              <Pressable
-                key={route.key}
-                accessibilityRole="tab"
-                accessibilityLabel={options.tabBarAccessibilityLabel ?? label}
-                accessibilityState={{ selected: focused }}
-                testID={options.tabBarButtonTestID}
-                onPress={() => {
-                  const event = navigation.emit({
-                    type: "tabPress",
-                    target: route.key,
-                    canPreventDefault: true,
-                  });
-                  if (!focused && !event.defaultPrevented)
-                    navigation.navigate(route.name, route.params);
-                }}
-                onLongPress={() =>
-                  navigation.emit({ type: "tabLongPress", target: route.key })
-                }
-                style={({ pressed }) => [
-                  styles.tab,
-                  {
-                    minHeight: Math.max(
-                      theme.layout.touchTarget,
-                      theme.layout.tabBarHeight -
-                        theme.layout.tabBarPadding * 2,
-                    ),
-                    paddingVertical: theme.layout.tabBarItemPaddingVertical,
-                    paddingHorizontal: theme.spacing.xs,
-                    gap: theme.spacing.xxs,
-                    borderRadius: theme.radius.full,
-                    opacity: pressed ? theme.motion.pressOpacity : 1,
-                  },
-                ]}
-              >
-                {options.tabBarIcon?.({
-                  focused,
-                  color,
-                  size: theme.layout.tabBarIconSize,
-                })}
-                <AppText
-                  variant="caption"
-                  style={{
-                    color,
-                    fontSize: theme.typography.fontSize.navigationLabel,
-                    lineHeight: theme.typography.lineHeight.navigationLabel,
-                    textAlign: "center",
-                    fontFamily: focused
-                      ? theme.typography.fontFamily.semibold
-                      : theme.typography.fontFamily.medium,
-                  }}
+          {[state.routes.slice(0, 2), state.routes.slice(2)].map(
+            (routes, groupIndex) => (
+              <Fragment key={groupIndex === 0 ? "left" : "right"}>
+                {groupIndex === 1 ? (
+                  <View
+                    aria-hidden
+                    pointerEvents="none"
+                    style={{ width: cameraSlotWidth, flexShrink: 0 }}
+                  />
+                ) : null}
+                <View
+                  style={[
+                    styles.group,
+                    {
+                      gap: groupGap,
+                      justifyContent:
+                        groupIndex === 0 ? "flex-end" : "flex-start",
+                    },
+                  ]}
                 >
-                  {label}
-                </AppText>
-              </Pressable>
-            );
-          })}
+                  {routes.map((route) => {
+                    const index = state.routes.findIndex(
+                      (item) => item.key === route.key,
+                    );
+                    const focused = activeTab === index;
+                    const options = descriptors[route.key].options;
+                    const label =
+                      typeof options.tabBarLabel === "string"
+                        ? options.tabBarLabel
+                        : (options.title ?? route.name);
+                    const color = focused
+                      ? theme.colors.navigationActive
+                      : theme.colors.navigationInactive;
+                    return (
+                      <Pressable
+                        key={route.key}
+                        accessibilityRole="tab"
+                        accessibilityLabel={
+                          options.tabBarAccessibilityLabel ?? label
+                        }
+                        accessibilityState={{ selected: focused }}
+                        testID={options.tabBarButtonTestID}
+                        onPress={() => {
+                          const event = navigation.emit({
+                            type: "tabPress",
+                            target: route.key,
+                            canPreventDefault: true,
+                          });
+                          if (!focused && !event.defaultPrevented)
+                            navigation.navigate(route.name, route.params);
+                        }}
+                        onLongPress={() =>
+                          navigation.emit({
+                            type: "tabLongPress",
+                            target: route.key,
+                          })
+                        }
+                        style={({ pressed }) => [
+                          styles.tab,
+                          {
+                            width: itemWidth,
+                            minHeight: Math.max(
+                              theme.layout.touchTarget,
+                              theme.layout.tabBarHeight -
+                                theme.layout.tabBarPadding * 2,
+                            ),
+                            paddingVertical:
+                              theme.layout.tabBarItemPaddingVertical,
+                            borderRadius: theme.radius.full,
+                            opacity: pressed ? theme.motion.pressOpacity : 1,
+                          },
+                        ]}
+                      >
+                        {options.tabBarIcon?.({
+                          focused,
+                          color,
+                          size: theme.layout.tabBarIconSize,
+                        })}
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </Fragment>
+            ),
+          )}
         </View>
+      </View>
+      <View
+        pointerEvents="box-none"
+        style={[
+          styles.camera,
+          {
+            marginLeft: -cameraSize / 2 + (insets.left - insets.right) / 2,
+            top: theme.spacing.xs + theme.layout.tabBarPadding,
+          },
+        ]}
+      >
+        <NavigationCameraButton
+          onPress={onCapture}
+          accessibilityLabel={captureLabel}
+          animationEnabled={animationEnabled}
+        />
       </View>
     </View>
   );
@@ -215,13 +272,23 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: "center",
   },
-  shell: { width: "100%", overflow: "hidden" },
+  shell: { width: "100%" },
+  camera: { position: "absolute", left: "50%" },
   row: { flexDirection: "row", position: "relative", alignItems: "stretch" },
-  tab: { flex: 1, minWidth: 0, alignItems: "center", justifyContent: "center" },
+  group: {
+    flex: 1,
+    flexBasis: 0,
+    minWidth: 0,
+    flexDirection: "row",
+    alignItems: "stretch",
+  },
+  tab: {
+    flexShrink: 0,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   indicator: {
     position: "absolute",
-    top: 0,
-    bottom: 0,
     pointerEvents: "none",
   },
 });

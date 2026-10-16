@@ -1,4 +1,5 @@
 import { useBottomTabBarHeight } from "expo-router/js-tabs";
+import { Image } from "expo-image";
 import { FlatList, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -14,11 +15,12 @@ import {
 import { useHomeCopy } from "../i18n/home-copy";
 import { useTripPreview } from "../providers/trip-preview-provider";
 import { isPastTrip, selectHome } from "../utils/select-home";
+import type { Memory } from "../types/home-types";
 
 export function MemoriesScreen() {
   const theme = useAppTheme();
   const tabBarHeight = useBottomTabBarHeight();
-  const { copy } = useHomeCopy();
+  const { copy, locale } = useHomeCopy();
   const { trips, memories, today, openPanel } = useTripPreview((state) => ({
     trips: state.trips,
     memories: state.memories,
@@ -28,7 +30,7 @@ export function MemoriesScreen() {
   const pastTrip = trips.find((trip) => isPastTrip(trip, today));
   const selection = selectHome(trips, today);
   const activeTrip = selection.kind === "ongoing" ? selection.trip : null;
-  const items = pastTrip
+  const items: Memory[] = pastTrip
     ? [
         ...memories,
         {
@@ -68,8 +70,9 @@ export function MemoriesScreen() {
                 leadingIcon={<AppIcon name="camera" />}
                 onPress={() =>
                   openPanel({
-                    kind: "moment",
-                    destination: activeTrip.destination,
+                    kind: "camera",
+                    tripId: activeTrip.id,
+                    date: today,
                   })
                 }
               >
@@ -88,12 +91,30 @@ export function MemoriesScreen() {
         renderItem={({ item }) => (
           <SurfaceCard>
             <Badge label={item.destination} icon="pin" />
-            <AppIcon
-              name="memories"
-              color={theme.colors.primaryText}
-              size={theme.layout.iconLarge}
-            />
-            <AppText>{item.text}</AppText>
+            {item.photo ? (
+              <Image
+                source={item.photo}
+                accessible
+                accessibilityLabel={item.place?.[locale] ?? item.destination}
+                contentFit="cover"
+                cachePolicy="memory-disk"
+                style={{
+                  width: "100%",
+                  aspectRatio: 4 / 3,
+                  borderRadius: theme.radius.md,
+                }}
+              />
+            ) : (
+              <AppIcon
+                name="memories"
+                color={theme.colors.primaryText}
+                size={theme.layout.iconLarge}
+              />
+            )}
+            {item.place ? (
+              <AppText variant="label">{item.place[locale]}</AppText>
+            ) : null}
+            {item.text ? <AppText>{item.text}</AppText> : null}
           </SurfaceCard>
         )}
         ListFooterComponent={<PreviewNotice />}

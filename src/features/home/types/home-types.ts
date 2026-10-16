@@ -5,6 +5,11 @@ export type TripStop = {
   time: string;
   name: LocalizedText;
   kind: LocalizedText;
+  quickInfo?: {
+    admission?: LocalizedText;
+    closesAt?: string;
+    sample?: boolean;
+  };
 };
 export type TripDay = { date: string; stops: TripStop[] };
 export type Trip = {
@@ -20,4 +25,14 @@ export type HomeSelection =
   | { kind: "upcoming"; trip: Trip }
   | { kind: "returning" }
   | { kind: "new" };
-export type Memory = { id: string; destination: string; text: string };
+export type Memory = {
+  id: string;
+  destination: string;
+  text: string;
+  tripId?: string;
+  date?: string;
+  time?: string;
+  place?: LocalizedText;
+  photo?: ImageSource | string | number;
+};
+import type { ImageSource } from "expo-image";

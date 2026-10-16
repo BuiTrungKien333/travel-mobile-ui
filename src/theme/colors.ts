@@ -78,12 +78,15 @@ export type AppColorTokens = {
   navigationActive: string;
   navigationInactive: string;
   navigationShadow: string;
+  navigationCameraShadow: string;
   navigationFallback: string;
   navigationTint: string;
   navigationBorder: string;
   navigationIndicatorBorder: string;
   weatherSun: string;
   weatherCloud: string;
+  weatherTemperatureCool: string;
+  weatherTemperatureWarm: string;
   glassSurface: string;
   glassFallback: string;
   glassTint: string;
@@ -161,17 +164,20 @@ export const lightColors: AppColorTokens = {
   heroSurface: palette.primary900,
   onHero: palette.white,
   onHeroMuted: palette.primary100,
-  navigationSurface: "rgba(255, 255, 255, 0.82)",
+  navigationSurface: "rgba(255, 255, 255, 0.80)",
   navigationIndicator: "rgba(33, 181, 195, 0.16)",
   navigationActive: palette.primary800,
   navigationInactive: "#365F69",
   navigationShadow: "rgba(13, 72, 78, 0.12)",
-  navigationFallback: "rgba(255, 255, 255, 0.94)",
-  navigationTint: "rgba(255, 255, 255, 0.36)",
+  navigationCameraShadow: "rgba(13, 72, 78, 0.26)",
+  navigationFallback: "rgba(255, 255, 255, 0.80)",
+  navigationTint: "rgba(255, 255, 255, 0.22)",
   navigationBorder: "rgba(255, 255, 255, 0.78)",
   navigationIndicatorBorder: "rgba(33, 181, 195, 0.22)",
   weatherSun: palette.yellow500,
   weatherCloud: palette.gray400,
+  weatherTemperatureCool: palette.primary400,
+  weatherTemperatureWarm: "#F3C48B",
   glassSurface: "rgba(255, 255, 255, 0.45)",
   glassFallback: "rgba(255, 255, 255, 0.88)",
   glassTint: "rgba(255, 255, 255, 0.20)",
@@ -251,12 +257,15 @@ export const darkColors: AppColorTokens = {
   navigationActive: palette.primary200,
   navigationInactive: "#B2CFD4",
   navigationShadow: "rgba(0, 0, 0, 0.20)",
+  navigationCameraShadow: "rgba(0, 0, 0, 0.36)",
   navigationFallback: "rgba(16, 32, 36, 0.96)",
   navigationTint: "rgba(16, 32, 36, 0.42)",
   navigationBorder: "rgba(167, 231, 236, 0.20)",
   navigationIndicatorBorder: "rgba(78, 207, 217, 0.26)",
   weatherSun: palette.yellow500,
   weatherCloud: palette.gray300,
+  weatherTemperatureCool: palette.primary400,
+  weatherTemperatureWarm: "#F3C48B",
   glassSurface: "rgba(16, 32, 36, 0.80)",
   glassFallback: "rgba(16, 32, 36, 0.95)",
   glassTint: "rgba(16, 32, 36, 0.42)",

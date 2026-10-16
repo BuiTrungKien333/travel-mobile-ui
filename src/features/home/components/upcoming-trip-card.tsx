@@ -5,7 +5,7 @@ import { AppButton } from "@/components/ui/app-button";
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
-import { homeImages, mockUpcomingWeather } from "../data/home-mocks";
+import { homeImages } from "../data/home-mocks";
 import { useHomeCopy } from "../i18n/home-copy";
 import { useTripPreview } from "../providers/trip-preview-provider";
 import { useUpcomingCardMotion } from "../hooks/use-upcoming-card-motion";
@@ -16,7 +16,7 @@ import {
   tripDuration,
 } from "../utils/select-home";
 import { homeStyles } from "./home-primitives";
-import { DepartureClock, TripWeatherSummary } from "./upcoming-trip-indicators";
+import { DepartureClock } from "./upcoming-trip-indicators";
 
 export function UpcomingTripCard({ trip }: { trip: Trip }) {
   const theme = useAppTheme();
@@ -43,7 +43,6 @@ export function UpcomingTripCard({ trip }: { trip: Trip }) {
     (count, day) => count + day.stops.length,
     0,
   );
-  const weather = mockUpcomingWeather[trip.id];
 
   return (
     <View
@@ -121,9 +120,6 @@ export function UpcomingTripCard({ trip }: { trip: Trip }) {
             </View>
           ) : null}
         </View>
-        {weather ? (
-          <TripWeatherSummary weather={weather} progress={animationProgress} />
-        ) : null}
         {trip.status === "draft" ? (
           <AppText variant="caption" tone="muted">
             {copy.draft}

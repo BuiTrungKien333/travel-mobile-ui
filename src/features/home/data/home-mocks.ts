@@ -1,9 +1,4 @@
-import type {
-  HomeScenario,
-  LocalizedText,
-  Trip,
-  TripStop,
-} from "../types/home-types";
+import type { HomeScenario, Trip, TripStop } from "../types/home-types";
 
 // Fixed mock clock keeps all four previews reproducible, regardless of device date.
 export const MOCK_TODAY = "2026-10-21";
@@ -19,6 +14,7 @@ export const homeImages = {
   lamVienSquare: require("@/assets/images/home/lam-vien-square.jpg"),
   lamDongMuseum: require("@/assets/images/home/lam-dong-museum.jpg"),
   rainCloud: require("@/assets/icons/weather/rain-cloud.svg"),
+  glassSun: require("@/assets/icons/weather/glass-sun.svg"),
 };
 export const exampleStops: TripStop[] = [
   {
@@ -26,18 +22,21 @@ export const exampleStops: TripStop[] = [
     time: "09:30",
     name: { vi: "Hồ Xuân Hương", en: "Xuan Huong Lake" },
     kind: { vi: "Dạo bộ · Ngắm cảnh", en: "Walk · Sightseeing" },
+    quickInfo: { admission: { vi: "Miễn phí", en: "Free" }, sample: true },
   },
   {
     id: "square",
     time: "11:00",
     name: { vi: "Quảng trường Lâm Viên", en: "Lam Vien Square" },
     kind: { vi: "Khám phá · Chụp ảnh", en: "Explore · Photography" },
+    quickInfo: { admission: { vi: "Miễn phí", en: "Free" }, sample: true },
   },
   {
     id: "museum",
     time: "15:30",
     name: { vi: "Bảo tàng Lâm Đồng", en: "Lam Dong Museum" },
     kind: { vi: "Văn hóa · Trong nhà", en: "Culture · Indoors" },
+    quickInfo: { closesAt: "17:00", sample: true },
   },
 ];
 export const sampleItineraryStops = [
@@ -48,29 +47,6 @@ export const sampleItineraryStops = [
 
 export const sampleItineraryDate = "2026-10-24";
 export const sampleWeatherTemperature = 22;
-
-// Forecasts belong to these fixtures only; newly created drafts have no forecast.
-export const mockUpcomingWeather: Partial<
-  Record<
-    string,
-    {
-      low: number;
-      high: number;
-      summary: LocalizedText;
-      packingHint: LocalizedText;
-    }
-  >
-> = {
-  dalat: {
-    low: 16,
-    high: 24,
-    summary: { vi: "Mưa nhẹ", en: "Light showers" },
-    packingHint: {
-      vi: "Áo ấm & dù",
-      en: "Warm layer & umbrella",
-    },
-  },
-};
 
 export const samplePhotoCredits = [
   {

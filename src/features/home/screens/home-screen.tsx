@@ -1,31 +1,23 @@
-import { Image } from "expo-image";
 import { router } from "expo-router";
-import { Pressable, StyleSheet, View } from "react-native";
+import { View } from "react-native";
 
-import { AppButton } from "@/components/ui/app-button";
-import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import {
   EnterSection,
   HomePage,
-  homeStyles,
   PreviewNotice,
   SectionHeading,
-  SurfaceCard,
-  TextAction,
 } from "../components/home-primitives";
 import { TripHero } from "../components/trip-hero";
-import { TripTimeline } from "../components/trip-timeline";
 import { ExampleItineraryCard } from "../components/example-itinerary-card";
 import { TripCompletionCard } from "../components/trip-completion-card";
 import { FootprintCard } from "../components/footprint-card";
+import { TravelWeatherDashboard } from "../components/travel-weather-dashboard";
 import { useHomeCopy } from "../i18n/home-copy";
 import { useTripPreview } from "../providers/trip-preview-provider";
 import { isPastTrip, selectHome } from "../utils/select-home";
-
-// logo.png has a 307px transparent left inset in its 2172px canvas.
-const logoLeftInsetRatio = 307 / 2172;
+import { OngoingHomeScreen } from "./ongoing-home-screen";
 
 export function HomeScreen() {
   const theme = useAppTheme();
@@ -36,6 +28,15 @@ export function HomeScreen() {
     openPanel: state.openPanel,
   }));
   const selection = selectHome(trips, today);
+  if (selection.kind === "ongoing") {
+    return (
+      <OngoingHomeScreen
+        key={selection.trip.id}
+        trip={selection.trip}
+        dayIndex={selection.dayIndex}
+      />
+    );
+  }
   const trip = "trip" in selection ? selection.trip : null;
   const emptyDayIndex =
     trip?.days.findIndex((day) => day.stops.length === 0) ?? -1;
@@ -61,56 +62,7 @@ export function HomeScreen() {
     returning: copy.returningSubtitle,
   };
   return (
-    <HomePage>
-      <View style={[homeStyles.row, { gap: theme.spacing.md }]}>
-        <View style={homeStyles.grow}>
-          <Image
-            accessible
-            accessibilityLabel="WeGo"
-            source={require("@/assets/images/logo.png")}
-            contentFit="contain"
-            cachePolicy="memory-disk"
-            style={{
-              width: theme.layout.headerLogoWidth,
-              height: theme.layout.headerLogoHeight,
-              marginLeft: -theme.layout.headerLogoWidth * logoLeftInsetRatio,
-              maxWidth: "100%",
-            }}
-          />
-        </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={copy.preview}
-          onPress={() => openPanel({ kind: "scenarios" })}
-          style={({ pressed }) => [
-            styles.avatar,
-            {
-              minWidth: theme.layout.touchTarget,
-              minHeight: theme.layout.touchTarget,
-              opacity: pressed ? theme.motion.pressOpacity : 1,
-            },
-          ]}
-        >
-          <AppIcon name="tune" />
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={copy.profile}
-          onPress={() => router.push("/tabs/profile")}
-          style={({ pressed }) => [
-            styles.avatar,
-            {
-              minWidth: theme.layout.touchTarget,
-              minHeight: theme.layout.touchTarget,
-              borderRadius: theme.radius.full,
-              backgroundColor: theme.colors.surfaceTint,
-              opacity: pressed ? theme.motion.pressOpacity : 1,
-            },
-          ]}
-        >
-          <AppIcon name="person" size={theme.layout.iconLarge} />
-        </Pressable>
-      </View>
+    <HomePage showHeader>
       <View style={{ gap: theme.spacing.xs }}>
         <AppText
           accessibilityRole="header"
@@ -124,10 +76,7 @@ export function HomeScreen() {
         </AppText>
         <AppText tone="muted">{subtitles[selection.kind]}</AppText>
       </View>
-      <EnterSection
-        key={selection.kind}
-        animated={selection.kind === "ongoing"}
-      >
+      <EnterSection key={selection.kind} animated={false}>
         <View style={{ gap: theme.spacing.sm }}>
           {selection.kind !== "upcoming" ? (
             <SectionHeading
@@ -139,6 +88,12 @@ export function HomeScreen() {
           ) : null}
           <TripHero selection={selection} />
         </View>
+        {selection.kind === "upcoming" ? (
+          <TravelWeatherDashboard
+            key={selection.trip.id}
+            trip={selection.trip}
+          />
+        ) : null}
         {selection.kind === "upcoming" &&
         trip &&
         (emptyDayIndex >= 0 || trip.status === "draft") ? (
@@ -158,88 +113,13 @@ export function HomeScreen() {
             }
           />
         ) : null}
-        {selection.kind === "ongoing" ? (
-          <>
-            <View
-              style={[
-                styles.weather,
-                {
-                  padding: theme.spacing.lg,
-                  borderRadius: theme.radius.xl,
-                  backgroundColor: theme.colors.warningSurface,
-                  gap: theme.spacing.md,
-                },
-              ]}
-            >
-              <AppIcon name="rain" color={theme.colors.onWarningSurface} />
-              <View style={homeStyles.grow}>
-                <AppText
-                  variant="label"
-                  style={{ color: theme.colors.onWarningSurface }}
-                >
-                  {copy.rainTitle}
-                </AppText>
-                <AppText
-                  variant="caption"
-                  style={{ color: theme.colors.onWarningSurface }}
-                >
-                  {copy.rainHint}
-                </AppText>
-                <TextAction
-                  label={copy.rainAction}
-                  onPress={() => openPanel({ kind: "weather" })}
-                />
-              </View>
-            </View>
-            <SurfaceCard>
-              <SectionHeading title={copy.nextStops} />
-              <AppButton
-                onPress={() =>
-                  openPanel({
-                    kind: "plan",
-                    tripId: selection.trip.id,
-                    dayIndex: selection.dayIndex,
-                  })
-                }
-                leadingIcon={
-                  <AppIcon
-                    name="route"
-                    color={theme.colors.onPrimary}
-                    size={theme.layout.iconSmall}
-                  />
-                }
-              >
-                {copy.todayPlan}
-              </AppButton>
-              <TripTimeline
-                stops={
-                  selection.trip.days
-                    .find((day) => day.date === today)
-                    ?.stops.slice(0, 2) ?? []
-                }
-              />
-              <AppButton
-                variant="outline"
-                leadingIcon={<AppIcon name="camera" />}
-                onPress={() =>
-                  openPanel({
-                    kind: "moment",
-                    destination: selection.trip.destination,
-                  })
-                }
-              >
-                {copy.capture}
-              </AppButton>
-            </SurfaceCard>
-          </>
-        ) : null}
         {selection.kind === "new" ? (
           <View style={{ gap: theme.spacing.sm }}>
             <SectionHeading title={copy.example} variant="eyebrow" />
             <ExampleItineraryCard />
           </View>
         ) : null}
-        {hasHistory && selection.kind !== "ongoing" ? (
+        {hasHistory ? (
           <FootprintCard
             provinces={provinces}
             visitedPlaces={visitedPlaces}
@@ -253,7 +133,3 @@ export function HomeScreen() {
     </HomePage>
   );
 }
-const styles = StyleSheet.create({
-  avatar: { alignItems: "center", justifyContent: "center" },
-  weather: { flexDirection: "row", alignItems: "flex-start" },
-});

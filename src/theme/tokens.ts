@@ -31,11 +31,18 @@ export const layout = {
   upcomingHeroImageHeight: 128,
   countdownClockSize: 20,
   footprintWatermarkSize: 128,
+  journeyThumbnailSize: 80,
+  journalThumbnailSize: 120,
+  cameraShutterSize: 72,
   firstTripIconFrameSize: 56,
   sampleStopImageSize: 64,
   sampleStopNumberSize: 24,
   compactTextActionPaddingVertical: 10,
   weatherArtworkSize: 40,
+  weatherHeroArtworkSize: 72,
+  weatherHourCardWidth: 96,
+  packingBurstDistance: 64,
+  packingSheetHeightRatio: 0.8,
   weatherGlassTileSize: 64,
   weatherCloudImageWidth: 56,
   weatherCloudImageHeight: 48,
@@ -46,6 +53,13 @@ export const layout = {
   tabBarMaxWidth: 480,
   tabBarPadding: 6,
   tabBarIconSize: 20,
+  tabBarActiveDotSize: 4,
+  tabBarCameraSize: 56,
+  tabBarCameraSideSpacing: 18,
+  tabBarGroupGap: -5,
+  tabBarCameraRise: 28,
+  tabBarNotchGap: 6,
+  tabBarNotchShoulder: 10,
   tabBarItemPaddingVertical: 6,
 } as const;
 
@@ -55,6 +69,20 @@ export const motion = {
   tabTransitionDuration: 240,
   weatherDriftDuration: 2600,
   tripCardAmbientDuration: 12000,
+  firstTripIconTilt: 3,
+  cameraFlashDuration: 180,
+  liveBadgeMinimumOpacity: 0.45,
+  shutterPressDuration: 160,
+  shutterPressScale: 0.94,
+  shutterPulseScale: 0.025,
+  shutterGlowOpacity: 0.35,
+  shutterGlowVariation: 0.2,
+  packingCheckDuration: 160,
+  packingProgressDuration: 280,
+  packingBurstDuration: 900,
+  packingReminderOpacity: 0.5,
+  packingShakeDuration: 700,
+  packingShakeAngle: 4,
 } as const;
 
 export const elevation = {
@@ -67,6 +95,12 @@ export const elevation = {
     spreadDistance: 0,
   },
   floating: { offsetX: 0, offsetY: 4, blurRadius: 16, spreadDistance: 0 },
+  navigationCamera: {
+    offsetX: 0,
+    offsetY: 6,
+    blurRadius: 14,
+    spreadDistance: 1,
+  },
   glass: { offsetX: 0, offsetY: 3, blurRadius: 12, spreadDistance: 0 },
 } as const;
 
@@ -74,7 +108,7 @@ export const glass = {
   blurRadius: 12,
   clockBlurRadius: 18,
   clockSaturation: 0.65,
-  navigationBlurRadius: 18,
+  navigationBlurRadius: 16,
   saturation: 1.25,
 } as const;
 

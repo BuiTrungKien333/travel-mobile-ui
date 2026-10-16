@@ -46,7 +46,7 @@ export function GlassBackdrop({
     <GlassView
       accessible={false}
       pointerEvents="none"
-      glassEffectStyle={clock ? "clear" : "regular"}
+      glassEffectStyle={clock || navigation ? "clear" : "regular"}
       colorScheme={theme.dark ? "dark" : "light"}
       tintColor={tint}
       style={style}

@@ -5,6 +5,7 @@ import { FloatingBottomNavigation } from "@/components/common/floating-bottom-na
 import { AppIcon, type AppIconName } from "@/components/ui/app-icon";
 import { PreviewPanels } from "@/features/home/components/preview-panels";
 import { useHomeCopy } from "@/features/home/i18n/home-copy";
+import { useNavigationCapture } from "@/features/home/hooks/use-navigation-capture";
 import {
   TripPreviewProvider,
   useTripPreview,
@@ -24,6 +25,7 @@ function WorkspaceTabs() {
   const theme = useAppTheme();
   const { copy } = useHomeCopy();
   const panelOpen = useTripPreview((state) => state.panel !== null);
+  const onCapture = useNavigationCapture();
   const tabs: { name: string; title: string; icon: AppIconName }[] = [
     { name: "index", title: copy.home, icon: "home" },
     { name: "trips", title: copy.trips, icon: "map" },
@@ -39,7 +41,14 @@ function WorkspaceTabs() {
     >
       <Tabs
         initialRouteName="index"
-        tabBar={(props) => <FloatingBottomNavigation {...props} />}
+        tabBar={(props) => (
+          <FloatingBottomNavigation
+            {...props}
+            onCapture={onCapture}
+            captureLabel={copy.capture}
+            animationEnabled={!panelOpen}
+          />
+        )}
         screenOptions={{
           headerShown: false,
           tabBarHideOnKeyboard: true,

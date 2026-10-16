@@ -9,8 +9,15 @@ import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useHomeCopy } from "../i18n/home-copy";
 import { useTripPreview } from "../providers/trip-preview-provider";
+import { HomeHeader } from "./home-header";
 
-export function HomePage({ children }: { children: ReactNode }) {
+export function HomePage({
+  children,
+  showHeader = false,
+}: {
+  children: ReactNode;
+  showHeader?: boolean;
+}) {
   const theme = useAppTheme();
   const tabBarHeight = useBottomTabBarHeight();
   return (
@@ -35,6 +42,7 @@ export function HomePage({ children }: { children: ReactNode }) {
             { maxWidth: theme.layout.contentMaxWidth, gap: theme.spacing.xl },
           ]}
         >
+          {showHeader ? <HomeHeader /> : null}
           {children}
         </View>
       </ScrollView>

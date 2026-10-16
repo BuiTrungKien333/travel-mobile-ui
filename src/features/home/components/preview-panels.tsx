@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { router } from "expo-router";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
@@ -28,6 +29,7 @@ import { dayDistance, formatTripDates } from "../utils/select-home";
 import { Badge, homeStyles, SurfaceCard } from "./home-primitives";
 import { TripTimeline } from "./trip-timeline";
 import { SampleItineraryPanel } from "./sample-itinerary-panel";
+import { OngoingTripPanels } from "./ongoing-trip-panels";
 
 export function PreviewPanels() {
   const theme = useAppTheme();
@@ -40,6 +42,16 @@ export function PreviewPanels() {
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
   if (!panel) return null;
+  if (
+    panel.kind === "camera" ||
+    panel.kind === "journal" ||
+    panel.kind === "current-weather" ||
+    panel.kind === "trip-details"
+  ) {
+    return (
+      <OngoingTripPanels key={`${panel.kind}:${panel.tripId}`} panel={panel} />
+    );
+  }
   const titles = {
     scenarios: copy.previewTitle,
     create: copy.create,
@@ -47,6 +59,7 @@ export function PreviewPanels() {
     moment: copy.capture,
     plan: copy.plan,
     sample: copy.exampleTitle,
+    "capture-start": copy.capture,
   };
   const trip =
     panel.kind === "plan"
@@ -140,6 +153,22 @@ export function PreviewPanels() {
             {panel.kind === "scenarios" ? <ScenarioPicker /> : null}
             {panel.kind === "create" ? <CreateTripForm /> : null}
             {panel.kind === "sample" ? <SampleItineraryPanel /> : null}
+            {panel.kind === "capture-start" ? (
+              <>
+                <AppIcon name="camera" size={theme.layout.iconLarge} />
+                <AppText variant="label">{copy.cameraNeedsTrip}</AppText>
+                <AppText tone="muted">{copy.cameraNeedsTripHint}</AppText>
+                <AppButton
+                  variant="gradient"
+                  onPress={() => {
+                    closePanel();
+                    router.push("/tabs/trips");
+                  }}
+                >
+                  {copy.trips}
+                </AppButton>
+              </>
+            ) : null}
             {panel.kind === "plan" && trip ? (
               <PlanPanel
                 key={trip.id}
