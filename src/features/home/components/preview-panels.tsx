@@ -30,6 +30,7 @@ import { Badge, homeStyles, SurfaceCard } from "./home-primitives";
 import { TripTimeline } from "./trip-timeline";
 import { SampleItineraryPanel } from "./sample-itinerary-panel";
 import { OngoingTripPanels } from "./ongoing-trip-panels";
+import { sampleTrips } from "@/features/trip/data/sample-trips";
 
 export function PreviewPanels() {
   const theme = useAppTheme();
@@ -62,7 +63,8 @@ export function PreviewPanels() {
   };
   const trip =
     panel.kind === "plan"
-      ? trips.find((item) => item.id === panel.tripId)
+      ? (trips.find((item) => item.id === panel.tripId) ??
+        sampleTrips.find((item) => item.id === panel.tripId))
       : undefined;
   return (
     <Modal

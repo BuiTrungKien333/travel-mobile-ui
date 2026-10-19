@@ -15,10 +15,12 @@ export type TripDay = { date: string; stops: TripStop[] };
 export type Trip = {
   id: string;
   destination: string;
+  title?: string;
   startDate?: string;
   endDate?: string;
   status: "draft" | "planned" | "completed" | "cancelled";
   days: TripDay[];
+  coverImage?: ImageSource | string | number;
 };
 export type HomeSelection =
   | { kind: "ongoing"; trip: Trip; dayIndex: number }
