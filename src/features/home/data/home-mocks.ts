@@ -10,7 +10,7 @@ export const homeImages = {
   forest: require("@/assets/images/home/forest.jpg"),
   upcomingPhoto: require("@/assets/images/home/dalat-upcoming.jpg"),
   firstTripLandscape: require("@/assets/images/home/first-trip-landscape.svg"),
-  nextTripNavigation: require("@/assets/images/home/next-trip-navigation.png"),
+  nextTripNavigation: require("@/assets/images/home/next-trip-navigation.webp"),
   xuanHuongLake: require("@/assets/images/home/xuan-huong-lake.jpg"),
   lamVienSquare: require("@/assets/images/home/lam-vien-square.jpg"),
   lamDongMuseum: require("@/assets/images/home/lam-dong-museum.jpg"),
@@ -135,6 +135,7 @@ export const mockTrips: Record<HomeScenario, Trip[]> = {
   new: [],
   upcoming: [
     history,
+    completedDalat,
     dalat,
     {
       id: "later-draft",

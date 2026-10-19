@@ -5,10 +5,9 @@ import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { suggestedPacking, weatherPreviews } from "../data/weather-preview";
-import { useUpcomingCardMotion } from "../hooks/use-upcoming-card-motion";
+import { useHomeAmbientMotion } from "../hooks/use-home-ambient-motion";
 import { useWeatherCopy } from "../i18n/weather-copy";
 import type { Trip } from "../types/home-types";
-import { formatTripDates } from "../utils/select-home";
 import { homeStyles } from "./home-primitives";
 import { TravelWeatherArt } from "./travel-weather-art";
 import { TripGlassBackdrop } from "./trip-glass-backdrop";
@@ -24,17 +23,11 @@ export function TravelWeatherDashboard({ trip }: { trip: Trip }) {
     preview?.days.filter((day) => tripDates.includes(day.date)) ?? [];
   const [selectedDate, setSelectedDate] = useState(days[0]?.date);
   const selected = days.find((day) => day.date === selectedDate) ?? days[0];
-  const progress = useUpcomingCardMotion();
+  const progress = useHomeAmbientMotion();
   const tripPacking = suggestedPacking(
     days,
     preview?.hasOutdoorWalking ?? false,
   );
-  const status =
-    selected && selected.comfort >= 9
-      ? copy.ideal
-      : selected && selected.comfort >= 8
-        ? copy.good
-        : copy.prepare;
 
   return (
     <View
@@ -51,20 +44,6 @@ export function TravelWeatherDashboard({ trip }: { trip: Trip }) {
         },
       ]}
     >
-      <View
-        pointerEvents="none"
-        style={[
-          styles.glow,
-          {
-            width: theme.layout.footprintWatermarkSize,
-            height: theme.layout.footprintWatermarkSize,
-            top: -theme.spacing.xxl,
-            right: -theme.spacing.xl,
-            borderRadius: theme.radius.full,
-            backgroundColor: theme.colors.glassGlow,
-          },
-        ]}
-      />
       <TripGlassBackdrop borderRadius={theme.radius.md} />
       <View style={{ gap: theme.spacing.xxs }}>
         <View style={[homeStyles.row, { gap: theme.spacing.sm }]}>
@@ -83,9 +62,6 @@ export function TravelWeatherDashboard({ trip }: { trip: Trip }) {
             {copy.title}
           </AppText>
         </View>
-        <AppText variant="caption" tone="muted">
-          {trip.destination} · {formatTripDates(trip, locale)}
-        </AppText>
       </View>
       {!selected ? (
         <View style={{ gap: theme.spacing.sm }}>
@@ -146,9 +122,6 @@ export function TravelWeatherDashboard({ trip }: { trip: Trip }) {
                     / 10
                   </AppText>
                 </View>
-                <AppText variant="caption" tone="primary">
-                  {status}
-                </AppText>
               </View>
               <TravelWeatherArt
                 condition={selected.condition}
@@ -183,18 +156,20 @@ export function TravelWeatherDashboard({ trip }: { trip: Trip }) {
                     gap: theme.spacing.sm,
                     padding: theme.spacing.sm,
                     borderRadius: theme.radius.sm,
-                    backgroundColor: theme.colors.warningSurface,
+                    backgroundColor: theme.colors.weatherRainSurface,
+                    borderWidth: StyleSheet.hairlineWidth,
+                    borderColor: theme.colors.weatherRainSurface,
                   },
                 ]}
               >
                 <AppIcon
                   name="rain"
                   size={theme.layout.iconSmall}
-                  color={theme.colors.onWarningSurface}
+                  color={theme.colors.weatherRainText}
                 />
                 <AppText
                   variant="caption"
-                  style={{ color: theme.colors.onWarningSurface }}
+                  style={{ color: theme.colors.weatherRainText }}
                 >
                   {copy.rainAlert
                     .replace("{from}", selected.alert.from)
@@ -223,6 +198,5 @@ export function TravelWeatherDashboard({ trip }: { trip: Trip }) {
 
 const styles = StyleSheet.create({
   dashboard: { overflow: "hidden", borderCurve: "continuous" },
-  glow: { position: "absolute" },
   hero: { borderWidth: StyleSheet.hairlineWidth },
 });

@@ -151,10 +151,8 @@ export function WeatherPackingChecklist({
             gap: theme.spacing.xs,
             borderWidth: StyleSheet.hairlineWidth,
             borderRadius: theme.radius.sm,
-            borderColor: complete
-              ? theme.colors.primary
-              : theme.colors.softActionBorder,
-            backgroundColor: theme.colors.softActionSurface,
+            borderColor: complete ? theme.colors.primary : theme.colors.border,
+            backgroundColor: theme.colors.packingSurface,
             boxShadow: [
               {
                 ...theme.elevation.glass,
@@ -181,11 +179,11 @@ export function WeatherPackingChecklist({
                 height: theme.spacing.xxxl,
                 borderRadius: theme.radius.md,
                 backgroundColor: notStarted
-                  ? theme.colors.achievementWarmSurface
-                  : theme.colors.glassInset,
+                  ? theme.colors.weatherAmberGlass
+                  : theme.colors.softActionSurface,
                 borderWidth: StyleSheet.hairlineWidth,
                 borderColor: notStarted
-                  ? theme.colors.weatherSun
+                  ? theme.colors.weatherAmberBorder
                   : theme.colors.glassBorder,
               },
               luggageStyle,
@@ -200,9 +198,9 @@ export function WeatherPackingChecklist({
                   StyleSheet.absoluteFill,
                   {
                     borderRadius: theme.radius.md,
-                    borderWidth: theme.spacing.xxs,
-                    borderColor: theme.colors.weatherSun,
-                    backgroundColor: theme.colors.achievementWarmSurface,
+                    borderWidth: StyleSheet.hairlineWidth,
+                    borderColor: theme.colors.weatherAmberBorder,
+                    backgroundColor: theme.colors.weatherAmberGlass,
                   },
                   reminderStyle,
                 ]}
@@ -224,17 +222,21 @@ export function WeatherPackingChecklist({
             </AppText>
             <AppText
               variant="caption"
-              tone="primary"
+              tone={complete ? "primary" : "muted"}
               accessibilityLiveRegion="polite"
               style={{
-                fontFamily: theme.typography.fontFamily.semibold,
+                fontFamily: theme.typography.fontFamily.medium,
                 fontVariant: ["tabular-nums"],
               }}
             >
               {packed}/{items.length} {copy.packed}
             </AppText>
           </View>
-          <AppIcon name="chevron" size={theme.layout.iconSmall} />
+          <AppIcon
+            name="chevron"
+            size={theme.layout.iconSmall}
+            color={theme.colors.primaryText}
+          />
         </View>
         <PackingProgress
           progress={progress}

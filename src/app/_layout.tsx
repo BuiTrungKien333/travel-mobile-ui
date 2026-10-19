@@ -2,6 +2,7 @@ import { QueryClientProvider, focusManager } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { ThemeProvider } from "expo-router/react-navigation";
 import { StatusBar } from "expo-status-bar";
+import { useFonts } from "expo-font";
 import { useEffect } from "react";
 import { AppState, Platform } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -14,13 +15,10 @@ import { useAuthStore } from "@/store/use-auth-store";
 
 import { lightTheme } from "@/theme";
 
-import {
-  Roboto_400Regular,
-  Roboto_500Medium,
-  Roboto_600SemiBold,
-  Roboto_700Bold,
-  useFonts,
-} from "@expo-google-fonts/roboto";
+import { Roboto_400Regular } from "@expo-google-fonts/roboto/400Regular";
+import { Roboto_500Medium } from "@expo-google-fonts/roboto/500Medium";
+import { Roboto_600SemiBold } from "@expo-google-fonts/roboto/600SemiBold";
+import { Roboto_700Bold } from "@expo-google-fonts/roboto/700Bold";
 
 export default function RootLayout() {
   const status = useAuthStore((state) => state.status);

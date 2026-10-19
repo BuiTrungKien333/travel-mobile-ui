@@ -30,6 +30,11 @@ const symbols = {
     android: "location_on",
     web: "location_on",
   },
+  pinAdd: {
+    ios: "mappin.and.ellipse",
+    android: "add_location_alt",
+    web: "add_location_alt",
+  },
   calendar: {
     ios: "calendar",
     android: "calendar_today",
@@ -107,6 +112,7 @@ const navigationAssets = {
   },
 };
 const lightAssets = {
+  pinAdd: require("@/assets/icons/navigation/plan-pin.svg"),
   camera: require("@/assets/icons/navigation/camera-outline.svg"),
   bell: require("@/assets/icons/navigation/header-bell.svg"),
   person: require("@/assets/icons/navigation/header-person.svg"),
@@ -121,6 +127,7 @@ const lightAssets = {
 };
 function isLightIcon(name: AppIconName): name is keyof typeof lightAssets {
   return (
+    name === "pinAdd" ||
     name === "camera" ||
     name === "bell" ||
     name === "person" ||

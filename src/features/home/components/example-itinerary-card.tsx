@@ -47,23 +47,6 @@ export function ExampleItineraryCard() {
         importantForAccessibility="no-hide-descendants"
         pointerEvents="none"
         style={[
-          styles.coolGlow,
-          {
-            width: theme.layout.heroImageHeight,
-            height: theme.layout.heroImageHeight,
-            top: -theme.spacing.section,
-            right: -theme.spacing.xl,
-            borderRadius: theme.radius.full,
-            backgroundColor: theme.colors.glassGlow,
-          },
-        ]}
-      />
-      <View
-        aria-hidden
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-        pointerEvents="none"
-        style={[
           styles.warmGlow,
           {
             width: theme.layout.upcomingHeroImageHeight,
@@ -121,7 +104,7 @@ export function ExampleItineraryCard() {
             style={[
               homeStyles.row,
               { gap: theme.spacing.xs },
-              { marginBottom: 10 },
+              { marginBottom: theme.spacing.sm },
             ]}
           >
             <AppIcon
@@ -166,7 +149,6 @@ const styles = StyleSheet.create({
     borderCurve: "continuous",
     overflow: "hidden",
   },
-  coolGlow: { position: "absolute" },
   warmGlow: { position: "absolute", opacity: 0.35 },
   action: { alignItems: "flex-end" },
 });

@@ -25,10 +25,8 @@ import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { captureSamples, type CapturePhotoId } from "../data/ongoing-preview";
 import { useOngoingCopy } from "../i18n/ongoing-copy";
-import {
-  useTripPreview,
-  type JourneyPanel,
-} from "../providers/trip-preview-provider";
+import { useTripPreview } from "../providers/trip-preview-provider";
+import type { JourneyPanel } from "../types/preview-state";
 import type { Trip } from "../types/home-types";
 import { homeStyles } from "./home-primitives";
 

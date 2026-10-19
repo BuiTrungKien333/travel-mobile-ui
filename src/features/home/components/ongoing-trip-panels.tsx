@@ -39,10 +39,8 @@ import { useAppTheme } from "@/hooks/use-app-theme";
 import { journalPhotoCredits } from "../data/ongoing-preview";
 import { useOngoingCopy } from "../i18n/ongoing-copy";
 import { formatForecastDate } from "../i18n/weather-copy";
-import {
-  useTripPreview,
-  type JourneyPanel,
-} from "../providers/trip-preview-provider";
+import { useTripPreview } from "../providers/trip-preview-provider";
+import type { JourneyPanel } from "../types/preview-state";
 import type { Memory } from "../types/home-types";
 import { getDayProgress } from "../utils/day-progress";
 import { formatTripDates } from "../utils/select-home";

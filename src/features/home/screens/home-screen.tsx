@@ -13,7 +13,7 @@ import { TripHero } from "../components/trip-hero";
 import { ExampleItineraryCard } from "../components/example-itinerary-card";
 import { TripCompletionCard } from "../components/trip-completion-card";
 import { FootprintCard } from "../components/footprint-card";
-import { TodayJournal } from "../components/ongoing-trip-components";
+import { JournalAlbum } from "../components/journal-album";
 import { TravelWeatherDashboard } from "../components/travel-weather-dashboard";
 import { useHomeCopy } from "../i18n/home-copy";
 import { useTripPreview } from "../providers/trip-preview-provider";
@@ -42,7 +42,8 @@ export function HomeScreen() {
   const trip = "trip" in selection ? selection.trip : null;
   const emptyDayIndex =
     trip?.days.findIndex((day) => day.stops.length === 0) ?? -1;
-  const hasHistory = trips.some((item) => isPastTrip(item, today));
+  const pastTrips = trips.filter((item) => isPastTrip(item, today));
+  const hasHistory = pastTrips.length > 0;
   const recentMemories = memories
     .filter((memory) => memory.photo)
     .sort(
@@ -50,19 +51,13 @@ export function HomeScreen() {
         (b.date ?? "").localeCompare(a.date ?? "") ||
         (b.time ?? "").localeCompare(a.time ?? ""),
     );
-  const provinces = new Set(
-    trips
-      .filter((item) => isPastTrip(item, today))
-      .map((item) => item.destination),
-  ).size;
+  const provinces = new Set(pastTrips.map((item) => item.destination)).size;
   const visitedPlaces = new Set(
-    trips
-      .filter((item) => isPastTrip(item, today))
-      .flatMap((item) =>
-        item.days.flatMap((day) =>
-          day.stops.map((stop) => `${item.destination}:${stop.id}`),
-        ),
+    pastTrips.flatMap((item) =>
+      item.days.flatMap((day) =>
+        day.stops.map((stop) => `${item.destination}:${stop.id}`),
       ),
+    ),
   ).size;
   const subtitles = {
     new: copy.newSubtitle,
@@ -86,12 +81,7 @@ export function HomeScreen() {
         <AppText tone="muted">{subtitles[selection.kind]}</AppText>
       </View>
       <EnterSection key={selection.kind} animated={false}>
-        <View style={{ gap: theme.spacing.sm }}>
-          {selection.kind === "new" ? (
-            <SectionHeading title={copy.yourTrip} variant="eyebrow" />
-          ) : null}
-          <TripHero selection={selection} />
-        </View>
+        <TripHero selection={selection} />
         {selection.kind === "upcoming" ? (
           <TravelWeatherDashboard
             key={selection.trip.id}
@@ -130,8 +120,8 @@ export function HomeScreen() {
             onPress={() => router.push("/tabs/memories")}
           />
         ) : null}
-        {selection.kind === "returning" ? (
-          <TodayJournal
+        {selection.kind === "returning" || selection.kind === "upcoming" ? (
+          <JournalAlbum
             variant="recent"
             memories={recentMemories}
             onOpen={() => router.push("/tabs/memories")}

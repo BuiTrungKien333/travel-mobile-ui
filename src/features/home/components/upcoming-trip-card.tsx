@@ -8,7 +8,7 @@ import { useAppTheme } from "@/hooks/use-app-theme";
 import { homeImages } from "../data/home-mocks";
 import { useHomeCopy } from "../i18n/home-copy";
 import { useTripPreview } from "../providers/trip-preview-provider";
-import { useUpcomingCardMotion } from "../hooks/use-upcoming-card-motion";
+import { useHomeAmbientMotion } from "../hooks/use-home-ambient-motion";
 import type { Trip } from "../types/home-types";
 import {
   dayDistance,
@@ -21,7 +21,7 @@ import { DepartureClock } from "./upcoming-trip-indicators";
 export function UpcomingTripCard({ trip }: { trip: Trip }) {
   const theme = useAppTheme();
   const { copy, locale } = useHomeCopy();
-  const animationProgress = useUpcomingCardMotion();
+  const animationProgress = useHomeAmbientMotion();
   const { today, openPanel } = useTripPreview((state) => ({
     today: state.today,
     openPanel: state.openPanel,

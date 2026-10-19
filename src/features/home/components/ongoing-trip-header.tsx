@@ -5,9 +5,8 @@ import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { ongoingWeatherSnapshot } from "../data/ongoing-preview";
-import { useUpcomingCardMotion } from "../hooks/use-upcoming-card-motion";
+import { useHomeAmbientMotion } from "../hooks/use-home-ambient-motion";
 import { useOngoingCopy } from "../i18n/ongoing-copy";
-import { useTripPreview } from "../providers/trip-preview-provider";
 import type { Trip } from "../types/home-types";
 import { tripDuration } from "../utils/select-home";
 import { homeStyles } from "./home-primitives";
@@ -31,8 +30,7 @@ export function OngoingTripHeader({
 }) {
   const theme = useAppTheme();
   const { copy } = useOngoingCopy();
-  const panelOpen = useTripPreview((state) => state.panel !== null);
-  const progress = useUpcomingCardMotion(!panelOpen);
+  const progress = useHomeAmbientMotion();
   const minimumOpacity = theme.motion.liveBadgeMinimumOpacity;
   const pulseStyle = useAnimatedStyle(() => ({
     opacity:

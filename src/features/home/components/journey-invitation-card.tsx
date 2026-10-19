@@ -7,7 +7,7 @@ import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { homeImages } from "../data/home-mocks";
-import { useUpcomingCardMotion } from "../hooks/use-upcoming-card-motion";
+import { useHomeAmbientMotion } from "../hooks/use-home-ambient-motion";
 import { useHomeCopy } from "../i18n/home-copy";
 import { useTripPreview } from "../providers/trip-preview-provider";
 
@@ -21,7 +21,7 @@ export function JourneyInvitationCard({
   const { copy } = useHomeCopy();
   const returning = variant === "returning";
   const openPanel = useTripPreview((state) => state.openPanel);
-  const progress = useUpcomingCardMotion();
+  const progress = useHomeAmbientMotion();
   const drift = theme.spacing.xs;
   const tilt = theme.motion.firstTripIconTilt;
   const iconStyle = useAnimatedStyle(() => {

@@ -20,6 +20,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { usePhotoViewerMotion } from "../hooks/use-photo-viewer-motion";
+import { usePhotoViewerKeyboard } from "../hooks/use-photo-viewer-keyboard";
 import { usePhotoViewerCopy } from "../i18n/photo-viewer-copy";
 import {
   saveJournalPhoto,
@@ -157,6 +158,14 @@ export function JournalPhotoViewer({
     else motion.close();
   }
 
+  usePhotoViewerKeyboard({
+    blocked: confirming || showInfo || busy !== null,
+    onBack: handleBack,
+    onPrevious: motion.previous,
+    onNext: motion.next,
+    onToggleControls: toggleControls,
+  });
+
   async function handleAction(action: "share" | "save") {
     if (actionInFlight.current || !info?.uri || failed) return;
     actionInFlight.current = true;
@@ -248,6 +257,7 @@ export function JournalPhotoViewer({
               collapsable={false}
               style={styles.flex}
               accessible={!confirming && !showInfo}
+              focusable={!confirming && !showInfo}
               accessibilityRole="image"
               onAccessibilityTap={toggleControls}
               accessibilityLabel={memory.place?.[locale] ?? memory.destination}

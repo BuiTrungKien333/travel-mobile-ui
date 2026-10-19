@@ -1,5 +1,7 @@
 # Home preview image
 
+`next-trip-navigation.webp` is the 256px delivery asset for the returning-traveller invitation icon (18,782 bytes, alpha preserved). `next-trip-navigation.png` remains the generated source asset (1,526,861 bytes) and is not imported by the app. The generation brief is in `next-trip-navigation.prompt.md`.
+
 `first-trip-landscape.svg` is project-owned decorative artwork for the first-trip card: misty hills, pine trees, and a subtle route. It is bundled locally and contains no text.
 
 `forest.jpg` is a bundled, compressed forest photograph used as illustrative travel artwork, not a photograph identifying a particular destination.

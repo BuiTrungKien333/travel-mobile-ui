@@ -1,3 +1,4 @@
+import { JournalAlbum } from "../components/journal-album";
 import { useEffect, useState } from "react";
 import { Image } from "expo-image";
 import { View } from "react-native";
@@ -8,7 +9,6 @@ import { HomePage } from "../components/home-primitives";
 import { OngoingTripHeader } from "../components/ongoing-trip-header";
 import {
   NextStopCard,
-  TodayJournal,
   TodayTimeline,
 } from "../components/ongoing-trip-components";
 import { useOngoingCopy } from "../i18n/ongoing-copy";
@@ -110,7 +110,7 @@ export function OngoingHomeScreen({
             onFullDay={openPlan}
           />
         ) : null}
-        <TodayJournal
+        <JournalAlbum
           memories={todayMemories}
           onOpen={openJournal}
           onCapture={openCamera}

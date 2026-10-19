@@ -55,8 +55,6 @@ export function PreviewPanels() {
   const titles = {
     scenarios: copy.previewTitle,
     create: copy.create,
-    weather: copy.rainTitle,
-    moment: copy.capture,
     plan: copy.plan,
     sample: copy.exampleTitle,
     "capture-start": copy.capture,
@@ -201,18 +199,6 @@ export function PreviewPanels() {
                 trip={trip}
                 initialDay={panel.dayIndex ?? 0}
               />
-            ) : null}
-            {panel.kind === "weather" ? (
-              <>
-                <Badge label={copy.example} icon="rain" />
-                <AppText>{copy.rainDetail}</AppText>
-                <AppButton variant="outline" onPress={closePanel}>
-                  {copy.close}
-                </AppButton>
-              </>
-            ) : null}
-            {panel.kind === "moment" ? (
-              <MomentForm destination={panel.destination} />
             ) : null}
             {panel.kind !== "notifications" ? (
               <AppText variant="caption" tone="muted">
@@ -492,81 +478,6 @@ function PlanPanel({ trip, initialDay }: { trip: Trip; initialDay: number }) {
   );
 }
 
-function MomentForm({ destination }: { destination: string }) {
-  const theme = useAppTheme();
-  const { copy } = useHomeCopy();
-  const { saveMoment } = useTripPreview((state) => ({
-    saveMoment: state.saveMoment,
-  }));
-  const [saved, setSaved] = useState(false);
-  const schema = z.object({
-    text: z
-      .string()
-      .trim()
-      .min(1, copy.momentRequired)
-      .max(500, copy.momentRequired),
-  });
-  const {
-    control,
-    handleSubmit,
-    setError,
-    formState: { errors, isSubmitting },
-  } = useForm<z.infer<typeof schema>>({
-    resolver: zodResolver(schema),
-    defaultValues: { text: "" },
-  });
-  if (saved)
-    return (
-      <SurfaceCard tinted>
-        <AppIcon name="check" size={theme.layout.iconLarge} />
-        <AppText accessibilityRole="alert">{copy.saved}</AppText>
-      </SurfaceCard>
-    );
-  return (
-    <>
-      <Badge label={destination} icon="pin" />
-      <AppText tone="muted">{copy.noteOnly}</AppText>
-      <Controller
-        name="text"
-        control={control}
-        render={({
-          field: { ref, onChange, onBlur, value },
-          fieldState: { error },
-        }) => (
-          <AppInput
-            ref={ref}
-            label={copy.note}
-            placeholder={copy.notePlaceholder}
-            multiline
-            maxLength={500}
-            style={{
-              minHeight: theme.layout.heroImageHeight,
-              textAlignVertical: "top",
-            }}
-            error={error?.message}
-            value={value}
-            onChangeText={onChange}
-            onBlur={onBlur}
-          />
-        )}
-      />
-      {errors.root ? (
-        <AppText accessibilityRole="alert" tone="error">
-          {errors.root.message}
-        </AppText>
-      ) : null}
-      <AppButton
-        loading={isSubmitting}
-        onPress={handleSubmit(({ text }) => {
-          if (saveMoment(destination, text)) setSaved(true);
-          else setError("root", { message: copy.capacity });
-        })}
-      >
-        {copy.saveMoment}
-      </AppButton>
-    </>
-  );
-}
 const styles = StyleSheet.create({
   modal: { flex: 1, justifyContent: "flex-end", alignItems: "center" },
   sheet: { width: "100%", maxHeight: "92%", flexShrink: 1, overflow: "hidden" },

@@ -14,8 +14,7 @@ import {
 } from "../components/home-primitives";
 import { useHomeCopy } from "../i18n/home-copy";
 import { useTripPreview } from "../providers/trip-preview-provider";
-import { isPastTrip, selectHome } from "../utils/select-home";
-import type { Memory } from "../types/home-types";
+import { selectHome } from "../utils/select-home";
 
 export function MemoriesScreen() {
   const theme = useAppTheme();
@@ -27,26 +26,15 @@ export function MemoriesScreen() {
     today: state.today,
     openPanel: state.openPanel,
   }));
-  const pastTrip = trips.find((trip) => isPastTrip(trip, today));
   const selection = selectHome(trips, today);
   const activeTrip = selection.kind === "ongoing" ? selection.trip : null;
-  const items: Memory[] = pastTrip
-    ? [
-        ...memories,
-        {
-          id: "sample-memory",
-          destination: pastTrip.destination,
-          text: copy.memoryText,
-        },
-      ]
-    : memories;
   return (
     <SafeAreaView
       edges={["top", "left", "right"]}
       style={[styles.screen, { backgroundColor: theme.colors.background }]}
     >
       <FlatList
-        data={items}
+        data={memories}
         keyExtractor={(memory) => memory.id}
         contentContainerStyle={[
           styles.content,

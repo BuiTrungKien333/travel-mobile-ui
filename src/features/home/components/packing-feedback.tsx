@@ -37,7 +37,7 @@ export function PackingProgress({
         {
           height: theme.spacing.xs,
           borderRadius: theme.radius.full,
-          backgroundColor: theme.colors.stopChipSurface,
+          backgroundColor: theme.colors.border,
         },
       ]}
     >

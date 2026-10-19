@@ -1,0 +1,33 @@
+import type { ReactNode } from "react";
+import { StyleSheet, View } from "react-native";
+import { GlassBackdrop } from "@/components/common/glass-backdrop";
+import { useAppTheme } from "@/hooks/use-app-theme";
+
+export function JourneyCard({ children }: { children: ReactNode }) {
+  const theme = useAppTheme();
+  return (
+    <View
+      style={[
+        styles.card,
+        {
+          padding: theme.spacing.lg,
+          gap: theme.spacing.md,
+          borderRadius: theme.radius.md,
+          backgroundColor: theme.colors.surfaceTint,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: theme.colors.glassBorder,
+          boxShadow: [
+            { ...theme.elevation.glass, color: theme.colors.glassShadow },
+          ],
+        },
+      ]}
+    >
+      <GlassBackdrop borderRadius={theme.radius.md} />
+      {children}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  card: { overflow: "hidden", borderCurve: "continuous" },
+});

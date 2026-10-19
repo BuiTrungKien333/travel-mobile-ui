@@ -1,16 +1,6 @@
-import { useIsFocused } from "expo-router/react-navigation";
-import { useEffect, useState } from "react";
-import { AppState, StyleSheet, View } from "react-native";
-import Animated, {
-  cancelAnimation,
-  Easing,
-  ReduceMotion,
-  useAnimatedStyle,
-  useReducedMotion,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from "react-native-reanimated";
+import { StyleSheet, View } from "react-native";
+import Animated, { useAnimatedStyle } from "react-native-reanimated";
+import { useHomeAmbientMotion } from "../hooks/use-home-ambient-motion";
 
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
@@ -22,44 +12,17 @@ import { useHomeCopy } from "../i18n/home-copy";
 export function SampleWeather() {
   const theme = useAppTheme();
   const { copy } = useHomeCopy();
-  const focused = useIsFocused();
-  const reduceMotion = useReducedMotion();
-  const [appActive, setAppActive] = useState(
-    AppState.currentState === "active",
-  );
-  const progress = useSharedValue(0);
-  const duration = theme.motion.weatherDriftDuration;
+  const progress = useHomeAmbientMotion(true, {
+    duration: theme.motion.weatherDriftDuration,
+    reverse: true,
+  });
   const drift = theme.spacing.xs;
 
-  useEffect(() => {
-    const subscription = AppState.addEventListener("change", (state) => {
-      setAppActive(state === "active");
-    });
-    return () => subscription.remove();
-  }, []);
-
-  useEffect(() => {
-    if (!focused || !appActive || reduceMotion) return;
-    progress.value = withRepeat(
-      withTiming(1, {
-        duration,
-        easing: Easing.inOut(Easing.sin),
-        reduceMotion: ReduceMotion.System,
-      }),
-      -1,
-      true,
-    );
-    return () => {
-      cancelAnimation(progress);
-      progress.value = 0;
-    };
-  }, [focused, appActive, reduceMotion, duration, progress]);
-
   const sunStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${progress.value * 20}deg` }],
+    transform: [{ rotate: `${progress.get() * 20}deg` }],
   }));
   const cloudStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: -progress.value * drift }],
+    transform: [{ translateX: -progress.get() * drift }],
   }));
 
   return (
