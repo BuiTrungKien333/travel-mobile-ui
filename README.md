@@ -39,6 +39,7 @@ ESLint đã được cấu hình qua `npm run lint`. Đợt rà soát Home ngày
 
 ## Tài liệu và tiến độ
 
+- [Bàn giao ngữ cảnh cho agent mới](docs/AGENT-HANDOFF.md) · [Lời nhắn để mở chat mới](docs/NEXT-CHAT-PROMPT.md)
 - [Trạng thái dự án](docs/PROJECT-STATUS.md)
 - [Cách xem và cấu trúc Home preview](docs/HOME-PREVIEW.md)
 - [Kết quả rà soát Home](docs/HOME-REVIEW.md)

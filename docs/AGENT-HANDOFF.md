@@ -1,0 +1,221 @@
+# Bàn giao ngữ cảnh cho agent tiếp theo
+
+Snapshot: **19/10/2026**. Repository mobile: **`E:/travel-mobile-ui`**. Mốc Git quan sát khi bắt đầu bàn giao: **`4b19a3e` — `complete code ui home page`**, working tree sạch trước khi thêm tài liệu này. Đây là thông tin lịch sử, không phải yêu cầu checkout/reset về commit đó.
+
+## 1. Bắt đầu từ đâu
+
+Đây là tài liệu bàn giao sản phẩm và bản đồ code, **không thay thế `AGENTS.md`**. Đọc `E:/travel-mobile-ui/AGENTS.md` một lần để lấy quy định chính thức; `CLAUDE.md` chỉ trỏ về file đó. Nếu có quy định gần hơn trong thư mục đang sửa thì áp dụng đúng phạm vi. Không cần nạp toàn bộ lịch sử chat hoặc đọc lại cả hai repository.
+
+| Cần biết                                           | Tài liệu / mã nguồn                             |
+| -------------------------------------------------- | ----------------------------------------------- |
+| Quy định phát triển chính thức                     | `../AGENTS.md`                                  |
+| Trạng thái hoàn thành và phần còn lại              | [PROJECT-STATUS.md](PROJECT-STATUS.md)          |
+| Luồng Home và giới hạn mock                        | [HOME-PREVIEW.md](HOME-PREVIEW.md)              |
+| Kết quả rà soát, bằng chứng kiểm tra, QA còn thiếu | [HOME-REVIEW.md](HOME-REVIEW.md)                |
+| Auth email/password và email links                 | [auth-integration.md](auth-integration.md)      |
+| Google login, cấu hình và giới hạn                 | [google-auth.md](google-auth.md)                |
+| Nguồn/giấy phép ảnh Home                           | [Asset README](../assets/images/home/README.md) |
+
+Nhận yêu cầu tiếp theo rồi đọc đúng route/feature liên quan và component mẫu gần nhất. Không tự xây tab Chuyến đi/Kỷ niệm hoặc nối API chỉ vì chúng nằm trong roadmap. Home đã chốt UI; người dùng chưa chọn module tiếp theo tại thời điểm bàn giao.
+
+## 2. Mục tiêu và các quyết định của người dùng
+
+- Công việc chính là xây **giao diện mobile React Native**. Thư mục shell đôi khi mặc định là `E:/travel-system`; phải đặt working directory mobile rõ ràng trước khi chạy lệnh.
+- `E:/travel-system` là repository hệ thống/backend riêng. Planning là nghiệp vụ chính nhưng đang có lỗi; **hiện chưa sửa và chưa tích hợp planning**. Chỉ đọc/sửa backend khi có nhiệm vụ liên quan được giao.
+- Hiện làm frontend trước bằng fixture/mock; đây là ngoại lệ được người dùng yêu cầu rõ ràng so với quy định mặc định không dùng dữ liệu giả. Không coi mock là một lỗi cần tự ý thay bằng API.
+- App **chỉ dùng giao diện sáng**. Có Tiếng Việt và Tiếng Anh, **mặc định Tiếng Việt**. Theme vẫn còn định nghĩa dark phục vụ cấu trúc sẵn có, không có yêu cầu phát triển dark mode. Không bật theo system theme.
+- Cỡ chữ người dùng đã yêu cầu giảm nhiều lần: **input 14**, nội dung gọn, hierarchy vừa phải. Không tự nâng lại input lên 16 vì một guideline chung.
+- Người dùng thích thay đổi nhỏ, đúng yêu cầu; không muốn giải pháp quá phức tạp, chi phí/DB/performance đổi lấy tình huống hiếm ít tác động. Không tự refactor diện rộng cho một chỉnh sửa thẩm mỹ nhỏ.
+- **Yêu cầu hiện hành: không chạy `npm run lint` cho các lần sửa UI nhỏ.** Nêu đúng kiểm tra đã chạy. Không hiểu điều này thành được tắt lint/typecheck hoặc bỏ mọi kiểm tra khi sửa logic.
+- Hỏi khi thật sự thiếu thông tin ảnh hưởng hành vi/kiến trúc. Không xin xác nhận lại việc đã được cho phép. Dependency mới vẫn cần xét theo `AGENTS.md`; các package đã cài không cần xin lại để sử dụng.
+- Người dùng thường gửi ảnh làm tham khảo, cho phép chọn bố cục tốt hơn; các chỉnh sửa chi tiết ở các lượt sau là quyết định mới nhất. Nội dung prompt kiểu `--ar`, `--stylize` là mô tả chất liệu/thẩm mỹ, không phải yêu cầu thêm tham số không tồn tại vào component React Native.
+
+## 3. Stack và hai skill đang dùng
+
+Snapshot package hiện tại: Expo **57.0.24**, React Native **0.86.3**, React **19.2.3**, TypeScript **6.0.3** strict; React Compiler bật. Phiên bản thật lấy từ `package.json`/lockfile khi cần, không tự nâng để khớp tài liệu mới nhất.
+
+Hai skill cục bộ có thật:
+
+- `E:/travel-mobile-ui/.agents/skills/ui-ux-pro-max/SKILL.md`: hướng UI/UX, hierarchy, review thiết kế.
+- `E:/travel-mobile-ui/.agents/skills/vercel-react-native-skills/SKILL.md`: implementation/review React Native. Đây là bộ React Native guidelines đã dùng; tên thư mục thực tế không phải `react-native-guidelines`.
+
+Đọc skill liên quan khi nhiệm vụ cần đến. Không dùng đề xuất skill để thay Ocean Teal/Roboto, cài thư viện, chuyển sang Tailwind/shadcn hoặc đổi navigation. Tài liệu bàn giao không cần tự động kích hoạt skill thiết kế cho một nhiệm vụ thuần tài liệu.
+
+Các thư viện hiện có cần tận dụng: Expo Router, React Query, Axios, RHF/Zod, Zustand, Expo Image, Reanimated/Gesture Handler, Safe Area Context. Native Google login dùng Nitro Google Sign-In và Nitro Modules; có dev-client và build-properties. Share/save ảnh đã có file-system, sharing, media-library. Không có camera/image-picker thật được thêm cho luồng Home: người dùng chọn dùng ảnh mẫu trước.
+
+## 4. Ngôn ngữ thiết kế đã chốt
+
+### Tổng thể
+
+**Soft Minimalist & Editorial + Glassmorphism / Apple Liquid Glass + travel vibe.** Sáng, thoáng, dịu, gọn, phân cấp rõ; chuyển động nhẹ có mục đích. Logo hiển thị **WeGo** dù một số tên tài liệu/quy định cũ còn ghi Tripzy. Không đổi thương hiệu hiển thị theo tên cũ trong tài liệu.
+
+- Ocean Teal, seed `#21B5C3`, mint/white/blue nhạt và teal đậm cho chữ/điểm nhấn. Giá trị màu cụ thể đọc từ semantic tokens, không chép hex của tài liệu này vào component.
+- Kính có viền sáng mảnh, chiều sâu mềm; tránh bóng nặng, trắng bệt, nền kính ám nâu/xám bùn hoặc độ tương phản thấp. Không lạm dụng mảng glow màu ở góc các card.
+- Người dùng không thích bo góc quá mức hoặc mọi card đều thành viên thuốc. Card thông thường hiện phần lớn dùng `radius.md`/`lg`; pill dành cho nav, badge, weather pill và các control thích hợp. Giữ ngoại lệ đã chốt, ví dụ invitation card có góc mềm hơn.
+- Nội dung ngắn; tránh lặp ngày, nhiệt độ, địa điểm giữa các khối. Không tự thêm lại subtitle/tagline đã bị bỏ.
+- Ảnh địa điểm là **ảnh thực tế**, bundle cục bộ với attribution. Không tạo ảnh AI thay ảnh địa điểm. Icon bản đồ glossy của card chuyến tiếp theo là asset riêng đã được duyệt, không phải ảnh du lịch thực tế.
+
+### Typography, spacing và primitive
+
+- `src/theme/tokens.ts`: spacing, radius, layout, motion, elevation, glass, typography.
+- `src/theme/colors.ts`: palette và semantic colors; `themes.ts`: theme; `useAppTheme()` lấy theme hiện tại.
+- Roboto Regular/Medium/SemiBold/Bold. Root layout import **từng biến thể** từ subpath package; tránh quay lại barrel kéo cả 18 file font vào native bundle.
+- Mốc hiện tại: body/input 14, caption 12, heading nhỏ 18–20, heading chuẩn 24; đây là tham chiếu token theo ngữ cảnh, không áp một cỡ duy nhất cho mọi thành phần.
+- `AppText`, `AppButton`, `AppInput` là primitive; dùng style/token/variant hiện có. Button có `primary`, `outline`, `hero`, `soft`, **`raised`**, **`gradient`**.
+- CTA tạo chuyến/Chỉ đường: teal sáng có highlight và cạnh nổi nhẹ, dùng `raised`. Xem kế hoạch chuyến sắp tới: gradient teal đậm, chữ trắng, label và mũi tên liên kết/căn giữa. Thêm địa điểm: secondary mint, **không có mũi tên**.
+- Icon có hệ thống `AppIcon`: Expo Symbols và SVG dự án; nav có outline/solid, nhiều control dùng `variant="light"`. Không thêm icon font khác chỉ để đổi một icon.
+- Thân app sáng; viewer ảnh vẫn có backdrop đen theo yêu cầu xem ảnh, không phải dark theme cho toàn app.
+
+### Header dùng chung
+
+`components/home-header.tsx`: logo `assets/images/logo.png` bên trái, nút thông báo kính bên phải. **Không có profile icon và không có icon đổi trạng thái test trên header.**
+
+Ảnh logo có transparent inset trái; component bù theo `logoLeftInsetRatio = 307 / 2172`. Không xóa bù lề này rồi thêm padding ngẫu nhiên khiến chữ WeGo lại lệch. Kích thước hiện lấy token 120×40. Tiêu đề chuyến đang đi gióng với phần chữ nhìn thấy của logo.
+
+### Bottom navigation
+
+`src/components/common/floating-bottom-navigation.tsx` và các file `navigation-*`, `notched-navigation-backdrop*`:
+
+- Floating glass pill; trái: Trang chủ + Chuyến đi; giữa: camera; phải: Kỷ niệm + Cá nhân.
+- **Chỉ icon**, không label dưới icon kể cả active. Active đổi màu teal và có chấm nhỏ; không dựng lại vòng pill/circle nền lớn bao icon active.
+- Hai nhóm gọn, có khoảng thở hai bên camera. Camera nhô cao và có curved notch ôm phía dưới, glow nhẹ. Không thêm lại camera FAB đè lên nội dung Home.
+- Token hiện tại: thanh cao 60, icon 24, camera 56, rise 28, side spacing 24, active dot 4; lề ngang 16 và safe-area, max width 480.
+- **`tabBarGroupGap: -5` là chỉnh tay có chủ đích của người dùng.** Layout native clamp negative gap; implementation dùng `Math.max(0, ...)` cho nhóm và tọa độ indicator cùng hệ. Không đổi token sang dương hoặc tính chấm active theo công thức khác khi không được yêu cầu.
+- Chiều cao nav được đo/cung cấp lại cho content padding. Đừng thay thành bottom padding cứng hoặc bỏ vùng chạm 44/48 dù icon nhìn nhỏ.
+
+## 5. Bản đồ code và luồng dữ liệu
+
+```text
+src/app/                         routes/layout mỏng
+  _layout.tsx                    font, providers, auth guards
+  tabs/_layout.tsx               scoped TripPreviewProvider + tabs + PreviewPanels
+src/features/home/
+  screens/                       ghép giao diện Home và các tab preview
+  components/                    hero, timeline, album, weather, packing, panels
+  data/                          fixtures: trips, ongoing, recent memories, weather
+  types/home-types.ts            Trip/Memory/HomeScenario...
+  types/preview-state.ts         panel union và preview state/actions
+  store/trip-preview-store.ts    Zustand vanilla factory, không phụ thuộc React
+  providers/                     identity store theo phiên + useTripPreview selector
+  hooks/                         motion/focus, capture action, photo gestures/keyboard
+  services/                      share/save ảnh native và web
+  utils/                         chọn Home, ngày, progress, photo geometry, maps URL
+  i18n/                          Home / ongoing / weather / photo viewer copy VI/EN
+src/components/ui/               primitive
+src/components/common/           glass, navigation, language switcher
+src/hooks/                       hook dùng nhiều feature
+src/services/api/                Axios client, normalized error, QueryClient
+src/store/                       auth và locale xuyên feature
+src/i18n/translations.ts         copy chung/auth
+src/theme/                       semantic tokens
+```
+
+Các mẫu quan trọng:
+
+- `HomeScreen` chọn trạng thái bằng `selectHome(trips, today)`. `TripHero` chọn hero; `OngoingHomeScreen` ghép riêng trạng thái đang đi và vẫn dùng `HomePage`/`HomeHeader` chung.
+- `JourneyInvitationCard`: chung cho Người mới và Đã đi; `JournalAlbum`: chung cho Đang đi, Sắp đi, Đã đi. Không copy album sang từng screen. `JourneyCard` là shell kính dùng chung.
+- `ItineraryStopList`: phong cách dùng chung lịch trình mẫu/live timeline. `NextStopCard` và `TodayTimeline` ở `ongoing-trip-components.tsx`; file này không còn chứa album.
+- `PreviewPanels` render panel từ discriminated union trong store; panel đang đi chuyển sang `OngoingTripPanels`. Không thêm `kind` rời rạc không có caller; panel `weather`/`moment` cũ và `saveMoment` đã bỏ. Note hiện sửa trên memory ảnh.
+- Store factory scoped theo provider; selector `useTripPreview` dùng `useShallow`. Local modal/checked state vẫn ở component. Derived values lấy từ dữ liệu gốc; animation frame không đẩy vào React state.
+- `useHomeAmbientMotion` bọc `useAmbientMotion`: focus + AppState + Reduced Motion + shared panel. Modal thời tiết dùng hook nền chung để tự chạy animation khi mở. Chưa có visibility manager toàn cục cho mọi local overlay/card ngoài viewport; không tự xây nếu chưa có nhu cầu/profiling.
+- File `.web.ts(x)` dành cho browser CSS/DOM, bản native dùng Expo/RN. `GlassBackdrop` dùng Liquid Glass khi API khả dụng; fallback native và backdrop blur trên web. Không đưa DOM/CSS browser vào file native.
+- Alias `@/` trỏ `src/`, `@/assets/` trỏ root `assets/`; feature nội bộ dùng relative ngắn theo code lân cận. Viết RN `View`/`Pressable`/StyleSheet và theme, không chuyển dự án sang HTML/Tailwind.
+- Khi có API: server state đi qua feature API/query hooks và Axios client chung, không nhét payload query vào preview store. Chỉ thực hiện khi có yêu cầu tích hợp.
+
+## 6. Home bốn trạng thái — hành vi và thiết kế
+
+Thứ tự chọn: **đang diễn ra → chuyến tương lai gần nhất (gồm draft có ngày) → có lịch sử → người mới**. Logic calendar-only ở `select-home.ts`, không dựa giờ UTC làm lệch ngày; draft quá ngày không tính là chuyến đã đi.
+
+### Người mới
+
+- Card Chuyến đi đầu tiên: illustration núi/rừng mờ, icon map/pin có motion nhẹ, mô tả ngắn, CTA Tạo chuyến đi + mũi tên.
+- **Chỉnh sửa mới nhất sau đợt audit:** đã bỏ hẳn dòng **CHUYẾN ĐI CỦA BẠN** phía trên hero.
+- **VÍ DỤ MINH HỌA** vẫn là label nhỏ nằm **ngoài** card. Tiêu đề Một ngày ở Đà Lạt nhỏ gọn; không có subtitle thành phố ngàn hoa.
+- Metadata: `24/10/2026`, không có chữ Ngày đi; `1 ngày | 3 điểm dừng`; weather animation, ba ảnh nhỏ và số thứ tự nối dọc.
+- Link Dùng thử lịch trình mẫu này →, padding trên/dưới 10, không padding trái/phải trên link.
+- Không có dòng Lịch trình luôn có thể thay đổi theo bạn.
+- **Chỉnh sửa mới nhất:** đã bỏ lớp `coolGlow` màu xanh góc trên bên phải card. Weather animation vẫn giữ; không nhầm yêu cầu bỏ mảng màu với xóa weather widget. Nền kính và accent ấm còn lại vẫn giữ.
+
+### Sắp khởi hành
+
+- Ảnh bìa thật Đà Lạt; badge đếm ngược **ngang**, kính trong mờ, icon đồng hồ + copy rõ **Còn 3 ngày**. Không quay lại badge dọc cao, nền nâu/xỉn hoặc chỉ ghi 3 ngày gây hiểu nhầm thời lượng.
+- Tên, ngày/thời lượng, chip số điểm dừng; Xem kế hoạch gradient primary. Không có heading CHUYẾN ĐI CỦA BẠN/Xem tất cả phía trên hero.
+- `TravelWeatherDashboard`: compact date selector, comfort score, thời tiết/UV, cảnh báo mưa nhẹ, vali và hourly. Chọn ngày cập nhật widget; vali tổng hợp cả chuyến.
+- Đã bỏ dòng lặp Đà Lạt + khoảng ngày, bỏ Thuận lợi để khám phá, bỏ mảng màu góc trên bên phải. Dòng nhiệt độ không lặp `16°–24°C` cạnh nhiệt độ hiện tại.
+- Rain alert dùng sắc xanh nhẹ; packing surface kính sáng/chữ rõ, không trở lại phối vàng đục + xanh quá gắt. Vali chưa tick món nào có icon hổ phách và rung nhẹ theo nhịp nghỉ; không ép hoàn thành. Tick có feedback/progress, đủ đồ có confetti ngắn, CTA Xong trong sheet. Có margin dưới ngăn cách hourly.
+- Cần hoàn thiện: pin SVG + add, không vòng pulse/viền tròn bên ngoài hoặc green shadow; secondary Thêm địa điểm không có mũi tên.
+- Dấu ấn của bạn rồi **Kỷ niệm gần đây**, album sáu ảnh như trạng thái Đã đi.
+
+### Đang trong chuyến đi
+
+- Quan trọng vì dùng liên tục ngoài đường: biết trip/ngày, điểm tiếp theo, đã ghé, chụp nhanh và nhật ký.
+- Giữ header logo chung. Phần Đà Lạt/live badge/ngày/Chi tiết/weather là dải mở, **không khung card mẹ lớn**; weather pill mỏng ngang tiêu đề. Live badge nhỏ kính, chấm xanh chuyển động nhẹ.
+- Chi tiết là text link/icon đơn giản đã tăng nhẹ kích thước, có vùng chạm ẩn >=44; không khôi phục nút hộp nặng.
+- Hero điểm tiếp theo có quick info vé/giờ đóng cửa. **Không có Thông tin mẫu** trong card này.
+- Hai CTA cùng hàng **60/40**, Chỉ đường `raised` primary, Đã ghé secondary mint/kính không xuống dòng. Không quay về 50/50 hay 65/35.
+- Đã ghé cập nhật cùng visited state/timeline, chuyển điểm kế tiếp; prompt chụp khoảng hai giây, camera nằm trong bottom nav.
+- Hành trình hôm nay tái dùng phong cách lịch trình mẫu, trục dọc + ảnh; trạng thái ✓/điểm tiếp theo/sắp tới thay số. Không dòng Khám phá/Chụp ảnh dưới mỗi tên; Điểm tiếp theo ngang hàng giờ. Không lặp lại hero lớn trong timeline.
+- Weather modal dạng bottom sheet kính pastel/khí quyển, gọn khoảng **68%** chiều cao theo token sau lần tăng nhẹ. Có handle để vuốt/chạm đóng và chạm ngoài, **không heading Thời tiết tại điểm đến hay nút X** trong header modal. Hero icon/nhiệt độ, các cột giờ/icon/nhiệt độ/% mưa, gợi ý hổ phách có chữ **Nên mang dù và áo khoác mỏng**. Nội dung chi tiết chỉ xuất hiện khi mở weather pill.
+- Nhật ký hôm nay là album chung, mô tả bên dưới.
+
+### Đã đi, chưa có chuyến mới
+
+- Giữ phong cách card Người mới, đổi ngữ cảnh thành chuyến tiếp theo. Icon glossy bản đồ/navigation đã duyệt, dùng `next-trip-navigation.webp`, PNG gốc chỉ làm source.
+- Không heading CHUYẾN ĐI CỦA BẠN, không câu Một điểm đến mới, một câu chuyện mới.
+- Dấu ấn của bạn: con số thành achievement badge, watermark bản đồ/la bàn, glass divider, action nhìn lại hành trình. Nhãn tỉnh/thành tránh vỡ từ.
+- **Kỷ niệm gần đây** nằm dưới Dấu ấn, có sáu ảnh fixture thật thuộc trip quá khứ; không chỉ reuse ảnh nhưng quên trip/date association.
+
+## 7. Album và xem ảnh toàn màn hình
+
+- Hai ảnh/hàng, gap 4, không radius cho ảnh, không card trắng bao cả album; viền gỗ **2px màu nhạt**, không mat trắng. Không tên địa điểm/giờ dưới thumbnail.
+- `JournalAlbum` preview tối đa sáu ảnh. Thumbnail đo tọa độ khi có event, không đo DOM/native trong render. Chưa load hoặc ảnh lỗi không bấm được.
+- Viewer giống Photos: ảnh bung từ thumbnail, vuốt ngang, pinch/double tap theo điểm chạm, pan giới hạn/rubber band, kéo xuống ảnh theo tay/backdrop giảm và spring về thumbnail hoặc snap back. Gesture/motion ở UI thread, không React setState mỗi frame.
+- Một tap ẩn/hiện chrome; **không có nút Ảnh gốc**. Ảnh hiển thị fit không crop như thumbnail.
+- Toolbar theo mẫu photo viewer đã chốt, thay cho các thử nghiệm glass xanh trước đó: trên có back và ngày/giờ sát nhau, thêm margin top; date 14/time 12, không card bo góc bọc ngày/giờ. Dưới: Share riêng, cụm Heart/Download/Delete, Info riêng; nền control **đen mờ**, icon mảnh 22, back 24.
+- Save/share lấy file ảnh đầy đủ. Native: Expo File System/Sharing/Media Library; web: Web Share hoặc download. Có busy/error/permission handling, confirm delete. Không coi nút save là chỉ lưu state.
+- Delete chỉ xóa memory preview, không ảnh thư viện thiết bị. Favorite chỉ theo lần xem; checklist theo dashboard; store theo phiên, chưa lưu backend.
+- Web keyboard: Escape, trái/phải, Space khi vùng ảnh có focus; native dùng system back/accessibility actions.
+- **Lỗi từng gặp cần bảo vệ:** `Cannot access 'clampPhoto' before initialization`. Hàm/worklet helper phải được khởi tạo trước nơi Babel Worklets capture; không chỉ dựa vào TS pass. Có `photo-viewer-worklets.test.ts` chạy transform thực tế.
+- RN Web có thể gọi lại Modal `onShow` khi callback đổi identity: giữ guard `presented` một lần, không bỏ rồi tạo vòng lặp setState.
+
+## 8. Mock, auth và giới hạn tích hợp
+
+### Preview Home
+
+- `UI_PREVIEW_ENABLED = __DEV__` ở `src/constants/development.ts`. Vào Home thẳng trong development; bỏ session restoration và dùng Profile preview. Không cần backend để làm UI.
+- Release vẫn guard auth. Đổi flag thành `false` + reload khi muốn quay lại tích hợp auth; **không tự làm trong nhiệm vụ UI**. Tắt flag không tự chuyển Home mock thành API.
+- Default scenario là **returning**, đổi qua nút Đổi trạng thái ở cuối trang, không trên header. Mock today **2026-10-21** và sample trip bắt đầu **2026-10-24**; đếm ngược ba ngày là có chủ đích.
+- Fixtures/import ảnh cục bộ. Scenario reset trips/memories/visited; restart provider mất sửa đổi. Store giới hạn trips/memories 20, album giới hạn 6; không thay preview thành feed vô hạn.
+- Notification chưa có API. Camera dùng sample ảnh, không xin cài expo-camera/image-picker khi chưa có yêu cầu mới.
+
+### Auth đã có từ giai đoạn trước
+
+Đăng nhập/đăng ký, xác thực email qua link, resend, forgot/reset password, session/refresh/logout/profile và Google login đã có code/tài liệu. Backend ở repository riêng; **đợt chốt Home không audit lại backend**, không chứng nhận auth production-ready.
+
+Yêu cầu quan trọng cần giữ: Google xác thực thành công với tài khoản email/password đủ điều kiện thì vào app **không bắt nhập lại mật khẩu**. Hiện tài liệu triển khai phân biệt Gmail/Workspace có thể auto-link và email ngoài miền đó cần link xác nhận hộp thư lần đầu, vẫn không nhập lại password. Đọc `google-auth.md` và code thật trước khi thay hành vi liên kết; không rút gọn thành auto-link mọi email có `email_verified`.
+
+OAuth IDs/SMTP/domain/native build phụ thuộc cấu hình thật của người dùng. Lịch sử trước đây chưa có IDs; lần bàn giao này không xác minh lại các giá trị private/local và không xuất `.env`. Không giả lập login thành công khi cấu hình thiếu. Google native cần development build, không hứa chạy đầy đủ bằng Expo Go.
+
+RBAC nghiệp vụ chưa hoàn thiện; yêu cầu audit trước đây loại RBAC khỏi phạm vi. Không tự thêm phân quyền hoặc coi mọi actor đã được production audit chỉ vì có JWT/route guards. Các số test/Doctor trong tài liệu auth là mốc lịch sử, không phải kết quả chạy mới.
+
+## 9. Kiểm tra và việc còn lại
+
+Kết quả gần nhất trong đợt rà soát Home trước bàn giao:
+
+- TypeScript `--noEmit --noUnusedLocals --noUnusedParameters`: pass.
+- `npm test`: **54/54 pass**, thêm bảy tests store/fixture/packing, cùng các tests chọn Home/date/progress và photo geometry/Worklets.
+- Metro export web/static routes và Android/Hermes: pass. Đây không phải native build hay runtime trên điện thoại.
+- `git diff --check`: pass. Không chạy lint theo yêu cầu.
+- Sau đó chỉ bỏ heading Người mới và green corner glow của card Ví dụ theo yêu cầu; không chạy lại cả suite cho hai chỉnh sửa giao diện này. Bàn giao hiện tại chỉ sửa tài liệu, không chạy lại app/test.
+
+Chưa có xác nhận mới về native gesture, VoiceOver/TalkBack, Dynamic Type/font lớn, contrast trên ảnh thực tế, quyền share/save hoặc FPS/bộ nhớ trong release. Không nói đã test trên browser/điện thoại khi chỉ chạy export. Cần native QA trước phát hành; integration loading/error/retry/persistence cần làm khi nối API thật.
+
+## 10. Cách tiếp tục mà không làm lệch dự án
+
+1. Đọc quy định gốc và snapshot này; kiểm tra `git status`/code hiện tại vì chủ dự án có thể đã sửa sau bàn giao. File hiện tại và yêu cầu mới hơn được ưu tiên hơn snapshot.
+2. Với UI mới, lấy header/nav, card, typography, glass và timeline/album hiện có làm mẫu. Chỉ đổi style/behavior được yêu cầu; không khôi phục các thiết kế đã bỏ từ lịch sử.
+3. Với chỉnh sửa nhỏ, đọc đúng component/token và sửa tại nguồn. Với sửa logic, dùng tests hành vi liên quan; không mở rộng kiểm tra không có mục đích cụ thể.
+4. Không bật backend/auth, thêm dependency, đổi theme hoặc viết lại viewer chỉ để xem UI. Không dựng abstraction cho tương lai giả định; giữ thay đổi dễ review.
+5. Cập nhật tiến độ/tài liệu khi đổi hành vi, boundary hoặc hoàn thành module. Báo ngắn phần đổi, kiểm tra thực chạy và giới hạn còn lại.
+
+Ngữ cảnh này nhằm giúp tiếp tục đúng thiết kế/cấu trúc hiện tại. Những thay đổi mới do người dùng yêu cầu luôn có thể thay các quyết định UI trong snapshot.

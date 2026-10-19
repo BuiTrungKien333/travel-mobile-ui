@@ -26,6 +26,12 @@ Cập nhật: **19/10/2026**. Phạm vi chốt lần này: frontend Home. Ngày 
 - Bundle icon bản đồ WebP khoảng 19 KB thay PNG khoảng 1,53 MB, giữ PNG nguồn.
 - Import đúng bốn font Roboto đang dùng thay vì kéo cả bộ font vào bundle native.
 
+## Chốt UI sau rà soát và bàn giao
+
+- Người mới: bỏ heading **CHUYẾN ĐI CỦA BẠN**; bỏ mảng glow xanh góc trên phải card **VÍ DỤ MINH HỌA**, giữ weather widget.
+- Home hiện được chốt frontend bốn trạng thái; chưa có yêu cầu xây module tiếp theo.
+- Đã xuất [ngữ cảnh bàn giao](AGENT-HANDOFF.md) và [lời nhắn mở chat mới](NEXT-CHAT-PROMPT.md), gồm quyết định UI, vị trí code, ranh giới mock/auth và giới hạn kiểm tra. Lần bàn giao chỉ sửa tài liệu, không chạy lại tests/bundle.
+
 ## Điều kiện trước khi tích hợp và phát hành
 
 1. Chốt phần Home ở mức **UI với dữ liệu mẫu**; có thể chuyển sang module UI tiếp theo.
