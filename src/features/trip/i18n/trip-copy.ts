@@ -1,7 +1,7 @@
 import { useI18n } from "@/hooks/use-i18n";
 
 const vi = {
-  trips: "Chuyến đi",
+  trips: "Chuyến đi của bạn",
   tripsCount: "{count} chuyến đi",
   tripsCountSingle: "1 chuyến đi",
   tripsEmptyCount: "Chưa có chuyến đi",
@@ -22,7 +22,7 @@ const vi = {
 };
 
 const en = {
-  trips: "Trips",
+  trips: "Your Trips",
   tripsCount: "{count} trips",
   tripsCountSingle: "1 trip",
   tripsEmptyCount: "No trips yet",

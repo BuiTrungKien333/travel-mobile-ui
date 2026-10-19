@@ -89,7 +89,7 @@ export function TripCard({
                 color: theme.colors.text,
                 fontSize: theme.typography.fontSize.md,
                 lineHeight: theme.typography.lineHeight.md,
-                fontFamily: theme.typography.fontFamily.bold,
+                fontFamily: theme.typography.fontFamily.medium,
               },
             ]}
           >

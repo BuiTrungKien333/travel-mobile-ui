@@ -1,5 +1,5 @@
 import type { CapturePhotoId } from "../data/ongoing-preview";
-import type { HomeScenario, Memory, Trip } from "./home-types";
+import type { HomeScenario, Memory, Trip, TripStop } from "./home-types";
 
 export type PreviewPanel =
   | {
@@ -29,6 +29,8 @@ export type PreviewState = {
     destination: string;
     startDate: string;
     endDate: string;
+    title?: string;
+    initialStops?: TripStop[];
   }) => boolean;
   addStop: (tripId: string, date: string) => void;
   visited: Record<string, string[]>;

@@ -1,3 +1,5 @@
+import type { ImageSource } from "expo-image";
+
 export type HomeScenario = "new" | "upcoming" | "ongoing" | "returning";
 export type LocalizedText = { vi: string; en: string };
 export type TripStop = {
@@ -37,4 +39,3 @@ export type Memory = {
   place?: LocalizedText;
   photo?: ImageSource | string | number;
 };
-import type { ImageSource } from "expo-image";

@@ -46,11 +46,17 @@ export function createPreviewStore() {
         (_, index) => {
           const date = new Date(`${values.startDate}T12:00:00Z`);
           date.setUTCDate(date.getUTCDate() + index);
-          return { date: date.toISOString().slice(0, 10), stops: [] };
+          return {
+            date: date.toISOString().slice(0, 10),
+            stops: index === 0 && values.initialStops ? values.initialStops : [],
+          };
         },
       );
       const trip: Trip = {
-        ...values,
+        destination: values.destination,
+        title: values.title,
+        startDate: values.startDate,
+        endDate: values.endDate,
         id: `draft-${++nextId}`,
         status: "draft",
         days,

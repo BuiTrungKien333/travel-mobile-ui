@@ -1,9 +1,6 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { router } from "expo-router";
 import { useState } from "react";
-import { Controller, useForm } from "react-hook-form";
 import {
-  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -14,23 +11,22 @@ import {
 } from "react-native";
 import { useReducedMotion } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { z } from "zod";
 
 import { AppButton } from "@/components/ui/app-button";
 import { AppIcon } from "@/components/ui/app-icon";
-import { AppInput } from "@/components/ui/app-input";
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { suggestedStops } from "../data/home-mocks";
 import { useHomeCopy } from "../i18n/home-copy";
 import { useTripPreview } from "../providers/trip-preview-provider";
 import type { HomeScenario, Trip } from "../types/home-types";
-import { dayDistance, formatTripDates } from "../utils/select-home";
+import { formatTripDates } from "../utils/select-home";
 import { Badge, homeStyles, SurfaceCard } from "./home-primitives";
 import { TripTimeline } from "./trip-timeline";
 import { SampleItineraryPanel } from "./sample-itinerary-panel";
 import { OngoingTripPanels } from "./ongoing-trip-panels";
 import { sampleTrips } from "@/features/trip/data/sample-trips";
+import { CreateTripModal } from "@/features/trip/components/create-trip-modal";
 
 export function PreviewPanels() {
   const theme = useAppTheme();
@@ -43,6 +39,9 @@ export function PreviewPanels() {
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
   if (!panel) return null;
+  if (panel.kind === "create") {
+    return <CreateTripModal visible onClose={closePanel} />;
+  }
   if (
     panel.kind === "camera" ||
     panel.kind === "journal" ||
@@ -177,7 +176,6 @@ export function PreviewPanels() {
                 </AppText>
               </View>
             ) : null}
-            {panel.kind === "create" ? <CreateTripForm /> : null}
             {panel.kind === "sample" ? <SampleItineraryPanel /> : null}
             {panel.kind === "capture-start" ? (
               <>
@@ -265,127 +263,6 @@ function ScenarioPicker() {
           </Pressable>
         ))}
       </View>
-    </>
-  );
-}
-
-function validDate(value: string) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const date = new Date(`${value}T12:00:00Z`);
-  return (
-    Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value
-  );
-}
-
-function CreateTripForm() {
-  const theme = useAppTheme();
-  const { copy } = useHomeCopy();
-  const { createDraft, today } = useTripPreview((state) => ({
-    createDraft: state.createDraft,
-    today: state.today,
-  }));
-  const schema = z
-    .object({
-      destination: z
-        .string()
-        .trim()
-        .min(1, copy.required)
-        .max(80, copy.required),
-      startDate: z.string().refine(validDate, copy.invalidDate),
-      endDate: z.string().refine(validDate, copy.invalidDate),
-    })
-    .superRefine((values, context) => {
-      if (validDate(values.startDate) && values.startDate < today)
-        context.addIssue({
-          code: "custom",
-          path: ["startDate"],
-          message: copy.datePast,
-        });
-      if (
-        validDate(values.startDate) &&
-        validDate(values.endDate) &&
-        (values.endDate < values.startDate ||
-          dayDistance(values.startDate, values.endDate) >= 30)
-      )
-        context.addIssue({
-          code: "custom",
-          path: ["endDate"],
-          message: copy.dateOrder,
-        });
-    });
-  const {
-    control,
-    handleSubmit,
-    setError,
-    setFocus,
-    formState: { errors, isSubmitting },
-  } = useForm<z.infer<typeof schema>>({
-    resolver: zodResolver(schema),
-    defaultValues: { destination: "", startDate: "", endDate: "" },
-    mode: "onTouched",
-  });
-  const fields = [
-    {
-      name: "destination",
-      label: copy.destination,
-      placeholder: copy.destinationPlaceholder,
-    },
-    { name: "startDate", label: copy.start, placeholder: "2026-10-24" },
-    { name: "endDate", label: copy.end, placeholder: "2026-10-27" },
-  ] as const;
-  const submit = handleSubmit((values) => {
-    Keyboard.dismiss();
-    if (!createDraft(values)) setError("root", { message: copy.capacity });
-  });
-  return (
-    <>
-      <AppText tone="muted">{copy.createHint}</AppText>
-      <View style={{ gap: theme.spacing.lg }}>
-        {fields.map((item) => (
-          <Controller
-            key={item.name}
-            control={control}
-            name={item.name}
-            render={({
-              field: { ref, onBlur, onChange, value },
-              fieldState: { error },
-            }) => (
-              <AppInput
-                ref={ref}
-                label={item.label}
-                placeholder={item.placeholder}
-                autoCorrect={false}
-                autoCapitalize={item.name === "destination" ? "words" : "none"}
-                maxLength={item.name === "destination" ? 80 : 10}
-                error={error?.message}
-                helperText={
-                  item.name === "startDate" ? copy.dateHint : undefined
-                }
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                returnKeyType={item.name === "endDate" ? "done" : "next"}
-                onSubmitEditing={
-                  item.name === "endDate"
-                    ? submit
-                    : () =>
-                        setFocus(
-                          item.name === "destination" ? "startDate" : "endDate",
-                        )
-                }
-              />
-            )}
-          />
-        ))}
-      </View>
-      {errors.root ? (
-        <AppText accessibilityRole="alert" tone="error">
-          {errors.root.message}
-        </AppText>
-      ) : null}
-      <AppButton loading={isSubmitting} onPress={submit}>
-        {copy.saveDraft}
-      </AppButton>
     </>
   );
 }

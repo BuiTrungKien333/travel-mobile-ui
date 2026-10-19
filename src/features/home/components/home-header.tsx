@@ -1,4 +1,5 @@
 import { Image } from "expo-image";
+import { router } from "expo-router";
 import { Pressable, StyleSheet, View } from "react-native";
 
 import { GlassBackdrop } from "@/components/common/glass-backdrop";
@@ -13,13 +14,34 @@ const logoLeftInsetRatio = 307 / 2172;
 export function HomeHeader() {
   const theme = useAppTheme();
   const { copy } = useHomeCopy();
-  const openPanel = useTripPreview((state) => state.openPanel);
+  const { openPanel, closePanel } = useTripPreview((state) => ({
+    openPanel: state.openPanel,
+    closePanel: state.closePanel,
+  }));
+
+  const handlePressLogo = () => {
+    closePanel();
+    router.navigate("/tabs");
+  };
+
   return (
     <View style={[styles.row, { gap: theme.spacing.xs }]}>
-      <View style={styles.grow}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={copy.home}
+        onPress={handlePressLogo}
+        hitSlop={theme.spacing.xs}
+        style={({ pressed }) => [
+          styles.grow,
+          {
+            minHeight: theme.layout.touchTarget,
+            justifyContent: "center",
+            opacity: pressed ? theme.motion.pressOpacity : 1,
+          },
+        ]}
+      >
         <Image
-          accessible
-          accessibilityLabel="WeGo"
+          accessible={false}
           source={require("@/assets/images/logo.png")}
           contentFit="contain"
           cachePolicy="memory-disk"
@@ -30,7 +52,7 @@ export function HomeHeader() {
             maxWidth: "100%",
           }}
         />
-      </View>
+      </Pressable>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={copy.notifications}

@@ -64,7 +64,7 @@ export function TripsScreen() {
             {/* Header: WeGo Logo + Notification Bell */}
             <HomeHeader />
 
-            {/* Title: "Chuyến đi" */}
+            {/* Title: "Chuyến đi của bạn" */}
             <AppText
               accessibilityRole="header"
               variant="heading"
