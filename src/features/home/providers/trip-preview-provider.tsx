@@ -1,9 +1,12 @@
+// @refresh reset
+// Recreate the session fixture store when this module changes during UI development.
 import { createContext, useContext, useState, type ReactNode } from "react";
 import { useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import { createStore } from "zustand/vanilla";
 
 import { MOCK_TODAY, mockTrips, suggestedStops } from "../data/home-mocks";
+import { recentMemoriesPreview } from "../data/recent-memories-preview";
 import {
   captureSamples,
   initialVisited,
@@ -14,7 +17,15 @@ import type { HomeScenario, Memory, Trip } from "../types/home-types";
 import { dayDistance } from "../utils/select-home";
 
 type PreviewPanel =
-  | { kind: "scenarios" | "create" | "weather" | "sample" | "capture-start" }
+  | {
+      kind:
+        | "scenarios"
+        | "create"
+        | "weather"
+        | "sample"
+        | "capture-start"
+        | "notifications";
+    }
   | { kind: "plan"; tripId: string; dayIndex?: number }
   | { kind: "moment"; destination: string };
 export type JourneyPanel =
@@ -56,23 +67,31 @@ type PreviewState = {
 
 const PREVIEW_ENTRY_LIMIT = 20;
 
+function scenarioSnapshot(scenario: HomeScenario) {
+  return {
+    scenario,
+    trips: mockTrips[scenario],
+    memories:
+      scenario === "ongoing"
+        ? ongoingMemories
+        : scenario === "returning"
+          ? recentMemoriesPreview
+          : [],
+    visited: initialVisited(scenario),
+  };
+}
+
 function createPreviewStore() {
   let nextId = 0;
   return createStore<PreviewState>((set, get) => ({
-    scenario: "upcoming",
-    trips: mockTrips.upcoming,
-    memories: [],
-    visited: {},
+    ...scenarioSnapshot("returning"),
     today: MOCK_TODAY,
     panel: null,
     openPanel: (panel) => set({ panel }),
     closePanel: () => set({ panel: null }),
     changeScenario: (scenario) =>
       set({
-        scenario,
-        trips: mockTrips[scenario],
-        memories: scenario === "ongoing" ? ongoingMemories : [],
-        visited: initialVisited(scenario),
+        ...scenarioSnapshot(scenario),
         panel: null,
       }),
     createDraft: (values) => {

@@ -13,6 +13,7 @@ import { TripHero } from "../components/trip-hero";
 import { ExampleItineraryCard } from "../components/example-itinerary-card";
 import { TripCompletionCard } from "../components/trip-completion-card";
 import { FootprintCard } from "../components/footprint-card";
+import { TodayJournal } from "../components/ongoing-trip-components";
 import { TravelWeatherDashboard } from "../components/travel-weather-dashboard";
 import { useHomeCopy } from "../i18n/home-copy";
 import { useTripPreview } from "../providers/trip-preview-provider";
@@ -22,9 +23,10 @@ import { OngoingHomeScreen } from "./ongoing-home-screen";
 export function HomeScreen() {
   const theme = useAppTheme();
   const { copy } = useHomeCopy();
-  const { trips, today, openPanel } = useTripPreview((state) => ({
+  const { trips, today, memories, openPanel } = useTripPreview((state) => ({
     trips: state.trips,
     today: state.today,
+    memories: state.memories,
     openPanel: state.openPanel,
   }));
   const selection = selectHome(trips, today);
@@ -41,6 +43,13 @@ export function HomeScreen() {
   const emptyDayIndex =
     trip?.days.findIndex((day) => day.stops.length === 0) ?? -1;
   const hasHistory = trips.some((item) => isPastTrip(item, today));
+  const recentMemories = memories
+    .filter((memory) => memory.photo)
+    .sort(
+      (a, b) =>
+        (b.date ?? "").localeCompare(a.date ?? "") ||
+        (b.time ?? "").localeCompare(a.time ?? ""),
+    );
   const provinces = new Set(
     trips
       .filter((item) => isPastTrip(item, today))
@@ -78,13 +87,8 @@ export function HomeScreen() {
       </View>
       <EnterSection key={selection.kind} animated={false}>
         <View style={{ gap: theme.spacing.sm }}>
-          {selection.kind !== "upcoming" ? (
-            <SectionHeading
-              title={copy.yourTrip}
-              variant="eyebrow"
-              action={selection.kind === "new" ? undefined : copy.all}
-              onPress={() => router.push("/tabs/trips")}
-            />
+          {selection.kind === "new" ? (
+            <SectionHeading title={copy.yourTrip} variant="eyebrow" />
           ) : null}
           <TripHero selection={selection} />
         </View>
@@ -124,6 +128,13 @@ export function HomeScreen() {
             provinces={provinces}
             visitedPlaces={visitedPlaces}
             onPress={() => router.push("/tabs/memories")}
+          />
+        ) : null}
+        {selection.kind === "returning" ? (
+          <TodayJournal
+            variant="recent"
+            memories={recentMemories}
+            onOpen={() => router.push("/tabs/memories")}
           />
         ) : null}
         <View style={{ paddingTop: theme.spacing.sm }}>

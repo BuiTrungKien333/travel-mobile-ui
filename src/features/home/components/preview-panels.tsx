@@ -60,6 +60,7 @@ export function PreviewPanels() {
     plan: copy.plan,
     sample: copy.exampleTitle,
     "capture-start": copy.capture,
+    notifications: copy.notifications,
   };
   const trip =
     panel.kind === "plan"
@@ -151,6 +152,31 @@ export function PreviewPanels() {
             }}
           >
             {panel.kind === "scenarios" ? <ScenarioPicker /> : null}
+            {panel.kind === "notifications" ? (
+              <View
+                style={{
+                  alignItems: "center",
+                  gap: theme.spacing.md,
+                  paddingVertical: theme.spacing.xl,
+                }}
+              >
+                <View
+                  style={{
+                    padding: theme.spacing.lg,
+                    borderRadius: theme.radius.full,
+                    backgroundColor: theme.colors.surfaceTint,
+                  }}
+                >
+                  <AppIcon name="bell" size={theme.layout.iconLarge} />
+                </View>
+                <AppText variant="label" style={{ textAlign: "center" }}>
+                  {copy.noNotifications}
+                </AppText>
+                <AppText tone="muted" style={{ textAlign: "center" }}>
+                  {copy.noNotificationsHint}
+                </AppText>
+              </View>
+            ) : null}
             {panel.kind === "create" ? <CreateTripForm /> : null}
             {panel.kind === "sample" ? <SampleItineraryPanel /> : null}
             {panel.kind === "capture-start" ? (
@@ -188,9 +214,11 @@ export function PreviewPanels() {
             {panel.kind === "moment" ? (
               <MomentForm destination={panel.destination} />
             ) : null}
-            <AppText variant="caption" tone="muted">
-              {copy.sampleHint}
-            </AppText>
+            {panel.kind !== "notifications" ? (
+              <AppText variant="caption" tone="muted">
+                {copy.sampleHint}
+              </AppText>
+            ) : null}
           </ScrollView>
         </View>
       </KeyboardAvoidingView>

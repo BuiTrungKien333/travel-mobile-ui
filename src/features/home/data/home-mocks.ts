@@ -10,6 +10,7 @@ export const homeImages = {
   forest: require("@/assets/images/home/forest.jpg"),
   upcomingPhoto: require("@/assets/images/home/dalat-upcoming.jpg"),
   firstTripLandscape: require("@/assets/images/home/first-trip-landscape.svg"),
+  nextTripNavigation: require("@/assets/images/home/next-trip-navigation.png"),
   xuanHuongLake: require("@/assets/images/home/xuan-huong-lake.jpg"),
   lamVienSquare: require("@/assets/images/home/lam-vien-square.jpg"),
   lamDongMuseum: require("@/assets/images/home/lam-dong-museum.jpg"),
@@ -118,6 +119,18 @@ const dalat: Trip = {
     { date: "2026-10-27", stops: [] },
   ],
 };
+export const completedDalat: Trip = {
+  ...dalat,
+  id: "past-dalat",
+  status: "completed",
+  startDate: "2026-09-18",
+  endDate: "2026-09-20",
+  days: dalat.days.slice(0, 3).map((day, index) => ({
+    ...day,
+    date: `2026-09-${18 + index}`,
+  })),
+};
+
 export const mockTrips: Record<HomeScenario, Trip[]> = {
   new: [],
   upcoming: [
@@ -148,5 +161,5 @@ export const mockTrips: Record<HomeScenario, Trip[]> = {
       })),
     },
   ],
-  returning: [history],
+  returning: [history, completedDalat],
 };

@@ -196,7 +196,7 @@ export const lightColors: AppColorTokens = {
   onHeroMuted: palette.primary100,
   navigationSurface: "rgba(255, 255, 255, 0.80)",
   navigationIndicator: "rgba(33, 181, 195, 0.16)",
-  navigationActive: palette.primary800,
+  navigationActive: palette.primary700,
   navigationInactive: "#365F69",
   navigationShadow: "rgba(13, 72, 78, 0.12)",
   navigationCameraShadow: "rgba(13, 72, 78, 0.26)",

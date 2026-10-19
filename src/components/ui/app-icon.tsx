@@ -8,6 +8,7 @@ import { useAppTheme } from "@/hooks/use-app-theme";
 const symbols = {
   home: { ios: "house", android: "home", web: "home" },
   map: { ios: "map", android: "map", web: "map" },
+  compass: { ios: "safari", android: "explore", web: "explore" },
   trips: { ios: "suitcase.rolling", android: "luggage", web: "luggage" },
   memories: {
     ios: "photo.on.rectangle",
@@ -70,6 +71,7 @@ const symbols = {
   umbrella: { ios: "umbrella.fill", android: "umbrella", web: "umbrella" },
   camera: { ios: "camera", android: "photo_camera", web: "photo_camera" },
   tune: { ios: "slider.horizontal.3", android: "tune", web: "tune" },
+  bell: { ios: "bell", android: "notifications", web: "notifications" },
   sparkles: { ios: "sparkles", android: "auto_awesome", web: "auto_awesome" },
   clock: { ios: "clock", android: "schedule", web: "schedule" },
   flag: { ios: "flag", android: "flag", web: "flag" },
@@ -83,6 +85,10 @@ const symbols = {
 export type AppIconName = keyof typeof symbols;
 
 const navigationAssets = {
+  compass: {
+    outline: require("@/assets/icons/navigation/compass-outline.svg"),
+    solid: require("@/assets/icons/navigation/compass-solid.svg"),
+  },
   home: {
     outline: require("@/assets/icons/navigation/home-outline.svg"),
     solid: require("@/assets/icons/navigation/home-solid.svg"),
@@ -101,6 +107,9 @@ const navigationAssets = {
   },
 };
 const lightAssets = {
+  camera: require("@/assets/icons/navigation/camera-outline.svg"),
+  bell: require("@/assets/icons/navigation/header-bell.svg"),
+  person: require("@/assets/icons/navigation/header-person.svg"),
   back: require("@/assets/icons/photo/back.svg"),
   chevron: require("@/assets/icons/photo/next.svg"),
   share: require("@/assets/icons/photo/share.svg"),
@@ -112,6 +121,9 @@ const lightAssets = {
 };
 function isLightIcon(name: AppIconName): name is keyof typeof lightAssets {
   return (
+    name === "camera" ||
+    name === "bell" ||
+    name === "person" ||
     name === "back" ||
     name === "chevron" ||
     name === "share" ||
@@ -126,6 +138,7 @@ function isNavigationIcon(
   name: AppIconName,
 ): name is keyof typeof navigationAssets {
   return (
+    name === "compass" ||
     name === "home" ||
     name === "map" ||
     name === "memories" ||

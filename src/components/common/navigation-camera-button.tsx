@@ -123,6 +123,7 @@ export function NavigationCameraButton({
           />
           <AppIcon
             name="camera"
+            variant="light"
             size={theme.layout.iconLarge}
             color={theme.colors.onGradientAction}
           />

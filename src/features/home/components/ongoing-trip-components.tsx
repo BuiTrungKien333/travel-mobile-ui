@@ -339,10 +339,12 @@ export function TodayJournal({
   memories,
   onOpen,
   onCapture,
+  variant = "today",
 }: {
   memories: Memory[];
   onOpen: () => void;
-  onCapture: () => void;
+  onCapture?: () => void;
+  variant?: "today" | "recent";
 }) {
   const theme = useAppTheme();
   const { copy } = useOngoingCopy();
@@ -371,9 +373,12 @@ export function TodayJournal({
           variant="label"
           style={homeStyles.grow}
         >
-          {copy.journal}
+          {variant === "recent" ? copy.recentJournal : copy.journal}
         </AppText>
-        <TextAction label={copy.allJournal} onPress={onOpen} />
+        <TextAction
+          label={variant === "recent" ? copy.allMemories : copy.allJournal}
+          onPress={onOpen}
+        />
       </View>
       {memories.length ? (
         <View style={{ gap: theme.spacing.xs }}>
@@ -415,11 +420,21 @@ export function TodayJournal({
         </View>
       ) : (
         <JourneyCard>
-          <AppText variant="label">{copy.journalEmpty}</AppText>
-          <AppText variant="caption" tone="muted">
-            {copy.journalEmptyHint}
+          <AppText variant="label">
+            {variant === "recent" ? copy.recentEmpty : copy.journalEmpty}
           </AppText>
-          <TextAction label={copy.capture} icon="camera" onPress={onCapture} />
+          <AppText variant="caption" tone="muted">
+            {variant === "recent"
+              ? copy.recentEmptyHint
+              : copy.journalEmptyHint}
+          </AppText>
+          {onCapture ? (
+            <TextAction
+              label={copy.capture}
+              icon="camera"
+              onPress={onCapture}
+            />
+          ) : null}
         </JourneyCard>
       )}
       {selection ? (

@@ -38,13 +38,20 @@ export function FloatingBottomNavigation({
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const activeTab = state.index;
   const cameraSize = theme.layout.tabBarCameraSize;
-  const itemWidth = theme.layout.touchTarget;
+  const preferredCameraSlot =
+    cameraSize + theme.layout.tabBarCameraSideSpacing * 2;
+  // Keep room around the camera on small screens while preserving 44px touch targets.
+  const itemWidth =
+    rowWidth > 0 &&
+    rowWidth < preferredCameraSlot + theme.layout.touchTarget * 4
+      ? theme.layout.compactTouchTarget
+      : theme.layout.touchTarget;
   // Native layout clamps negative gaps to zero; keep indicator geometry in sync.
   const groupGap = Math.max(0, theme.layout.tabBarGroupGap);
   const groupWidth = itemWidth * 2 + groupGap;
   // Fixed-size pairs stay compact; only the central clearance adapts on narrow screens.
   const cameraSlotWidth = Math.min(
-    cameraSize + theme.layout.tabBarCameraSideSpacing * 2,
+    preferredCameraSlot,
     Math.max(0, rowWidth - groupWidth * 2),
   );
   const sideWidth = (rowWidth - cameraSlotWidth) / 2;

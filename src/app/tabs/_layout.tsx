@@ -28,7 +28,7 @@ function WorkspaceTabs() {
   const onCapture = useNavigationCapture();
   const tabs: { name: string; title: string; icon: AppIconName }[] = [
     { name: "index", title: copy.home, icon: "home" },
-    { name: "trips", title: copy.trips, icon: "map" },
+    { name: "trips", title: copy.trips, icon: "compass" },
     { name: "memories", title: copy.memories, icon: "memories" },
     { name: "profile", title: copy.profile, icon: "person" },
   ];

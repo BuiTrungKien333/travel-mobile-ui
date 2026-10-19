@@ -1,7 +1,7 @@
 import { Image } from "expo-image";
-import { router } from "expo-router";
 import { Pressable, StyleSheet, View } from "react-native";
 
+import { GlassBackdrop } from "@/components/common/glass-backdrop";
 import { AppIcon } from "@/components/ui/app-icon";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useHomeCopy } from "../i18n/home-copy";
@@ -15,7 +15,7 @@ export function HomeHeader() {
   const { copy } = useHomeCopy();
   const openPanel = useTripPreview((state) => state.openPanel);
   return (
-    <View style={[styles.row, { gap: theme.spacing.md }]}>
+    <View style={[styles.row, { gap: theme.spacing.xs }]}>
       <View style={styles.grow}>
         <Image
           accessible
@@ -33,35 +33,33 @@ export function HomeHeader() {
       </View>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={copy.preview}
-        onPress={() => openPanel({ kind: "scenarios" })}
+        accessibilityLabel={copy.notifications}
+        onPress={() => openPanel({ kind: "notifications" })}
+        hitSlop={theme.spacing.xs}
         style={({ pressed }) => [
           styles.control,
           {
-            minWidth: theme.layout.touchTarget,
-            minHeight: theme.layout.touchTarget,
-            opacity: pressed ? theme.motion.pressOpacity : 1,
-          },
-        ]}
-      >
-        <AppIcon name="tune" />
-      </Pressable>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={copy.profile}
-        onPress={() => router.push("/tabs/profile")}
-        style={({ pressed }) => [
-          styles.control,
-          {
-            minWidth: theme.layout.touchTarget,
-            minHeight: theme.layout.touchTarget,
+            minWidth: theme.layout.compactTouchTarget,
+            minHeight: theme.layout.compactTouchTarget,
             borderRadius: theme.radius.full,
-            backgroundColor: theme.colors.surfaceTint,
+            backgroundColor: theme.colors.glassGlow,
+            boxShadow: [
+              { ...theme.elevation.glass, color: theme.colors.glassShadow },
+              {
+                ...theme.elevation.raisedActionHighlight,
+                color: theme.colors.glassInset,
+              },
+            ],
             opacity: pressed ? theme.motion.pressOpacity : 1,
           },
         ]}
       >
-        <AppIcon name="person" size={theme.layout.iconLarge} />
+        <GlassBackdrop borderRadius={theme.radius.full} />
+        <AppIcon
+          name="bell"
+          variant="light"
+          size={theme.layout.headerActionIconSize}
+        />
       </Pressable>
     </View>
   );

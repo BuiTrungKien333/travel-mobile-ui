@@ -11,9 +11,15 @@ import { useUpcomingCardMotion } from "../hooks/use-upcoming-card-motion";
 import { useHomeCopy } from "../i18n/home-copy";
 import { useTripPreview } from "../providers/trip-preview-provider";
 
-export function FirstTripCard() {
+/** One visual language for starting a first trip or planning the next one. */
+export function JourneyInvitationCard({
+  variant,
+}: {
+  variant: "new" | "returning";
+}) {
   const theme = useAppTheme();
   const { copy } = useHomeCopy();
+  const returning = variant === "returning";
   const openPanel = useTripPreview((state) => state.openPanel);
   const progress = useUpcomingCardMotion();
   const drift = theme.spacing.xs;
@@ -61,29 +67,49 @@ export function FirstTripCard() {
         style={[
           styles.iconFrame,
           {
-            width: theme.layout.firstTripIconFrameSize,
-            height: theme.layout.firstTripIconFrameSize,
-            backgroundColor: theme.colors.surface,
+            width: returning
+              ? theme.layout.nextTripIconSize
+              : theme.layout.firstTripIconFrameSize,
+            height: returning
+              ? theme.layout.nextTripIconSize
+              : theme.layout.firstTripIconFrameSize,
+            backgroundColor: returning ? undefined : theme.colors.surface,
             borderRadius: theme.radius.xl,
           },
         ]}
       >
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            styles.iconShadow,
-            {
-              width: theme.spacing.xl,
-              height: theme.spacing.xs,
-              bottom: theme.spacing.sm,
-              borderRadius: theme.radius.full,
-              backgroundColor: theme.colors.glassShadow,
-            },
-            shadowStyle,
-          ]}
-        />
+        {!returning ? (
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.iconShadow,
+              {
+                width: theme.spacing.xl,
+                height: theme.spacing.xs,
+                bottom: theme.spacing.sm,
+                borderRadius: theme.radius.full,
+                backgroundColor: theme.colors.glassShadow,
+              },
+              shadowStyle,
+            ]}
+          />
+        ) : null}
         <Animated.View style={iconStyle}>
-          <AppIcon name="pin" size={theme.layout.iconLarge} />
+          {returning ? (
+            <Image
+              accessible={false}
+              source={homeImages.nextTripNavigation}
+              contentFit="contain"
+              cachePolicy="memory-disk"
+              transition={0}
+              style={{
+                width: theme.layout.nextTripIconSize,
+                height: theme.layout.nextTripIconSize,
+              }}
+            />
+          ) : (
+            <AppIcon name="pin" size={theme.layout.iconLarge} />
+          )}
         </Animated.View>
       </View>
       <View style={{ gap: theme.spacing.sm }}>
@@ -98,12 +124,14 @@ export function FirstTripCard() {
             },
           ]}
         >
-          {copy.newTitle}
+          {returning ? copy.returningTitle : copy.newTitle}
         </AppText>
         <View style={{ gap: theme.spacing.xs }}>
-          <AppText style={styles.centeredText}>{copy.newHint}</AppText>
+          {!returning ? (
+            <AppText style={styles.centeredText}>{copy.newHint}</AppText>
+          ) : null}
           <AppText variant="caption" tone="muted" style={styles.centeredText}>
-            {copy.newDetail}
+            {returning ? copy.returningDetail : copy.newDetail}
           </AppText>
         </View>
       </View>
@@ -119,7 +147,7 @@ export function FirstTripCard() {
             />
           }
         >
-          {copy.create}
+          {returning ? copy.createNew : copy.create}
         </AppButton>
       </View>
     </View>
