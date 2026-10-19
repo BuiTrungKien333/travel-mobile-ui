@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Image } from "expo-image";
+import { Link } from "expo-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
@@ -10,6 +11,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  useWindowDimensions,
   View,
 } from "react-native";
 import {
@@ -34,6 +36,7 @@ import { AppIcon } from "@/components/ui/app-icon";
 import { AppInput } from "@/components/ui/app-input";
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
+import { journalPhotoCredits } from "../data/ongoing-preview";
 import { useOngoingCopy } from "../i18n/ongoing-copy";
 import { formatForecastDate } from "../i18n/weather-copy";
 import {
@@ -75,7 +78,12 @@ export function OngoingTripPanels({ panel }: { panel: JourneyPanel }) {
     return <CaptureMomentPreview panel={panel} trip={trip} />;
   if (panel.kind === "current-weather")
     return (
-      <JourneySheet title={copy.weatherNow} onClose={closePanel} glass>
+      <JourneySheet
+        title={copy.weatherNow}
+        onClose={closePanel}
+        glass
+        hideHeader
+      >
         <OngoingWeatherDetails
           tripId={trip.id}
           today={today}
@@ -278,6 +286,18 @@ export function OngoingTripPanels({ panel }: { panel: JourneyPanel }) {
           <AppText variant="caption" tone="muted">
             {copy.savedInSession}
           </AppText>
+          <View style={{ gap: theme.spacing.xs }}>
+            <AppText variant="caption" tone="muted">
+              {copy.photoCredit}
+            </AppText>
+            {journalPhotoCredits.map((credit) => (
+              <AppText key={credit.source} variant="caption" tone="muted">
+                <Link href={credit.source}>{credit.author}</Link>
+                {" · "}
+                <Link href={credit.licenseUrl}>{credit.license}</Link>
+              </AppText>
+            ))}
+          </View>
         </>
       )}
     </JourneySheet>
@@ -361,15 +381,18 @@ function JourneySheet({
   onClose,
   children,
   glass = false,
+  hideHeader = false,
 }: {
   title: string;
   onClose: () => void;
   children: ReactNode;
   glass?: boolean;
+  hideHeader?: boolean;
 }) {
   const theme = useAppTheme();
   const { copy } = useOngoingCopy();
   const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
   const reduceMotion = useReducedMotion();
   const translateY = useSharedValue(0);
   const dismissDistance = theme.layout.sheetDismissDistance;
@@ -437,16 +460,25 @@ function JourneySheet({
           <Animated.View
             accessibilityViewIsModal
             onAccessibilityEscape={onClose}
+            accessibilityActions={
+              hideHeader ? [{ name: "escape", label: copy.close }] : undefined
+            }
+            onAccessibilityAction={(event) => {
+              if (event.nativeEvent.actionName === "escape") onClose();
+            }}
             style={[
               styles.sheet,
               sheetMotion,
               {
                 maxWidth: theme.layout.contentMaxWidth,
+                height: glass
+                  ? windowHeight * theme.layout.weatherSheetHeightRatio
+                  : undefined,
                 backgroundColor: glass
-                  ? theme.colors.packingSurface
+                  ? theme.colors.weatherGlassSurface
                   : theme.colors.background,
-                borderTopLeftRadius: glass ? theme.radius.lg : theme.radius.xl,
-                borderTopRightRadius: glass ? theme.radius.lg : theme.radius.xl,
+                borderTopLeftRadius: theme.radius.xl,
+                borderTopRightRadius: theme.radius.xl,
                 borderWidth: glass ? StyleSheet.hairlineWidth : 0,
                 borderColor: theme.colors.glassClockBorder,
                 boxShadow: glass
@@ -464,65 +496,76 @@ function JourneySheet({
             <GestureDetector gesture={dragGesture}>
               <View collapsable={false}>
                 {glass ? (
-                  <View
-                    pointerEvents="none"
-                    aria-hidden
-                    style={{
-                      alignSelf: "center",
-                      width: theme.layout.sheetDragHandleWidth,
-                      height: theme.layout.sheetDragHandleHeight,
-                      borderRadius: theme.radius.full,
-                      backgroundColor: theme.colors.textDisabled,
-                      marginTop: theme.spacing.sm,
-                      marginBottom: theme.spacing.xs,
-                    }}
-                  />
-                ) : null}
-                <View
-                  style={[
-                    homeStyles.row,
-                    {
-                      gap: theme.spacing.sm,
-                      paddingHorizontal: theme.spacing.lg,
-                      paddingTop: theme.spacing.sm,
-                    },
-                  ]}
-                >
-                  <AppText
-                    accessibilityRole="header"
-                    variant="label"
-                    style={[
-                      homeStyles.grow,
-                      glass
-                        ? {
-                            fontSize: theme.typography.fontSize.lg,
-                            lineHeight: theme.typography.lineHeight.lg,
-                          }
-                        : null,
-                    ]}
-                  >
-                    {title}
-                  </AppText>
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel={copy.close}
+                    accessibilityHint={copy.weatherDismissHint}
                     onPress={onClose}
-                    style={({ pressed }) => [
-                      styles.center,
+                    style={({ pressed }) => ({
+                      alignItems: "center",
+                      justifyContent: "center",
+                      minHeight: theme.layout.compactTouchTarget,
+                      opacity: pressed ? theme.motion.pressOpacity : 1,
+                    })}
+                  >
+                    <View
+                      aria-hidden
+                      style={{
+                        width: theme.layout.sheetDragHandleWidth,
+                        height: theme.layout.sheetDragHandleHeight,
+                        borderRadius: theme.radius.full,
+                        backgroundColor: theme.colors.textDisabled,
+                      }}
+                    />
+                  </Pressable>
+                ) : null}
+                {!hideHeader ? (
+                  <View
+                    style={[
+                      homeStyles.row,
                       {
-                        width: theme.layout.touchTarget,
-                        height: theme.layout.touchTarget,
-                        borderRadius: theme.radius.md,
-                        backgroundColor: glass
-                          ? theme.colors.glassInset
-                          : undefined,
-                        opacity: pressed ? theme.motion.pressOpacity : 1,
+                        gap: theme.spacing.sm,
+                        paddingHorizontal: theme.spacing.lg,
+                        paddingTop: theme.spacing.sm,
                       },
                     ]}
                   >
-                    <AppIcon name="close" />
-                  </Pressable>
-                </View>
+                    <AppText
+                      accessibilityRole="header"
+                      variant="label"
+                      style={[
+                        homeStyles.grow,
+                        glass
+                          ? {
+                              fontSize: theme.typography.fontSize.lg,
+                              lineHeight: theme.typography.lineHeight.lg,
+                            }
+                          : null,
+                      ]}
+                    >
+                      {title}
+                    </AppText>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={copy.close}
+                      onPress={onClose}
+                      style={({ pressed }) => [
+                        styles.center,
+                        {
+                          width: theme.layout.touchTarget,
+                          height: theme.layout.touchTarget,
+                          borderRadius: theme.radius.md,
+                          backgroundColor: glass
+                            ? theme.colors.glassInset
+                            : undefined,
+                          opacity: pressed ? theme.motion.pressOpacity : 1,
+                        },
+                      ]}
+                    >
+                      <AppIcon name="close" />
+                    </Pressable>
+                  </View>
+                ) : null}
               </View>
             </GestureDetector>
             <ScrollView
@@ -531,9 +574,10 @@ function JourneySheet({
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{
                 paddingHorizontal: theme.spacing.lg,
-                paddingTop: theme.spacing.sm,
-                paddingBottom: insets.bottom + theme.spacing.lg,
-                gap: theme.spacing.lg,
+                paddingTop: glass ? theme.spacing.none : theme.spacing.sm,
+                paddingBottom:
+                  insets.bottom + (glass ? theme.spacing.md : theme.spacing.lg),
+                gap: glass ? theme.spacing.sm : theme.spacing.lg,
               }}
             >
               {children}

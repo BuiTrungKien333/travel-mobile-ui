@@ -51,6 +51,51 @@ export const ongoingMemories: Memory[] = [
     text: "",
   },
   {
+    id: "ongoing-album-square",
+    tripId: "dalat-ongoing",
+    destination: "Đà Lạt",
+    date: "2026-10-21",
+    photo: homeImages.lamVienSquare,
+    place: { vi: "Quảng trường Lâm Viên", en: "Lam Vien Square" },
+    text: "",
+  },
+  {
+    id: "ongoing-album-waterfall",
+    tripId: "dalat-ongoing",
+    destination: "Đà Lạt",
+    date: "2026-10-21",
+    photo: homeImages.datanlaWaterfall,
+    place: { vi: "Thác Datanla", en: "Datanla Waterfall" },
+    text: "",
+  },
+  {
+    id: "ongoing-album-station",
+    tripId: "dalat-ongoing",
+    destination: "Đà Lạt",
+    date: "2026-10-21",
+    photo: homeImages.dalatStation,
+    place: { vi: "Ga Đà Lạt", en: "Da Lat Railway Station" },
+    text: "",
+  },
+  {
+    id: "ongoing-album-flowers",
+    tripId: "dalat-ongoing",
+    destination: "Đà Lạt",
+    date: "2026-10-21",
+    photo: homeImages.dalatFlowerGarden,
+    place: { vi: "Vườn hoa Đà Lạt", en: "Da Lat Flower Garden" },
+    text: "",
+  },
+  {
+    id: "ongoing-album-museum",
+    tripId: "dalat-ongoing",
+    destination: "Đà Lạt",
+    date: "2026-10-21",
+    photo: homeImages.lamDongMuseum,
+    place: { vi: "Bảo tàng Lâm Đồng", en: "Lam Dong Museum" },
+    text: "",
+  },
+  {
     id: "ongoing-square",
     tripId: "dalat-ongoing",
     destination: "Đà Lạt",
@@ -61,6 +106,29 @@ export const ongoingMemories: Memory[] = [
     text: "",
   },
 ];
+
+export const journalPhotoCredits = [
+  ...samplePhotoCredits,
+  {
+    author: "P. Hughes",
+    source:
+      "https://commons.wikimedia.org/wiki/File:Da_Lat_-_Train_Station.jpg",
+    license: "CC BY 4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
+  },
+  {
+    author: "Du Tran",
+    source: "https://commons.wikimedia.org/wiki/File:Datanla_Waterfall.jpg",
+    license: "CC BY 2.0",
+    licenseUrl: "https://creativecommons.org/licenses/by/2.0/",
+  },
+  {
+    author: "hector garcia",
+    source: "https://commons.wikimedia.org/wiki/File:Da_Lat_Flower_Park_1.jpg",
+    license: "CC BY-SA 2.0",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/2.0/",
+  },
+] as const;
 
 export function initialVisited(scenario: string): Record<string, string[]> {
   return scenario === "ongoing" ? { "dalat-ongoing:2026-10-21": ["lake"] } : {};

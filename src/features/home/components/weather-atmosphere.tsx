@@ -15,7 +15,7 @@ export function WeatherAtmosphere() {
         <radialGradient id="lavender"><stop stop-color="${colors.weatherAuroraLavender}" stop-opacity=".6"/><stop offset="1" stop-color="${colors.weatherAuroraLavender}" stop-opacity="0"/></radialGradient>
         <radialGradient id="amber"><stop stop-color="${colors.weatherTemperatureWarm}" stop-opacity=".22"/><stop offset="1" stop-color="${colors.weatherTemperatureWarm}" stop-opacity="0"/></radialGradient>
       </defs>
-      <rect width="400" height="600" fill="${colors.background}" fill-opacity=".8"/>
+      <rect width="400" height="600" fill="${colors.background}" fill-opacity=".55"/>
       <ellipse cx="30" cy="170" rx="300" ry="230" fill="url(#mint)"/>
       <ellipse cx="380" cy="20" rx="270" ry="340" fill="url(#lavender)"/>
       <ellipse cx="330" cy="580" rx="300" ry="230" fill="url(#amber)"/>
@@ -30,7 +30,7 @@ export function WeatherAtmosphere() {
         contentFit="fill"
         cachePolicy="memory"
       />
-      <TripGlassBackdrop borderRadius={theme.radius.lg} variant="clock" />
+      <TripGlassBackdrop borderRadius={theme.radius.xl} variant="weather" />
     </View>
   );
 }

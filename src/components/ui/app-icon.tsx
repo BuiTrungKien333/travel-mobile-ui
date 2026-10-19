@@ -47,6 +47,18 @@ const symbols = {
   },
   plus: { ios: "plus", android: "add", web: "add" },
   close: { ios: "xmark", android: "close", web: "close" },
+  back: { ios: "chevron.left", android: "arrow_back", web: "arrow_back" },
+  share: { ios: "square.and.arrow.up", android: "share", web: "share" },
+  download: { ios: "arrow.down.to.line", android: "download", web: "download" },
+  trash: { ios: "trash", android: "delete_outline", web: "delete_outline" },
+  heart: { ios: "heart", android: "favorite_border", web: "favorite_border" },
+  heartFilled: { ios: "heart.fill", android: "favorite", web: "favorite" },
+  info: { ios: "info.circle", android: "info", web: "info" },
+  expand: {
+    ios: "arrow.up.left.and.arrow.down.right",
+    android: "open_in_full",
+    web: "open_in_full",
+  },
   check: {
     ios: "checkmark.circle.fill",
     android: "check_circle",
@@ -88,6 +100,28 @@ const navigationAssets = {
     solid: require("@/assets/icons/navigation/person-solid.svg"),
   },
 };
+const lightAssets = {
+  back: require("@/assets/icons/photo/back.svg"),
+  chevron: require("@/assets/icons/photo/next.svg"),
+  share: require("@/assets/icons/photo/share.svg"),
+  download: require("@/assets/icons/photo/download.svg"),
+  trash: require("@/assets/icons/photo/trash.svg"),
+  heart: require("@/assets/icons/photo/heart.svg"),
+  heartFilled: require("@/assets/icons/photo/heart-filled.svg"),
+  info: require("@/assets/icons/photo/info.svg"),
+};
+function isLightIcon(name: AppIconName): name is keyof typeof lightAssets {
+  return (
+    name === "back" ||
+    name === "chevron" ||
+    name === "share" ||
+    name === "download" ||
+    name === "trash" ||
+    name === "heart" ||
+    name === "heartFilled" ||
+    name === "info"
+  );
+}
 function isNavigationIcon(
   name: AppIconName,
 ): name is keyof typeof navigationAssets {
@@ -109,7 +143,7 @@ export function AppIcon({
   name: AppIconName;
   color?: ComponentProps<typeof SymbolView>["tintColor"];
   size?: number;
-  variant?: "outline" | "solid";
+  variant?: "outline" | "solid" | "light";
 }) {
   const theme = useAppTheme();
   return (
@@ -119,7 +153,21 @@ export function AppIcon({
       importantForAccessibility="no-hide-descendants"
       style={styles.decorative}
     >
-      {variant && isNavigationIcon(name) ? (
+      {variant === "light" && isLightIcon(name) ? (
+        <Image
+          accessible={false}
+          source={lightAssets[name]}
+          tintColor={
+            typeof color === "string" ? color : theme.colors.primaryText
+          }
+          contentFit="contain"
+          cachePolicy="memory"
+          style={{
+            width: size ?? theme.layout.iconMedium,
+            height: size ?? theme.layout.iconMedium,
+          }}
+        />
+      ) : variant && variant !== "light" && isNavigationIcon(name) ? (
         <Image
           accessible={false}
           source={navigationAssets[name][variant]}

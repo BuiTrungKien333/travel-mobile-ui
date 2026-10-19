@@ -116,6 +116,29 @@ export type AppColorTokens = {
   weatherAmberGlass: string;
   weatherAmberBorder: string;
   weatherUmbrellaAccent: string;
+  weatherGlassSurface: string;
+  weatherGlassFallback: string;
+  weatherGlassTint: string;
+  weatherRainText: string;
+  weatherRainSurface: string;
+  journalFrameSurface: string;
+  journalFrameBorder: string;
+  journalFrameHighlight: string;
+  journalFrameShadow: string;
+  photoViewerBackdrop: string;
+  photoViewerControls: string;
+  photoViewerText: string;
+  photoViewerMuted: string;
+  photoViewerDanger: string;
+  photoViewerBar: string;
+  photoViewerButton: string;
+  photoGlassSurface: string;
+  photoGlassFallback: string;
+  photoGlassTint: string;
+  photoGlassBorder: string;
+  photoControlText: string;
+  photoControlMuted: string;
+  photoControlDanger: string;
   raisedActionSurface: string;
   raisedActionPressed: string;
   raisedActionBorder: string;
@@ -213,6 +236,29 @@ export const lightColors: AppColorTokens = {
   weatherAmberGlass: "rgba(245, 158, 11, 0.10)",
   weatherAmberBorder: "rgba(245, 158, 11, 0.30)",
   weatherUmbrellaAccent: "#C87520",
+  weatherGlassSurface: "rgba(255, 255, 255, 0.30)",
+  weatherGlassFallback: "rgba(255, 255, 255, 0.42)",
+  weatherGlassTint: "rgba(255, 255, 255, 0.10)",
+  weatherRainText: "#21689B",
+  weatherRainSurface: "rgba(77, 159, 220, 0.12)",
+  journalFrameSurface: "#E5D3B8",
+  journalFrameBorder: "#D6C3A7",
+  journalFrameHighlight: "#FAF3E8",
+  journalFrameShadow: "rgba(105, 78, 44, 0.18)",
+  photoViewerBackdrop: "#000000",
+  photoViewerControls: "rgba(16, 24, 30, 0.76)",
+  photoViewerText: "#FFFFFF",
+  photoViewerMuted: "#D5E2E6",
+  photoViewerDanger: "#FFAAA2",
+  photoViewerBar: "rgba(0, 0, 0, 0.78)",
+  photoViewerButton: "rgba(20, 20, 20, 0.64)",
+  photoGlassSurface: "rgba(233, 247, 246, 0.84)",
+  photoGlassFallback: "rgba(233, 247, 246, 0.94)",
+  photoGlassTint: "rgba(214, 239, 239, 0.78)",
+  photoGlassBorder: "rgba(255, 255, 255, 0.82)",
+  photoControlText: "#163F49",
+  photoControlMuted: "#4F6B73",
+  photoControlDanger: "#9B444B",
   raisedActionSurface: palette.primary500,
   raisedActionPressed: palette.primary600,
   raisedActionBorder: palette.primary600,
@@ -307,6 +353,29 @@ export const darkColors: AppColorTokens = {
   weatherAmberGlass: "rgba(245, 158, 11, 0.12)",
   weatherAmberBorder: "rgba(251, 191, 36, 0.30)",
   weatherUmbrellaAccent: "#F3C48B",
+  weatherGlassSurface: "rgba(16, 32, 36, 0.38)",
+  weatherGlassFallback: "rgba(16, 32, 36, 0.66)",
+  weatherGlassTint: "rgba(16, 32, 36, 0.12)",
+  weatherRainText: "#9ACDF0",
+  weatherRainSurface: "rgba(77, 159, 220, 0.16)",
+  journalFrameSurface: "#5C4D39",
+  journalFrameBorder: "#827055",
+  journalFrameHighlight: "#A28B69",
+  journalFrameShadow: "rgba(0, 0, 0, 0.24)",
+  photoViewerBackdrop: "#000000",
+  photoViewerControls: "rgba(16, 24, 30, 0.76)",
+  photoViewerText: "#FFFFFF",
+  photoViewerMuted: "#D5E2E6",
+  photoViewerDanger: "#FFAAA2",
+  photoViewerBar: "rgba(0, 0, 0, 0.78)",
+  photoViewerButton: "rgba(20, 20, 20, 0.64)",
+  photoGlassSurface: "rgba(233, 247, 246, 0.84)",
+  photoGlassFallback: "rgba(233, 247, 246, 0.94)",
+  photoGlassTint: "rgba(214, 239, 239, 0.78)",
+  photoGlassBorder: "rgba(255, 255, 255, 0.82)",
+  photoControlText: "#163F49",
+  photoControlMuted: "#4F6B73",
+  photoControlDanger: "#9B444B",
   raisedActionSurface: palette.primary600,
   raisedActionPressed: palette.primary700,
   raisedActionBorder: palette.primary700,

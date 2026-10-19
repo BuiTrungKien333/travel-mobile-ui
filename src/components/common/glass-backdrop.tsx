@@ -13,32 +13,44 @@ export function GlassBackdrop({
   variant = "default",
 }: {
   borderRadius: number;
-  variant?: "default" | "clock" | "navigation";
+  variant?: "default" | "clock" | "navigation" | "weather" | "photo";
 }) {
   const theme = useAppTheme();
   const nativeGlass = isLiquidGlassAvailable() && isGlassEffectAPIAvailable();
   const navigation = variant === "navigation";
   const clock = variant === "clock";
-  const tint = navigation
-    ? theme.colors.navigationTint
-    : clock
-      ? theme.colors.glassClockTint
-      : theme.colors.glassTint;
-  const fallback = navigation
-    ? theme.colors.navigationFallback
-    : clock
-      ? theme.colors.glassClockFallback
-      : theme.colors.glassFallback;
+  const weather = variant === "weather";
+  const photo = variant === "photo";
+  const tint = photo
+    ? theme.colors.photoGlassTint
+    : navigation
+      ? theme.colors.navigationTint
+      : weather
+        ? theme.colors.weatherGlassTint
+        : clock
+          ? theme.colors.glassClockTint
+          : theme.colors.glassTint;
+  const fallback = photo
+    ? theme.colors.photoGlassFallback
+    : navigation
+      ? theme.colors.navigationFallback
+      : weather
+        ? theme.colors.weatherGlassFallback
+        : clock
+          ? theme.colors.glassClockFallback
+          : theme.colors.glassFallback;
   const style = [
     StyleSheet.absoluteFill,
     {
       borderRadius,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: navigation
-        ? theme.colors.navigationBorder
-        : clock
-          ? theme.colors.glassClockBorder
-          : theme.colors.glassBorder,
+      borderColor: photo
+        ? theme.colors.photoGlassBorder
+        : navigation
+          ? theme.colors.navigationBorder
+          : clock || weather
+            ? theme.colors.glassClockBorder
+            : theme.colors.glassBorder,
     },
   ];
 
@@ -46,7 +58,7 @@ export function GlassBackdrop({
     <GlassView
       accessible={false}
       pointerEvents="none"
-      glassEffectStyle={clock || navigation ? "clear" : "regular"}
+      glassEffectStyle={clock || navigation || weather ? "clear" : "regular"}
       colorScheme={theme.dark ? "dark" : "light"}
       tintColor={tint}
       style={style}

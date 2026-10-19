@@ -5,30 +5,44 @@ export function GlassBackdrop({
   variant = "default",
 }: {
   borderRadius: number;
-  variant?: "default" | "clock" | "navigation";
+  variant?: "default" | "clock" | "navigation" | "weather" | "photo";
 }) {
   const theme = useAppTheme();
   const navigation = variant === "navigation";
   const clock = variant === "clock";
-  const blur = navigation
-    ? theme.glass.navigationBlurRadius
+  const weather = variant === "weather";
+  const photo = variant === "photo";
+  const blur = photo
+    ? theme.glass.photoBlurRadius
+    : navigation
+      ? theme.glass.navigationBlurRadius
+      : weather
+        ? theme.glass.weatherBlurRadius
+        : clock
+          ? theme.glass.clockBlurRadius
+          : theme.glass.blurRadius;
+  const saturation = weather
+    ? theme.glass.weatherSaturation
     : clock
-      ? theme.glass.clockBlurRadius
-      : theme.glass.blurRadius;
-  const saturation = clock
-    ? theme.glass.clockSaturation
-    : theme.glass.saturation;
+      ? theme.glass.clockSaturation
+      : theme.glass.saturation;
   const filter = `blur(${blur}px) saturate(${saturation})`;
-  const surface = navigation
-    ? theme.colors.navigationSurface
-    : variant === "clock"
-      ? theme.colors.glassClockSurface
-      : theme.colors.glassSurface;
-  const border = navigation
-    ? theme.colors.navigationBorder
-    : clock
-      ? theme.colors.glassClockBorder
-      : theme.colors.glassBorder;
+  const surface = photo
+    ? theme.colors.photoGlassSurface
+    : navigation
+      ? theme.colors.navigationSurface
+      : weather
+        ? theme.colors.weatherGlassSurface
+        : clock
+          ? theme.colors.glassClockSurface
+          : theme.colors.glassSurface;
+  const border = photo
+    ? theme.colors.photoGlassBorder
+    : navigation
+      ? theme.colors.navigationBorder
+      : clock || weather
+        ? theme.colors.glassClockBorder
+        : theme.colors.glassBorder;
 
   return (
     <div

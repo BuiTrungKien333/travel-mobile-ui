@@ -51,6 +51,7 @@ type PreviewState = {
     photoId: CapturePhotoId;
   }) => Memory | null;
   updateMemoryNote: (id: string, text: string) => void;
+  removeMemory: (id: string) => void;
 };
 
 const PREVIEW_ENTRY_LIMIT = 20;
@@ -179,6 +180,10 @@ function createPreviewStore() {
         memories: state.memories.map((memory) =>
           memory.id === id ? { ...memory, text } : memory,
         ),
+      })),
+    removeMemory: (id) =>
+      set((state) => ({
+        memories: state.memories.filter((memory) => memory.id !== id),
       })),
   }));
 }

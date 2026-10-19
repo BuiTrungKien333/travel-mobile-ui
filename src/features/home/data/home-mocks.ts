@@ -13,6 +13,9 @@ export const homeImages = {
   xuanHuongLake: require("@/assets/images/home/xuan-huong-lake.jpg"),
   lamVienSquare: require("@/assets/images/home/lam-vien-square.jpg"),
   lamDongMuseum: require("@/assets/images/home/lam-dong-museum.jpg"),
+  dalatStation: require("@/assets/images/home/dalat-station.jpg"),
+  datanlaWaterfall: require("@/assets/images/home/datanla-waterfall.jpg"),
+  dalatFlowerGarden: require("@/assets/images/home/dalat-flower-garden.jpg"),
   rainCloud: require("@/assets/icons/weather/rain-cloud.svg"),
   glassSun: require("@/assets/icons/weather/glass-sun.svg"),
 };

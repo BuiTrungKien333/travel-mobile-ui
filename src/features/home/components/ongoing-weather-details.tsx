@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import Animated, { useAnimatedStyle } from "react-native-reanimated";
 
 import { AppIcon } from "@/components/ui/app-icon";
@@ -7,7 +7,6 @@ import { useAppTheme } from "@/hooks/use-app-theme";
 import { useAmbientMotion } from "@/hooks/use-ambient-motion";
 import { ongoingWeatherSnapshot } from "../data/ongoing-preview";
 import { useOngoingCopy } from "../i18n/ongoing-copy";
-import { formatForecastDate } from "../i18n/weather-copy";
 import { homeStyles } from "./home-primitives";
 import { TravelWeatherArt } from "./travel-weather-art";
 import { TripGlassBackdrop } from "./trip-glass-backdrop";
@@ -23,7 +22,7 @@ export function OngoingWeatherDetails({
 }) {
   const theme = useAppTheme();
   const { colors, spacing, radius, typography, layout } = theme;
-  const { copy, locale } = useOngoingCopy();
+  const { copy } = useOngoingCopy();
   const progress = useAmbientMotion();
   const tilt = theme.motion.firstTripIconTilt;
   const umbrellaMotion = useAnimatedStyle(() => ({
@@ -39,14 +38,10 @@ export function OngoingWeatherDetails({
   if (!weather)
     return <AppText tone="muted">{copy.weatherUnavailable}</AppText>;
 
-  const rainWindow = copy.weatherRainWindow
+  const rainWindow = copy.weatherRainCompact
     .replace("{chance}", String(weather.rainChance))
     .replace("{from}", weather.rainStartsAt)
     .replace("{to}", weather.rainEndsAt);
-  const advice = copy.weatherCompanionAdvice.replace(
-    "{place}",
-    weather.indoorAlternative[locale],
-  );
 
   return (
     <>
@@ -54,10 +49,10 @@ export function OngoingWeatherDetails({
         style={[
           styles.card,
           {
-            padding: spacing.lg,
-            gap: spacing.md,
-            borderRadius: radius.md,
-            backgroundColor: colors.glassInset,
+            padding: spacing.md,
+            gap: spacing.xs,
+            borderRadius: radius.lg,
+            backgroundColor: colors.weatherGlassSurface,
             borderWidth: StyleSheet.hairlineWidth,
             borderColor: colors.glassClockBorder,
             boxShadow: [
@@ -70,15 +65,7 @@ export function OngoingWeatherDetails({
           },
         ]}
       >
-        <TripGlassBackdrop borderRadius={radius.md} variant="clock" />
-        <View style={[homeStyles.row, { gap: spacing.sm, flexWrap: "wrap" }]}>
-          <AppText variant="caption" tone="muted" style={homeStyles.grow}>
-            {copy.weatherSnapshot} · {weather.observedAt}
-          </AppText>
-          <AppText variant="caption" tone="muted">
-            {formatForecastDate(weather.date, locale)}
-          </AppText>
-        </View>
+        <TripGlassBackdrop borderRadius={radius.lg} variant="weather" />
         <View style={[homeStyles.row, { gap: spacing.md }]}>
           <View
             style={{
@@ -117,8 +104,8 @@ export function OngoingWeatherDetails({
               accessibilityLabel={`${weather.temperature}°C`}
               style={{
                 fontFamily: typography.fontFamily.medium,
-                fontSize: typography.fontSize.weatherDisplay,
-                lineHeight: typography.lineHeight.weatherDisplay,
+                fontSize: typography.fontSize.display,
+                lineHeight: typography.lineHeight.display,
               }}
             >
               {weather.temperature}°
@@ -133,14 +120,12 @@ export function OngoingWeatherDetails({
         </View>
       </View>
 
-      <View style={{ gap: spacing.sm }}>
+      <View style={{ gap: spacing.xs }}>
         <AppText accessibilityRole="header" variant="label">
           {copy.weatherHourly}
         </AppText>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: spacing.sm, paddingBottom: spacing.xs }}
+        <View
+          style={[homeStyles.row, { alignItems: "stretch", gap: spacing.sm }]}
         >
           {weather.hours.map((hour) => {
             const rainy = hour.condition === "rain";
@@ -150,25 +135,35 @@ export function OngoingWeatherDetails({
                 accessible
                 accessibilityLabel={`${hour.time}, ${hour.temperature}°C, ${copy.weatherChance} ${hour.rainChance}%`}
                 style={[
-                  homeStyles.row,
                   styles.card,
+                  styles.hourColumn,
                   {
-                    flexShrink: 0,
-                    minHeight: layout.touchTarget,
-                    paddingHorizontal: spacing.md,
+                    paddingHorizontal: spacing.xs,
                     paddingVertical: spacing.sm,
-                    gap: spacing.sm,
-                    borderRadius: radius.full,
+                    gap: spacing.xs,
+                    borderRadius: radius.lg,
                     backgroundColor: rainy
-                      ? colors.weatherAmberGlass
-                      : colors.glassInset,
+                      ? colors.weatherRainSurface
+                      : colors.weatherGlassSurface,
                     borderWidth: StyleSheet.hairlineWidth,
-                    borderColor: rainy
-                      ? colors.weatherAmberBorder
-                      : colors.glassClockBorder,
+                    borderColor: colors.glassClockBorder,
+                    boxShadow: [
+                      { ...theme.elevation.glass, color: colors.glassShadow },
+                    ],
                   },
                 ]}
               >
+                <TripGlassBackdrop borderRadius={radius.lg} variant="weather" />
+                {rainy ? (
+                  <View
+                    aria-hidden
+                    pointerEvents="none"
+                    style={[
+                      StyleSheet.absoluteFill,
+                      { backgroundColor: colors.weatherRainSurface },
+                    ]}
+                  />
+                ) : null}
                 <AppText
                   variant="caption"
                   style={{ fontFamily: typography.fontFamily.semibold }}
@@ -178,41 +173,52 @@ export function OngoingWeatherDetails({
                 <TravelWeatherArt
                   condition={hour.condition}
                   progress={progress}
-                  size={spacing.xl}
+                  size={layout.iconLarge}
                 />
-                <AppText variant="label">{hour.temperature}°</AppText>
+                <AppText
+                  variant="label"
+                  style={{
+                    fontSize: typography.fontSize.lg,
+                    lineHeight: typography.lineHeight.lg,
+                  }}
+                >
+                  {hour.temperature}°
+                </AppText>
                 <AppText
                   variant="caption"
                   style={{
-                    color: rainy
-                      ? colors.onWarningSurface
-                      : colors.textSecondary,
+                    color: colors.weatherRainText,
+                    fontFamily: typography.fontFamily.medium,
                   }}
                 >
-                  {copy.weatherRainShort} {hour.rainChance}%
+                  {hour.rainChance}%
                 </AppText>
               </View>
             );
           })}
-        </ScrollView>
+        </View>
       </View>
 
       <View
         style={[
           styles.card,
           {
-            padding: spacing.lg,
+            padding: spacing.md,
             gap: spacing.md,
-            borderRadius: radius.md,
+            borderRadius: radius.lg,
             borderWidth: StyleSheet.hairlineWidth,
-            borderColor: colors.weatherAmberBorder,
+            borderColor: colors.glassClockBorder,
             boxShadow: [
               { ...theme.elevation.glass, color: colors.glassShadow },
+              {
+                ...theme.elevation.raisedActionHighlight,
+                color: colors.glassClockBorder,
+              },
             ],
           },
         ]}
       >
-        <TripGlassBackdrop borderRadius={radius.md} variant="clock" />
+        <TripGlassBackdrop borderRadius={radius.lg} variant="weather" />
         <View
           pointerEvents="none"
           aria-hidden
@@ -225,14 +231,14 @@ export function OngoingWeatherDetails({
           <Animated.View
             aria-hidden
             style={[
-              styles.umbrella,
+              styles.adviceIcon,
               {
-                width: layout.touchTarget,
-                height: layout.touchTarget,
-                borderRadius: radius.lg,
-                backgroundColor: colors.weatherAmberGlass,
+                width: layout.weatherArtworkSize,
+                height: layout.weatherArtworkSize,
+                borderRadius: radius.md,
+                backgroundColor: colors.glassInset,
                 borderWidth: StyleSheet.hairlineWidth,
-                borderColor: colors.weatherAmberBorder,
+                borderColor: colors.glassClockBorder,
                 boxShadow: [
                   {
                     ...theme.elevation.glass,
@@ -250,30 +256,80 @@ export function OngoingWeatherDetails({
             />
           </Animated.View>
           <View style={[homeStyles.grow, { gap: spacing.xs }]}>
-            <AppText variant="label" style={{ color: colors.onWarningSurface }}>
-              {copy.weatherCompanion}
-            </AppText>
-            <AppText
-              variant="caption"
-              style={{
-                color: colors.onWarningSurface,
-                fontFamily: typography.fontFamily.medium,
-              }}
-            >
+            <View style={[homeStyles.row, { gap: spacing.xs }]}>
+              <AppText
+                accessibilityRole="header"
+                variant="caption"
+                tone="primary"
+                style={{ fontFamily: typography.fontFamily.semibold }}
+              >
+                {copy.weatherCompanion}
+              </AppText>
+              <AppIcon
+                name="sparkles"
+                size={spacing.md}
+                color={colors.weatherUmbrellaAccent}
+              />
+            </View>
+            <AppText variant="label" style={{ color: colors.weatherRainText }}>
               {rainWindow}
             </AppText>
           </View>
         </View>
-        <AppText>{advice}</AppText>
+        <View
+          style={[homeStyles.row, { alignItems: "stretch", gap: spacing.sm }]}
+        >
+          {(
+            [
+              {
+                icon: "umbrella",
+                text: copy.weatherBringEssentials,
+                tint: colors.weatherUmbrellaAccent,
+              },
+              {
+                icon: "pin",
+                text: copy.weatherExploreIndoors,
+                tint: colors.primaryText,
+              },
+            ] as const
+          ).map(({ icon, text, tint }) => (
+            <View
+              key={icon}
+              style={[
+                homeStyles.row,
+                homeStyles.grow,
+                {
+                  flexBasis: 0,
+                  paddingVertical: spacing.sm,
+                  paddingHorizontal: spacing.sm,
+                  gap: spacing.xs,
+                  borderRadius: radius.md,
+                  backgroundColor: colors.glassInset,
+                  borderWidth: StyleSheet.hairlineWidth,
+                  borderColor: colors.glassClockBorder,
+                },
+              ]}
+            >
+              <AppIcon name={icon} size={layout.iconSmall} color={tint} />
+              <AppText
+                variant="caption"
+                style={{ fontFamily: typography.fontFamily.medium }}
+              >
+                {text}
+              </AppText>
+            </View>
+          ))}
+        </View>
       </View>
       <AppText variant="caption" tone="muted">
-        {copy.weatherSample}
+        {copy.weatherSampleCompact.replace("{time}", weather.observedAt)}
       </AppText>
     </>
   );
 }
 const styles = StyleSheet.create({
   card: { overflow: "hidden", borderCurve: "continuous" },
+  hourColumn: { flex: 1, minWidth: 0, alignItems: "center" },
   artShadow: { position: "absolute", alignSelf: "center" },
-  umbrella: { alignItems: "center", justifyContent: "center" },
+  adviceIcon: { alignItems: "center", justifyContent: "center" },
 });
