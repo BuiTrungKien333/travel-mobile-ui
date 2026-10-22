@@ -15,7 +15,7 @@ import {
   GestureHandlerRootView,
 } from "react-native-gesture-handler";
 import Animated from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useScreenInsets } from "@/hooks/use-screen-insets";
 
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
@@ -55,7 +55,7 @@ export function JournalPhotoViewer({
   onDelete: (id: string) => void;
 }) {
   const theme = useAppTheme();
-  const insets = useSafeAreaInsets();
+  const insets = useScreenInsets();
   const window = useWindowDimensions();
   const [viewport, setViewport] = useState({
     width: window.width,

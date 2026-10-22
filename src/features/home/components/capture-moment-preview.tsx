@@ -17,7 +17,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ScreenSafeArea } from "@/components/common/screen-safe-area";
 
 import { AppButton } from "@/components/ui/app-button";
 import { AppIcon } from "@/components/ui/app-icon";
@@ -101,7 +101,7 @@ export function CaptureMomentPreview({
       onRequestClose={closePanel}
     >
       <StatusBar style="light" />
-      <SafeAreaView
+      <ScreenSafeArea
         style={[styles.screen, { backgroundColor: theme.colors.heroSurface }]}
       >
         <View
@@ -366,7 +366,7 @@ export function CaptureMomentPreview({
             </Pressable>
           </View>
         </ScrollView>
-      </SafeAreaView>
+      </ScreenSafeArea>
     </Modal>
   );
 }

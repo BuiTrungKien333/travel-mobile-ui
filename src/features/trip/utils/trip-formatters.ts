@@ -52,7 +52,10 @@ export function getTripTitle(trip: Trip, locale: "vi" | "en" = "vi"): string {
 
 export function getTotalTripStops(trip: Trip): number {
   if (!trip.days || !Array.isArray(trip.days)) return 0;
-  return trip.days.reduce((acc, day) => acc + (day.stops?.length ?? 0), 0);
+  return trip.days.reduce(
+    (acc, day) => acc + (day.stops?.length ?? 0),
+    trip.unscheduledStops?.length ?? 0,
+  );
 }
 
 export function formatTripDurationAndStops(
@@ -87,7 +90,10 @@ export function formatTripDurationAndStops(
   return `${daysText} · ${stopsText}`;
 }
 
-export function formatTripDates(trip: Trip, locale: "vi" | "en" = "vi"): string {
+export function formatTripDates(
+  trip: Trip,
+  locale: "vi" | "en" = "vi",
+): string {
   const formatted = formatDatesBase(trip, locale);
   if (!formatted) {
     return locale === "vi" ? "Chưa chọn ngày" : "Dates not set";

@@ -38,8 +38,10 @@ function load(filename: string): Record<string, unknown> {
       exports: module.exports,
       require: (id: string) => {
         if (id.startsWith("@/assets/")) return id;
-        if (!id.startsWith(".")) return require(id);
-        const base = resolve(dirname(filename), id);
+        if (!id.startsWith(".") && !id.startsWith("@/")) return require(id);
+        const base = id.startsWith("@/")
+          ? fileURLToPath(new URL(`../../src/${id.slice(2)}`, import.meta.url))
+          : resolve(dirname(filename), id);
         const target = [base, `${base}.ts`].find((file) => existsSync(file));
         if (!target) throw new Error(`Unable to resolve ${id}`);
         return load(target);

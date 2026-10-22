@@ -95,9 +95,6 @@ export const genericStops: TripStop[] = [
     kind: { vi: "Văn hóa · Địa điểm mẫu", en: "Culture · Sample place" },
   },
 ];
-export function suggestedStops(destination: string): TripStop[] {
-  return destination === "Đà Lạt" ? exampleStops : genericStops;
-}
 const history: Trip = {
   id: "past-danang",
   destination: "Đà Nẵng",

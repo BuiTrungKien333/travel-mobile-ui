@@ -17,7 +17,7 @@ import Animated, {
   withTiming,
   type SharedValue,
 } from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useScreenInsets } from "@/hooks/use-screen-insets";
 
 import { AppIcon, type AppIconName } from "@/components/ui/app-icon";
 import { AppButton } from "@/components/ui/app-button";
@@ -46,7 +46,7 @@ export function WeatherPackingChecklist({
 }) {
   const theme = useAppTheme();
   const { copy } = useWeatherCopy();
-  const insets = useSafeAreaInsets();
+  const insets = useScreenInsets();
   const { height } = useWindowDimensions();
   const reduceMotion = useReducedMotion();
   const [open, setOpen] = useState(false);

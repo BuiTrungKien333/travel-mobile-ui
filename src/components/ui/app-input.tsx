@@ -1,7 +1,14 @@
 import { SymbolView } from "expo-symbols";
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { forwardRef, useState } from "react";
-import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import {
+  Platform,
+  Pressable,
+  StyleSheet,
+  TextInput,
+  View,
+  type TextStyle,
+} from "react-native";
 
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
@@ -12,13 +19,22 @@ type AppInputProps = ComponentProps<typeof TextInput> & {
   helperText?: string;
   label: string;
   password?: boolean;
+  leadingIcon?: ReactNode;
+  trailingAction?: ReactNode;
 };
+
+const webInputReset: TextStyle = Platform.select({
+  web: { outlineWidth: 0, outlineStyle: "solid" },
+  default: {},
+});
 
 export const AppInput = forwardRef<TextInput, AppInputProps>(function AppInput(
   {
     error,
     helperText,
     label,
+    leadingIcon,
+    trailingAction,
     onBlur,
     onFocus,
     password = false,
@@ -50,6 +66,15 @@ export const AppInput = forwardRef<TextInput, AppInputProps>(function AppInput(
           },
         ]}
       >
+        {leadingIcon ? (
+          <View
+            pointerEvents="none"
+            aria-hidden
+            style={{ paddingLeft: theme.spacing.md }}
+          >
+            {leadingIcon}
+          </View>
+        ) : null}
         <TextInput
           {...props}
           ref={ref}
@@ -66,8 +91,10 @@ export const AppInput = forwardRef<TextInput, AppInputProps>(function AppInput(
           placeholderTextColor={theme.colors.textDisabled}
           secureTextEntry={password && !passwordVisible}
           selectionColor={theme.colors.primary}
+          underlineColorAndroid="transparent"
           style={[
             styles.input,
+            webInputReset,
             {
               color: theme.colors.text,
               fontFamily: theme.typography.fontFamily.regular,
@@ -79,6 +106,7 @@ export const AppInput = forwardRef<TextInput, AppInputProps>(function AppInput(
             style,
           ]}
         />
+        {trailingAction}
         {password ? (
           <Pressable
             accessibilityLabel={

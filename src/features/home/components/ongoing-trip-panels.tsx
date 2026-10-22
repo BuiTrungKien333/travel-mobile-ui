@@ -28,7 +28,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useScreenInsets } from "@/hooks/use-screen-insets";
 import { z } from "zod";
 
 import { AppButton } from "@/components/ui/app-button";
@@ -42,25 +42,28 @@ import { formatForecastDate } from "../i18n/weather-copy";
 import { useTripPreview } from "../providers/trip-preview-provider";
 import type { JourneyPanel } from "../types/preview-state";
 import type { Memory } from "../types/home-types";
-import { getDayProgress } from "../utils/day-progress";
 import { formatTripDates } from "../utils/select-home";
 import { CaptureMomentPreview } from "./capture-moment-preview";
 import { homeStyles, TextAction } from "./home-primitives";
 import { OngoingWeatherDetails } from "./ongoing-weather-details";
 import { WeatherAtmosphere } from "./weather-atmosphere";
 
-export function OngoingTripPanels({ panel }: { panel: JourneyPanel }) {
+export function OngoingTripPanels({
+  panel,
+}: {
+  panel: Exclude<JourneyPanel, { kind: "trip-details" }>;
+}) {
   const theme = useAppTheme();
   const { copy, locale } = useOngoingCopy();
-  const { trips, memories, visited, today, closePanel, openPanel } =
-    useTripPreview((state) => ({
+  const { trips, memories, today, closePanel, openPanel } = useTripPreview(
+    (state) => ({
       trips: state.trips,
       memories: state.memories,
-      visited: state.visited,
       today: state.today,
       closePanel: state.closePanel,
       openPanel: state.openPanel,
-    }));
+    }),
+  );
   const [date, setDate] = useState(
     panel.kind === "journal" ? panel.date : undefined,
   );
@@ -93,10 +96,7 @@ export function OngoingTripPanels({ panel }: { panel: JourneyPanel }) {
     (memory) => memory.tripId === trip.id && (!date || memory.date === date),
   );
   return (
-    <JourneySheet
-      title={panel.kind === "journal" ? copy.tripJournal : copy.details}
-      onClose={closePanel}
-    >
+    <JourneySheet title={copy.tripJournal} onClose={closePanel}>
       <View style={{ gap: theme.spacing.xs }}>
         <AppText accessibilityRole="header" variant="heading">
           {trip.destination}
@@ -105,199 +105,144 @@ export function OngoingTripPanels({ panel }: { panel: JourneyPanel }) {
           {formatTripDates(trip, locale)}
         </AppText>
       </View>
-      {panel.kind === "trip-details" ? (
-        trip.days.map((day, index) => {
-          const progress = getDayProgress(
-            day.stops,
-            visited[`${trip.id}:${day.date}`] ?? [],
-          );
-          return (
+      <>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ gap: theme.spacing.sm }}
+        >
+          {[undefined, ...trip.days.map((day) => day.date)].map((value) => (
+            <Pressable
+              key={value ?? "all"}
+              accessibilityRole="button"
+              accessibilityState={{ selected: date === value }}
+              onPress={() => {
+                setDate(value);
+                setEditingId(null);
+              }}
+              style={({ pressed }) => ({
+                minHeight: theme.layout.touchTarget,
+                justifyContent: "center",
+                paddingHorizontal: theme.spacing.md,
+                paddingVertical: theme.spacing.sm,
+                borderRadius: theme.radius.sm,
+                backgroundColor:
+                  date === value
+                    ? theme.colors.softActionSurface
+                    : theme.colors.surface,
+                opacity: pressed ? theme.motion.pressOpacity : 1,
+              })}
+            >
+              <AppText
+                variant="caption"
+                tone={date === value ? "primary" : "muted"}
+              >
+                {value ? formatForecastDate(value, locale) : copy.allDays}
+              </AppText>
+            </Pressable>
+          ))}
+        </ScrollView>
+        {journal.length ? (
+          journal.map((memory) => (
             <View
-              key={day.date}
+              key={memory.id}
               style={{
+                gap: theme.spacing.sm,
                 padding: theme.spacing.md,
-                gap: theme.spacing.xs,
                 borderRadius: theme.radius.md,
                 backgroundColor: theme.colors.surface,
               }}
             >
-              <AppText variant="label">
-                {copy.day} {index + 1} · {formatForecastDate(day.date, locale)}
-              </AppText>
-              <AppText variant="caption" tone="muted">
-                {progress.visitedStops.length}/{day.stops.length}{" "}
-                {copy.visited.toLocaleLowerCase(locale)}
-              </AppText>
-              <View
-                style={[
-                  homeStyles.row,
-                  { flexWrap: "wrap", gap: theme.spacing.md },
-                ]}
-              >
-                <TextAction
-                  label={copy.fullDay}
-                  onPress={() =>
-                    openPanel({
-                      kind: "plan",
-                      tripId: trip.id,
-                      dayIndex: index,
-                    })
-                  }
-                />
-                <TextAction
-                  label={copy.allJournal}
-                  onPress={() =>
-                    openPanel({
-                      kind: "journal",
-                      tripId: trip.id,
-                      date: day.date,
-                    })
-                  }
-                />
-              </View>
-            </View>
-          );
-        })
-      ) : (
-        <>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: theme.spacing.sm }}
-          >
-            {[undefined, ...trip.days.map((day) => day.date)].map((value) => (
-              <Pressable
-                key={value ?? "all"}
-                accessibilityRole="button"
-                accessibilityState={{ selected: date === value }}
-                onPress={() => {
-                  setDate(value);
-                  setEditingId(null);
-                }}
-                style={({ pressed }) => ({
-                  minHeight: theme.layout.touchTarget,
-                  justifyContent: "center",
-                  paddingHorizontal: theme.spacing.md,
-                  paddingVertical: theme.spacing.sm,
-                  borderRadius: theme.radius.sm,
-                  backgroundColor:
-                    date === value
-                      ? theme.colors.softActionSurface
-                      : theme.colors.surface,
-                  opacity: pressed ? theme.motion.pressOpacity : 1,
-                })}
-              >
-                <AppText
-                  variant="caption"
-                  tone={date === value ? "primary" : "muted"}
-                >
-                  {value ? formatForecastDate(value, locale) : copy.allDays}
+              <View style={[homeStyles.row, { gap: theme.spacing.sm }]}>
+                <AppIcon name="pin" size={theme.layout.iconSmall} />
+                <AppText variant="label" style={homeStyles.grow}>
+                  {memory.place?.[locale] ?? memory.destination}
                 </AppText>
-              </Pressable>
-            ))}
-          </ScrollView>
-          {journal.length ? (
-            journal.map((memory) => (
-              <View
-                key={memory.id}
-                style={{
-                  gap: theme.spacing.sm,
-                  padding: theme.spacing.md,
-                  borderRadius: theme.radius.md,
-                  backgroundColor: theme.colors.surface,
-                }}
-              >
-                <View style={[homeStyles.row, { gap: theme.spacing.sm }]}>
-                  <AppIcon name="pin" size={theme.layout.iconSmall} />
-                  <AppText variant="label" style={homeStyles.grow}>
-                    {memory.place?.[locale] ?? memory.destination}
-                  </AppText>
-                  <AppText variant="caption" tone="muted">
-                    {memory.time}
-                  </AppText>
-                </View>
-                {memory.date ? (
-                  <AppText variant="caption" tone="muted">
-                    {formatForecastDate(memory.date, locale)}
-                  </AppText>
-                ) : null}
-                {memory.photo ? (
-                  <Image
-                    accessible
-                    accessibilityLabel={
-                      memory.place?.[locale] ?? memory.destination
-                    }
-                    source={memory.photo}
-                    contentFit="cover"
-                    cachePolicy="memory-disk"
-                    style={{
-                      width: "100%",
-                      aspectRatio: 4 / 3,
-                      borderRadius: theme.radius.sm,
-                    }}
-                  />
-                ) : null}
-                {memory.text ? <AppText>{memory.text}</AppText> : null}
-                {editingId === memory.id ? (
-                  <JournalNoteEditor
-                    key={memory.id}
-                    memory={memory}
-                    onDone={() => setEditingId(null)}
-                  />
-                ) : (
-                  <TextAction
-                    label={memory.text ? copy.editNote : copy.addNote}
-                    onPress={() => setEditingId(memory.id)}
-                  />
-                )}
+                <AppText variant="caption" tone="muted">
+                  {memory.time}
+                </AppText>
               </View>
-            ))
-          ) : (
-            <View style={{ gap: theme.spacing.sm }}>
-              <AppText variant="label">{copy.journalEmpty}</AppText>
-              <AppText tone="muted">{copy.journalEmptyHint}</AppText>
+              {memory.date ? (
+                <AppText variant="caption" tone="muted">
+                  {formatForecastDate(memory.date, locale)}
+                </AppText>
+              ) : null}
+              {memory.photo ? (
+                <Image
+                  accessible
+                  accessibilityLabel={
+                    memory.place?.[locale] ?? memory.destination
+                  }
+                  source={memory.photo}
+                  contentFit="cover"
+                  cachePolicy="memory-disk"
+                  style={{
+                    width: "100%",
+                    aspectRatio: 4 / 3,
+                    borderRadius: theme.radius.sm,
+                  }}
+                />
+              ) : null}
+              {memory.text ? <AppText>{memory.text}</AppText> : null}
+              {editingId === memory.id ? (
+                <JournalNoteEditor
+                  key={memory.id}
+                  memory={memory}
+                  onDone={() => setEditingId(null)}
+                />
+              ) : (
+                <TextAction
+                  label={memory.text ? copy.editNote : copy.addNote}
+                  onPress={() => setEditingId(memory.id)}
+                />
+              )}
             </View>
-          )}
-          <AppButton
-            variant="gradient"
-            onPress={() =>
-              openPanel({
-                kind: "camera",
-                tripId: trip.id,
-                date:
-                  date ??
-                  (trip.days.some((day) => day.date === today)
-                    ? today
-                    : (trip.days[0]?.date ?? "")),
-              })
-            }
-            leadingIcon={
-              <AppIcon
-                name="camera"
-                size={theme.layout.iconSmall}
-                color={theme.colors.onGradientAction}
-              />
-            }
-          >
-            {copy.capture}
-          </AppButton>
-          <AppText variant="caption" tone="muted">
-            {copy.savedInSession}
-          </AppText>
-          <View style={{ gap: theme.spacing.xs }}>
-            <AppText variant="caption" tone="muted">
-              {copy.photoCredit}
-            </AppText>
-            {journalPhotoCredits.map((credit) => (
-              <AppText key={credit.source} variant="caption" tone="muted">
-                <Link href={credit.source}>{credit.author}</Link>
-                {" · "}
-                <Link href={credit.licenseUrl}>{credit.license}</Link>
-              </AppText>
-            ))}
+          ))
+        ) : (
+          <View style={{ gap: theme.spacing.sm }}>
+            <AppText variant="label">{copy.journalEmpty}</AppText>
+            <AppText tone="muted">{copy.journalEmptyHint}</AppText>
           </View>
-        </>
-      )}
+        )}
+        <AppButton
+          variant="gradient"
+          onPress={() =>
+            openPanel({
+              kind: "camera",
+              tripId: trip.id,
+              date:
+                date ??
+                (trip.days.some((day) => day.date === today)
+                  ? today
+                  : (trip.days[0]?.date ?? "")),
+            })
+          }
+          leadingIcon={
+            <AppIcon
+              name="camera"
+              size={theme.layout.iconSmall}
+              color={theme.colors.onGradientAction}
+            />
+          }
+        >
+          {copy.capture}
+        </AppButton>
+        <AppText variant="caption" tone="muted">
+          {copy.savedInSession}
+        </AppText>
+        <View style={{ gap: theme.spacing.xs }}>
+          <AppText variant="caption" tone="muted">
+            {copy.photoCredit}
+          </AppText>
+          {journalPhotoCredits.map((credit) => (
+            <AppText key={credit.source} variant="caption" tone="muted">
+              <Link href={credit.source}>{credit.author}</Link>
+              {" · "}
+              <Link href={credit.licenseUrl}>{credit.license}</Link>
+            </AppText>
+          ))}
+        </View>
+      </>
     </JourneySheet>
   );
 }
@@ -389,7 +334,7 @@ function JourneySheet({
 }) {
   const theme = useAppTheme();
   const { copy } = useOngoingCopy();
-  const insets = useSafeAreaInsets();
+  const insets = useScreenInsets();
   const { height: windowHeight } = useWindowDimensions();
   const reduceMotion = useReducedMotion();
   const translateY = useSharedValue(0);

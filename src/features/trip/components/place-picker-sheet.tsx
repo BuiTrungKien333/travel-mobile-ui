@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   FlatList,
+  KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
@@ -10,28 +11,25 @@ import {
   View,
 } from "react-native";
 import {
-  Gesture,
   GestureDetector,
   GestureHandlerRootView,
 } from "react-native-gesture-handler";
-import Animated, {
-  cancelAnimation,
-  ReduceMotion,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from "react-native-reanimated";
+import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { scheduleOnRN } from "react-native-worklets";
+import { getPlacesForDestination } from "../data/place-bank";
+import { usePickerSheetMotion } from "../hooks/use-picker-sheet-motion";
+import { useTripCopy } from "../i18n/trip-copy";
+import { tripMessage } from "../utils/create-trip-formatters";
 
 import { AppButton } from "@/components/ui/app-button";
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
 import type { TripStop } from "@/features/home/types/home-types";
 import { useAppTheme } from "@/hooks/use-app-theme";
+import { spacing, typography, layout, radius } from "@/theme/tokens";
 
 const webInputReset: TextStyle = Platform.select({
-  web: { outlineStyle: "none", outlineWidth: 0 } as unknown as TextStyle,
+  web: { outlineWidth: 0 },
   default: {},
 });
 
@@ -39,129 +37,20 @@ type PlacePickerSheetProps = {
   visible: boolean;
   destination: string;
   initialSelected: TripStop[];
+  excludedIds?: string[];
   onApply: (stops: TripStop[]) => void;
   onClose: () => void;
 };
 
-// Available suggested places by destination
-const samplePlaceBank: Record<string, TripStop[]> = {
-  "Đà Lạt": [
-    {
-      id: "lake",
-      time: "09:30",
-      name: { vi: "Hồ Xuân Hương", en: "Xuan Huong Lake" },
-      kind: { vi: "Đà Lạt · Tham quan", en: "Da Lat · Sightseeing" },
-    },
-    {
-      id: "square",
-      time: "11:00",
-      name: { vi: "Quảng trường Lâm Viên", en: "Lam Vien Square" },
-      kind: { vi: "Đà Lạt · Tham quan", en: "Da Lat · Sightseeing" },
-    },
-    {
-      id: "flower-garden",
-      time: "14:00",
-      name: { vi: "Vườn hoa Đà Lạt", en: "Dalat Flower Garden" },
-      kind: { vi: "Đà Lạt · Tham quan", en: "Da Lat · Sightseeing" },
-    },
-    {
-      id: "museum",
-      time: "15:30",
-      name: { vi: "Bảo tàng Lâm Đồng", en: "Lam Dong Museum" },
-      kind: { vi: "Đà Lạt · Tham quan", en: "Da Lat · Sightseeing" },
-    },
-    {
-      id: "datanla",
-      time: "16:30",
-      name: { vi: "Thác Datanla", en: "Datanla Waterfall" },
-      kind: { vi: "Đà Lạt · Khám phá", en: "Da Lat · Adventure" },
-    },
-    {
-      id: "station",
-      time: "17:30",
-      name: { vi: "Ga Đà Lạt", en: "Dalat Old Railway Station" },
-      kind: { vi: "Đà Lạt · Di tích", en: "Da Lat · Historic" },
-    },
-  ],
-  "Đà Nẵng": [
-    {
-      id: "dn-beach",
-      time: "08:00",
-      name: { vi: "Biển Mỹ Khê", en: "My Khe Beach" },
-      kind: { vi: "Đà Nẵng · Tham quan", en: "Da Nang · Sightseeing" },
-    },
-    {
-      id: "dn-bridge",
-      time: "19:30",
-      name: { vi: "Cầu Rồng Đà Nẵng", en: "Dragon Bridge" },
-      kind: { vi: "Đà Nẵng · Tham quan", en: "Da Nang · Sightseeing" },
-    },
-    {
-      id: "dn-sontra",
-      time: "14:00",
-      name: { vi: "Bán đảo Sơn Trà", en: "Son Tra Peninsula" },
-      kind: { vi: "Đà Nẵng · Thiên nhiên", en: "Da Nang · Nature" },
-    },
-    {
-      id: "dn-marble",
-      time: "16:00",
-      name: { vi: "Ngũ Hành Sơn", en: "Marble Mountains" },
-      kind: { vi: "Đà Nẵng · Di tích", en: "Da Nang · Historic" },
-    },
-  ],
-  "Hội An": [
-    {
-      id: "ha-oldtown",
-      time: "16:00",
-      name: { vi: "Phố cổ Hội An", en: "Hoi An Ancient Town" },
-      kind: { vi: "Hội An · Tham quan", en: "Hoi An · Sightseeing" },
-    },
-    {
-      id: "ha-market",
-      time: "18:30",
-      name: { vi: "Chợ đêm đèn lồng", en: "Lantern Night Market" },
-      kind: { vi: "Hội An · Ẩm thực", en: "Hoi An · Food" },
-    },
-    {
-      id: "ha-bridge",
-      time: "10:00",
-      name: { vi: "Chùa Cầu Hội An", en: "Japanese Covered Bridge" },
-      kind: { vi: "Hội An · Văn hóa", en: "Hoi An · Culture" },
-    },
-  ],
-  "Nha Trang": [
-    {
-      id: "nt-honmun",
-      time: "09:00",
-      name: { vi: "Đảo Hòn Mun", en: "Hon Mun Island" },
-      kind: { vi: "Nha Trang · Lặn biển", en: "Nha Trang · Diving" },
-    },
-    {
-      id: "nt-ponagar",
-      time: "14:30",
-      name: { vi: "Tháp Bà Ponagar", en: "Ponagar Cham Towers" },
-      kind: { vi: "Nha Trang · Văn hóa", en: "Nha Trang · Culture" },
-    },
-    {
-      id: "nt-vinwonders",
-      time: "10:00",
-      name: { vi: "VinWonders Nha Trang", en: "VinWonders Nha Trang" },
-      kind: { vi: "Nha Trang · Vui chơi", en: "Nha Trang · Theme Park" },
-    },
-  ],
-};
-
-function getPlacesForDestination(dest: string): TripStop[] {
-  const match = Object.keys(samplePlaceBank).find((key) =>
-    dest.toLowerCase().includes(key.toLowerCase()),
-  );
-  return match ? samplePlaceBank[match] : samplePlaceBank["Đà Lạt"];
+export function PlacePickerSheet(props: PlacePickerSheetProps) {
+  return props.visible ? <PlacePickerSession {...props} /> : null;
 }
 
-export function PlacePickerSheet({
+function PlacePickerSession({
   visible,
   destination,
   initialSelected,
+  excludedIds = [],
   onApply,
   onClose,
 }: PlacePickerSheetProps) {
@@ -170,97 +59,19 @@ export function PlacePickerSheet({
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [selectedStops, setSelectedStops] = useState<TripStop[]>(initialSelected);
+  const [selectedStops, setSelectedStops] = useState<TripStop[]>([
+    ...initialSelected,
+  ]);
 
-  const isClosing = useSharedValue(false);
-  const translateY = useSharedValue(0);
-  const dismissDistance = theme.layout.sheetDismissDistance;
-  const dismissVelocity = theme.motion.sheetDismissVelocity;
-  const snapDuration = theme.motion.tabTransitionDuration;
-  const minimumSwipe = theme.spacing.md;
-
-  const sheetMotion = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }],
-  }));
-
-  const backdropMotion = useAnimatedStyle(() => ({
-    opacity: Math.max(0, Math.min(1, 1 - translateY.value / 350)),
-  }));
-
-  useEffect(() => () => cancelAnimation(translateY), [translateY]);
-
-  useEffect(() => {
-    if (visible) {
-      isClosing.value = false;
-      translateY.value = 280;
-      translateY.value = withTiming(0, {
-        duration: snapDuration,
-        reduceMotion: ReduceMotion.System,
-      });
-    }
-  }, [visible, snapDuration, translateY, isClosing]);
-
-  const handleAnimatedClose = () => {
-    if (isClosing.value) return;
-    isClosing.value = true;
-    translateY.value = withTiming(
-      600,
-      {
-        duration: 180,
-        reduceMotion: ReduceMotion.System,
-      },
-      (finished) => {
-        if (finished) {
-          scheduleOnRN(onClose);
-        }
-      },
-    );
-  };
-
-  const dragGesture = Gesture.Pan()
-    .activeOffsetY(theme.spacing.sm)
-    .failOffsetX([-theme.spacing.lg, theme.spacing.lg])
-    .onUpdate((event) => {
-      translateY.value = Math.max(0, event.translationY);
-    })
-    .onEnd((event) => {
-      if (
-        event.translationY >= dismissDistance ||
-        (event.translationY > minimumSwipe &&
-          event.velocityY >= dismissVelocity)
-      ) {
-        isClosing.value = true;
-        translateY.value = withTiming(
-          600,
-          {
-            duration: 180,
-            reduceMotion: ReduceMotion.System,
-          },
-          (finished) => {
-            if (finished) {
-              scheduleOnRN(onClose);
-            }
-          },
-        );
-      } else {
-        translateY.value = withTiming(0, {
-          duration: snapDuration,
-          reduceMotion: ReduceMotion.System,
-        });
-      }
-    })
-    .onFinalize((_event, success) => {
-      if (!success && !isClosing.value) {
-        translateY.value = withTiming(0, {
-          duration: snapDuration,
-          reduceMotion: ReduceMotion.System,
-        });
-      }
-    });
-
+  const { sheetMotion, backdropMotion, dragGesture, close, reduceMotion } =
+    usePickerSheetMotion(onClose);
+  const { copy, locale } = useTripCopy();
   const allPlaces = useMemo(
-    () => getPlacesForDestination(destination),
-    [destination],
+    () =>
+      getPlacesForDestination(destination).filter(
+        (stop) => !excludedIds.includes(stop.id),
+      ),
+    [destination, excludedIds],
   );
 
   const filteredPlaces = useMemo(() => {
@@ -270,7 +81,8 @@ export function PlacePickerSheet({
       (item) =>
         item.name.vi.toLowerCase().includes(q) ||
         item.name.en.toLowerCase().includes(q) ||
-        item.kind.vi.toLowerCase().includes(q),
+        item.kind.vi.toLowerCase().includes(q) ||
+        item.kind.en.toLowerCase().includes(q),
     );
   }, [allPlaces, searchQuery]);
 
@@ -284,22 +96,22 @@ export function PlacePickerSheet({
   };
 
   const handleApply = () => {
-    onApply(selectedStops);
-    handleAnimatedClose();
+    close(() => onApply([...selectedStops]));
   };
-
-  if (!visible) return null;
 
   return (
     <Modal
       transparent
       visible={visible}
-      animationType="fade"
+      animationType={reduceMotion ? "none" : "fade"}
       statusBarTranslucent
-      onRequestClose={handleAnimatedClose}
+      onRequestClose={() => close()}
     >
       <GestureHandlerRootView style={styles.root}>
-        <View style={styles.backdrop}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={styles.backdrop}
+        >
           <Animated.View
             style={[
               StyleSheet.absoluteFill,
@@ -307,7 +119,7 @@ export function PlacePickerSheet({
               backdropMotion,
             ]}
           />
-          <Pressable style={StyleSheet.absoluteFill} onPress={handleAnimatedClose} />
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => close()} />
           <Animated.View
             style={[
               styles.sheet,
@@ -316,7 +128,8 @@ export function PlacePickerSheet({
                 backgroundColor: theme.colors.surface,
                 borderTopLeftRadius: theme.radius.xxl,
                 borderTopRightRadius: theme.radius.xxl,
-                paddingBottom: Math.max(insets.bottom, 16) + theme.spacing.md,
+                paddingBottom:
+                  Math.max(insets.bottom, theme.spacing.lg) + theme.spacing.md,
               },
             ]}
           >
@@ -344,168 +157,193 @@ export function PlacePickerSheet({
                       },
                     ]}
                   >
-                    Thêm địa điểm
+                    {copy.addPlace}
                   </AppText>
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel="Đóng"
-                    onPress={handleAnimatedClose}
+                    accessibilityLabel={copy.close}
+                    onPress={() => close()}
                     hitSlop={12}
                     style={({ pressed }) => [
                       styles.closeButton,
                       { opacity: pressed ? theme.motion.pressOpacity : 1 },
                     ]}
                   >
-                    <AppIcon name="close" size={20} color={theme.colors.textSecondary} />
+                    <AppIcon
+                      name="close"
+                      size={20}
+                      color={theme.colors.textSecondary}
+                    />
                   </Pressable>
                 </View>
               </View>
             </GestureDetector>
 
-          {/* Search Box */}
-          <View
-            style={[
-              styles.searchBox,
-              {
-                backgroundColor: theme.colors.surfaceVariant,
-                borderRadius: theme.radius.md,
-                borderColor: isSearchFocused
-                  ? theme.colors.focus
-                  : theme.colors.border,
-              },
-            ]}
-          >
-            <AppIcon name="pin" size={16} color={theme.colors.textSecondary} />
-            <TextInput
+            {/* Search Box */}
+            <View
               style={[
-                styles.searchInput,
+                styles.searchBox,
                 {
-                  color: theme.colors.text,
-                  fontFamily: theme.typography.fontFamily.regular,
-                },
-                webInputReset,
-              ]}
-              placeholder={`Tìm địa điểm ở ${destination || "điểm đến"}...`}
-              placeholderTextColor={theme.colors.textDisabled}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              onFocus={() => setIsSearchFocused(true)}
-              onBlur={() => setIsSearchFocused(false)}
-              cursorColor={theme.colors.primaryText}
-              selectionColor={theme.colors.surfaceTint}
-              underlineColorAndroid="transparent"
-              autoCorrect={false}
-            />
-            {searchQuery.length > 0 ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Xóa nội dung tìm kiếm"
-                onPress={() => setSearchQuery("")}
-                hitSlop={8}
-                style={({ pressed }) => [
-                  styles.clearSearchButton,
-                  { opacity: pressed ? theme.motion.pressOpacity : 1 },
-                ]}
-              >
-                <AppIcon
-                  name="close"
-                  size={16}
-                  color={theme.colors.textSecondary}
-                />
-              </Pressable>
-            ) : null}
-          </View>
-
-          {/* Selected count info */}
-          <View style={styles.countRow}>
-            <AppText
-              style={[
-                styles.countText,
-                {
-                  color: theme.colors.primaryText,
-                  fontFamily: theme.typography.fontFamily.semibold,
+                  backgroundColor: theme.colors.surfaceVariant,
+                  borderRadius: theme.radius.md,
+                  borderColor: isSearchFocused
+                    ? theme.colors.focus
+                    : theme.colors.border,
                 },
               ]}
             >
-              Đã chọn {selectedStops.length} địa điểm
-            </AppText>
-          </View>
-
-          {/* Place List */}
-          <FlatList
-            data={filteredPlaces}
-            keyExtractor={(item) => item.id}
-            showsVerticalScrollIndicator={false}
-            style={styles.list}
-            contentContainerStyle={styles.listContent}
-            renderItem={({ item }) => {
-              const isChecked = selectedStops.some((s) => s.id === item.id);
-              return (
+              <AppIcon
+                name="pin"
+                size={16}
+                color={theme.colors.textSecondary}
+              />
+              <TextInput
+                style={[
+                  styles.searchInput,
+                  {
+                    color: theme.colors.text,
+                    fontFamily: theme.typography.fontFamily.regular,
+                  },
+                  webInputReset,
+                ]}
+                accessibilityLabel={copy.addPlace}
+                placeholder={tripMessage(copy.placeSearch, { destination })}
+                placeholderTextColor={theme.colors.textDisabled}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setIsSearchFocused(false)}
+                cursorColor={theme.colors.primaryText}
+                selectionColor={theme.colors.surfaceTint}
+                underlineColorAndroid="transparent"
+                autoCorrect={false}
+              />
+              {searchQuery.length > 0 ? (
                 <Pressable
-                  accessibilityRole="checkbox"
-                  accessibilityState={{ checked: isChecked }}
-                  onPress={() => toggleSelect(item)}
+                  accessibilityRole="button"
+                  accessibilityLabel={copy.clearSearch}
+                  onPress={() => setSearchQuery("")}
+                  hitSlop={8}
                   style={({ pressed }) => [
-                    styles.placeItem,
-                    {
-                      borderColor: theme.colors.border,
-                      opacity: pressed ? theme.motion.pressOpacity : 1,
-                    },
+                    styles.clearSearchButton,
+                    { opacity: pressed ? theme.motion.pressOpacity : 1 },
                   ]}
                 >
-                  <View style={styles.placeInfo}>
-                    <AppText
-                      style={[
-                        styles.placeName,
-                        {
-                          color: theme.colors.text,
-                          fontFamily: theme.typography.fontFamily.regular,
-                        },
-                      ]}
-                    >
-                      {item.name.vi}
-                    </AppText>
-                    <AppText variant="caption" tone="muted">
-                      {item.kind.vi}
-                    </AppText>
-                  </View>
+                  <AppIcon
+                    name="close"
+                    size={16}
+                    color={theme.colors.textSecondary}
+                  />
+                </Pressable>
+              ) : null}
+            </View>
 
-                  {/* Custom Checkbox */}
-                  <View
-                    style={[
-                      styles.checkbox,
+            {/* Selected count info */}
+            <View style={styles.countRow}>
+              <AppText
+                style={[
+                  styles.countText,
+                  {
+                    color: theme.colors.primaryText,
+                    fontFamily: theme.typography.fontFamily.semibold,
+                  },
+                ]}
+              >
+                {tripMessage(copy.selectedPlaces, {
+                  count: selectedStops.length,
+                })}
+              </AppText>
+            </View>
+
+            {/* Place List */}
+            <FlatList
+              data={filteredPlaces}
+              keyboardShouldPersistTaps="handled"
+              ListEmptyComponent={
+                <View
+                  style={{ padding: theme.spacing.lg, gap: theme.spacing.sm }}
+                >
+                  <AppText>{copy.noPlaces}</AppText>
+                  <AppText variant="caption" tone="muted">
+                    {copy.noPlacesHint}
+                  </AppText>
+                </View>
+              }
+              keyExtractor={(item) => item.id}
+              showsVerticalScrollIndicator={false}
+              style={styles.list}
+              contentContainerStyle={styles.listContent}
+              renderItem={({ item }) => {
+                const isChecked = selectedStops.some((s) => s.id === item.id);
+                return (
+                  <Pressable
+                    accessibilityRole="checkbox"
+                    accessibilityLabel={item.name[locale]}
+                    accessibilityState={{ checked: isChecked }}
+                    onPress={() => toggleSelect(item)}
+                    style={({ pressed }) => [
+                      styles.placeItem,
                       {
-                        borderColor: isChecked
-                          ? theme.colors.primary
-                          : theme.colors.borderStrong,
-                        backgroundColor: isChecked
-                          ? theme.colors.primary
-                          : theme.colors.surface,
-                        borderRadius: theme.radius.sm,
+                        borderColor: theme.colors.border,
+                        opacity: pressed ? theme.motion.pressOpacity : 1,
                       },
                     ]}
                   >
-                    {isChecked ? (
-                      <AppIcon
-                        name="check"
-                        size={14}
-                        color={theme.colors.onPrimary}
-                      />
-                    ) : null}
-                  </View>
-                </Pressable>
-              );
-            }}
-          />
+                    <View style={styles.placeInfo}>
+                      <AppText
+                        style={[
+                          styles.placeName,
+                          {
+                            color: theme.colors.text,
+                            fontFamily: theme.typography.fontFamily.regular,
+                          },
+                        ]}
+                      >
+                        {item.name[locale]}
+                      </AppText>
+                      <AppText variant="caption" tone="muted">
+                        {item.kind[locale]}
+                      </AppText>
+                    </View>
 
-          {/* Action Button */}
-          <AppButton variant="raised" onPress={handleApply}>
-            {selectedStops.length > 0
-              ? `Thêm ${selectedStops.length} địa điểm`
-              : "Xong"}
-          </AppButton>
+                    {/* Custom Checkbox */}
+                    <View
+                      style={[
+                        styles.checkbox,
+                        {
+                          borderColor: isChecked
+                            ? theme.colors.primary
+                            : theme.colors.borderStrong,
+                          backgroundColor: isChecked
+                            ? theme.colors.primary
+                            : theme.colors.surface,
+                          borderRadius: theme.radius.sm,
+                        },
+                      ]}
+                    >
+                      {isChecked ? (
+                        <AppIcon
+                          name="check"
+                          size={14}
+                          color={theme.colors.onPrimary}
+                        />
+                      ) : null}
+                    </View>
+                  </Pressable>
+                );
+              }}
+            />
+
+            {/* Action Button */}
+            <AppButton variant="raised" onPress={handleApply}>
+              {selectedStops.length > 0
+                ? tripMessage(copy.addSelectedPlaces, {
+                    count: selectedStops.length,
+                  })
+                : copy.done}
+            </AppButton>
           </Animated.View>
-        </View>
+        </KeyboardAvoidingView>
       </GestureHandlerRootView>
     </Modal>
   );
@@ -522,47 +360,51 @@ const styles = StyleSheet.create({
   sheet: {
     width: "100%",
     maxHeight: "85%",
-    paddingHorizontal: 20,
-    paddingTop: 8,
+    paddingHorizontal: spacing.lg + spacing.xs,
+    paddingTop: spacing.sm,
   },
   dragHeaderZone: {
     width: "100%",
   },
   handleWrapper: {
     alignItems: "center",
-    paddingVertical: 8,
+    paddingVertical: spacing.sm,
   },
   handle: {
-    width: 44,
-    height: 5,
-    borderRadius: 3,
+    width: layout.sheetDragHandleWidth,
+    height: layout.sheetDragHandleHeight,
+    borderRadius: radius.full,
     opacity: 0.35,
   },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   headerTitle: {
-    fontSize: 18,
-    lineHeight: 24,
+    fontSize: typography.fontSize.lg,
+    lineHeight: typography.lineHeight.md,
   },
   closeButton: {
-    padding: 4,
+    minWidth: layout.compactTouchTarget,
+    minHeight: layout.compactTouchTarget,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: spacing.xs,
   },
   searchBox: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 12,
-    height: 44,
+    paddingHorizontal: spacing.md,
+    height: layout.compactTouchTarget,
     borderWidth: 1,
-    gap: 8,
-    marginBottom: 12,
+    gap: spacing.sm,
+    marginBottom: spacing.md,
   },
   searchInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: typography.fontSize.sm,
     height: "100%",
     paddingVertical: 0,
   },
@@ -572,35 +414,35 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    marginLeft: 4,
+    marginLeft: spacing.xs,
   },
   countRow: {
-    marginBottom: 10,
+    marginBottom: spacing.sm + spacing.xxs,
   },
   countText: {
-    fontSize: 13,
+    fontSize: typography.fontSize.compactAction,
   },
   list: {
-    maxHeight: 280,
-    marginBottom: 16,
+    maxHeight: layout.pickerListMaxHeight,
+    marginBottom: spacing.lg,
   },
   listContent: {
-    gap: 4,
+    gap: spacing.xs,
   },
   placeItem: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 12,
+    paddingVertical: spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   placeInfo: {
     flex: 1,
-    gap: 2,
+    gap: spacing.xxs,
   },
   placeName: {
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: typography.fontSize.sm,
+    lineHeight: typography.lineHeight.compactAction,
   },
   checkbox: {
     width: 22,

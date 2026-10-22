@@ -12,7 +12,7 @@ import { LanguageSwitcher } from "@/components/common/language-switcher";
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useI18n } from "@/hooks/use-i18n";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useScreenInsets } from "@/hooks/use-screen-insets";
 
 type AuthScaffoldProps = {
   children: ReactNode;
@@ -31,7 +31,7 @@ export function AuthScaffold({
 }: AuthScaffoldProps) {
   const theme = useAppTheme();
   const { t } = useI18n();
-  const insets = useSafeAreaInsets();
+  const insets = useScreenInsets();
 
   return (
     <KeyboardAvoidingView

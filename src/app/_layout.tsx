@@ -5,7 +5,10 @@ import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
 import { useEffect } from "react";
 import { AppState, Platform } from "react-native";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import {
+  initialWindowMetrics,
+  SafeAreaProvider,
+} from "react-native-safe-area-context";
 
 import { UI_PREVIEW_ENABLED } from "@/constants/development";
 import { MagicLinkProvider } from "@/features/auth/components/magic-link-provider";
@@ -43,7 +46,7 @@ export default function RootLayout() {
   }
 
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider value={lightTheme}>
           <StatusBar style="dark" />
@@ -69,7 +72,7 @@ export default function RootLayout() {
               <Stack.Protected
                 guard={UI_PREVIEW_ENABLED || status === "authenticated"}
               >
-                <Stack.Screen name="tabs" />
+                <Stack.Screen name="(workspace)" />
               </Stack.Protected>
             </Stack>
           </MagicLinkProvider>

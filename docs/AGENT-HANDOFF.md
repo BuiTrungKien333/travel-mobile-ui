@@ -4,6 +4,18 @@ Snapshot: **19/10/2026**. Repository mobile: **`E:/travel-mobile-ui`**. Mốc Gi
 
 ## 1. Bắt đầu từ đâu
 
+**Planning UI mới nhất:** Planning dùng một `Animated.FlatList`: ListHeader là `TripPlanningMap` (35%, mở 80%), row đầu là day strip sticky (96px, hai dòng, underline 3px, có `+`). `use-planning-map-collapse.ts` tự ẩn bản đồ khi cuộn xuống, ghim Back/tên chuyến/sửa/mở lại trên dải ngày; vuốt nhanh lên hoặc nút mở lại về 35%. Không tách thêm vertical scroll container; giữ viewOffset khi jump stop. Header tên 16px và divider nhẹ; map actions compact 32px/target44, vị trí hiện tại chưa có GPS. Hiện **112 tests**, TS/no-unused và Android export đạt, web đã thử, native gesture chưa xác nhận. Xem mục mới nhất ở đầu `TRIP-DETAIL-DESIGN.md`; các mốc dưới là lịch sử.
+
+**Trip details · lượt UI mới nhất 21/10/2026:** Bản hiện tại **đã bỏ cover và toggle Lịch trình/Bản đồ**. AppBar gọn + day tabs (không counts), tab cuối Chưa xếp lịch. Helper `trip-details-layout.ts` chọn Planning/Live/Recap bằng ngày (inclusive), giữ Cancelled riêng, dùng clock của session mock. Planning/Live: sơ đồ S→1→2 trên khoảng 36% vùng nội dung, FlatList dưới; marker cuộn/highlight stop cùng số. Recap ưu tiên album/ghi chú theo ngày, CTA Xem kỷ niệm + chia sẻ văn bản; không mặc định hiện nút sửa/tối ưu. Header/actions/backlog/recap/timeline states tách component; `use-trip-timeline-scroll.ts` quản lý scroll retry có giới hạn/Reduce Motion/cleanup. Backlog gồm pool + stop chưa có giờ nằm trong days (cần giữ source date), không còn pool sheet/card riêng. `scheduledStops`/`mergeScheduledOrder` giữ reorder chỉ tác động stop có giờ; không làm rơi backlog/pins. Camera, visited, ảnh vẫn dùng chung Home. Hiện **104 tests**, TS và Android/Web exports đạt; QA web ba mode đã thực hiện, native/share/a11y chưa xác nhận. Thông tin MVP 97 tests ngay dưới là mốc lịch sử. Xem phần đầu `TRIP-DETAIL-DESIGN.md` trước đề xuất cũ.
+
+**Trip details · 21/10/2026:** Đã implement MVP frontend; xem `docs/TRIP-DETAIL-DESIGN.md` (kết quả hiện tại nằm đầu tài liệu). Route `/trip/[tripId]` + param `day`; source ở `src/app/(workspace)/trip/[tripId].tsx`, screen/components/schema/mutations trong feature trip. Workspace native stack bọc chung provider và PreviewPanels, nằm trong auth guard; tabs đã chuyển thư mục vào `(workspace)/tabs` nhưng URL `/tabs/...` không đổi. Home/list/create chuyển qua route chung bằng `TripDetailsRedirect`, không còn PlanPanel hoặc modal trip-details riêng. Store có `mutateTrip` + pure reducer `applyTripMutation`; không thêm nguồn trips khác. `createDraft.initialStops` giờ lưu trong `unscheduledStops` (giờ trống), chỉ xếp vào ngày khi người dùng chọn. Chỉnh ngày giải cứu stop về pool, kỷ niệm giữ ngày chụp. Forecast/di chuyển/optimization/map vẫn là dữ liệu/luồng mẫu, không ngụ ý backend hay GPS thật. Hiện 97 tests, TypeScript, Android/Web export đạt; đã thử luồng web chính, cần QA native.
+
+**Trips · 21/10/2026:** Người dùng đã làm UI danh sách/tạo chuyến tại `src/features/trip` và yêu cầu review + ý tưởng chi tiết. Đã sửa các lỗi review: xem trạng thái hiện tại trong `docs/TRIPS-REVIEW.md`; `docs/TRIP-DETAIL-DESIGN.md` có cập nhật triển khai MVP ở đầu tài liệu. List/plan chỉ dùng scoped preview store (không còn sampleTrips riêng/cắt bốn mục); create form dùng RHF + Zod, lưu budget/preferences và copy VI/EN. Picker mount session mới mỗi lần mở và chỉ Apply sau animation đóng; Cancel không commit. Header tạo chuyến có padding trên safe area + spacing.xxl (32px). Mốc trong snapshot cũ nói chưa chọn module tiếp theo không còn áp dụng cho Trips. Hiện có 87 tests đạt, gồm 13 regression tests mới; Android/Web export đạt. Vẫn cần QA native cho keyboard/gesture/safe area, không coi tests harness là kiểm thử trên điện thoại.
+
+**Safe area · 21/10/2026:** Dùng chung `src/components/common/screen-safe-area.tsx` + `src/hooks/use-screen-insets.ts` cho boundary màn hình/modal. Root provider có `initialWindowMetrics`; Android dùng `StatusBar.currentHeight` do hệ điều hành báo (đã trừ `frame.y`) làm mốc tối thiểu, không cộng chồng với inset. Giữ padding nội dung theo theme, không tự hardcode lề notch hay bọc safe area hai lần. Xem hướng dẫn trong `HOME-PREVIEW.md`. Chưa có thiết bị ADB để xác nhận layout thực tế.
+
+**Bổ sung 21/10/2026:** Đã xử lý crash tải Home khi runtime thiếu `ExpoMediaLibraryNext`: các dependency native ảnh được guard/import lúc thao tác trong `services/journal-photo-actions.ts`, có lỗi VI/EN `nativeBuildRequired`. Không chuyển về legacy API, không nâng package. Bản app cũ cần build/cài lại để lưu/chia sẻ đầy đủ; xem phần khắc phục Android trong `HOME-PREVIEW.md`. Cảnh báo route thiếu default export là hệ quả import lỗi, không phải route thiếu export. Tám tests mới trong `tests/journal-photo-actions.test.ts` kiểm tra module thiếu, permission, cleanup và share. Không có thiết bị ADB kết nối tại thời điểm sửa nên chưa xác nhận native runtime.
+
 Đây là tài liệu bàn giao sản phẩm và bản đồ code, **không thay thế `AGENTS.md`**. Đọc `E:/travel-mobile-ui/AGENTS.md` một lần để lấy quy định chính thức; `CLAUDE.md` chỉ trỏ về file đó. Nếu có quy định gần hơn trong thư mục đang sửa thì áp dụng đúng phạm vi. Không cần nạp toàn bộ lịch sử chat hoặc đọc lại cả hai repository.
 
 | Cần biết                                           | Tài liệu / mã nguồn                             |
@@ -88,7 +100,9 @@ Các thư viện hiện có cần tận dụng: Expo Router, React Query, Axios,
 ```text
 src/app/                         routes/layout mỏng
   _layout.tsx                    font, providers, auth guards
-  tabs/_layout.tsx               scoped TripPreviewProvider + tabs + PreviewPanels
+  (workspace)/_layout.tsx        guarded workspace stack + scoped store + PreviewPanels
+  (workspace)/tabs/_layout.tsx   floating tab navigation
+  (workspace)/trip/[tripId].tsx  validated details route
 src/features/home/
   screens/                       ghép giao diện Home và các tab preview
   components/                    hero, timeline, album, weather, packing, panels
@@ -101,6 +115,12 @@ src/features/home/
   services/                      share/save ảnh native và web
   utils/                         chọn Home, ngày, progress, photo geometry, maps URL
   i18n/                          Home / ongoing / weather / photo viewer copy VI/EN
+src/features/trip/
+  screens/                       Trips + TripDetails composition
+  components/                    overview, timeline row, forms, sheets, diagram, reorder
+  schemas/                       create/details form + route validation
+  utils/trip-mutations.ts         immutable schedule operations
+  data/                          place bank + explicit preview estimates
 src/components/ui/               primitive
 src/components/common/           glass, navigation, language switcher
 src/hooks/                       hook dùng nhiều feature

@@ -39,13 +39,11 @@ test("draft creation builds inclusive calendar days and opens its plan", () => {
   const store = createPreviewStore();
   store.getState().changeScenario("new");
   assert.equal(
-    store
-      .getState()
-      .createDraft({
-        destination: "Huế",
-        startDate: "2026-10-31",
-        endDate: "2026-11-02",
-      }),
+    store.getState().createDraft({
+      destination: "Huế",
+      startDate: "2026-10-31",
+      endDate: "2026-11-02",
+    }),
     true,
   );
   const state = store.getState();
@@ -68,7 +66,14 @@ test("adding suggestions does not duplicate stops or mutate original scenario fi
   assert.ok(trip);
   const day = trip.days[2];
   assert.equal(day.stops.length, 0);
-  for (let i = 0; i < 5; i++) store.getState().addStop(trip.id, day.date);
+  for (let i = 0; i < 5; i++)
+    store
+      .getState()
+      .mutateTrip(trip.id, {
+        kind: "add",
+        date: day.date,
+        stops: trip.days[1].stops,
+      });
   const updated = store.getState().trips.find((item) => item.id === trip.id)
     ?.days[2];
   assert.equal(updated?.stops.length, 3);

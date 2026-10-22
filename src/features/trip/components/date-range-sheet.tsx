@@ -1,30 +1,21 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import {
-  Modal,
-  Pressable,
-  StyleSheet,
-  View,
-} from "react-native";
-import {
-  Gesture,
   GestureDetector,
   GestureHandlerRootView,
 } from "react-native-gesture-handler";
-import Animated, {
-  cancelAnimation,
-  ReduceMotion,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from "react-native-reanimated";
+import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { scheduleOnRN } from "react-native-worklets";
+import { usePickerSheetMotion } from "../hooks/use-picker-sheet-motion";
+import { useTripCopy } from "../i18n/trip-copy";
+import { formatDisplayDate } from "../utils/create-trip-formatters";
 
 import { AppButton } from "@/components/ui/app-button";
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
 import { dayDistance } from "@/features/home/utils/select-home";
 import { useAppTheme } from "@/hooks/use-app-theme";
+import { spacing, typography, layout, radius } from "@/theme/tokens";
 
 type DateRangeSheetProps = {
   visible: boolean;
@@ -35,13 +26,11 @@ type DateRangeSheetProps = {
   onClose: () => void;
 };
 
-function formatDisplayDate(isoDate: string): string {
-  if (!isoDate || !/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return "";
-  const [y, m, d] = isoDate.split("-");
-  return `${d}/${m}/${y}`;
+export function DateRangeSheet(props: DateRangeSheetProps) {
+  return props.visible ? <DateRangeSession {...props} /> : null;
 }
 
-export function DateRangeSheet({
+function DateRangeSession({
   visible,
   startDate,
   endDate,
@@ -68,7 +57,8 @@ export function DateRangeSheet({
     const month = currentMonth.getUTCMonth();
     const totalDays = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
     // Monday is index 0 (0: Mon, ..., 6: Sun)
-    const firstDayIndex = (new Date(Date.UTC(year, month, 1)).getUTCDay() + 6) % 7;
+    const firstDayIndex =
+      (new Date(Date.UTC(year, month, 1)).getUTCDay() + 6) % 7;
 
     const days: ({ dateStr: string; dayNum: number } | null)[] = [];
     for (let i = 0; i < firstDayIndex; i++) {
@@ -88,7 +78,11 @@ export function DateRangeSheet({
   const handlePrevMonth = () => {
     setCurrentMonth(
       new Date(
-        Date.UTC(currentMonth.getUTCFullYear(), currentMonth.getUTCMonth() - 1, 1),
+        Date.UTC(
+          currentMonth.getUTCFullYear(),
+          currentMonth.getUTCMonth() - 1,
+          1,
+        ),
       ),
     );
   };
@@ -96,7 +90,11 @@ export function DateRangeSheet({
   const handleNextMonth = () => {
     setCurrentMonth(
       new Date(
-        Date.UTC(currentMonth.getUTCFullYear(), currentMonth.getUTCMonth() + 1, 1),
+        Date.UTC(
+          currentMonth.getUTCFullYear(),
+          currentMonth.getUTCMonth() + 1,
+          1,
+        ),
       ),
     );
   };
@@ -121,122 +119,31 @@ export function DateRangeSheet({
     return dayDistance(selectedStart, selectedEnd) + 1;
   }, [selectedStart, selectedEnd]);
 
-  const isClosing = useSharedValue(false);
-  const translateY = useSharedValue(0);
-  const dismissDistance = theme.layout.sheetDismissDistance;
-  const dismissVelocity = theme.motion.sheetDismissVelocity;
-  const snapDuration = theme.motion.tabTransitionDuration;
-  const minimumSwipe = theme.spacing.md;
-
-  const sheetMotion = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }],
-  }));
-
-  const backdropMotion = useAnimatedStyle(() => ({
-    opacity: Math.max(0, Math.min(1, 1 - translateY.value / 350)),
-  }));
-
-  useEffect(() => () => cancelAnimation(translateY), [translateY]);
-
-  useEffect(() => {
-    if (visible) {
-      isClosing.value = false;
-      setSelectedStart(startDate);
-      setSelectedEnd(endDate);
-      const base = startDate || today || new Date().toISOString().slice(0, 10);
-      const [y, m] = base.split("-").map(Number);
-      setCurrentMonth(new Date(Date.UTC(y, m - 1, 1)));
-      translateY.value = 280;
-      translateY.value = withTiming(0, {
-        duration: snapDuration,
-        reduceMotion: ReduceMotion.System,
-      });
-    }
-  }, [visible, startDate, endDate, today, snapDuration, translateY, isClosing]);
-
-  const handleAnimatedClose = () => {
-    if (isClosing.value) return;
-    isClosing.value = true;
-    translateY.value = withTiming(
-      600,
-      {
-        duration: 180,
-        reduceMotion: ReduceMotion.System,
-      },
-      (finished) => {
-        if (finished) {
-          scheduleOnRN(onClose);
-        }
-      },
-    );
-  };
-
-  const dragGesture = Gesture.Pan()
-    .activeOffsetY(theme.spacing.sm)
-    .failOffsetX([-theme.spacing.lg, theme.spacing.lg])
-    .onUpdate((event) => {
-      translateY.value = Math.max(0, event.translationY);
-    })
-    .onEnd((event) => {
-      if (
-        event.translationY >= dismissDistance ||
-        (event.translationY > minimumSwipe &&
-          event.velocityY >= dismissVelocity)
-      ) {
-        isClosing.value = true;
-        translateY.value = withTiming(
-          600,
-          {
-            duration: 180,
-            reduceMotion: ReduceMotion.System,
-          },
-          (finished) => {
-            if (finished) {
-              scheduleOnRN(onClose);
-            }
-          },
-        );
-      } else {
-        translateY.value = withTiming(0, {
-          duration: snapDuration,
-          reduceMotion: ReduceMotion.System,
-        });
-      }
-    })
-    .onFinalize((_event, success) => {
-      if (!success && !isClosing.value) {
-        translateY.value = withTiming(0, {
-          duration: snapDuration,
-          reduceMotion: ReduceMotion.System,
-        });
-      }
-    });
-
-  const monthLabel = useMemo(() => {
-    const month = currentMonth.getUTCMonth() + 1;
-    const year = currentMonth.getUTCFullYear();
-    return `Tháng ${month}, ${year}`;
-  }, [currentMonth]);
-
-  const weekHeaders = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
-
+  const { sheetMotion, backdropMotion, dragGesture, close, reduceMotion } =
+    usePickerSheetMotion(onClose);
+  const { copy, locale } = useTripCopy();
+  const monthLabel = new Intl.DateTimeFormat(
+    locale === "vi" ? "vi-VN" : "en-US",
+    { month: "long", year: "numeric", timeZone: "UTC" },
+  ).format(currentMonth);
+  const weekHeaders =
+    locale === "vi"
+      ? ["T2", "T3", "T4", "T5", "T6", "T7", "CN"]
+      : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const handleApply = () => {
     if (!selectedStart) return;
     const finalStart = selectedStart;
     const finalEnd = selectedEnd || finalStart;
-    onApply(finalStart, finalEnd);
-    handleAnimatedClose();
+    close(() => onApply(finalStart, finalEnd));
   };
-
-  if (!visible) return null;
 
   return (
     <Modal
       transparent
       visible={visible}
-      animationType="fade"
+      animationType={reduceMotion ? "none" : "fade"}
       statusBarTranslucent
-      onRequestClose={handleAnimatedClose}
+      onRequestClose={() => close()}
     >
       <GestureHandlerRootView style={styles.root}>
         <View style={styles.backdrop}>
@@ -247,7 +154,7 @@ export function DateRangeSheet({
               backdropMotion,
             ]}
           />
-          <Pressable style={StyleSheet.absoluteFill} onPress={handleAnimatedClose} />
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => close()} />
           <Animated.View
             style={[
               styles.sheet,
@@ -256,7 +163,8 @@ export function DateRangeSheet({
                 backgroundColor: theme.colors.surface,
                 borderTopLeftRadius: theme.radius.xxl,
                 borderTopRightRadius: theme.radius.xxl,
-                paddingBottom: Math.max(insets.bottom, 16) + theme.spacing.md,
+                paddingBottom:
+                  Math.max(insets.bottom, theme.spacing.lg) + theme.spacing.md,
               },
             ]}
           >
@@ -284,227 +192,257 @@ export function DateRangeSheet({
                       },
                     ]}
                   >
-                    Chọn ngày đi và ngày về
+                    {copy.chooseDates}
                   </AppText>
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel="Đóng"
-                    onPress={handleAnimatedClose}
+                    accessibilityLabel={copy.close}
+                    onPress={() => close()}
                     hitSlop={12}
                     style={({ pressed }) => [
                       styles.closeButton,
                       { opacity: pressed ? theme.motion.pressOpacity : 1 },
                     ]}
                   >
-                    <AppIcon name="close" size={20} color={theme.colors.textSecondary} />
+                    <AppIcon
+                      name="close"
+                      size={20}
+                      color={theme.colors.textSecondary}
+                    />
                   </Pressable>
                 </View>
               </View>
             </GestureDetector>
 
-          {/* Selected Range Banner */}
-          <View
-            style={[
-              styles.rangeBanner,
-              {
-                backgroundColor: theme.colors.surfaceTint,
-                borderRadius: theme.radius.md,
-                borderColor: theme.colors.border,
-              },
-            ]}
-          >
-            <View style={styles.bannerColumn}>
-              <AppText variant="caption" tone="muted">
-                Ngày đi
-              </AppText>
-              <AppText
+            <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
+              {/* Selected Range Banner */}
+              <View
                 style={[
-                  styles.bannerDate,
+                  styles.rangeBanner,
                   {
-                    color: theme.colors.text,
-                    fontFamily: theme.typography.fontFamily.bold,
+                    backgroundColor: theme.colors.surfaceTint,
+                    borderRadius: theme.radius.md,
+                    borderColor: theme.colors.border,
                   },
                 ]}
               >
-                {formatDisplayDate(selectedStart) || "--/--/----"}
-              </AppText>
-            </View>
-
-            <View
-              style={[styles.bannerDivider, { backgroundColor: theme.colors.border }]}
-            />
-
-            <View style={styles.bannerColumn}>
-              <AppText variant="caption" tone="muted">
-                Ngày về
-              </AppText>
-              <AppText
-                style={[
-                  styles.bannerDate,
-                  {
-                    color: theme.colors.text,
-                    fontFamily: theme.typography.fontFamily.bold,
-                  },
-                ]}
-              >
-                {formatDisplayDate(selectedEnd || selectedStart) || "--/--/----"}
-              </AppText>
-            </View>
-          </View>
-
-          {/* Month Navigation */}
-          <View style={styles.monthNavRow}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Tháng trước"
-              onPress={handlePrevMonth}
-              hitSlop={12}
-              style={({ pressed }) => [
-                styles.navArrow,
-                { opacity: pressed ? theme.motion.pressOpacity : 1 },
-              ]}
-            >
-              <AppIcon name="back" size={18} color={theme.colors.primaryText} />
-            </Pressable>
-            <AppText
-              style={[
-                styles.monthLabel,
-                {
-                  color: theme.colors.text,
-                  fontFamily: theme.typography.fontFamily.bold,
-                },
-              ]}
-            >
-              {monthLabel}
-            </AppText>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Tháng sau"
-              onPress={handleNextMonth}
-              hitSlop={12}
-              style={({ pressed }) => [
-                styles.navArrow,
-                { opacity: pressed ? theme.motion.pressOpacity : 1 },
-              ]}
-            >
-              <AppIcon name="chevron" size={18} color={theme.colors.primaryText} />
-            </Pressable>
-          </View>
-
-          {/* Weekday Row */}
-          <View style={styles.weekdayRow}>
-            {weekHeaders.map((head, idx) => (
-              <AppText
-                key={head + idx}
-                variant="caption"
-                tone="muted"
-                style={styles.weekdayCell}
-              >
-                {head}
-              </AppText>
-            ))}
-          </View>
-
-          {/* Days Grid */}
-          <View style={styles.daysGrid}>
-            {daysInMonth.map((cell, index) => {
-              if (!cell) {
-                return <View key={`empty-${index}`} style={styles.dayCell} />;
-              }
-
-              const { dateStr, dayNum } = cell;
-              const isPast = dateStr < today;
-              const isStart = dateStr === selectedStart;
-              const isEnd = dateStr === selectedEnd;
-              const isInRange =
-                selectedStart &&
-                selectedEnd &&
-                dateStr > selectedStart &&
-                dateStr < selectedEnd;
-
-              return (
-                <Pressable
-                  key={dateStr}
-                  disabled={isPast}
-                  onPress={() => handleDatePress(dateStr)}
-                  style={[
-                    styles.dayCell,
-                    isInRange && {
-                      backgroundColor: theme.colors.surfaceTint,
-                    },
-                    isStart &&
-                      selectedEnd &&
-                      selectedEnd !== selectedStart && {
-                        borderTopLeftRadius: theme.radius.full,
-                        borderBottomLeftRadius: theme.radius.full,
-                        backgroundColor: theme.colors.surfaceTint,
-                      },
-                    isEnd &&
-                      selectedStart &&
-                      selectedEnd !== selectedStart && {
-                        borderTopRightRadius: theme.radius.full,
-                        borderBottomRightRadius: theme.radius.full,
-                        backgroundColor: theme.colors.surfaceTint,
-                      },
-                  ]}
-                >
-                  <View
+                <View style={styles.bannerColumn}>
+                  <AppText variant="caption" tone="muted">
+                    {copy.startDate}
+                  </AppText>
+                  <AppText
                     style={[
-                      styles.dayCircle,
-                      (isStart || isEnd) && {
-                        backgroundColor: theme.colors.primary,
-                        borderRadius: theme.radius.full,
+                      styles.bannerDate,
+                      {
+                        color: theme.colors.text,
+                        fontFamily: theme.typography.fontFamily.bold,
                       },
                     ]}
                   >
-                    <AppText
+                    {formatDisplayDate(selectedStart, locale) || "--/--/----"}
+                  </AppText>
+                </View>
+
+                <View
+                  style={[
+                    styles.bannerDivider,
+                    { backgroundColor: theme.colors.border },
+                  ]}
+                />
+
+                <View style={styles.bannerColumn}>
+                  <AppText variant="caption" tone="muted">
+                    {copy.endDate}
+                  </AppText>
+                  <AppText
+                    style={[
+                      styles.bannerDate,
+                      {
+                        color: theme.colors.text,
+                        fontFamily: theme.typography.fontFamily.bold,
+                      },
+                    ]}
+                  >
+                    {formatDisplayDate(selectedEnd || selectedStart, locale) ||
+                      "--/--/----"}
+                  </AppText>
+                </View>
+              </View>
+
+              {/* Month Navigation */}
+              <View style={styles.monthNavRow}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={copy.previousMonth}
+                  onPress={handlePrevMonth}
+                  hitSlop={12}
+                  style={({ pressed }) => [
+                    styles.navArrow,
+                    { opacity: pressed ? theme.motion.pressOpacity : 1 },
+                  ]}
+                >
+                  <AppIcon
+                    name="back"
+                    size={18}
+                    color={theme.colors.primaryText}
+                  />
+                </Pressable>
+                <AppText
+                  style={[
+                    styles.monthLabel,
+                    {
+                      color: theme.colors.text,
+                      fontFamily: theme.typography.fontFamily.bold,
+                    },
+                  ]}
+                >
+                  {monthLabel}
+                </AppText>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={copy.nextMonth}
+                  onPress={handleNextMonth}
+                  hitSlop={12}
+                  style={({ pressed }) => [
+                    styles.navArrow,
+                    { opacity: pressed ? theme.motion.pressOpacity : 1 },
+                  ]}
+                >
+                  <AppIcon
+                    name="chevron"
+                    size={18}
+                    color={theme.colors.primaryText}
+                  />
+                </Pressable>
+              </View>
+
+              {/* Weekday Row */}
+              <View style={styles.weekdayRow}>
+                {weekHeaders.map((head, idx) => (
+                  <AppText
+                    key={head + idx}
+                    variant="caption"
+                    tone="muted"
+                    style={styles.weekdayCell}
+                  >
+                    {head}
+                  </AppText>
+                ))}
+              </View>
+
+              {/* Days Grid */}
+              <View style={styles.daysGrid}>
+                {daysInMonth.map((cell, index) => {
+                  if (!cell) {
+                    return (
+                      <View key={`empty-${index}`} style={styles.dayCell} />
+                    );
+                  }
+
+                  const { dateStr, dayNum } = cell;
+                  const isPast = dateStr < today;
+                  const isStart = dateStr === selectedStart;
+                  const isEnd = dateStr === selectedEnd;
+                  const isInRange =
+                    selectedStart &&
+                    selectedEnd &&
+                    dateStr > selectedStart &&
+                    dateStr < selectedEnd;
+
+                  return (
+                    <Pressable
+                      key={dateStr}
+                      accessibilityRole="button"
+                      accessibilityLabel={new Intl.DateTimeFormat(
+                        locale === "vi" ? "vi-VN" : "en-US",
+                        { dateStyle: "full", timeZone: "UTC" },
+                      ).format(new Date(`${dateStr}T12:00:00Z`))}
+                      accessibilityState={{
+                        disabled: isPast,
+                        selected: Boolean(isStart || isEnd || isInRange),
+                      }}
+                      disabled={isPast}
+                      onPress={() => handleDatePress(dateStr)}
                       style={[
-                        styles.dayText,
-                        {
-                          color: isStart || isEnd
-                            ? theme.colors.onPrimary
-                            : isPast
-                              ? theme.colors.textDisabled
-                              : theme.colors.text,
-                          fontFamily: isStart || isEnd
-                            ? theme.typography.fontFamily.bold
-                            : theme.typography.fontFamily.regular,
+                        styles.dayCell,
+                        isInRange && {
+                          backgroundColor: theme.colors.surfaceTint,
                         },
+                        isStart &&
+                          selectedEnd &&
+                          selectedEnd !== selectedStart && {
+                            borderTopLeftRadius: theme.radius.full,
+                            borderBottomLeftRadius: theme.radius.full,
+                            backgroundColor: theme.colors.surfaceTint,
+                          },
+                        isEnd &&
+                          selectedStart &&
+                          selectedEnd !== selectedStart && {
+                            borderTopRightRadius: theme.radius.full,
+                            borderBottomRightRadius: theme.radius.full,
+                            backgroundColor: theme.colors.surfaceTint,
+                          },
                       ]}
                     >
-                      {dayNum}
-                    </AppText>
-                  </View>
-                </Pressable>
-              );
-            })}
-          </View>
+                      <View
+                        style={[
+                          styles.dayCircle,
+                          (isStart || isEnd) && {
+                            backgroundColor: theme.colors.primary,
+                            borderRadius: theme.radius.full,
+                          },
+                        ]}
+                      >
+                        <AppText
+                          style={[
+                            styles.dayText,
+                            {
+                              color:
+                                isStart || isEnd
+                                  ? theme.colors.onPrimary
+                                  : isPast
+                                    ? theme.colors.textDisabled
+                                    : theme.colors.text,
+                              fontFamily:
+                                isStart || isEnd
+                                  ? theme.typography.fontFamily.bold
+                                  : theme.typography.fontFamily.regular,
+                            },
+                          ]}
+                        >
+                          {dayNum}
+                        </AppText>
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </View>
 
-          {/* Duration Summary */}
-          {durationDays > 0 ? (
-            <View style={styles.durationRow}>
-              <AppText
-                style={[
-                  styles.durationText,
-                  {
-                    color: theme.colors.primaryText,
-                    fontFamily: theme.typography.fontFamily.bold,
-                  },
-                ]}
-              >
-                {durationDays} ngày
-              </AppText>
-            </View>
-          ) : null}
-
-          {/* Apply Button */}
-          <AppButton
-            variant="raised"
-            disabled={!selectedStart}
-            onPress={handleApply}
-          >
-            Áp dụng
-          </AppButton>
+              {/* Duration Summary */}
+              {durationDays > 0 ? (
+                <View style={styles.durationRow}>
+                  <AppText
+                    style={[
+                      styles.durationText,
+                      {
+                        color: theme.colors.primaryText,
+                        fontFamily: theme.typography.fontFamily.bold,
+                      },
+                    ]}
+                  >
+                    {durationDays} {copy.days}
+                  </AppText>
+                </View>
+              ) : null}
+            </ScrollView>
+            {/* Apply Button */}
+            <AppButton
+              variant="raised"
+              disabled={!selectedStart}
+              onPress={handleApply}
+            >
+              {copy.apply}
+            </AppButton>
           </Animated.View>
         </View>
       </GestureHandlerRootView>
@@ -522,86 +460,95 @@ const styles = StyleSheet.create({
   },
   sheet: {
     width: "100%",
-    paddingHorizontal: 20,
-    paddingTop: 8,
+    maxHeight: "90%",
+    paddingHorizontal: spacing.lg + spacing.xs,
+    paddingTop: spacing.sm,
   },
   dragHeaderZone: {
     width: "100%",
   },
   handleWrapper: {
     alignItems: "center",
-    paddingVertical: 8,
+    paddingVertical: spacing.sm,
   },
   handle: {
-    width: 44,
-    height: 5,
-    borderRadius: 3,
+    width: layout.sheetDragHandleWidth,
+    height: layout.sheetDragHandleHeight,
+    borderRadius: radius.full,
     opacity: 0.35,
   },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   headerTitle: {
-    fontSize: 18,
-    lineHeight: 24,
+    fontSize: typography.fontSize.lg,
+    lineHeight: typography.lineHeight.md,
   },
   closeButton: {
-    padding: 4,
+    minWidth: layout.compactTouchTarget,
+    minHeight: layout.compactTouchTarget,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: spacing.xs,
   },
   rangeBanner: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 10,
-    paddingHorizontal: 16,
+    paddingVertical: spacing.sm + spacing.xxs,
+    paddingHorizontal: spacing.lg,
     borderWidth: StyleSheet.hairlineWidth,
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   bannerColumn: {
     flex: 1,
     alignItems: "center",
-    gap: 2,
+    gap: spacing.xxs,
   },
   bannerDivider: {
     width: StyleSheet.hairlineWidth,
     height: 28,
   },
   bannerDate: {
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: typography.fontSize.sm,
+    lineHeight: typography.lineHeight.compactAction,
   },
   monthNavRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 12,
-    paddingHorizontal: 8,
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.sm,
   },
   navArrow: {
-    padding: 6,
+    minWidth: layout.compactTouchTarget,
+    minHeight: layout.compactTouchTarget,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: spacing.xs + spacing.xxs,
   },
   monthLabel: {
-    fontSize: 15,
+    fontSize: typography.fontSize.md,
   },
   weekdayRow: {
     flexDirection: "row",
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   weekdayCell: {
     flex: 1,
     textAlign: "center",
-    fontSize: 12,
+    fontSize: typography.fontSize.xs,
   },
   daysGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   dayCell: {
     width: "14.285%",
-    height: 40,
+    height: layout.compactTouchTarget,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -612,13 +559,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   dayText: {
-    fontSize: 13,
+    fontSize: typography.fontSize.compactAction,
   },
   durationRow: {
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   durationText: {
-    fontSize: 14,
+    fontSize: typography.fontSize.sm,
   },
 });

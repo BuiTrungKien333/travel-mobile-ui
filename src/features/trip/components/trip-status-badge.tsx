@@ -2,6 +2,7 @@ import { StyleSheet, View } from "react-native";
 
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
+import { typography } from "@/theme/tokens";
 import type { TripDisplayStatus } from "../utils/trip-formatters";
 
 type TripStatusBadgeProps = {
@@ -99,8 +100,8 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   text: {
-    fontSize: 11,
-    lineHeight: 14,
+    fontSize: typography.fontSize.navigationLabel,
+    lineHeight: typography.lineHeight.navigationLabel,
     includeFontPadding: false,
   },
 });

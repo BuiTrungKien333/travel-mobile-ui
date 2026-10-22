@@ -1,5 +1,5 @@
 import { ActivityIndicator, StyleSheet, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ScreenSafeArea } from "@/components/common/screen-safe-area";
 
 import { AppButton } from "@/components/ui/app-button";
 import { AppText } from "@/components/ui/app-text";
@@ -12,7 +12,7 @@ export function SessionGate({ failed }: { failed: boolean }) {
   const theme = useAppTheme();
   const { t } = useI18n();
   return (
-    <SafeAreaView
+    <ScreenSafeArea
       style={[styles.screen, { backgroundColor: theme.colors.background }]}
     >
       <View style={{ padding: theme.spacing.xl, gap: theme.spacing.lg }}>
@@ -35,7 +35,7 @@ export function SessionGate({ failed }: { failed: boolean }) {
           </>
         )}
       </View>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }
 const styles = StyleSheet.create({

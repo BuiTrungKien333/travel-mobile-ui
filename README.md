@@ -43,6 +43,7 @@ ESLint đã được cấu hình qua `npm run lint`. Đợt rà soát Home ngày
 - [Trạng thái dự án](docs/PROJECT-STATUS.md)
 - [Cách xem và cấu trúc Home preview](docs/HOME-PREVIEW.md)
 - [Kết quả rà soát Home](docs/HOME-REVIEW.md)
+- [Review danh sách/tạo chuyến](docs/TRIPS-REVIEW.md) · [Đề xuất chi tiết chuyến đi](docs/TRIP-DETAIL-DESIGN.md)
 - [Tích hợp Auth](docs/auth-integration.md)
 - [Thiết lập Google Sign-In](docs/google-auth.md)
 - [Quy định phát triển](AGENTS.md)

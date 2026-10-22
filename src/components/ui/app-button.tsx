@@ -7,12 +7,14 @@ import {
   View,
   type StyleProp,
   type ViewStyle,
+  type AccessibilityState,
 } from "react-native";
 
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
 
 type AppButtonProps = {
+  accessibilityState?: AccessibilityState;
   accessibilityHint?: string;
   children: ReactNode;
   disabled?: boolean;
@@ -26,6 +28,7 @@ type AppButtonProps = {
 };
 
 export function AppButton({
+  accessibilityState,
   accessibilityHint,
   children,
   disabled = false,
@@ -78,7 +81,11 @@ export function AppButton({
       accessibilityHint={accessibilityHint}
       accessibilityLabel={typeof children === "string" ? children : undefined}
       accessibilityRole="button"
-      accessibilityState={{ busy: loading, disabled: isDisabled }}
+      accessibilityState={{
+        ...accessibilityState,
+        busy: loading,
+        disabled: isDisabled,
+      }}
       disabled={isDisabled}
       onPress={onPress}
       style={({ pressed }) => [

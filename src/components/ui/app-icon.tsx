@@ -6,6 +6,28 @@ import { StyleSheet, View } from "react-native";
 import { useAppTheme } from "@/hooks/use-app-theme";
 
 const symbols = {
+  more: { ios: "ellipsis", android: "more_horiz", web: "more_horiz" },
+  search: { ios: "magnifyingglass", android: "search", web: "search" },
+  edit: { ios: "square.and.pencil", android: "edit", web: "edit" },
+  car: { ios: "car", android: "directions_car", web: "directions_car" },
+  motorcycle: { ios: "motorcycle", android: "two_wheeler", web: "two_wheeler" },
+  walk: {
+    ios: "figure.walk",
+    android: "directions_walk",
+    web: "directions_walk",
+  },
+  up: { ios: "arrow.up", android: "arrow_upward", web: "arrow_upward" },
+  down: { ios: "arrow.down", android: "arrow_downward", web: "arrow_downward" },
+  drag: {
+    ios: "line.3.horizontal",
+    android: "drag_handle",
+    web: "drag_handle",
+  },
+  reorder: {
+    ios: "arrow.up.arrow.down",
+    android: "swap_vert",
+    web: "swap_vert",
+  },
   home: { ios: "house", android: "home", web: "home" },
   map: { ios: "map", android: "map", web: "map" },
   compass: { ios: "safari", android: "explore", web: "explore" },
@@ -65,6 +87,16 @@ const symbols = {
     android: "open_in_full",
     web: "open_in_full",
   },
+  collapse: {
+    ios: "arrow.down.right.and.arrow.up.left",
+    android: "close_fullscreen",
+    web: "close_fullscreen",
+  },
+  locate: {
+    ios: "location.viewfinder",
+    android: "my_location",
+    web: "my_location",
+  },
   check: {
     ios: "checkmark.circle.fill",
     android: "check_circle",
@@ -112,6 +144,9 @@ const navigationAssets = {
   },
 };
 const lightAssets = {
+  locate: require("@/assets/icons/navigation/map-locate.svg"),
+  expand: require("@/assets/icons/navigation/map-expand.svg"),
+  collapse: require("@/assets/icons/navigation/map-collapse.svg"),
   pinAdd: require("@/assets/icons/navigation/plan-pin.svg"),
   camera: require("@/assets/icons/navigation/camera-outline.svg"),
   bell: require("@/assets/icons/navigation/header-bell.svg"),
@@ -127,6 +162,9 @@ const lightAssets = {
 };
 function isLightIcon(name: AppIconName): name is keyof typeof lightAssets {
   return (
+    name === "locate" ||
+    name === "expand" ||
+    name === "collapse" ||
     name === "pinAdd" ||
     name === "camera" ||
     name === "bell" ||

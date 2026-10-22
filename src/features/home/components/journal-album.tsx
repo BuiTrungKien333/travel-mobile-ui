@@ -25,11 +25,13 @@ export function JournalAlbum({
   onOpen,
   onCapture,
   variant = "today",
+  title,
 }: {
   memories: Memory[];
   onOpen: () => void;
   onCapture?: () => void;
   variant?: "today" | "recent";
+  title?: string;
 }) {
   const theme = useAppTheme();
   const { copy } = useOngoingCopy();
@@ -58,7 +60,7 @@ export function JournalAlbum({
           variant="label"
           style={homeStyles.grow}
         >
-          {variant === "recent" ? copy.recentJournal : copy.journal}
+          {title ?? (variant === "recent" ? copy.recentJournal : copy.journal)}
         </AppText>
         <TextAction
           label={variant === "recent" ? copy.allMemories : copy.allJournal}

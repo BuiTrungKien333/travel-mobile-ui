@@ -1,6 +1,38 @@
 # Tiến độ Travel Mobile UI
 
-Cập nhật: **19/10/2026**. Phạm vi chốt lần này: frontend Home. Ngày trong fixture Home là **21/10/2026** để tái hiện các trạng thái.
+Cập nhật: **21/10/2026**. Phạm vi: frontend Home, sửa lỗi danh sách/tạo chuyến, đề xuất chi tiết chuyến đi và lỗi tải module ảnh trên Android. Ngày trong fixture Home là **21/10/2026** để tái hiện các trạng thái.
+
+## Chi tiết chuyến đi · 21/10/2026
+
+- Planning mới nhất: sơ đồ 35%/80%, dải ngày gọn 96px và thêm ngày bằng `+`; cuộn xuống ghim Back/tên/sửa/mở bản đồ trên dải ngày, vuốt nhanh ngược lên hoặc bấm mở lại trả về 35%. Dùng chung một Animated.FlatList; **112 tests**, TS/no-unused, Android/Hermes export đạt; đã thử web, native gesture chưa QA.
+
+- Hoàn thành MVP frontend và điều chỉnh ba mode theo ngày: Planning / Live / Recap. AppBar gọn không cover; date strip + tab Chưa xếp lịch; sơ đồ ~36% phía trên và FlatList timeline phía dưới. Chạm số cuộn/highlight đúng stop. Recap ưu tiên album, Live ưu tiên chỉ đường/camera.
+- Quản lý lịch: pool chưa xếp, thêm/sửa/chuyển ngày/gỡ, ghim, drag + mũi tên sắp xếp, preview thứ tự mẫu, áp dụng và hoàn tác. Chỉnh thông tin/ngày/lưu trú/ngân sách/sở thích/ghi chú và xóa có xác nhận; check-in/ảnh dùng chung dữ liệu Home.
+- Route group `(workspace)` giữ một session store cho tabs và details trong auth guard; URL tabs không đổi. Địa điểm chọn khi tạo chuyến chuyển vào pool, không tự gán ngày 1/giờ giả.
+- Backlog bao gồm pool và stop thiếu giờ trong ngày; reorder chỉ xử lý stop có giờ rồi ghép lại, giữ pins/giờ/backlog. Timeline có số khớp sơ đồ và khung giờ tham quan; share Recap là bản tóm tắt văn bản, không phải link công khai.
+- TypeScript và **104/104 tests** đạt; export Android/Hermes + Web đạt. Đã kiểm tra luồng marker/backlog/xếp lịch, Live check-in/camera mẫu và Recap album trên web; native gesture/keyboard/a11y/share/performance chưa QA. Không lint, không dependency mới.
+- Bản đồ, tối ưu và thời tiết vẫn thuộc preview; chưa nối backend, chưa có lưu qua reload hoặc camera thật. Xem [thiết kế và kết quả triển khai](TRIP-DETAIL-DESIGN.md).
+
+## Rà soát Trips và đề xuất màn chi tiết · 21/10/2026
+
+- Người dùng đã hoàn thiện UI danh sách/tạo chuyến trong `src/features/trip`; đã review code và chạy TypeScript + 74 tests hiện có, đều đạt.
+- Đã sửa các phát hiện trong lượt tiếp theo: picker dùng session riêng và commit sau đóng; đổi thành phố bỏ địa điểm cũ; list/plan dùng một scoped store, không cắt bốn mục; ngân sách/sở thích được lưu và đọc lại; form RHF + Zod và copy VI/EN. Chi tiết trong [TRIPS-REVIEW.md](TRIPS-REVIEW.md).
+- Bổ sung 13 regression tests, toàn bộ suite **87/87 đạt**, TypeScript và export Android/Hermes + Web đạt. Chưa QA trên điện thoại. Không chạy lint hay thêm dependency.
+- Header tạo chuyến tăng khoảng đệm trên thành **safe area + 32px** theo yêu cầu; vẫn giữ khoảng đệm bên dưới và bố cục form.
+- Đã đề xuất màn chi tiết lấy timeline từng ngày làm trung tâm, bản đồ là cách xem thứ hai, địa điểm chưa xếp và tối ưu có preview/undo: [TRIP-DETAIL-DESIGN.md](TRIP-DETAIL-DESIGN.md). Đề xuất này đã được hiện thực ở mức MVP frontend trong lượt tiếp theo; chưa sửa planning backend.
+
+## Safe area dùng chung · 21/10/2026
+
+- Khởi tạo provider với số đo cửa sổ ban đầu; chuyển screen frames và top-inset consumers sang `ScreenSafeArea`/`useScreenInsets` dùng chung.
+- Lề trên dựa safe area và status bar hệ điều hành trên Android, không gán một chiều cao chung cho mọi điện thoại hoặc cộng đôi status bar/inset. Giữ khoảng đệm nội dung theo theme.
+- Bao phủ Home, Trips, Memories, Profile, auth, camera mẫu và các toolbar/panel toàn màn hình. Bỏ mốc top 20px trong modal tạo chuyến, dùng inset + spacing theme.
+- Thêm 7 tests cho inset bằng 0, notch, tránh lề đôi, provider đã dịch xuống và iOS/web. Toàn bộ suite **74/74 đạt**, TypeScript và export Android/Hermes đạt; không chạy lint. Cần kiểm tra layout thực tế trên Android/iOS vì ADB chưa có thiết bị.
+
+## Khắc phục native photo module · 21/10/2026
+
+- Home không còn import eager `expo-media-library`/`expo-sharing`/`expo-file-system`; chỉ kiểm tra/tải khi dùng chức năng ảnh. Runtime thiếu module nhận lỗi có nội dung VI/EN, không crash Home hoặc giả báo thành công.
+- Giữ API SDK 57, không downgrade sang legacy và không nâng dependency. Hướng dẫn build/cài lại ở [HOME-PREVIEW.md](HOME-PREVIEW.md).
+- Thêm 8 regression tests cho lỗi module thiếu và hành vi save/share/permission. Toàn bộ suite hiện tại **67/67 đạt**, TypeScript và export Android/Hermes đạt. Không chạy lint. Chưa thử native trên điện thoại vì ADB chưa có thiết bị kết nối.
 
 ## Hiện trạng
 

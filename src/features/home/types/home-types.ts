@@ -7,17 +7,42 @@ export type TripStop = {
   time: string;
   name: LocalizedText;
   kind: LocalizedText;
+  durationMinutes?: number;
+  pinned?: boolean;
+  note?: string;
   quickInfo?: {
     admission?: LocalizedText;
     closesAt?: string;
     sample?: boolean;
   };
 };
-export type TripDay = { date: string; stops: TripStop[] };
+export type TravelMode = "car" | "motorcycle" | "walk";
+export type TripDay = {
+  date: string;
+  stops: TripStop[];
+  startLocation?: string;
+  startTime?: string;
+  returnToStart?: boolean;
+  transport?: TravelMode;
+};
+export type TripPreference =
+  | "nature"
+  | "food"
+  | "culture"
+  | "relaxation"
+  | "photography"
+  | "adventure"
+  | "shopping"
+  | "beach";
 export type Trip = {
   id: string;
   destination: string;
   title?: string;
+  budget?: { amount: number; currency: "VND" };
+  preferences?: TripPreference[];
+  accommodation?: string;
+  notes?: string;
+  unscheduledStops?: TripStop[];
   startDate?: string;
   endDate?: string;
   status: "draft" | "planned" | "completed" | "cancelled";

@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   FlatList,
+  KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
@@ -10,26 +11,21 @@ import {
   View,
 } from "react-native";
 import {
-  Gesture,
   GestureDetector,
   GestureHandlerRootView,
 } from "react-native-gesture-handler";
-import Animated, {
-  cancelAnimation,
-  ReduceMotion,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from "react-native-reanimated";
+import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { scheduleOnRN } from "react-native-worklets";
+import { usePickerSheetMotion } from "../hooks/use-picker-sheet-motion";
+import { useTripCopy } from "../i18n/trip-copy";
 
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
+import { spacing, typography, layout, radius } from "@/theme/tokens";
 
 const webInputReset: TextStyle = Platform.select({
-  web: { outlineStyle: "none", outlineWidth: 0 } as unknown as TextStyle,
+  web: { outlineWidth: 0 },
   default: {},
 });
 
@@ -51,7 +47,11 @@ const popularDestinations = [
   { name: "Quy Nhơn, Bình Định", city: "Quy Nhơn" },
 ];
 
-export function DestinationPickerSheet({
+export function DestinationPickerSheet(props: DestinationPickerSheetProps) {
+  return props.visible ? <DestinationPickerSession {...props} /> : null;
+}
+
+function DestinationPickerSession({
   visible,
   currentDestination,
   onSelect,
@@ -62,101 +62,16 @@ export function DestinationPickerSheet({
   const [customInput, setCustomInput] = useState("");
   const [isInputFocused, setIsInputFocused] = useState(false);
 
-  const isClosing = useSharedValue(false);
-  const translateY = useSharedValue(0);
-  const dismissDistance = theme.layout.sheetDismissDistance;
-  const dismissVelocity = theme.motion.sheetDismissVelocity;
-  const snapDuration = theme.motion.tabTransitionDuration;
-  const minimumSwipe = theme.spacing.md;
-
-  const sheetMotion = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }],
-  }));
-
-  const backdropMotion = useAnimatedStyle(() => ({
-    opacity: Math.max(0, Math.min(1, 1 - translateY.value / 350)),
-  }));
-
-  useEffect(() => () => cancelAnimation(translateY), [translateY]);
-
-  useEffect(() => {
-    if (visible) {
-      isClosing.value = false;
-      translateY.value = 280;
-      translateY.value = withTiming(0, {
-        duration: snapDuration,
-        reduceMotion: ReduceMotion.System,
-      });
-    }
-  }, [visible, snapDuration, translateY, isClosing]);
-
-  const handleAnimatedClose = () => {
-    if (isClosing.value) return;
-    isClosing.value = true;
-    translateY.value = withTiming(
-      600,
-      {
-        duration: 180,
-        reduceMotion: ReduceMotion.System,
-      },
-      (finished) => {
-        if (finished) {
-          scheduleOnRN(onClose);
-        }
-      },
-    );
-  };
-
-  const dragGesture = Gesture.Pan()
-    .activeOffsetY(theme.spacing.sm)
-    .failOffsetX([-theme.spacing.lg, theme.spacing.lg])
-    .onUpdate((event) => {
-      translateY.value = Math.max(0, event.translationY);
-    })
-    .onEnd((event) => {
-      if (
-        event.translationY >= dismissDistance ||
-        (event.translationY > minimumSwipe &&
-          event.velocityY >= dismissVelocity)
-      ) {
-        isClosing.value = true;
-        translateY.value = withTiming(
-          600,
-          {
-            duration: 180,
-            reduceMotion: ReduceMotion.System,
-          },
-          (finished) => {
-            if (finished) {
-              scheduleOnRN(onClose);
-            }
-          },
-        );
-      } else {
-        translateY.value = withTiming(0, {
-          duration: snapDuration,
-          reduceMotion: ReduceMotion.System,
-        });
-      }
-    })
-    .onFinalize((_event, success) => {
-      if (!success && !isClosing.value) {
-        translateY.value = withTiming(0, {
-          duration: snapDuration,
-          reduceMotion: ReduceMotion.System,
-        });
-      }
-    });
-
+  const { sheetMotion, backdropMotion, dragGesture, close, reduceMotion } =
+    usePickerSheetMotion(onClose);
+  const { copy } = useTripCopy();
   const handleSelect = (dest: string) => {
-    onSelect(dest);
-    handleAnimatedClose();
+    close(() => onSelect(dest));
   };
 
   const handleCustomSubmit = () => {
     if (customInput.trim()) {
-      onSelect(customInput.trim());
-      handleAnimatedClose();
+      close(() => onSelect(customInput.trim()));
     }
   };
 
@@ -170,8 +85,7 @@ export function DestinationPickerSheet({
         d.city.toLowerCase().includes(lower),
     );
     const hasExactMatch = popularDestinations.some(
-      (d) =>
-        d.name.toLowerCase() === lower || d.city.toLowerCase() === lower,
+      (d) => d.name.toLowerCase() === lower || d.city.toLowerCase() === lower,
     );
     if (!hasExactMatch) {
       return [{ name: q, city: q }, ...matched];
@@ -179,18 +93,19 @@ export function DestinationPickerSheet({
     return matched;
   }, [customInput]);
 
-  if (!visible) return null;
-
   return (
     <Modal
       transparent
       visible={visible}
-      animationType="fade"
+      animationType={reduceMotion ? "none" : "fade"}
       statusBarTranslucent
-      onRequestClose={handleAnimatedClose}
+      onRequestClose={() => close()}
     >
       <GestureHandlerRootView style={styles.root}>
-        <View style={styles.backdrop}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={styles.backdrop}
+        >
           <Animated.View
             style={[
               StyleSheet.absoluteFill,
@@ -198,7 +113,7 @@ export function DestinationPickerSheet({
               backdropMotion,
             ]}
           />
-          <Pressable style={StyleSheet.absoluteFill} onPress={handleAnimatedClose} />
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => close()} />
           <Animated.View
             style={[
               styles.sheet,
@@ -207,7 +122,8 @@ export function DestinationPickerSheet({
                 backgroundColor: theme.colors.surface,
                 borderTopLeftRadius: theme.radius.xxl,
                 borderTopRightRadius: theme.radius.xxl,
-                paddingBottom: Math.max(insets.bottom, 16) + theme.spacing.md,
+                paddingBottom:
+                  Math.max(insets.bottom, theme.spacing.lg) + theme.spacing.md,
               },
             ]}
           >
@@ -235,19 +151,23 @@ export function DestinationPickerSheet({
                       },
                     ]}
                   >
-                    Chọn điểm đến chính
+                    {copy.chooseDestination}
                   </AppText>
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel="Đóng"
-                    onPress={handleAnimatedClose}
+                    accessibilityLabel={copy.close}
+                    onPress={() => close()}
                     hitSlop={12}
                     style={({ pressed }) => [
                       styles.closeButton,
                       { opacity: pressed ? theme.motion.pressOpacity : 1 },
                     ]}
                   >
-                    <AppIcon name="close" size={20} color={theme.colors.textSecondary} />
+                    <AppIcon
+                      name="close"
+                      size={20}
+                      color={theme.colors.textSecondary}
+                    />
                   </Pressable>
                 </View>
               </View>
@@ -266,7 +186,11 @@ export function DestinationPickerSheet({
                 },
               ]}
             >
-              <AppIcon name="pin" size={16} color={theme.colors.textSecondary} />
+              <AppIcon
+                name="pin"
+                size={16}
+                color={theme.colors.textSecondary}
+              />
               <TextInput
                 style={[
                   styles.input,
@@ -276,7 +200,8 @@ export function DestinationPickerSheet({
                   },
                   webInputReset,
                 ]}
-                placeholder="Tìm kiếm hoặc nhập điểm đến..."
+                accessibilityLabel={copy.destination}
+                placeholder={copy.destinationSearch}
                 placeholderTextColor={theme.colors.textDisabled}
                 value={customInput}
                 onChangeText={setCustomInput}
@@ -291,7 +216,7 @@ export function DestinationPickerSheet({
               {customInput.length > 0 ? (
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel="Xóa nội dung tìm kiếm"
+                  accessibilityLabel={copy.clearSearch}
                   onPress={() => setCustomInput("")}
                   hitSlop={8}
                   style={({ pressed }) => [
@@ -310,7 +235,9 @@ export function DestinationPickerSheet({
 
             {/* Suggestions label */}
             <AppText variant="caption" tone="muted" style={styles.sectionLabel}>
-              {customInput.trim() ? "Kết quả tìm kiếm" : "Điểm đến phổ biến"}
+              {customInput.trim()
+                ? copy.searchResults
+                : copy.popularDestinations}
             </AppText>
 
             {/* Destinations List */}
@@ -322,10 +249,16 @@ export function DestinationPickerSheet({
               style={styles.list}
               renderItem={({ item }) => {
                 const isSelected =
-                  currentDestination.toLowerCase().includes(item.city.toLowerCase()) ||
+                  currentDestination
+                    .toLowerCase()
+                    .includes(item.city.toLowerCase()) ||
                   currentDestination.toLowerCase() === item.name.toLowerCase();
                 return (
                   <Pressable
+                    accessibilityRole="button"
+                    accessibilityState={{
+                      selected: currentDestination === item.name,
+                    }}
                     onPress={() => handleSelect(item.name)}
                     style={({ pressed }) => [
                       styles.item,
@@ -373,7 +306,7 @@ export function DestinationPickerSheet({
               }}
             />
           </Animated.View>
-        </View>
+        </KeyboardAvoidingView>
       </GestureHandlerRootView>
     </Modal>
   );
@@ -390,47 +323,51 @@ const styles = StyleSheet.create({
   sheet: {
     width: "100%",
     maxHeight: "85%",
-    paddingHorizontal: 20,
-    paddingTop: 8,
+    paddingHorizontal: spacing.lg + spacing.xs,
+    paddingTop: spacing.sm,
   },
   dragHeaderZone: {
     width: "100%",
   },
   handleWrapper: {
     alignItems: "center",
-    paddingVertical: 8,
+    paddingVertical: spacing.sm,
   },
   handle: {
-    width: 44,
-    height: 5,
-    borderRadius: 3,
+    width: layout.sheetDragHandleWidth,
+    height: layout.sheetDragHandleHeight,
+    borderRadius: radius.full,
     opacity: 0.35,
   },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   headerTitle: {
-    fontSize: 18,
-    lineHeight: 24,
+    fontSize: typography.fontSize.lg,
+    lineHeight: typography.lineHeight.md,
   },
   closeButton: {
-    padding: 4,
+    minWidth: layout.compactTouchTarget,
+    minHeight: layout.compactTouchTarget,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: spacing.xs,
   },
   inputBox: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 12,
-    height: 44,
+    paddingHorizontal: spacing.md,
+    height: layout.compactTouchTarget,
     borderWidth: 1,
-    gap: 8,
-    marginBottom: 16,
+    gap: spacing.sm,
+    marginBottom: spacing.lg,
   },
   input: {
     flex: 1,
-    fontSize: 14,
+    fontSize: typography.fontSize.sm,
     height: "100%",
     paddingVertical: 0,
   },
@@ -440,29 +377,29 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    marginLeft: 4,
+    marginLeft: spacing.xs,
   },
   sectionLabel: {
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   list: {
-    maxHeight: 280,
+    maxHeight: layout.pickerListMaxHeight,
   },
   item: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 12,
+    paddingVertical: spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   itemLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: spacing.sm + spacing.xxs,
     flex: 1,
   },
   itemText: {
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: typography.fontSize.sm,
+    lineHeight: typography.lineHeight.compactAction,
   },
 });

@@ -1,7 +1,6 @@
-import { useMemo } from "react";
 import { useBottomTabBarHeight } from "expo-router/js-tabs";
 import { FlatList, StyleSheet, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ScreenSafeArea } from "@/components/common/screen-safe-area";
 
 import { AppButton } from "@/components/ui/app-button";
 import { AppIcon } from "@/components/ui/app-icon";
@@ -11,8 +10,8 @@ import { PreviewNotice } from "@/features/home/components/home-primitives";
 import { useTripPreview } from "@/features/home/providers/trip-preview-provider";
 import type { Trip } from "@/features/home/types/home-types";
 import { useAppTheme } from "@/hooks/use-app-theme";
+import { spacing, typography } from "@/theme/tokens";
 import { TripCard } from "../components/trip-card";
-import { sampleTrips } from "../data/sample-trips";
 import { useTripCopy } from "../i18n/trip-copy";
 
 export function TripsScreen() {
@@ -20,29 +19,18 @@ export function TripsScreen() {
   const tabBarHeight = useBottomTabBarHeight();
   const { copy, locale } = useTripCopy();
 
-  const { trips: storeTrips, today, openPanel } = useTripPreview((state) => ({
+  const { trips, today, openPanel } = useTripPreview((state) => ({
     trips: state.trips,
     today: state.today,
     openPanel: state.openPanel,
   }));
 
-  const trips = useMemo(() => {
-    const userDrafts = storeTrips.filter((t) => t.id.startsWith("draft-"));
-    if (userDrafts.length > 0) {
-      const existing = new Set(userDrafts.map((t) => t.id));
-      const remaining = sampleTrips.filter((t) => !existing.has(t.id));
-      return [...userDrafts, ...remaining].slice(0, 4);
-    }
-    return sampleTrips;
-  }, [storeTrips]);
-
   const handleTripPress = (trip: Trip) => {
     openPanel({ kind: "plan", tripId: trip.id });
   };
 
-
   return (
-    <SafeAreaView
+    <ScreenSafeArea
       edges={["top", "left", "right"]}
       style={[styles.screen, { backgroundColor: theme.colors.background }]}
     >
@@ -169,7 +157,7 @@ export function TripsScreen() {
           </View>
         }
       />
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }
 
@@ -183,11 +171,11 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   headerContainer: {
-    marginBottom: 6,
+    marginBottom: spacing.xs + spacing.xxs,
   },
   screenHeading: {
-    fontSize: 18,
-    lineHeight: 24,
+    fontSize: typography.fontSize.lg,
+    lineHeight: typography.lineHeight.md,
     letterSpacing: -0.2,
   },
   createButtonWrapper: {
@@ -202,14 +190,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: StyleSheet.hairlineWidth,
     borderCurve: "continuous",
-    marginVertical: 12,
+    marginVertical: spacing.md,
   },
   emptyIconCircle: {
     width: 60,
     height: 60,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   emptyTitle: {
     textAlign: "center",

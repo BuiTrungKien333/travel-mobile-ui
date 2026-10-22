@@ -1,10 +1,16 @@
-import { Directory, File, Paths } from "expo-file-system";
+import { requireOptionalNativeModule } from "expo";
+import type { File } from "expo-file-system";
 import { Image } from "expo-image";
-import { Asset, requestPermissionsAsync } from "expo-media-library";
-import * as Sharing from "expo-sharing";
 import { Platform } from "react-native";
 import type { PhotoRect } from "../utils/photo-viewer-geometry";
 import { PhotoActionError } from "./photo-action-error";
+
+function assertPhotoModule(
+  name: "FileSystem" | "ExpoMediaLibraryNext" | "ExpoSharing",
+) {
+  if (!requireOptionalNativeModule(name))
+    throw new PhotoActionError("nativeBuildRequired");
+}
 
 /** Export the entire photo, independently of the current crop or zoom. */
 async function withLocalPhoto(
@@ -12,6 +18,8 @@ async function withLocalPhoto(
   action: (file: File) => Promise<void>,
   retainForSharing = false,
 ) {
+  assertPhotoModule("FileSystem");
+  const { Directory, File, Paths } = await import("expo-file-system");
   const directory = new Directory(Paths.cache, `wego-photo-${Date.now()}`);
   directory.create();
   const extension =
@@ -48,6 +56,8 @@ export async function shareJournalPhoto(
   title: string,
   anchor: PhotoRect,
 ) {
+  assertPhotoModule("ExpoSharing");
+  const Sharing = await import("expo-sharing");
   if (!(await Sharing.isAvailableAsync()))
     throw new PhotoActionError("sharingUnavailable");
   await withLocalPhoto(
@@ -63,6 +73,9 @@ export async function shareJournalPhoto(
 }
 
 export async function saveJournalPhoto(uri: string) {
+  // Native photo dependencies must not block Home when an older build lacks them.
+  assertPhotoModule("ExpoMediaLibraryNext");
+  const { Asset, requestPermissionsAsync } = await import("expo-media-library");
   // Modern Android can insert an app-owned photo without browsing the user's library.
   if (
     Platform.OS === "ios" ||

@@ -1,4 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useReducedMotion } from "react-native-reanimated";
+import { useController, useForm, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRef, useState } from "react";
 import {
   Keyboard,
   KeyboardAvoidingView,
@@ -11,15 +14,32 @@ import {
   View,
   type TextStyle,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useScreenInsets } from "@/hooks/use-screen-insets";
 
 import { AppButton } from "@/components/ui/app-button";
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
 import { useTripPreview } from "@/features/home/providers/trip-preview-provider";
-import type { TripStop } from "@/features/home/types/home-types";
+import type { TripPreference } from "@/features/home/types/home-types";
 import { dayDistance } from "@/features/home/utils/select-home";
 import { useAppTheme } from "@/hooks/use-app-theme";
+import { spacing, typography, layout } from "@/theme/tokens";
+import { tripFormLimits, tripPreferenceIds } from "../constants/trip-form";
+import { useTripCopy } from "../i18n/trip-copy";
+import {
+  createTripSchema,
+  type CreateTripInput,
+  type CreateTripOutput,
+} from "../schemas/create-trip-schema";
+import { confirmDiscard } from "../utils/confirm-discard";
+import {
+  destinationRegion,
+  formatBudget,
+  formatDisplayDate,
+  generateDefaultTitle,
+  tripMessage,
+} from "../utils/create-trip-formatters";
+import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 import { DateRangeSheet } from "./date-range-sheet";
 import { DestinationPickerSheet } from "./destination-picker-sheet";
 import { PlacePickerSheet } from "./place-picker-sheet";
@@ -29,191 +49,154 @@ type CreateTripModalProps = {
   onClose: () => void;
 };
 
-const PREFERENCE_CHIPS = [
-  "Thiên nhiên",
-  "Ẩm thực",
-  "Văn hóa",
-  "Nghỉ dưỡng",
-  "Check-in",
-  "Phiêu lưu",
-  "Mua sắm",
-  "Biển đảo",
-];
-
-function formatDisplayDate(isoDate: string): string {
-  if (!isoDate || !/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return "--/--/----";
-  const [y, m, d] = isoDate.split("-");
-  return `${d}/${m}/${y}`;
-}
-
-function getDestinationRegion(dest: string): string {
-  if (!dest || !dest.trim()) return "Chưa chọn điểm đến";
-  const d = dest.toLowerCase();
-  if (d.includes("đà nẵng")) return "Việt Nam • Miền Trung";
-  if (d.includes("hội an") || d.includes("quảng nam")) return "Việt Nam • Miền Trung";
-  if (d.includes("huế")) return "Việt Nam • Miền Trung";
-  if (d.includes("đà lạt") || d.includes("lâm đồng")) return "Việt Nam • Tây Nguyên";
-  if (d.includes("hà nội") || d.includes("sapa") || d.includes("hạ long") || d.includes("ninh bình")) return "Việt Nam • Miền Bắc";
-  if (d.includes("phú quốc") || d.includes("hồ chí minh") || d.includes("sài gòn") || d.includes("vũng tàu")) return "Việt Nam • Miền Nam";
-  if (d.includes("nha trang") || d.includes("quy nhơn") || d.includes("phú yên")) return "Việt Nam • Duyên hải Nam Trung Bộ";
-  return "Việt Nam • Điểm đến du lịch";
-}
-
-function generateDefaultTitle(destination: string, start: string, end: string): string {
-  if (!destination || !destination.trim()) return "";
-  const destName = destination.split(",")[0].trim();
-  if (start && end && end >= start) {
-    const days = dayDistance(start, end) + 1;
-    const nights = Math.max(0, days - 1);
-    if (nights > 0) {
-      return `Chuyến đi ${destName} ${days}N${nights}Đ`;
-    }
-    return `Chuyến đi ${destName} 1 ngày`;
-  }
-  return `Chuyến đi ${destName}`;
-}
-
-function formatVND(value: string): string {
-  const digits = value.replace(/\D/g, "");
-  if (!digits) return "";
-  return new Intl.NumberFormat("vi-VN").format(Number(digits));
-}
-
 const webInputReset: TextStyle = Platform.select({
-  web: { outlineStyle: "none", outlineWidth: 0 } as unknown as TextStyle,
+  web: { outlineWidth: 0 },
   default: {},
 });
 
-export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
+export function CreateTripModal(props: CreateTripModalProps) {
+  return props.visible ? <CreateTripForm onClose={props.onClose} /> : null;
+}
+
+function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
   const theme = useAppTheme();
-  const insets = useSafeAreaInsets();
+  const insets = useScreenInsets();
+  const reduceMotion = useReducedMotion();
+  const { copy, locale } = useTripCopy();
+  const { copy: detailsCopy } = useTripDetailsCopy();
+  const scrollRef = useRef<ScrollView>(null);
   const { today, createDraft } = useTripPreview((state) => ({
     today: state.today,
     createDraft: state.createDraft,
   }));
-
-  const [destination, setDestination] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [tripTitle, setTripTitle] = useState("");
-  const [isTitleManual, setIsTitleManual] = useState(false);
-
-  // Places
-  const [selectedStops, setSelectedStops] = useState<TripStop[]>([]);
-
-  // Accordion (Tùy chọn thêm)
+  const { control, setValue, handleSubmit, setError, setFocus, formState } =
+    useForm<CreateTripInput, unknown, CreateTripOutput>({
+      resolver: zodResolver(createTripSchema(copy, today)),
+      defaultValues: {
+        destination: "",
+        startDate: "",
+        endDate: "",
+        title: "",
+        budget: "",
+        preferences: [],
+        initialStops: [],
+      },
+      mode: "onTouched",
+    });
+  const titleField = useController({ name: "title", control }).field;
+  const titleEdited = useRef(false);
+  const budgetField = useController({ name: "budget", control }).field;
+  const {
+    destination = "",
+    startDate = "",
+    endDate = "",
+    title: tripTitle = "",
+    budget: budgetDigits = "",
+    preferences: selectedTags = [],
+  } = useWatch({ control });
+  const selectedStops = useController({ name: "initialStops", control }).field
+    .value;
+  const budget = formatBudget(budgetDigits, locale);
+  const { errors, isSubmitting, isDirty } = formState;
+  const error = errors.root?.message;
+  const [notice, setNotice] = useState("");
   const [isAccordionOpen, setIsAccordionOpen] = useState(false);
-  const [budget, setBudget] = useState("");
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-
-  // Sheets
   const [showDestSheet, setShowDestSheet] = useState(false);
   const [showDateSheet, setShowDateSheet] = useState(false);
   const [showPlaceSheet, setShowPlaceSheet] = useState(false);
-
-  // Validation & state
-  const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isTitleFocused, setIsTitleFocused] = useState(false);
   const [isBudgetFocused, setIsBudgetFocused] = useState(false);
+  const durationDays =
+    startDate && endDate && endDate >= startDate
+      ? dayDistance(startDate, endDate) + 1
+      : 0;
 
-  // Reset all fields when modal opens
-  useEffect(() => {
-    if (visible) {
-      setDestination("");
-      setStartDate("");
-      setEndDate("");
-      setTripTitle("");
-      setIsTitleManual(false);
-      setSelectedStops([]);
-      setIsAccordionOpen(false);
-      setBudget("");
-      setSelectedTags([]);
-      setError(null);
-    }
-  }, [visible]);
-
-  const durationDays = useMemo(() => {
-    if (!startDate || !endDate || endDate < startDate) return 0;
-    return dayDistance(startDate, endDate) + 1;
-  }, [startDate, endDate]);
-
-  const handleSelectDestination = (newDest: string) => {
-    setDestination(newDest);
-    if (!isTitleManual) {
-      setTripTitle(generateDefaultTitle(newDest, startDate, endDate));
-    }
-  };
-
-  const handleApplyDateRange = (start: string, end: string) => {
-    setStartDate(start);
-    setEndDate(end);
-    if (!isTitleManual) {
-      setTripTitle(generateDefaultTitle(destination, start, end));
-    }
-  };
-
-  const handleRemoveStop = (id: string) => {
-    setSelectedStops((prev) => prev.filter((stop) => stop.id !== id));
-  };
-
-  const toggleTag = (tag: string) => {
-    setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
-    );
-  };
-
-  const handleBudgetChange = (text: string) => {
-    setBudget(formatVND(text));
-  };
-
-  const handleSubmit = () => {
+  const requestClose = () => {
     Keyboard.dismiss();
-
-    if (!destination.trim()) {
-      setError("Vui lòng chọn điểm đến chính.");
-      return;
-    }
-    if (!startDate || !endDate) {
-      setError("Vui lòng chọn ngày đi và ngày về.");
-      return;
-    }
-    if (endDate < startDate) {
-      setError("Ngày về phải cùng ngày hoặc sau ngày đi.");
-      return;
-    }
-
-    setError(null);
-    setIsSubmitting(true);
-
-    const finalTitle =
-      tripTitle.trim() || generateDefaultTitle(destination, startDate, endDate);
-
-    const success = createDraft({
-      destination: destination.trim(),
-      startDate,
-      endDate,
-      title: finalTitle,
-      initialStops: selectedStops.length > 0 ? selectedStops : undefined,
-    });
-
-    setIsSubmitting(false);
-
-    if (success) {
-      onClose();
-    } else {
-      setError("Đã đạt giới hạn số lượng chuyến đi bản nháp.");
-    }
+    if (isDirty) confirmDiscard(copy, onClose);
+    else onClose();
   };
-
-  if (!visible) return null;
+  const handleSelectDestination = (newDest: string) => {
+    const previousCity = destination.split(",")[0].trim().toLowerCase();
+    const nextCity = newDest.split(",")[0].trim().toLowerCase();
+    if (previousCity !== nextCity && selectedStops.length) {
+      setValue("initialStops", [], { shouldDirty: true });
+      setNotice(copy.destinationChanged);
+    }
+    setValue("destination", newDest, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    if (!titleEdited.current)
+      setValue(
+        "title",
+        generateDefaultTitle(newDest, startDate, endDate, copy),
+      );
+  };
+  const handleApplyDateRange = (start: string, end: string) => {
+    setValue("startDate", start, { shouldDirty: true, shouldValidate: true });
+    setValue("endDate", end, { shouldDirty: true, shouldValidate: true });
+    if (!titleEdited.current)
+      setValue("title", generateDefaultTitle(destination, start, end, copy));
+  };
+  const handleRemoveStop = (id: string) =>
+    setValue(
+      "initialStops",
+      selectedStops.filter((stop) => stop.id !== id),
+      { shouldDirty: true },
+    );
+  const toggleTag = (tag: TripPreference) =>
+    setValue(
+      "preferences",
+      selectedTags.includes(tag)
+        ? selectedTags.filter((value) => value !== tag)
+        : [...selectedTags, tag],
+      { shouldDirty: true },
+    );
+  const handleBudgetChange = (text: string) =>
+    budgetField.onChange(text.replace(/\D/g, ""));
+  const submit = handleSubmit(
+    (values) => {
+      Keyboard.dismiss();
+      const success = createDraft({
+        ...values,
+        title:
+          values.title ||
+          generateDefaultTitle(
+            values.destination,
+            values.startDate,
+            values.endDate,
+            copy,
+          ),
+      });
+      // The store switches directly from this form to the created trip's plan.
+      if (!success) setError("root", { message: copy.capacity });
+    },
+    (fieldErrors) => {
+      Keyboard.dismiss();
+      if (fieldErrors.destination) setShowDestSheet(true);
+      else if (fieldErrors.startDate || fieldErrors.endDate)
+        setShowDateSheet(true);
+      else if (fieldErrors.title) setFocus("title");
+      else if (fieldErrors.budget) {
+        setIsAccordionOpen(true);
+        requestAnimationFrame(() => setFocus("budget"));
+      }
+      if (
+        fieldErrors.destination ||
+        fieldErrors.startDate ||
+        fieldErrors.endDate
+      )
+        scrollRef.current?.scrollTo({ y: 0, animated: !reduceMotion });
+    },
+  );
 
   return (
     <Modal
-      visible={visible}
-      animationType="slide"
+      visible
+      animationType={reduceMotion ? "none" : "slide"}
       statusBarTranslucent
-      onRequestClose={onClose}
+      onRequestClose={requestClose}
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -224,7 +207,7 @@ export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
           style={[
             styles.header,
             {
-              paddingTop: Math.max(insets.top, 20) + theme.spacing.lg,
+              paddingTop: insets.top + theme.spacing.xxl,
               paddingBottom: theme.spacing.md,
               paddingHorizontal: theme.spacing.lg,
               borderBottomColor: theme.colors.border,
@@ -233,8 +216,8 @@ export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
         >
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Quay lại"
-            onPress={onClose}
+            accessibilityLabel={copy.back}
+            onPress={requestClose}
             hitSlop={12}
             style={({ pressed }) => [
               styles.backButton,
@@ -256,17 +239,18 @@ export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
                 {
                   fontFamily: theme.typography.fontFamily.medium,
                   color: theme.colors.text,
-                  marginTop: 2,
+                  marginTop: spacing.xxs,
                 },
               ]}
             >
-              Tạo chuyến đi
+              {copy.createTrip}
             </AppText>
           </View>
         </View>
 
         {/* Scrollable Form Body */}
         <ScrollView
+          ref={scrollRef}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[
@@ -282,7 +266,7 @@ export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
           {/* Card 1: Điểm đến chính */}
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`Điểm đến chính: ${destination}`}
+            accessibilityLabel={`${copy.destination}: ${destination || copy.chooseDestination}`}
             onPress={() => setShowDestSheet(true)}
             style={({ pressed }) => [
               styles.card,
@@ -310,7 +294,7 @@ export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
 
               <View style={styles.cardInfoCol}>
                 <AppText variant="caption" tone="muted">
-                  Điểm đến chính
+                  {copy.destination}
                 </AppText>
                 <AppText
                   style={[
@@ -323,10 +307,10 @@ export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
                     },
                   ]}
                 >
-                  {destination || "Chọn điểm đến"}
+                  {destination || copy.chooseDestination}
                 </AppText>
                 <AppText variant="caption" tone="muted">
-                  {getDestinationRegion(destination)}
+                  {destinationRegion(destination, copy)}
                 </AppText>
               </View>
 
@@ -338,10 +322,28 @@ export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
             </View>
           </Pressable>
 
+          {errors.destination ? (
+            <AppText accessibilityRole="alert" tone="error" variant="caption">
+              {errors.destination.message}
+            </AppText>
+          ) : null}
+          {notice ? (
+            <AppText
+              accessibilityLiveRegion="polite"
+              variant="caption"
+              tone="muted"
+            >
+              {notice}
+            </AppText>
+          ) : null}
           {/* Card 2: Thời gian chuyến đi */}
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`Thời gian: Ngày đi ${formatDisplayDate(startDate)}, Ngày về ${formatDisplayDate(endDate)}, ${durationDays} ngày`}
+            accessibilityLabel={tripMessage(copy.dateSummary, {
+              start: formatDisplayDate(startDate, locale),
+              end: formatDisplayDate(endDate, locale),
+              count: durationDays,
+            })}
             onPress={() => setShowDateSheet(true)}
             style={({ pressed }) => [
               styles.card,
@@ -376,7 +378,7 @@ export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
                     },
                   ]}
                 >
-                  Thời gian chuyến đi
+                  {copy.tripDates}
                 </AppText>
               </View>
 
@@ -396,7 +398,7 @@ export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
                     },
                   ]}
                 >
-                  {durationDays > 0 ? `${durationDays} ngày` : "--"}
+                  {durationDays > 0 ? `${durationDays} ${copy.days}` : "--"}
                 </AppText>
               </View>
             </View>
@@ -415,7 +417,7 @@ export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
               {/* Ngày đi */}
               <View style={styles.dateColumnBlock}>
                 <AppText variant="caption" tone="muted">
-                  Ngày đi
+                  {copy.startDate}
                 </AppText>
                 <AppText
                   numberOfLines={1}
@@ -429,7 +431,7 @@ export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
                     },
                   ]}
                 >
-                  {formatDisplayDate(startDate)}
+                  {formatDisplayDate(startDate, locale)}
                 </AppText>
               </View>
 
@@ -442,9 +444,11 @@ export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
               />
 
               {/* Ngày về */}
-              <View style={[styles.dateColumnBlock, { paddingLeft: 8 }]}>
+              <View
+                style={[styles.dateColumnBlock, { paddingLeft: spacing.sm }]}
+              >
                 <AppText variant="caption" tone="muted">
-                  Ngày về
+                  {copy.endDate}
                 </AppText>
                 <AppText
                   numberOfLines={1}
@@ -458,12 +462,17 @@ export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
                     },
                   ]}
                 >
-                  {formatDisplayDate(endDate)}
+                  {formatDisplayDate(endDate, locale)}
                 </AppText>
               </View>
             </View>
           </Pressable>
 
+          {errors.startDate || errors.endDate ? (
+            <AppText accessibilityRole="alert" tone="error" variant="caption">
+              {errors.startDate?.message || errors.endDate?.message}
+            </AppText>
+          ) : null}
           {/* Section 3: Tên chuyến đi */}
           <View
             style={[
@@ -483,7 +492,7 @@ export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
                 color: theme.colors.text,
               }}
             >
-              Tên chuyến đi
+              {copy.tripTitle}
             </AppText>
             <View
               style={[
@@ -500,29 +509,38 @@ export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
               <TextInput
                 value={tripTitle}
                 onChangeText={(text) => {
-                  setTripTitle(text);
-                  setIsTitleManual(true);
+                  titleEdited.current = true;
+                  titleField.onChange(text);
                 }}
+                ref={titleField.ref}
+                accessibilityLabel={copy.tripTitle}
+                maxLength={tripFormLimits.title}
                 onFocus={() => setIsTitleFocused(true)}
-                onBlur={() => setIsTitleFocused(false)}
-                placeholder="VD: Khám phá Đà Nẵng 4N3Đ"
+                onBlur={() => {
+                  setIsTitleFocused(false);
+                  titleField.onBlur();
+                }}
+                placeholder={copy.titlePlaceholder}
                 placeholderTextColor={theme.colors.textSecondary}
                 cursorColor={theme.colors.primaryText}
                 selectionColor={theme.colors.surfaceTint}
                 underlineColorAndroid="transparent"
                 style={[
                   styles.titleInput,
-                  { color: theme.colors.text },
+                  {
+                    color: theme.colors.text,
+                    fontFamily: theme.typography.fontFamily.regular,
+                  },
                   webInputReset,
                 ]}
               />
               {tripTitle.length > 0 ? (
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel="Xóa tên chuyến đi"
+                  accessibilityLabel={copy.clearTitle}
                   onPress={() => {
-                    setTripTitle("");
-                    setIsTitleManual(true);
+                    titleEdited.current = true;
+                    titleField.onChange("");
                   }}
                   hitSlop={8}
                   style={({ pressed }) => [
@@ -539,7 +557,13 @@ export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
               ) : null}
             </View>
             <AppText variant="caption" tone="muted">
-              Đặt tên gợi nhớ để dễ dàng theo dõi hành trình của bạn.
+              {errors.title ? (
+                <AppText accessibilityRole="alert" tone="error">
+                  {errors.title.message}
+                </AppText>
+              ) : (
+                copy.titleHint
+              )}
             </AppText>
           </View>
 
@@ -565,7 +589,7 @@ export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
                   },
                 ]}
               >
-                Địa điểm dự kiến
+                {copy.plannedPlaces}
               </AppText>
 
               {selectedStops.length > 0 ? (
@@ -576,7 +600,9 @@ export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
                     fontFamily: theme.typography.fontFamily.medium,
                   }}
                 >
-                  Đã chọn {selectedStops.length} điểm
+                  {tripMessage(copy.selectedPlaces, {
+                    count: selectedStops.length,
+                  })}
                 </AppText>
               ) : null}
             </View>
@@ -585,7 +611,7 @@ export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
               /* State 01: Empty state button */
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Thêm địa điểm"
+                accessibilityLabel={copy.addPlace}
                 onPress={() => {
                   if (!destination.trim()) {
                     setShowDestSheet(true);
@@ -624,7 +650,7 @@ export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
                       },
                     ]}
                   >
-                    Thêm địa điểm
+                    {copy.addPlace}
                   </AppText>
                 </View>
                 <AppIcon
@@ -637,10 +663,7 @@ export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
               /* State 04: Populated stops list */
               <View style={styles.stopsList}>
                 {selectedStops.map((stop, index) => {
-                  const stopName =
-                    typeof stop.name === "string"
-                      ? stop.name
-                      : stop.name.vi || stop.name.en;
+                  const stopName = stop.name[locale];
 
                   return (
                     <View
@@ -689,7 +712,9 @@ export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
 
                       <Pressable
                         accessibilityRole="button"
-                        accessibilityLabel={`Xóa ${stopName}`}
+                        accessibilityLabel={tripMessage(copy.removePlace, {
+                          place: stopName,
+                        })}
                         onPress={() => handleRemoveStop(stop.id)}
                         hitSlop={8}
                         style={({ pressed }) => [
@@ -709,7 +734,7 @@ export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
 
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel="Thêm địa điểm khác"
+                  accessibilityLabel={copy.addMorePlaces}
                   onPress={() => setShowPlaceSheet(true)}
                   style={({ pressed }) => [
                     styles.addMoreStopsBtn,
@@ -734,13 +759,16 @@ export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
                       },
                     ]}
                   >
-                    Thêm địa điểm khác
+                    {copy.addMorePlaces}
                   </AppText>
                 </Pressable>
               </View>
             )}
           </View>
 
+          <AppText variant="caption" tone="muted">
+            {detailsCopy.savedPoolHint}
+          </AppText>
           {/* Section 5: Accordion (Tùy chọn thêm) */}
           <View
             style={[
@@ -754,7 +782,7 @@ export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
           >
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Mở rộng tùy chọn thêm: ngân sách và sở thích"
+              accessibilityLabel={`${copy.moreOptions}: ${copy.moreOptionsHint}`}
               accessibilityState={{ expanded: isAccordionOpen }}
               onPress={() => setIsAccordionOpen((prev) => !prev)}
               style={({ pressed }) => [
@@ -785,10 +813,10 @@ export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
                     },
                   ]}
                 >
-                  Tùy chọn thêm
+                  {copy.moreOptions}
                 </AppText>
                 <AppText variant="caption" tone="muted">
-                  Ngân sách, sở thích
+                  {copy.moreOptionsHint}
                 </AppText>
               </View>
 
@@ -826,7 +854,7 @@ export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
                       color: theme.colors.text,
                     }}
                   >
-                    Ngân sách dự kiến cho cả chuyến
+                    {copy.budget}
                   </AppText>
                   <View
                     style={[
@@ -843,17 +871,26 @@ export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
                     <TextInput
                       value={budget}
                       onChangeText={handleBudgetChange}
+                      ref={budgetField.ref}
+                      accessibilityLabel={copy.budget}
+                      maxLength={20}
                       onFocus={() => setIsBudgetFocused(true)}
-                      onBlur={() => setIsBudgetFocused(false)}
+                      onBlur={() => {
+                        setIsBudgetFocused(false);
+                        budgetField.onBlur();
+                      }}
                       keyboardType="numeric"
-                      placeholder="VD: 3.000.000"
+                      placeholder={copy.budgetPlaceholder}
                       placeholderTextColor={theme.colors.textSecondary}
                       cursorColor={theme.colors.primaryText}
                       selectionColor={theme.colors.surfaceTint}
                       underlineColorAndroid="transparent"
                       style={[
                         styles.budgetInput,
-                        { color: theme.colors.text },
+                        {
+                          color: theme.colors.text,
+                          fontFamily: theme.typography.fontFamily.regular,
+                        },
                         webInputReset,
                       ]}
                     />
@@ -870,7 +907,13 @@ export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
                     </AppText>
                   </View>
                   <AppText variant="caption" tone="muted">
-                    Dự trù chi phí ước tính để tối ưu lộ trình phù hợp.
+                    {errors.budget ? (
+                      <AppText accessibilityRole="alert" tone="error">
+                        {errors.budget.message}
+                      </AppText>
+                    ) : (
+                      copy.budgetHint
+                    )}
                   </AppText>
                 </View>
 
@@ -883,18 +926,18 @@ export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
                       color: theme.colors.text,
                     }}
                   >
-                    Sở thích trải nghiệm
+                    {copy.preferencesTitle}
                   </AppText>
                   <AppText variant="caption" tone="muted">
-                    Chọn các hoạt động bạn quan tâm:
+                    {copy.preferencesHint}
                   </AppText>
 
                   <View style={styles.chipsContainer}>
-                    {PREFERENCE_CHIPS.map((chip) => {
+                    {tripPreferenceIds.map((chip) => {
                       const isSelected = selectedTags.includes(chip);
                       return (
                         <Pressable
-                          key={chip}
+                          key={copy.preferences[chip]}
                           accessibilityRole="button"
                           accessibilityState={{ selected: isSelected }}
                           onPress={() => toggleTag(chip)}
@@ -935,7 +978,7 @@ export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
                               },
                             ]}
                           >
-                            {chip}
+                            {copy.preferences[chip]}
                           </AppText>
                         </Pressable>
                       );
@@ -958,7 +1001,11 @@ export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
                 },
               ]}
             >
-              <AppText tone="error" style={styles.errorText}>
+              <AppText
+                accessibilityRole="alert"
+                tone="error"
+                style={styles.errorText}
+              >
                 {error}
               </AppText>
             </View>
@@ -972,24 +1019,20 @@ export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
             {
               backgroundColor: theme.colors.surface,
               borderTopColor: theme.colors.border,
-              paddingBottom: Math.max(insets.bottom, 16),
+              paddingBottom: Math.max(insets.bottom, theme.spacing.lg),
             },
           ]}
         >
           <AppButton
             variant="raised"
             loading={isSubmitting}
-            onPress={handleSubmit}
+            onPress={submit}
             style={styles.createButton}
           >
-            Tạo chuyến đi
+            {copy.createTrip}
           </AppButton>
-          <AppText
-            variant="caption"
-            tone="muted"
-            style={styles.bottomHintText}
-          >
-            Bạn có thể chỉnh sửa sau khi tạo.
+          <AppText variant="caption" tone="muted" style={styles.bottomHintText}>
+            {copy.createHint}
           </AppText>
         </View>
 
@@ -1015,8 +1058,8 @@ export function CreateTripModal({ visible, onClose }: CreateTripModalProps) {
           destination={destination}
           initialSelected={selectedStops}
           onApply={(stops) => {
-            setSelectedStops(stops);
-            setShowPlaceSheet(false);
+            setValue("initialStops", stops, { shouldDirty: true });
+            setNotice("");
           }}
           onClose={() => setShowPlaceSheet(false)}
         />
@@ -1033,11 +1076,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderBottomWidth: StyleSheet.hairlineWidth,
-    gap: 12,
+    gap: spacing.md,
   },
   backButton: {
-    width: 40,
-    height: 40,
+    width: layout.compactTouchTarget,
+    height: layout.compactTouchTarget,
     borderRadius: 20,
     borderWidth: 1,
     alignItems: "center",
@@ -1047,23 +1090,23 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerTitle: {
-    fontSize: 20,
-    lineHeight: 24,
+    fontSize: typography.fontSize.xl,
+    lineHeight: typography.lineHeight.md,
   },
   headerSubtitle: {
-    marginTop: 2,
+    marginTop: spacing.xxs,
   },
   scrollContent: {
     flexGrow: 1,
   },
   card: {
     borderWidth: 1,
-    padding: 16,
+    padding: spacing.lg,
   },
   cardRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
+    gap: spacing.md + spacing.xxs,
   },
   iconCircle: {
     width: 40,
@@ -1074,22 +1117,22 @@ const styles = StyleSheet.create({
   },
   cardInfoCol: {
     flex: 1,
-    gap: 2,
+    gap: spacing.xxs,
   },
   destinationTitle: {
-    fontSize: 16,
-    lineHeight: 22,
+    fontSize: typography.fontSize.md,
+    lineHeight: typography.lineHeight.md,
   },
   dateHeaderRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   dateHeaderLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: spacing.sm,
   },
   iconCircleSmall: {
     width: 28,
@@ -1099,46 +1142,46 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   dateCardTitle: {
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: typography.fontSize.sm,
+    lineHeight: typography.lineHeight.compactAction,
   },
   dateColumnsContainer: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md + spacing.xxs,
   },
   dateColumnBlock: {
     flex: 1,
-    gap: 4,
+    gap: spacing.xs,
   },
   dateVerticalDivider: {
     width: 1,
     height: 32,
-    marginHorizontal: 10,
+    marginHorizontal: spacing.sm + spacing.xxs,
   },
   dateValueText: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: typography.fontSize.compactAction,
+    lineHeight: typography.lineHeight.compactAction,
   },
   durationBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: spacing.sm + spacing.xxs,
+    paddingVertical: spacing.xs,
     borderRadius: 16,
   },
   durationText: {
-    fontSize: 12,
+    fontSize: typography.fontSize.xs,
   },
   titleInputWrapper: {
     flexDirection: "row",
     alignItems: "center",
     height: 48,
     borderWidth: 1,
-    paddingHorizontal: 12,
+    paddingHorizontal: spacing.md,
   },
   titleInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: typography.fontSize.sm,
     height: "100%",
   },
   clearTitleButton: {
@@ -1147,7 +1190,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    marginLeft: 4,
+    marginLeft: spacing.xs,
   },
   sectionHeaderRow: {
     flexDirection: "row",
@@ -1155,15 +1198,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   sectionHeading: {
-    fontSize: 15,
+    fontSize: typography.fontSize.md,
   },
   addPlaceDashedCard: {
     borderWidth: 1.5,
     borderStyle: "dashed",
     flexDirection: "row",
     alignItems: "center",
-    padding: 14,
-    gap: 12,
+    padding: spacing.md + spacing.xxs,
+    gap: spacing.md,
   },
   addPlaceIconCircle: {
     width: 32,
@@ -1174,20 +1217,20 @@ const styles = StyleSheet.create({
   },
   addPlaceTextCol: {
     flex: 1,
-    gap: 2,
+    gap: spacing.xxs,
   },
   addPlaceTitle: {
-    fontSize: 14,
+    fontSize: typography.fontSize.sm,
   },
   stopsList: {
-    gap: 8,
-    marginTop: 4,
+    gap: spacing.sm,
+    marginTop: spacing.xs,
   },
   stopItemRow: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 10,
-    gap: 10,
+    padding: spacing.sm + spacing.xxs,
+    gap: spacing.sm + spacing.xxs,
   },
   stopIndexBadge: {
     width: 24,
@@ -1197,18 +1240,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   stopIndexText: {
-    fontSize: 11,
+    fontSize: typography.fontSize.navigationLabel,
   },
   stopInfoCol: {
     flex: 1,
     justifyContent: "center",
   },
   stopNameText: {
-    fontSize: 14,
+    fontSize: typography.fontSize.sm,
   },
   removeStopBtn: {
-    width: 32,
-    height: 32,
+    width: layout.compactTouchTarget,
+    height: layout.compactTouchTarget,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1217,72 +1260,73 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    height: 40,
-    gap: 6,
-    marginTop: 4,
+    minHeight: layout.compactTouchTarget,
+    gap: spacing.xs + spacing.xxs,
+    marginTop: spacing.xs,
   },
   addMoreStopsText: {
-    fontSize: 13,
+    fontSize: typography.fontSize.compactAction,
   },
   accordionHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
+    gap: spacing.md + spacing.xxs,
   },
   accordionTitle: {
-    fontSize: 15,
+    fontSize: typography.fontSize.md,
   },
   accordionBody: {
     borderTopWidth: StyleSheet.hairlineWidth,
-    marginTop: 14,
+    marginTop: spacing.md + spacing.xxs,
   },
   budgetInputWrapper: {
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
     height: 48,
-    paddingHorizontal: 12,
+    paddingHorizontal: spacing.md,
   },
   budgetInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: typography.fontSize.sm,
     height: "100%",
   },
   budgetSuffix: {
-    fontSize: 13,
+    fontSize: typography.fontSize.compactAction,
   },
   chipsContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
-    marginTop: 4,
+    gap: spacing.sm,
+    marginTop: spacing.xs,
   },
   chip: {
+    minHeight: layout.compactTouchTarget,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 7,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm - 1,
     borderWidth: 1,
   },
   chipCheck: {
-    fontSize: 12,
+    fontSize: typography.fontSize.xs,
     fontWeight: "bold",
   },
   chipText: {
-    fontSize: 13,
+    fontSize: typography.fontSize.compactAction,
   },
   errorBanner: {
     borderWidth: 1,
-    padding: 12,
+    padding: spacing.md,
   },
   errorText: {
-    fontSize: 13,
+    fontSize: typography.fontSize.compactAction,
     textAlign: "center",
   },
   bottomBar: {
     borderTopWidth: StyleSheet.hairlineWidth,
-    paddingTop: 12,
-    paddingHorizontal: 16,
+    paddingTop: spacing.md,
+    paddingHorizontal: spacing.lg,
   },
   createButton: {
     width: "100%",
@@ -1290,6 +1334,6 @@ const styles = StyleSheet.create({
   },
   bottomHintText: {
     textAlign: "center",
-    marginTop: 8,
+    marginTop: spacing.sm,
   },
 });

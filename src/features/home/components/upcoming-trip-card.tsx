@@ -5,7 +5,8 @@ import { AppButton } from "@/components/ui/app-button";
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
-import { homeImages } from "../data/home-mocks";
+import { getTripCoverImage } from "@/features/trip/utils/trip-images";
+import { getTotalTripStops } from "@/features/trip/utils/trip-formatters";
 import { useHomeCopy } from "../i18n/home-copy";
 import { useTripPreview } from "../providers/trip-preview-provider";
 import { useHomeAmbientMotion } from "../hooks/use-home-ambient-motion";
@@ -39,10 +40,7 @@ export function UpcomingTripCard({ trip }: { trip: Trip }) {
           timeZone: "UTC",
         }).format(new Date(`${trip.startDate}T12:00:00Z`))
       : "");
-  const totalStops = trip.days.reduce(
-    (count, day) => count + day.stops.length,
-    0,
-  );
+  const totalStops = getTotalTripStops(trip);
 
   return (
     <View
@@ -58,7 +56,7 @@ export function UpcomingTripCard({ trip }: { trip: Trip }) {
       <View style={{ height: theme.layout.upcomingHeroImageHeight }}>
         <Image
           accessible={false}
-          source={homeImages.upcomingPhoto}
+          source={getTripCoverImage(trip)}
           contentFit="cover"
           contentPosition="bottom"
           cachePolicy="memory-disk"

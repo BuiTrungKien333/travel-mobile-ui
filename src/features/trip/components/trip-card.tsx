@@ -5,6 +5,7 @@ import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
 import type { Trip } from "@/features/home/types/home-types";
 import { useAppTheme } from "@/hooks/use-app-theme";
+import { spacing, layout } from "@/theme/tokens";
 import {
   formatTripDates,
   formatTripDurationAndStops,
@@ -45,8 +46,8 @@ export function TripCard({
           backgroundColor: theme.colors.surface,
           borderColor: theme.colors.border,
           borderRadius: theme.radius.md,
-          paddingLeft: 4,
-          paddingVertical: 10,
+          paddingLeft: spacing.xs,
+          paddingVertical: spacing.sm + spacing.xxs,
           paddingRight: theme.spacing.md,
           opacity: pressed ? theme.motion.pressOpacity : 1,
         },
@@ -98,11 +99,7 @@ export function TripCard({
 
           {/* Destination */}
           <View style={[styles.metaRow, { gap: theme.spacing.xs }]}>
-            <AppIcon
-              name="pin"
-              size={14}
-              color={theme.colors.primaryText}
-            />
+            <AppIcon name="pin" size={14} color={theme.colors.primaryText} />
             <AppText
               numberOfLines={1}
               style={[
@@ -184,10 +181,10 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     justifyContent: "space-between",
-    gap: 4,
+    gap: spacing.xs,
   },
   badgeRow: {
-    marginBottom: 2,
+    marginBottom: spacing.xxs,
   },
   title: {
     letterSpacing: -0.2,
@@ -201,8 +198,8 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   imageWrapper: {
-    width: 104,
-    height: 120,
+    width: layout.tripCardImageWidth,
+    height: layout.tripCardImageHeight,
     overflow: "hidden",
     borderWidth: StyleSheet.hairlineWidth,
     borderCurve: "continuous",

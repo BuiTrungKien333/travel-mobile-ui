@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { useState } from "react";
+import { TripDetailsRedirect } from "@/features/trip/components/trip-details-redirect";
 import {
   KeyboardAvoidingView,
   Modal,
@@ -10,43 +10,45 @@ import {
   View,
 } from "react-native";
 import { useReducedMotion } from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useScreenInsets } from "@/hooks/use-screen-insets";
 
 import { AppButton } from "@/components/ui/app-button";
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
-import { suggestedStops } from "../data/home-mocks";
 import { useHomeCopy } from "../i18n/home-copy";
 import { useTripPreview } from "../providers/trip-preview-provider";
-import type { HomeScenario, Trip } from "../types/home-types";
-import { formatTripDates } from "../utils/select-home";
-import { Badge, homeStyles, SurfaceCard } from "./home-primitives";
-import { TripTimeline } from "./trip-timeline";
+import type { HomeScenario } from "../types/home-types";
+import { homeStyles } from "./home-primitives";
 import { SampleItineraryPanel } from "./sample-itinerary-panel";
 import { OngoingTripPanels } from "./ongoing-trip-panels";
-import { sampleTrips } from "@/features/trip/data/sample-trips";
 import { CreateTripModal } from "@/features/trip/components/create-trip-modal";
 
 export function PreviewPanels() {
   const theme = useAppTheme();
   const { copy } = useHomeCopy();
-  const { panel, closePanel, trips } = useTripPreview((state) => ({
+  const { panel, closePanel } = useTripPreview((state) => ({
     panel: state.panel,
     closePanel: state.closePanel,
-    trips: state.trips,
   }));
-  const insets = useSafeAreaInsets();
+  const insets = useScreenInsets();
   const reduceMotion = useReducedMotion();
   if (!panel) return null;
+  if (panel.kind === "plan" || panel.kind === "trip-details")
+    return (
+      <TripDetailsRedirect
+        tripId={panel.tripId}
+        dayIndex={panel.kind === "plan" ? panel.dayIndex : undefined}
+        onClose={closePanel}
+      />
+    );
   if (panel.kind === "create") {
     return <CreateTripModal visible onClose={closePanel} />;
   }
   if (
     panel.kind === "camera" ||
     panel.kind === "journal" ||
-    panel.kind === "current-weather" ||
-    panel.kind === "trip-details"
+    panel.kind === "current-weather"
   ) {
     return (
       <OngoingTripPanels key={`${panel.kind}:${panel.tripId}`} panel={panel} />
@@ -60,11 +62,6 @@ export function PreviewPanels() {
     "capture-start": copy.capture,
     notifications: copy.notifications,
   };
-  const trip =
-    panel.kind === "plan"
-      ? (trips.find((item) => item.id === panel.tripId) ??
-        sampleTrips.find((item) => item.id === panel.tripId))
-      : undefined;
   return (
     <Modal
       transparent
@@ -193,13 +190,6 @@ export function PreviewPanels() {
                 </AppButton>
               </>
             ) : null}
-            {panel.kind === "plan" && trip ? (
-              <PlanPanel
-                key={trip.id}
-                trip={trip}
-                initialDay={panel.dayIndex ?? 0}
-              />
-            ) : null}
             {panel.kind !== "notifications" ? (
               <AppText variant="caption" tone="muted">
                 {copy.sampleHint}
@@ -263,96 +253,6 @@ function ScenarioPicker() {
           </Pressable>
         ))}
       </View>
-    </>
-  );
-}
-
-function PlanPanel({ trip, initialDay }: { trip: Trip; initialDay: number }) {
-  const theme = useAppTheme();
-  const { copy, locale } = useHomeCopy();
-  const { addStop } = useTripPreview((state) => ({ addStop: state.addStop }));
-  const [dayIndex, setDayIndex] = useState(
-    Math.min(Math.max(0, initialDay), Math.max(0, trip.days.length - 1)),
-  );
-  const day = trip.days[dayIndex];
-  const hasSuggestion =
-    day &&
-    suggestedStops(trip.destination).some(
-      (stop) => !day.stops.some((existing) => existing.id === stop.id),
-    );
-  return (
-    <>
-      <View style={{ gap: theme.spacing.sm }}>
-        <AppText variant="heading">{trip.destination}</AppText>
-        <AppText tone="muted">{formatTripDates(trip, locale)}</AppText>
-        <Badge
-          label={
-            trip.status === "draft"
-              ? copy.draft
-              : trip.status === "completed"
-                ? copy.completed
-                : copy.planned
-          }
-        />
-      </View>
-      <View
-        accessibilityLabel={copy.chooseDay}
-        style={[homeStyles.row, { flexWrap: "wrap", gap: theme.spacing.sm }]}
-      >
-        {trip.days.map((item, index) => (
-          <Pressable
-            key={item.date}
-            accessibilityRole="button"
-            accessibilityLabel={`${copy.day} ${index + 1}`}
-            accessibilityState={{ selected: dayIndex === index }}
-            onPress={() => setDayIndex(index)}
-            style={({ pressed }) => ({
-              minHeight: theme.layout.touchTarget,
-              paddingHorizontal: theme.spacing.lg,
-              paddingVertical: theme.spacing.md,
-              borderRadius: theme.radius.full,
-              borderWidth: 1,
-              borderColor:
-                dayIndex === index
-                  ? theme.colors.primaryText
-                  : theme.colors.borderStrong,
-              backgroundColor:
-                dayIndex === index
-                  ? theme.colors.surfaceTint
-                  : theme.colors.surface,
-              opacity: pressed ? theme.motion.pressOpacity : 1,
-            })}
-          >
-            <AppText
-              variant="label"
-              tone={dayIndex === index ? "primary" : "muted"}
-            >
-              {copy.day} {index + 1}
-            </AppText>
-          </Pressable>
-        ))}
-      </View>
-      <SurfaceCard>
-        {day?.stops.length ? (
-          <TripTimeline stops={day.stops} />
-        ) : (
-          <AppText tone="muted">{copy.emptyDay}</AppText>
-        )}
-      </SurfaceCard>
-      {trip.status !== "completed" && day ? (
-        <AppButton
-          disabled={!hasSuggestion}
-          leadingIcon={
-            <AppIcon
-              name={hasSuggestion ? "plus" : "check"}
-              color={theme.colors.onPrimary}
-            />
-          }
-          onPress={() => addStop(trip.id, day.date)}
-        >
-          {hasSuggestion ? copy.addSuggestion : copy.allAdded}
-        </AppButton>
-      ) : null}
     </>
   );
 }

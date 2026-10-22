@@ -7,7 +7,7 @@ import {
   View,
 } from "react-native";
 import Animated from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useScreenInsets } from "@/hooks/use-screen-insets";
 
 import { AppIcon, type AppIconName } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
@@ -50,7 +50,7 @@ export function PhotoViewerToolbar({
   onInfo: () => void;
 }) {
   const theme = useAppTheme();
-  const insets = useSafeAreaInsets();
+  const insets = useScreenInsets();
   const { copy, locale } = usePhotoViewerCopy();
   // Preview favorites belong to this album viewing session.
   const [favorites, setFavorites] = useState<Set<string>>(() => new Set());
@@ -254,7 +254,7 @@ export function PhotoInfoPanel({
   onClose: () => void;
 }) {
   const theme = useAppTheme();
-  const insets = useSafeAreaInsets();
+  const insets = useScreenInsets();
   const { copy, locale } = usePhotoViewerCopy();
   return (
     <View

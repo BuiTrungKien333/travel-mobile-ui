@@ -25,6 +25,8 @@ const vi = {
     "Chưa có quyền lưu ảnh. Bạn có thể cấp quyền trong Cài đặt của thiết bị.",
   sharingUnavailable:
     "Thiết bị hoặc trình duyệt này chưa hỗ trợ chia sẻ file ảnh.",
+  nativeBuildRequired:
+    "Phiên bản ứng dụng này chưa hỗ trợ thao tác ảnh này. Vui lòng cập nhật ứng dụng.",
   saved: "Đã lưu ảnh vào thư viện",
   downloaded: "Đã gửi ảnh đến trình tải xuống",
   retry: "Thử lại",
@@ -57,6 +59,8 @@ const en: typeof vi = {
     "Photo saving permission is missing. You can enable it in your device settings.",
   sharingUnavailable:
     "This device or browser doesn't support sharing photo files.",
+  nativeBuildRequired:
+    "This app version doesn't support this photo action. Please update the app.",
   saved: "Photo saved to your library",
   downloaded: "Photo sent to your downloads",
   retry: "Try again",

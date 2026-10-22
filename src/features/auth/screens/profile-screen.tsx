@@ -6,7 +6,7 @@ import {
   StyleSheet,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ScreenSafeArea } from "@/components/common/screen-safe-area";
 
 import { LanguageSwitcher } from "@/components/common/language-switcher";
 import { AppButton } from "@/components/ui/app-button";
@@ -33,7 +33,7 @@ export function ProfileScreen() {
     }
   };
   return (
-    <SafeAreaView
+    <ScreenSafeArea
       edges={["top", "left", "right"]}
       style={[styles.screen, { backgroundColor: theme.colors.background }]}
     >
@@ -101,7 +101,7 @@ export function ProfileScreen() {
           </AppButton>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }
 const styles = StyleSheet.create({

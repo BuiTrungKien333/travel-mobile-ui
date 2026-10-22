@@ -66,7 +66,7 @@ Fixtures và các thay đổi trong store chỉ tồn tại trong phiên. Đổi
 ## Quy ước triển khai
 
 - Home dùng ScrollView với số khối hữu hạn; album preview tối đa sáu ảnh, viewer dựng tối đa ba trang ảnh. Tab Trips/Memories dùng FlatList và ID ổn định.
-- Safe area phía trên/hai bên và khoảng trống đáy theo chiều cao bottom navigation. Form có xử lý bàn phím, validation và lỗi.
+- Safe area phía trên/hai bên qua `ScreenSafeArea` và `useScreenInsets`; khoảng trống đáy theo chiều cao bottom navigation. Form có xử lý bàn phím, validation và lỗi.
 - UI dùng semantic tokens, Roboto và thành phần chung; giữ phong cách kính/teal đã chốt. Android/web có chất liệu kính fallback, không cam kết hiệu ứng khúc xạ giống iOS.
 - Gesture ảnh chạy bằng Reanimated/Gesture Handler. Motion trang trí dừng khi app background, tab mất focus hoặc panel preview dùng chung mở; tôn trọng Reduced Motion. Chưa đo FPS trên thiết bị.
 - Label/trạng thái trợ năng cho các thao tác chính; icon-only tab vẫn có tên cho screen reader. Cần kiểm tra VoiceOver/TalkBack và font phóng lớn trên máy thật.
@@ -78,3 +78,29 @@ Fixtures và các thay đổi trong store chỉ tồn tại trong phiên. Đổi
 Đổi cờ thành `false` và reload khi muốn thử lại auth. Việc này không tự nối Home với API: Home vẫn dùng các fixture cho đến khi triển khai query/API riêng.
 
 Chi tiết kiểm tra và giới hạn: [HOME-REVIEW.md](HOME-REVIEW.md). Tiến độ: [PROJECT-STATUS.md](PROJECT-STATUS.md).
+
+## Android báo thiếu `ExpoMediaLibraryNext` (21/10/2026)
+
+API `Asset.create` của SDK 57 cần native module `ExpoMediaLibraryNext`. Nếu JavaScript đã có package nhưng bản app cài trên máy chưa chứa module, Metro reload không thể thêm module vào APK. Cảnh báo route Home thiếu default export có thể là hệ quả của lỗi import; route `tabs/index.tsx` vẫn có default export.
+
+Các dependency native của lưu/chia sẻ ảnh hiện được kiểm tra và import khi bấm thao tác, không khi tải Home. Bản app thiếu module vẫn mở Home/album; thao tác thiếu hỗ trợ trả thông báo cập nhật ứng dụng, không giả báo đã lưu thành công. Web giữ service riêng.
+
+Để dùng lưu/chia sẻ đầy đủ, kết nối Android/emulator và build/cài lại development app từ thư mục mobile:
+
+```powershell
+cd E:\travel-mobile-ui
+npx expo prebuild --platform android --no-install
+npx expo run:android
+```
+
+Sau khi đã cài bản mới, các lần chỉ sửa JS/UI dùng `npx expo start --dev-client`. Mở bản development app của dự án. Chỉ `expo start`, clear Metro cache hoặc cập nhật package trong `node_modules` không cập nhật native code trong app đã cài.
+
+Không dùng `prebuild --clean` hoặc xóa thư mục native chỉ để xử lý lỗi này; kiểm tra thay đổi native riêng nếu đã chỉnh tay. Thông báo có patch Expo mới là việc riêng, chưa tự nâng package trong lần sửa này.
+
+## Khoảng an toàn phía trên · 21/10/2026
+
+Màn hình dùng `src/components/common/screen-safe-area.tsx` tại boundary và giữ padding nội dung theo theme bên trong. Root provider được khởi tạo với `initialWindowMetrics`. `useScreenInsets` lấy safe-area theo thiết bị; trên Android dùng chiều cao status bar do hệ điều hành báo làm mốc tối thiểu khi cần, trừ phần provider đã nằm dưới status bar. Dùng giá trị lớn hơn, không cộng status bar với top inset.
+
+Home bốn trạng thái, Chuyến đi, Kỷ niệm, Profile và camera mẫu dùng chung frame. Form auth, toolbar xem ảnh, modal tạo chuyến và các panel dùng cùng hook cho top inset. Không đổi spacing thành một chiều cao status bar cố định, không dùng tắt edge-to-edge để né lỗi. Native insets vẫn quyết định notch/Dynamic Island; web không nhận offset Android.
+
+Áp dụng inset một lần tại mỗi screen/modal boundary; không bọc thêm `ScreenSafeArea` ở component con rồi cộng lại `insets.top`. Giữ `contentInsetAdjustmentBehavior="never"` ở các scroll đã tự xử lý inset, không bật thêm automatic gây lề đôi. Thay đổi chỉ ở JS, reload app để nhận; cần kiểm tra trực tiếp trên thiết bị để xác nhận vị trí thực tế.

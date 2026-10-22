@@ -3,22 +3,13 @@ import { View } from "react-native";
 
 import { FloatingBottomNavigation } from "@/components/common/floating-bottom-navigation";
 import { AppIcon, type AppIconName } from "@/components/ui/app-icon";
-import { PreviewPanels } from "@/features/home/components/preview-panels";
 import { useHomeCopy } from "@/features/home/i18n/home-copy";
 import { useNavigationCapture } from "@/features/home/hooks/use-navigation-capture";
-import {
-  TripPreviewProvider,
-  useTripPreview,
-} from "@/features/home/providers/trip-preview-provider";
+import { useTripPreview } from "@/features/home/providers/trip-preview-provider";
 import { useAppTheme } from "@/hooks/use-app-theme";
 
 export default function AuthenticatedLayout() {
-  return (
-    <TripPreviewProvider>
-      <WorkspaceTabs />
-      <PreviewPanels />
-    </TripPreviewProvider>
-  );
+  return <WorkspaceTabs />;
 }
 
 function WorkspaceTabs() {

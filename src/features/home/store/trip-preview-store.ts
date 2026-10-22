@@ -1,5 +1,5 @@
 import { createStore } from "zustand/vanilla";
-import { MOCK_TODAY, mockTrips, suggestedStops } from "../data/home-mocks";
+import { MOCK_TODAY, mockTrips } from "../data/home-mocks";
 import { recentMemoriesPreview } from "../data/recent-memories-preview";
 import {
   captureSamples,
@@ -9,6 +9,9 @@ import {
 import type { HomeScenario, Memory, Trip } from "../types/home-types";
 import type { PreviewState } from "../types/preview-state";
 import { dayDistance } from "../utils/select-home";
+import { isCalendarDate } from "@/utils/calendar-date";
+import { tripFormLimits } from "../../trip/constants/trip-form";
+import { applyTripMutation } from "@/features/trip/utils/trip-mutations";
 
 const PREVIEW_ENTRY_LIMIT = 20;
 
@@ -41,6 +44,21 @@ export function createPreviewStore() {
       }),
     createDraft: (values) => {
       if (get().trips.length >= PREVIEW_ENTRY_LIMIT) return false;
+      if (
+        values.budget !== undefined &&
+        (!Number.isSafeInteger(values.budget) ||
+          values.budget < 0 ||
+          values.budget > tripFormLimits.budget)
+      )
+        return false;
+      const duration = dayDistance(values.startDate, values.endDate) + 1;
+      if (
+        !isCalendarDate(values.startDate) ||
+        !isCalendarDate(values.endDate) ||
+        duration < 1 ||
+        duration > tripFormLimits.days
+      )
+        return false;
       const days = Array.from(
         { length: dayDistance(values.startDate, values.endDate) + 1 },
         (_, index) => {
@@ -48,13 +66,22 @@ export function createPreviewStore() {
           date.setUTCDate(date.getUTCDate() + index);
           return {
             date: date.toISOString().slice(0, 10),
-            stops: index === 0 && values.initialStops ? values.initialStops : [],
+            stops: [],
           };
         },
       );
       const trip: Trip = {
         destination: values.destination,
         title: values.title,
+        budget:
+          values.budget === undefined
+            ? undefined
+            : { amount: values.budget, currency: "VND" },
+        preferences: values.preferences ? [...values.preferences] : undefined,
+        unscheduledStops: (values.initialStops ?? []).map((stop) => ({
+          ...stop,
+          time: "",
+        })),
         startDate: values.startDate,
         endDate: values.endDate,
         id: `draft-${++nextId}`,
@@ -62,35 +89,32 @@ export function createPreviewStore() {
         days,
       };
       set((current) => ({
-        trips: [...current.trips, trip],
+        trips: [trip, ...current.trips],
         panel: { kind: "plan", tripId: trip.id },
       }));
       return true;
     },
-    addStop: (tripId, date) =>
-      set((current) => ({
-        trips: current.trips.map((trip) =>
-          trip.id !== tripId
-            ? trip
-            : {
-                ...trip,
-                days: trip.days.map((day) => {
-                  if (day.date !== date) return day;
-                  const next = suggestedStops(trip.destination).find(
-                    (stop) =>
-                      !day.stops.some((existing) => existing.id === stop.id),
-                  );
-                  return next
-                    ? {
-                        ...day,
-                        stops: [...day.stops, next].sort((a, b) =>
-                          a.time.localeCompare(b.time),
-                        ),
-                      }
-                    : day;
-                }),
-              },
+    mutateTrip: (tripId, mutation) => {
+      const state = get();
+      const trip = state.trips.find((item) => item.id === tripId);
+      if (!trip) return false;
+      const updated = applyTripMutation(trip, mutation);
+      if (!updated) return false;
+      set({
+        trips: state.trips.map((item) => (item.id === tripId ? updated : item)),
+      });
+      return true;
+    },
+    deleteTrip: (tripId) =>
+      set((state) => ({
+        trips: state.trips.filter((trip) => trip.id !== tripId),
+        memories: state.memories.filter((memory) => memory.tripId !== tripId),
+        visited: Object.fromEntries(
+          Object.entries(state.visited).filter(
+            ([key]) => !key.startsWith(`${tripId}:`),
+          ),
         ),
+        panel: null,
       })),
     setVisited: (tripId, date, stopId, visited) => {
       const state = get();

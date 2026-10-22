@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { useBottomTabBarHeight } from "expo-router/js-tabs";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import Animated, { FadeInDown, ReduceMotion } from "react-native-reanimated";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ScreenSafeArea } from "@/components/common/screen-safe-area";
 
 import { AppIcon, type AppIconName } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
@@ -23,7 +23,7 @@ export function HomePage({
   const theme = useAppTheme();
   const tabBarHeight = useBottomTabBarHeight();
   return (
-    <SafeAreaView
+    <ScreenSafeArea
       edges={["top", "left", "right"]}
       style={[styles.flex, { backgroundColor: theme.colors.background }]}
     >
@@ -53,7 +53,7 @@ export function HomePage({
           {children}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }
 

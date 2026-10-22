@@ -1,7 +1,7 @@
 import { useBottomTabBarHeight } from "expo-router/js-tabs";
 import { Image } from "expo-image";
 import { FlatList, StyleSheet, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ScreenSafeArea } from "@/components/common/screen-safe-area";
 
 import { AppButton } from "@/components/ui/app-button";
 import { AppIcon } from "@/components/ui/app-icon";
@@ -29,7 +29,7 @@ export function MemoriesScreen() {
   const selection = selectHome(trips, today);
   const activeTrip = selection.kind === "ongoing" ? selection.trip : null;
   return (
-    <SafeAreaView
+    <ScreenSafeArea
       edges={["top", "left", "right"]}
       style={[styles.screen, { backgroundColor: theme.colors.background }]}
     >
@@ -107,7 +107,7 @@ export function MemoriesScreen() {
         )}
         ListFooterComponent={<PreviewNotice />}
       />
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }
 const styles = StyleSheet.create({
