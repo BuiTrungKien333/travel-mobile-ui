@@ -78,6 +78,7 @@ export const layout = {
   weatherHeroArtworkSize: 72,
   weatherModalArtworkSize: 72,
   weatherSheetHeightRatio: 0.68,
+  tripOptimizationSheetHeightRatio: 0.7,
   weatherHourCardWidth: 96,
   weatherModalHourMinWidth: 72,
   sheetDragHandleWidth: 40,
@@ -185,6 +186,7 @@ export const typography = {
   },
 
   fontSize: {
+    previousDistance: 15,
     compactAction: 13,
     navigationLabel: 11,
     xs: 12,

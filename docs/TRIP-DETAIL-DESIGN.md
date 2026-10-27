@@ -1,5 +1,17 @@
 # Đề xuất thiết kế · Chi tiết chuyến đi
 
+## Xem trước kết quả tối ưu · 27/10/2026
+
+- Modal hiển thị lần lượt: kết quả so sánh, thứ tự gợi ý, thứ tự hiện tại, nút Áp dụng thứ tự này. Đóng/hủy qua X hoặc vuốt sheet; bỏ nút phụ nằm dưới CTA để Áp dụng luôn là hành động cuối.
+- Kết quả gọn: icon vị trí cạnh dòng `km trước → km sau` (15px → 18px), dưới là `(Tiết kiệm … km – … phút)` 12px. Khối có nền mint kính mờ, viền hairline, bo 10px và padding 12px; không có nhãn phụ/chip. Ghi chú dữ liệu mẫu nằm cuối phần cuộn.
+- Modal cao 70% màn hình, giới hạn theo safe area trên. `TripDetailsSheet` nhận footer ngoài ScrollView; nút Áp dụng cố định ở đáy, có đệm safe area dưới. Nội dung cuộn độc lập, nút vẫn disabled nếu thứ tự không đổi/không có gợi ý.
+- `TripOptimizationPreview` tách khỏi panels; `getOptimizationComparison` tính tổng trước/sau từ các chặng mẫu đúng phương tiện; giữ dấu tăng nếu gợi ý dài hơn, thể hiện không đổi nếu bằng nhau. Không bịa tổng/tiết kiệm khi thiếu chặng xuất phát, quay về hoặc bất kỳ chặng nối nào.
+- Danh sách gợi ý đặt trước, đánh số, tên địa điểm, giờ theo vị trí sẽ lưu, biểu tượng ghim. Áp dụng vẫn dùng mutation reorder/mergeScheduledOrder cũ, giữ khung giờ, điểm ghim và địa điểm chưa xếp lịch; không đổi backend/thuật toán tối ưu.
+- Phần gợi ý cho kéo trực tiếp trên số thứ tự; không có nút lên/xuống. Danh sách có khung chung bo 10px, nền mint và viền teal nhạt để phân biệt card hiện tại màu trắng. Từng item không có viền/nền riêng, chỉ có line nhẹ giữa các hàng.
+- `TripOptimizationSheet` sở hữu thứ tự nháp theo phiên mở. Kéo rồi thả cập nhật số liệu so sánh, không thay đổi lịch trình hiện tại cho đến Áp dụng; đóng/mở lại bỏ nháp. Danh sách tái sử dụng `TripReorderList`, hook kéo và geometry đo thực tế của timeline; ghim là ranh giới, giữ khung giờ. Khóa cuộn và CTA khi đang kéo, hỗ trợ bàn phím và thao tác trợ năng. Chưa có tự cuộn sát mép khi kéo.
+- Kiểm tra sau bổ sung kéo thả: TypeScript/no-unused, **137/137 tests** và Android/Hermes export đạt. Tests bổ sung kiểm tra nháp chỉ lưu khi Áp dụng, hủy phiên, khóa khi kéo, thứ tự không đổi/không hỗ trợ. Chưa QA kéo thực tế trên điện thoại; công cụ trình duyệt hiện lỗi khởi tạo. Không lint/dependency mới.
+- TypeScript/no-unused và **133/133 tests** đạt. Có kiểm tra số liệu/rounding, phương tiện, tăng/không đổi, thiếu chặng và thứ tự không hợp lệ. Chưa QA trực quan lượt này do công cụ trình duyệt lỗi khởi tạo; không lint hoặc dependency mới.
+
 ## Modal sắp xếp, tùy chọn và sửa chuyến đi · 22/10/2026
 
 - Sắp xếp: số thứ tự thay tay nắm, kéo trực tiếp trên số hoặc dùng nút lên/xuống 44px; tên và giờ được phân cấp rõ trên hàng kính mờ viền mint. Giờ hiển thị theo vị trí sẽ lưu, không đi theo địa điểm đang kéo. Có Đặt lại, chỉ bật Áp dụng khi đổi thứ tự; giữ giới hạn điểm ghim và Reduce Motion. Đã thử kéo, nút lên/xuống, Đặt lại, áp dụng và Hoàn tác trên web 390px.

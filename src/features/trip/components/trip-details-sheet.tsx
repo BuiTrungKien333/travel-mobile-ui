@@ -30,6 +30,9 @@ export function TripDetailsSheet({
   onShow,
   contentKey,
   topSpacing,
+  heightRatio,
+  footer,
+  scrollEnabled = true,
   variant = "default",
 }: {
   title: string;
@@ -38,6 +41,9 @@ export function TripDetailsSheet({
   onShow?: () => void;
   contentKey?: string;
   topSpacing?: number;
+  heightRatio?: number;
+  footer?: ReactNode;
+  scrollEnabled?: boolean;
   variant?: "default" | "weather";
 }) {
   const theme = useAppTheme();
@@ -116,9 +122,15 @@ export function TripDetailsSheet({
                       ),
                     }
                   : {}),
-                height: weather
-                  ? windowHeight * theme.layout.weatherSheetHeightRatio
-                  : undefined,
+                height:
+                  heightRatio !== undefined
+                    ? Math.min(
+                        windowHeight * heightRatio,
+                        windowHeight - safeTop,
+                      )
+                    : weather
+                      ? windowHeight * theme.layout.weatherSheetHeightRatio
+                      : undefined,
                 backgroundColor: weather
                   ? theme.colors.weatherGlassSurface
                   : theme.colors.surface,
@@ -187,16 +199,36 @@ export function TripDetailsSheet({
             </GestureDetector>
             <ScrollView
               key={contentKey}
+              scrollEnabled={scrollEnabled}
+              style={
+                heightRatio !== undefined
+                  ? { flex: 1, minHeight: 0 }
+                  : undefined
+              }
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{
                 paddingHorizontal: theme.spacing.lg,
                 paddingTop: theme.spacing.sm,
+                paddingBottom: footer ? theme.spacing.lg : undefined,
                 gap: theme.spacing.lg,
               }}
             >
               {children}
             </ScrollView>
+            {footer ? (
+              <View
+                style={{
+                  flexShrink: 0,
+                  paddingHorizontal: theme.spacing.lg,
+                  paddingTop: theme.spacing.md,
+                  borderTopWidth: StyleSheet.hairlineWidth,
+                  borderTopColor: theme.colors.softActionBorder,
+                }}
+              >
+                {footer}
+              </View>
+            ) : null}
           </Animated.View>
         </KeyboardAvoidingView>
       </GestureHandlerRootView>

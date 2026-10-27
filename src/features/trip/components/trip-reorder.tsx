@@ -1,13 +1,6 @@
-import { useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { useState, type KeyboardEvent } from "react";
+import { Platform, Pressable, StyleSheet, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Animated, {
-  LinearTransition,
-  ReduceMotion,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 import { AppButton } from "@/components/ui/app-button";
 import { AppIcon } from "@/components/ui/app-icon";
@@ -15,6 +8,12 @@ import { AppText } from "@/components/ui/app-text";
 import type { TripStop } from "@/features/home/types/home-types";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
+import {
+  useTripTimelineDrag,
+  type TripTimelineDrag,
+} from "../hooks/use-trip-timeline-drag";
+import { timelineDropTarget } from "../utils/timeline-reorder";
+import { TripStopDragFrame } from "./trip-stop-interactions";
 
 export function TripReorder({
   stops,
@@ -27,23 +26,19 @@ export function TripReorder({
   const theme = useAppTheme();
   const { copy } = useTripDetailsCopy();
   const changed = order.some((stop, index) => stop.id !== stops[index]?.id);
-  function move(id: string, steps: number) {
-    setOrder((current) => {
-      const from = current.findIndex((stop) => stop.id === id);
-      const to = Math.max(0, Math.min(current.length - 1, from + steps));
-      if (
-        from < 0 ||
-        current[from].pinned ||
-        current
-          .slice(Math.min(from, to), Math.max(from, to) + 1)
-          .some((stop) => stop.pinned)
-      )
-        return current;
-      const updated = [...current];
-      updated.splice(to, 0, ...updated.splice(from, 1));
-      return updated;
-    });
-  }
+  const drag = useTripTimelineDrag({
+    stops: order,
+    selectionKey: "manual-reorder",
+    onReorder: (ids) => {
+      const byId = new Map(order.map((stop) => [stop.id, stop]));
+      setOrder(
+        ids.flatMap((id) => {
+          const stop = byId.get(id);
+          return stop ? [stop] : [];
+        }),
+      );
+    },
+  });
   return (
     <>
       <View style={{ gap: theme.spacing.xs }}>
@@ -54,7 +49,7 @@ export function TripReorder({
           <Pressable
             accessibilityRole="button"
             accessibilityState={{ disabled: !changed }}
-            disabled={!changed}
+            disabled={!changed || drag.draggedId !== null}
             onPress={() => setOrder(stops)}
             style={({ pressed }) => ({
               minHeight: theme.layout.compactTouchTarget,
@@ -80,23 +75,14 @@ export function TripReorder({
           {copy.reorderHint}
         </AppText>
       </View>
-      <View style={{ gap: theme.spacing.sm }}>
-        {order.map((stop, index) => (
-          <ReorderRow
-            key={stop.id}
-            stop={stop}
-            number={index + 1}
-            total={order.length}
-            time={stops[index]?.time ?? ""}
-            canUp={index > 0 && !order[index - 1].pinned}
-            canDown={index < order.length - 1 && !order[index + 1].pinned}
-            onMove={(steps) => move(stop.id, steps)}
-          />
-        ))}
-      </View>
+      <TripReorderList
+        stops={order}
+        slotTimes={stops.map((stop) => stop.time)}
+        drag={drag}
+      />
       <AppButton
         variant="gradient"
-        disabled={!changed}
+        disabled={!changed || drag.draggedId !== null}
         onPress={() => onApply(order.map((stop) => stop.id))}
       >
         {copy.apply}
@@ -104,6 +90,59 @@ export function TripReorder({
     </>
   );
 }
+export function TripReorderList({
+  stops,
+  slotTimes,
+  drag,
+  variant = "default",
+}: {
+  stops: TripStop[];
+  slotTimes: string[];
+  drag: TripTimelineDrag;
+  variant?: "default" | "compact";
+}) {
+  const theme = useAppTheme();
+  return (
+    <View>
+      {stops.map((stop, index) => (
+        <TripStopDragFrame key={stop.id} id={stop.id} drag={drag}>
+          <View
+            style={{
+              paddingBottom:
+                variant === "default" && index < stops.length - 1
+                  ? theme.spacing.sm
+                  : 0,
+              borderBottomWidth:
+                variant === "compact" && index < stops.length - 1
+                  ? StyleSheet.hairlineWidth
+                  : 0,
+              borderBottomColor: theme.colors.border,
+            }}
+          >
+            <ReorderRow
+              stop={stop}
+              number={index + 1}
+              total={stops.length}
+              time={slotTimes[index] ?? ""}
+              drag={drag}
+              variant={variant}
+              canUp={index > 0 && !stops[index - 1].pinned}
+              canDown={index < stops.length - 1 && !stops[index + 1].pinned}
+              onMove={(steps) => {
+                if (drag.draggedId === null)
+                  drag.finish(
+                    stop.id,
+                    Math.max(0, Math.min(stops.length - 1, index + steps)),
+                  );
+              }}
+            />
+          </View>
+        </TripStopDragFrame>
+      ))}
+    </View>
+  );
+}
+
 function ReorderRow({
   stop,
   number,
@@ -112,6 +151,8 @@ function ReorderRow({
   canUp,
   canDown,
   onMove,
+  drag,
+  variant,
 }: {
   stop: TripStop;
   number: number;
@@ -120,58 +161,74 @@ function ReorderRow({
   canUp: boolean;
   canDown: boolean;
   onMove: (steps: number) => void;
+  drag: TripTimelineDrag;
+  variant: "default" | "compact";
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
-  const offset = useSharedValue(0);
-  const height = useSharedValue<number>(
-    theme.layout.touchTarget + theme.spacing.lg,
-  );
-  const moving = useAnimatedStyle(() => ({
-    transform: [{ translateY: offset.get() }],
-    zIndex: offset.get() === 0 ? 0 : 1,
-  }));
-  const spring = theme.motion.photoViewerZoomSpring;
+  const compact = variant === "compact";
+  const keyboardProps =
+    Platform.OS === "web"
+      ? {
+          onKeyDown: (event: KeyboardEvent<HTMLElement>) => {
+            if (stop.pinned || drag.draggedId !== null) return;
+            const direction =
+              event.key === "ArrowUp" ? -1 : event.key === "ArrowDown" ? 1 : 0;
+            if (direction && (direction < 0 ? canUp : canDown)) {
+              event.preventDefault();
+              onMove(direction);
+            }
+          },
+        }
+      : {};
   const pan = Gesture.Pan()
-    .enabled(!stop.pinned)
+    .enabled(
+      !stop.pinned && (drag.draggedId === null || drag.draggedId === stop.id),
+    )
     .activeOffsetY([-theme.spacing.sm, theme.spacing.sm])
+    .failOffsetX([-theme.spacing.sm, theme.spacing.sm])
+    .onStart(() => {
+      const index = drag.slots.get().findIndex((slot) => slot.id === stop.id);
+      drag.from.set(index);
+      drag.target.set(index);
+      drag.offset.set(0);
+      drag.active.set(stop.id);
+      scheduleOnRN(drag.begin, stop.id);
+    })
     .onUpdate((event) => {
-      offset.set(event.translationY);
-    })
-    .onEnd((event) => {
-      const steps = Math.round(event.translationY / height.get());
-      offset.set(0);
-      if (steps) scheduleOnRN(onMove, steps);
-    })
-    .onFinalize(() => {
-      offset.set(
-        withSpring(0, { ...spring, reduceMotion: ReduceMotion.System }),
+      drag.offset.set(event.translationY);
+      drag.target.set(
+        timelineDropTarget(
+          drag.slots.get(),
+          drag.from.get(),
+          event.translationY,
+        ),
       );
+    })
+    .onEnd(() => {
+      scheduleOnRN(drag.finish, stop.id, drag.target.get());
+    })
+    .onFinalize((_event, success) => {
+      if (!success && drag.active.get() === stop.id) scheduleOnRN(drag.reset);
     });
   return (
-    <Animated.View
-      layout={LinearTransition.duration(
-        theme.motion.tabTransitionDuration,
-      ).reduceMotion(ReduceMotion.System)}
-      onLayout={(event) =>
-        height.set(event.nativeEvent.layout.height + theme.spacing.sm)
-      }
+    <View
       style={[
         {
           flexDirection: "row",
           alignItems: "center",
           gap: theme.spacing.sm,
-          backgroundColor: theme.colors.glassFallback,
-          padding: theme.spacing.sm,
-          borderRadius: theme.radius.md,
-          borderWidth: StyleSheet.hairlineWidth,
+          backgroundColor: compact ? undefined : theme.colors.glassFallback,
+          padding: compact ? theme.spacing.none : theme.spacing.sm,
+          borderRadius: compact ? theme.radius.none : theme.radius.md,
+          borderWidth: compact ? 0 : StyleSheet.hairlineWidth,
           borderColor: theme.colors.softActionBorder,
         },
-        moving,
       ]}
     >
       <GestureDetector gesture={pan}>
         <View
+          {...keyboardProps}
           collapsable={false}
           accessible
           accessibilityRole="adjustable"
@@ -180,7 +237,14 @@ function ReorderRow({
           aria-valuemax={total}
           aria-valuenow={number}
           accessibilityLabel={`${number}. ${stop.name[locale]}`}
-          accessibilityHint={stop.pinned ? copy.pinnedHint : copy.reorderHint}
+          accessibilityHint={
+            stop.pinned
+              ? copy.pinnedHint
+              : compact
+                ? copy.optimizationDragHint
+                : copy.reorderHint
+          }
+          aria-disabled={!!stop.pinned || (!canUp && !canDown)}
           accessibilityState={{
             disabled: !!stop.pinned || (!canUp && !canDown),
           }}
@@ -210,11 +274,15 @@ function ReorderRow({
         >
           <View
             style={{
-              width: theme.layout.compactIconButtonSurfaceSize,
-              height: theme.layout.compactIconButtonSurfaceSize,
+              width: compact
+                ? theme.layout.sampleStopNumberSize
+                : theme.layout.compactIconButtonSurfaceSize,
+              height: compact
+                ? theme.layout.sampleStopNumberSize
+                : theme.layout.compactIconButtonSurfaceSize,
               borderRadius: theme.radius.full,
               backgroundColor: theme.colors.surfaceTint,
-              borderWidth: StyleSheet.hairlineWidth,
+              borderWidth: compact ? 0 : StyleSheet.hairlineWidth,
               borderColor: theme.colors.softActionBorder,
               alignItems: "center",
               justifyContent: "center",
@@ -226,72 +294,93 @@ function ReorderRow({
           </View>
         </View>
       </GestureDetector>
-      <View style={{ flex: 1, minWidth: 0, gap: theme.spacing.xs }}>
-        <AppText variant="label">{stop.name[locale]}</AppText>
+      <View
+        style={{
+          flex: 1,
+          minWidth: 0,
+          gap: theme.spacing.xs,
+          ...(compact
+            ? ({ flexDirection: "row", alignItems: "center" } as const)
+            : {}),
+        }}
+      >
+        <AppText variant="label" style={compact ? { flex: 1 } : undefined}>
+          {stop.name[locale]}
+        </AppText>
         <View style={[styles.row, { flexWrap: "wrap", gap: theme.spacing.sm }]}>
           <AppText variant="caption" tone="muted">
             {time || copy.noTime}
           </AppText>
           {stop.pinned ? (
-            <View style={[styles.row, { gap: theme.spacing.xxs }]}>
+            <View
+              accessible
+              accessibilityLabel={copy.pinned}
+              style={[styles.row, { gap: theme.spacing.xxs }]}
+            >
               <AppIcon
                 name="pin"
                 size={theme.layout.iconSmall}
                 color={theme.colors.primaryText}
               />
-              <AppText variant="caption" tone="primary">
-                {copy.pinned}
-              </AppText>
+              {!compact ? (
+                <AppText variant="caption" tone="primary">
+                  {copy.pinned}
+                </AppText>
+              ) : null}
             </View>
           ) : null}
         </View>
       </View>
-      <View
-        style={[
-          styles.row,
-          {
-            borderWidth: StyleSheet.hairlineWidth,
-            borderColor: theme.colors.softActionBorder,
-            borderRadius: theme.radius.sm,
-            overflow: "hidden",
-            backgroundColor: theme.colors.surface,
-          },
-        ]}
-      >
-        {(
-          [
-            [-1, "up", canUp],
-            [1, "down", canDown],
-          ] as const
-        ).map(([step, name, allowed]) => (
-          <Pressable
-            key={name}
-            accessibilityRole="button"
-            accessibilityLabel={`${step < 0 ? copy.moveUp : copy.moveDown}: ${stop.name[locale]}`}
-            disabled={!allowed || stop.pinned}
-            accessibilityState={{ disabled: !allowed || stop.pinned }}
-            onPress={() => onMove(step)}
-            style={({ pressed }) => ({
-              width: theme.layout.compactTouchTarget,
-              height: theme.layout.compactTouchTarget,
-              alignItems: "center",
-              justifyContent: "center",
-              backgroundColor: pressed ? theme.colors.surfaceTint : undefined,
-            })}
-          >
-            <AppIcon
-              name={name}
-              size={theme.layout.iconSmall}
-              color={
-                allowed && !stop.pinned
-                  ? theme.colors.primaryText
-                  : theme.colors.textDisabled
-              }
-            />
-          </Pressable>
-        ))}
-      </View>
-    </Animated.View>
+      {!compact ? (
+        <View
+          style={[
+            styles.row,
+            {
+              borderWidth: StyleSheet.hairlineWidth,
+              borderColor: theme.colors.softActionBorder,
+              borderRadius: theme.radius.sm,
+              overflow: "hidden",
+              backgroundColor: theme.colors.surface,
+            },
+          ]}
+        >
+          {(
+            [
+              [-1, "up", canUp],
+              [1, "down", canDown],
+            ] as const
+          ).map(([step, name, allowed]) => (
+            <Pressable
+              key={name}
+              accessibilityRole="button"
+              accessibilityLabel={`${step < 0 ? copy.moveUp : copy.moveDown}: ${stop.name[locale]}`}
+              disabled={!allowed || stop.pinned || drag.draggedId !== null}
+              accessibilityState={{
+                disabled: !allowed || stop.pinned || drag.draggedId !== null,
+              }}
+              onPress={() => onMove(step)}
+              style={({ pressed }) => ({
+                width: theme.layout.compactTouchTarget,
+                height: theme.layout.compactTouchTarget,
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: pressed ? theme.colors.surfaceTint : undefined,
+              })}
+            >
+              <AppIcon
+                name={name}
+                size={theme.layout.iconSmall}
+                color={
+                  allowed && !stop.pinned
+                    ? theme.colors.primaryText
+                    : theme.colors.textDisabled
+                }
+              />
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
+    </View>
   );
 }
 

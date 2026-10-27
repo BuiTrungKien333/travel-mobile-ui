@@ -7,10 +7,7 @@ import { useAppTheme } from "@/hooks/use-app-theme";
 import type { Trip, TripDay } from "@/features/home/types/home-types";
 import { OngoingWeatherDetails } from "@/features/home/components/ongoing-weather-details";
 import { ongoingWeatherSnapshot } from "@/features/home/data/ongoing-preview";
-import {
-  getTripForecast,
-  suggestedDayOrder,
-} from "../data/trip-details-preview";
+import { getTripForecast } from "../data/trip-details-preview";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 import type {
   TripDetailsSheetState,
@@ -25,6 +22,7 @@ import { TripEditForm } from "./trip-edit-form";
 import { TripStartPointForm } from "./trip-start-point-form";
 import { TripForecastDetails } from "./trip-forecast-details";
 import { TripReorder } from "./trip-reorder";
+import { TripOptimizationSheet } from "./trip-optimization-preview";
 import { TripDirectionsButton } from "./trip-directions-button";
 import { TripDeleteAlert } from "./trip-delete-alert";
 import { tripTransportModes } from "../constants/trip-form";
@@ -69,11 +67,6 @@ export function TripDetailsPanels({
     ongoingWeatherSnapshot.date === day?.date &&
     day?.date === today;
   const scheduledDay = day ? { ...day, stops: scheduledStops(day) } : undefined;
-  const order = scheduledDay ? suggestedDayOrder(scheduledDay) : null;
-  const changedOrder =
-    !!scheduledDay &&
-    !!order &&
-    scheduledDay.stops.some((stop, index) => stop.id !== order[index]);
   const stopInSheet =
     sheet?.kind === "stop"
       ? (sheet.date === null
@@ -98,7 +91,7 @@ export function TripDetailsPanels({
     : "";
   return (
     <>
-      {sheet ? (
+      {sheet && sheet.kind !== "optimize" ? (
         <TripDetailsSheet
           contentKey={`${sheet.kind}:${sheet.kind === "stop" ? sheet.stopId : ""}`}
           variant={sheet.kind === "weather" ? "weather" : "default"}
@@ -286,58 +279,6 @@ export function TripDetailsPanels({
               }
             />
           ) : null}
-          {sheet.kind === "optimize" ? (
-            <>
-              <AppText variant="caption" tone="muted">
-                {copy.optimizeHint}
-              </AppText>
-              {order && day && scheduledDay ? (
-                <>
-                  <AppText variant="label">{copy.before}</AppText>
-                  {scheduledDay.stops.map((stop, index) => (
-                    <AppText variant="caption" key={stop.id}>
-                      {index + 1} · {stop.time || copy.noTime} ·{" "}
-                      {stop.name[locale]}
-                      {stop.pinned ? ` · ${copy.pinned}` : ""}
-                    </AppText>
-                  ))}
-                  <AppText variant="label">{copy.after}</AppText>
-                  {order.map((id, index) => (
-                    <AppText variant="caption" key={id}>
-                      {index + 1} ·{" "}
-                      {scheduledDay.stops[index].time || copy.noTime} ·{" "}
-                      {
-                        scheduledDay.stops.find((stop) => stop.id === id)?.name[
-                          locale
-                        ]
-                      }
-                    </AppText>
-                  ))}
-                  {!changedOrder ? (
-                    <AppText tone="muted">{copy.alreadyGood}</AppText>
-                  ) : null}
-                  <AppButton
-                    variant="gradient"
-                    disabled={!changedOrder}
-                    onPress={() =>
-                      commit({
-                        kind: "reorder",
-                        date: day.date,
-                        ids: mergeScheduledOrder(day, order),
-                      })
-                    }
-                  >
-                    {copy.apply}
-                  </AppButton>
-                </>
-              ) : (
-                <AppText tone="muted">{copy.noOptimization}</AppText>
-              )}
-              <AppButton variant="outline" onPress={closeSheet}>
-                {copy.cancel}
-              </AppButton>
-            </>
-          ) : null}
           {sheet.kind === "weather" ? (
             currentWeather ? (
               <OngoingWeatherDetails
@@ -363,6 +304,21 @@ export function TripDetailsPanels({
             </AppText>
           ) : null}
         </TripDetailsSheet>
+      ) : null}
+      {sheet?.kind === "optimize" ? (
+        <TripOptimizationSheet
+          key={`${trip.id}:${day?.date ?? "none"}`}
+          day={scheduledDay}
+          onClose={closeSheet}
+          onApply={(ids) => {
+            if (day)
+              commit({
+                kind: "reorder",
+                date: day.date,
+                ids: mergeScheduledOrder(day, ids),
+              });
+          }}
+        />
       ) : null}
       {hostReady && sheet?.kind === "dates" ? (
         <DateRangeSheet
