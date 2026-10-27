@@ -4,6 +4,7 @@ import {
   useAnimatedScrollHandler,
   useReducedMotion,
   useSharedValue,
+  type SharedValue,
 } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 import { useAppTheme } from "@/hooks/use-app-theme";
@@ -14,11 +15,13 @@ export function usePlanningMapCollapse<T>({
   selectionKey,
   mapHeight,
   list,
+  resizeLock,
 }: {
   enabled: boolean;
   selectionKey: string;
   mapHeight: number;
   list: RefObject<FlatList<T> | null>;
+  resizeLock?: SharedValue<number>;
 }) {
   const theme = useAppTheme();
   const [hidden, setHidden] = useState(false);
@@ -38,7 +41,16 @@ export function usePlanningMapCollapse<T>({
     target.set(-1);
     previousOffset.set(0);
     previousTime.set(0);
-  }, [enabled, selectionKey, collapsed, target, previousOffset, previousTime]);
+    resizeLock?.set(0);
+  }, [
+    enabled,
+    selectionKey,
+    collapsed,
+    target,
+    previousOffset,
+    previousTime,
+    resizeLock,
+  ]);
 
   function hide(snap: boolean) {
     setHidden(true);
@@ -69,12 +81,14 @@ export function usePlanningMapCollapse<T>({
       const velocity = (delta / Math.max(1, now - previousTime.get())) * 1000;
       previousOffset.set(offset);
       previousTime.set(now);
+      // Resizing the list header can emit scroll events without a scrolling gesture.
+      if (resizeLock && resizeLock.get() > 0) return;
       if (target.get() >= 0) {
         if (Math.abs(offset - target.get()) <= restoreDistance) target.set(-1);
         else if (now >= settleUntil.get()) target.set(-1);
         return;
       }
-      if (!collapsed.get() && offset >= hideDistance) {
+      if (!collapsed.get() && offset >= hideDistance && delta > 0) {
         collapsed.set(true);
         if (offset < mapHeight) {
           target.set(mapHeight);

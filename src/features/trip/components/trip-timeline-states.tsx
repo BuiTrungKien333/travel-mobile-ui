@@ -6,20 +6,27 @@ import { GlassBackdrop } from "@/components/common/glass-backdrop";
 import type { Trip, TripDay } from "@/features/home/types/home-types";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
+import { getTripStartInfo } from "../utils/trip-details-layout";
 
 export function TripStartNode({
   trip,
   day,
   canEdit,
   onPress,
+  live = false,
+  markerWidth,
 }: {
   trip: Trip;
   day?: TripDay;
   canEdit: boolean;
   onPress: () => void;
+  live?: boolean;
+  markerWidth?: number;
 }) {
   const theme = useAppTheme();
   const { copy } = useTripDetailsCopy();
+  const start = getTripStartInfo(trip, day, live);
+  if (!start) return null;
   return (
     <Pressable
       accessibilityRole="button"
@@ -36,24 +43,33 @@ export function TripStartNode({
     >
       <View
         style={{
-          width: theme.layout.sampleStopNumberSize,
-          height: theme.layout.sampleStopNumberSize,
-          borderRadius: theme.radius.full,
-          backgroundColor: theme.colors.surfaceTint,
+          width: markerWidth ?? theme.layout.sampleStopNumberSize,
           alignItems: "center",
-          justifyContent: "center",
         }}
       >
-        <AppText variant="caption" tone="primary">
-          S
-        </AppText>
+        <View
+          style={{
+            width: theme.layout.sampleStopNumberSize,
+            height: theme.layout.sampleStopNumberSize,
+            borderRadius: theme.radius.full,
+            backgroundColor: theme.colors.surfaceTint,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <AppText variant="caption" tone="primary">
+            S
+          </AppText>
+        </View>
       </View>
       <View style={{ flex: 1, minWidth: 0 }}>
-        <AppText variant="caption" tone="primary">
-          {day?.startTime || copy.noTime}
-        </AppText>
+        {start.time || !live ? (
+          <AppText variant="caption" tone="primary">
+            {start.time || copy.noTime}
+          </AppText>
+        ) : null}
         <AppText variant="caption">
-          {day?.startLocation || trip.accommodation || copy.chooseStart}
+          {start.location || copy.chooseStart}
         </AppText>
       </View>
       <AppIcon

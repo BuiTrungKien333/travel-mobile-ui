@@ -1,12 +1,11 @@
 import { useRef } from "react";
 import { Modal, Pressable, StyleSheet, View } from "react-native";
-import { GlassBackdrop } from "@/components/common/glass-backdrop";
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useScreenInsets } from "@/hooks/use-screen-insets";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 
-/** Centered confirmation shares the app's glass material across platforms. */
+/** Centered confirmation with a solid surface across platforms. */
 export function TripDeleteAlert({
   onCancel,
   onConfirm,
@@ -49,7 +48,7 @@ export function TripDeleteAlert({
             width: "100%",
             maxWidth: theme.layout.confirmationAlertMaxWidth,
             borderRadius: theme.radius.lg,
-            backgroundColor: theme.colors.weatherGlassSurface,
+            backgroundColor: theme.colors.surface,
             borderWidth: StyleSheet.hairlineWidth,
             borderColor: theme.colors.glassClockBorder,
             boxShadow: [
@@ -58,38 +57,6 @@ export function TripDeleteAlert({
             overflow: "hidden",
           }}
         >
-          <View
-            pointerEvents="none"
-            aria-hidden
-            style={[
-              StyleSheet.absoluteFill,
-              { overflow: "hidden", borderRadius: theme.radius.lg },
-            ]}
-          >
-            <View
-              style={{
-                position: "absolute",
-                top: -theme.spacing.xxl,
-                left: -theme.spacing.xl,
-                width: theme.layout.confirmationAlertMaxWidth / 2,
-                height: theme.layout.confirmationAlertMaxWidth / 2,
-                borderRadius: theme.radius.full,
-                backgroundColor: theme.colors.glassGlow,
-              }}
-            />
-            <View
-              style={{
-                position: "absolute",
-                bottom: -theme.spacing.xxl,
-                right: -theme.spacing.xl,
-                width: theme.layout.confirmationAlertMaxWidth / 2,
-                height: theme.layout.confirmationAlertMaxWidth / 2,
-                borderRadius: theme.radius.full,
-                backgroundColor: theme.colors.weatherRainSurface,
-              }}
-            />
-          </View>
-          <GlassBackdrop borderRadius={theme.radius.lg} variant="photo" />
           <View style={{ padding: theme.spacing.xl, gap: theme.spacing.md }}>
             <AppText
               variant="label"

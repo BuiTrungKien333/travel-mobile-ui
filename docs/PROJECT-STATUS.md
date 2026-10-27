@@ -1,6 +1,13 @@
 # Tiến độ Travel Mobile UI
 
-Cập nhật: **21/10/2026**. Phạm vi: frontend Home, sửa lỗi danh sách/tạo chuyến, đề xuất chi tiết chuyến đi và lỗi tải module ảnh trên Android. Ngày trong fixture Home là **21/10/2026** để tái hiện các trạng thái.
+Cập nhật: **27/10/2026**. Phạm vi: frontend Home, danh sách/tạo/chi tiết chuyến đi và tìm chọn địa điểm. Ngày trong fixture Home vẫn là **21/10/2026** để tái hiện các trạng thái.
+
+## Tìm và thêm địa điểm · 27/10/2026
+
+- Chi tiết mở màn Stack riêng `/trip/add-places`, thay picker modal và bước hỏi thêm vào ngày/pool. Giao diện dùng chung ở bước tạo chuyến, giữ dữ liệu form khi quay lại.
+- Tìm tên VI/EN, không dấu và địa chỉ; xem ghim/phóng tới vị trí, xác nhận, chọn nhiều điểm, chọn ngày/chờ xếp, lọc đã chọn, đặt ghim riêng có tên. Draft chỉ được lưu khi bấm thêm. Địa chỉ và tọa độ được giữ trong store.
+- Bản đồ và dữ liệu tìm kiếm là preview cục bộ, có nhãn ngay trong UI; chưa kết nối Google Maps, API Places hoặc GPS. Không thêm dependency. Xem [PLACE-SEARCH.md](PLACE-SEARCH.md).
+- TypeScript/no-unused, toàn bộ 149 tests và export Android/Hermes đạt. Công cụ trình duyệt lỗi môi trường nên chưa QA trực quan hoặc trên điện thoại; không chạy lint theo yêu cầu.
 
 ## Chi tiết chuyến đi · 21/10/2026
 

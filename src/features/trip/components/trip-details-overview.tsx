@@ -1,4 +1,5 @@
 import { FlatList, Pressable, StyleSheet, View } from "react-native";
+import { GlassBackdrop } from "@/components/common/glass-backdrop";
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
 import type { Trip, TripDay } from "@/features/home/types/home-types";
@@ -18,6 +19,7 @@ export function TripDayTools({
   editHistory,
   showWeather = true,
   reorderAtEnd = false,
+  showOptimize = false,
 }: {
   trip: Trip;
   day?: TripDay;
@@ -27,6 +29,7 @@ export function TripDayTools({
   editHistory: boolean;
   showWeather?: boolean;
   reorderAtEnd?: boolean;
+  showOptimize?: boolean;
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
@@ -66,7 +69,12 @@ export function TripDayTools({
       </Pressable>
     ) : null;
   return (
-    <View style={{ gap: theme.spacing.sm, paddingBottom: theme.spacing.md }}>
+    <View
+      style={{
+        gap: theme.spacing.sm,
+        paddingBottom: showOptimize ? theme.spacing.xl : theme.spacing.md,
+      }}
+    >
       <View
         style={[
           styles.inline,
@@ -88,7 +96,37 @@ export function TripDayTools({
               : copy.unknownRoute}
           </AppText>
         </View>
-        {reorderAtEnd ? (
+        {showOptimize && day && day.stops.length > 1 ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={copy.optimize}
+            onPress={() => setSheet({ kind: "optimize" })}
+            style={({ pressed }) => ({
+              width: theme.layout.compactTouchTarget,
+              height: theme.layout.compactTouchTarget,
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: theme.radius.full,
+              backgroundColor: theme.colors.glassGlow,
+              boxShadow: [
+                { ...theme.elevation.glass, color: theme.colors.glassShadow },
+                {
+                  ...theme.elevation.raisedActionHighlight,
+                  color: theme.colors.glassInset,
+                },
+              ],
+              opacity: pressed ? theme.motion.pressOpacity : 1,
+            })}
+          >
+            <GlassBackdrop borderRadius={theme.radius.full} />
+            <AppIcon
+              name="sparkles"
+              variant="light"
+              size={theme.layout.iconMedium}
+              color={theme.colors.primaryText}
+            />
+          </Pressable>
+        ) : reorderAtEnd ? (
           reorderLink
         ) : showWeather ? (
           <Pressable

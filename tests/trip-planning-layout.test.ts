@@ -90,6 +90,10 @@ type Row =
 type ListProps = {
   data: Row[];
   renderItem: (input: { item: Row }) => ReactNode;
+  getItemLayout: (
+    data: unknown,
+    index: number,
+  ) => { length: number; offset: number; index: number };
 };
 type Props = { children?: ReactNode; onPress?: () => void };
 function texts(node: ReactNode): string[] {
@@ -150,4 +154,31 @@ test("actual date items show day and abbreviated weekday/date; plus appends rath
   add.props.onPress?.();
   assert.equal(added, 1);
   assert.equal(selected, "2026-10-24");
+  const live = TripPlanningDaySelector({
+    trip: {
+      id: "live",
+      destination: "Đà Lạt",
+      status: "planned",
+      days: [{ date: "2026-10-24", stops: [] }],
+    },
+    selectedDate: "2026-10-24",
+    backlog: false,
+    backlogCount: 0,
+    addDayDisabled: false,
+    onSelect: () => {},
+  });
+  assert.ok(isValidElement<ListProps>(live));
+  assert.equal(
+    live.props.data.some((item) => item.kind === "add"),
+    false,
+  );
+  assert.equal(live.props.data.at(-1)?.kind, "backlog");
+  assert.equal(
+    live.props.getItemLayout(null, live.props.data.length - 1).length,
+    tokens.layout.tripPlanningDateTabWidth,
+  );
+  assert.equal(
+    node.props.getItemLayout(null, node.props.data.length - 1).length,
+    tokens.layout.touchTarget,
+  );
 });

@@ -48,7 +48,8 @@ test("actual action bar exposes mode-specific CTAs and invokes the correct actio
     } satisfies Trip,
     canOptimize: true,
     onOptimize: () => invoked.push("optimize"),
-    onCapture: () => invoked.push("capture"),
+    onVisited: () => invoked.push("visited"),
+    onDirections: () => invoked.push("expandMap"),
     onJournal: () => invoked.push("journal"),
     onInfo: () => invoked.push("info"),
   };
@@ -62,12 +63,28 @@ test("actual action bar exposes mode-specific CTAs and invokes the correct actio
     TripDetailsActions({ ...props, mode: "planning", canOptimize: false }),
     null,
   );
-  const live = buttons(TripDetailsActions({ ...props, mode: "live" }));
-  assert.deepEqual(
-    live.map((button) => button.children),
-    ["Chụp khoảnh khắc"],
+  const live = buttons(
+    TripDetailsActions({
+      ...props,
+      mode: "live",
+      nextStop: {
+        id: "square",
+        time: "11:00",
+        name: { vi: "Lâm Viên", en: "Lam Vien" },
+        kind: { vi: "Quảng trường", en: "Square" },
+      },
+    }),
   );
+  assert.equal(live.length, 2);
+  assert.equal(live[0].children, "Chỉ đường");
   live[0].onPress?.();
+  assert.equal(live[1].children, "Đã ghé");
+  live[1].onPress?.();
+  const completed = buttons(TripDetailsActions({ ...props, mode: "live" }));
+  assert.deepEqual(
+    completed.map((button) => button.children),
+    ["Xem kỷ niệm"],
+  );
   const recap = buttons(TripDetailsActions({ ...props, mode: "recap" }));
   assert.deepEqual(
     recap.map((button) => button.children),
@@ -81,5 +98,5 @@ test("actual action bar exposes mode-specific CTAs and invokes the correct actio
     cancelled.map((button) => button.children),
     ["Thông tin chuyến đi"],
   );
-  assert.deepEqual(invoked, ["optimize", "capture", "journal"]);
+  assert.deepEqual(invoked, ["optimize", "expandMap", "visited", "journal"]);
 });

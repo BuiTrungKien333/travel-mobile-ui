@@ -59,6 +59,14 @@ test("departure picker opens empty or malformed values at a valid default", () =
 
 test("details route rejects arrays, invalid dates and malformed identifiers", () => {
   assert.equal(
+    tripRouteSchema.safeParse({
+      tripId: "dalat",
+      day: "2026-10-21",
+      map: "expanded",
+    }).success,
+    true,
+  );
+  assert.equal(
     tripRouteSchema.safeParse({ tripId: "draft-1", day: "2026-10-24" }).success,
     true,
   );
@@ -68,6 +76,8 @@ test("details route rejects arrays, invalid dates and malformed identifiers", ()
     { tripId: "" },
     { tripId: "dalat", day: "2026-02-30" },
     { tripId: "dalat", day: ["2026-10-24"] },
+    { tripId: "dalat", map: ["expanded"] },
+    { tripId: "dalat", map: "invalid" },
   ])
     assert.equal(tripRouteSchema.safeParse(value).success, false);
 });

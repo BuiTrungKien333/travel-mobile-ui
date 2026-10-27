@@ -1,6 +1,5 @@
 import { Image } from "expo-image";
-import { useState } from "react";
-import { Linking, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { AppButton } from "@/components/ui/app-button";
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
@@ -8,22 +7,19 @@ import { useAppTheme } from "@/hooks/use-app-theme";
 import { captureSamples } from "../data/ongoing-preview";
 import { useOngoingCopy } from "../i18n/ongoing-copy";
 import type { TripStop } from "../types/home-types";
-import type { getDayProgress } from "../utils/day-progress";
-import { directionsUrl } from "../utils/map-links";
-import { homeStyles, TextAction } from "./home-primitives";
-import { ItineraryStopList } from "./itinerary-stop-list";
+import { homeStyles } from "./home-primitives";
 import { JourneyCard } from "./journey-card";
 
 export function NextStopCard({
   stop,
-  destination,
+  onDirections,
   hasStops,
   onVisited,
   onJournal,
   onPlan,
 }: {
   stop?: TripStop;
-  destination: string;
+  onDirections: () => void;
   hasStops: boolean;
   onVisited: () => void;
   onJournal: () => void;
@@ -31,21 +27,7 @@ export function NextStopCard({
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useOngoingCopy();
-  const [opening, setOpening] = useState(false);
-  const [error, setError] = useState(false);
   const photo = captureSamples.find((sample) => sample.id === stop?.id)?.photo;
-  async function handleDirections() {
-    if (!stop || opening) return;
-    setOpening(true);
-    setError(false);
-    try {
-      await Linking.openURL(directionsUrl(stop.name.vi, destination));
-    } catch {
-      setError(true);
-    } finally {
-      setOpening(false);
-    }
-  }
   if (!stop)
     return (
       <JourneyCard>
@@ -183,9 +165,7 @@ export function NextStopCard({
             styles.actionColumn,
             { flexGrow: 60, paddingHorizontal: theme.spacing.sm },
           ]}
-          loading={opening}
-          onPress={handleDirections}
-          accessibilityHint={copy.directionsHint}
+          onPress={onDirections}
           leadingIcon={
             <AppIcon
               name="navigation"
@@ -213,77 +193,6 @@ export function NextStopCard({
         >
           {copy.visited}
         </AppButton>
-      </View>
-      {error ? (
-        <AppText accessibilityRole="alert" variant="caption" tone="error">
-          {copy.directionsError}
-        </AppText>
-      ) : null}
-    </JourneyCard>
-  );
-}
-
-export function TodayTimeline({
-  progress,
-  onToggle,
-  onFullDay,
-}: {
-  progress: ReturnType<typeof getDayProgress>;
-  onToggle: (id: string, visited: boolean) => void;
-  onFullDay: () => void;
-}) {
-  const theme = useAppTheme();
-  const { copy, locale } = useOngoingCopy();
-  const [expanded, setExpanded] = useState(false);
-  const visible = expanded
-    ? progress.ordered
-    : progress.ordered.filter(
-        (stop) =>
-          stop.id === progress.visitedStops.at(-1)?.id ||
-          progress.remainingStops
-            .slice(0, 2)
-            .some((item) => item.id === stop.id),
-      );
-  const visitedIds = new Set(progress.visitedStops.map((stop) => stop.id));
-  return (
-    <JourneyCard>
-      <View style={[homeStyles.row, { gap: theme.spacing.sm }]}>
-        <AppText
-          accessibilityRole="header"
-          variant="label"
-          style={homeStyles.grow}
-        >
-          {copy.itinerary}
-        </AppText>
-        <AppText
-          variant="caption"
-          tone="primary"
-          accessibilityLiveRegion="polite"
-        >
-          {progress.visitedStops.length}/{progress.ordered.length}{" "}
-          {copy.visited.toLocaleLowerCase(locale)}
-        </AppText>
-      </View>
-      <ItineraryStopList
-        stops={visible.map((stop) => ({
-          ...stop,
-          image: captureSamples.find((sample) => sample.id === stop.id)?.photo,
-        }))}
-        live={{ visitedIds, nextStopId: progress.nextStop?.id, onToggle }}
-      />
-      <View
-        style={[
-          homeStyles.row,
-          { flexWrap: "wrap", justifyContent: "space-between" },
-        ]}
-      >
-        {visible.length < progress.ordered.length || expanded ? (
-          <TextAction
-            label={expanded ? copy.hideVisited : copy.showVisited}
-            onPress={() => setExpanded(!expanded)}
-          />
-        ) : null}
-        <TextAction label={copy.fullDay} onPress={onFullDay} />
       </View>
     </JourneyCard>
   );

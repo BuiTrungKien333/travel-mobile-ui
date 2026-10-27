@@ -74,6 +74,8 @@ const symbols = {
     web: "chevron_right",
   },
   plus: { ios: "plus", android: "add", web: "add" },
+  minus: { ios: "minus", android: "remove", web: "remove" },
+  tick: { ios: "checkmark", android: "check", web: "check" },
   close: { ios: "xmark", android: "close", web: "close" },
   back: { ios: "chevron.left", android: "arrow_back", web: "arrow_back" },
   share: { ios: "square.and.arrow.up", android: "share", web: "share" },

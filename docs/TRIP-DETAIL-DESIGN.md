@@ -1,4 +1,33 @@
+## Live: timeline làm trọng tâm · 27/10/2026
+
+- Bỏ Hero điểm đến tiếp theo và icon thời tiết trong màn chi tiết Live.
+- Bên phải thống kê ngày có nút icon sparkles mở lại `TripOptimizationSheet` đang dùng ở Planning. Chỉ hiển thị khi ngày đang xem có ít nhất 2 điểm đã xếp lịch; xem trước, kéo chỉnh và áp dụng dùng cùng luồng hiện có.
+- Chỉ đường mở rộng bản đồ nội bộ đến cùng mức kéo xuống (khoảng 80%), dùng chung hiệu ứng spring và khóa tự thu gọn trong lúc chuyển động. Nút trên Home mở chi tiết ngày hôm nay với `map=expanded`; nút trong chi tiết cuộn về bản đồ, nhấn mạnh điểm tiếp theo và mở rộng. Khoảng đệm đáy 24px cộng safe area.
+- Thanh đáy dùng Chỉ đường / Đã ghé theo tỷ lệ 65/35, padding ngang gọn, cùng phong cách nút trên Home. Chỉ áp dụng cho điểm chưa ghé tiếp theo của hôm nay; đánh dấu xong tự chuyển sang điểm tiếp theo. Khi không có điểm phù hợp hoặc xem ngày khác, hiển thị hành động xem kỷ niệm.
+- Timeline giữ thao tác đánh dấu trên nốt, ảnh và trục nối. Điểm tiếp theo có viền teal nhấn mạnh và nhãn ngay hàng giờ; điểm đã ghé có dấu tích; các điểm sắp tới dùng nốt viền nhẹ. Không còn nút chụp ở thanh đáy màn chi tiết.
+
 # Đề xuất thiết kế · Chi tiết chuyến đi
+
+## Live: check-in gọn, dùng chung Hero, ẩn xuất phát thiếu dữ liệu · 27/10/2026
+
+- Bỏ nút Đánh dấu/Bỏ đánh dấu đã ghé rời dưới từng thẻ. Nốt số trở thành checkbox độc lập, vùng chạm 44px và vòng tròn 24px; ghé rồi hiện dấu check, có thể bỏ đánh dấu. Không lồng nút vào thẻ mở chi tiết; trục nối và nốt S có cùng lề khi tương tác check-in.
+- Điểm tiếp theo dùng lại `NextStopCard` của Home, gồm ảnh, giờ, vé/đóng cửa nếu có, chỉ đường và Đã ghé. Trạng thái dùng chung visited store; Hero chuyển ngay sang điểm chưa ghé tiếp theo. Timeline bỏ nhãn Điểm tiếp theo lặp lại, giữ thẻ với viền teal đậm và trạng thái selected.
+- `getTripStartInfo` chuẩn hóa nơi xuất phát/nơi lưu trú và giờ đã lưu. Live thiếu cả hai địa chỉ sẽ ẩn S trong timeline lẫn sơ đồ, không hiển thị đoạn nối chưa tính trước điểm đầu. Nếu có địa chỉ mà chưa có giờ thì chỉ hiện địa chỉ; Planning vẫn có lời nhắc bổ sung như cũ. Không lấy vị trí giả hoặc tự gán giờ.
+- TypeScript/no-unused và **143/143 tests** đạt. Thêm kiểm tra checkbox đánh dấu/bỏ đánh dấu không mở chi tiết, không còn CTA/nhãn next lặp, origin trống/nơi lưu trú/giờ thiếu và số thứ tự trên sơ đồ khi bỏ S. Chưa QA trực tiếp trên thiết bị thật; không lint/dependency mới.
+
+## Sửa bản đồ bật lại sau khi kéo mở · 27/10/2026
+
+- Thanh gạt chặn onPress phát sinh sau khi Pan kết thúc, tránh đảo lại trạng thái vừa mở. Nút mở/thu lấy trạng thái đích của animation thay vì state React có thể chưa cập nhật.
+- Shared resize lock trên UI thread chặn auto-collapse khi đang kéo/spring và trong khoảng ổn định layout sau đó; scroll event do thay đổi chiều cao không tự đóng bản đồ. Sau khi nhả lock, scroll cùng offset không đóng; cuộn tiến tiếp vẫn thu gọn bình thường.
+- Chỉ reset về 35% khi thực sự mở lại từ trạng thái ẩn do cuộn, không reset mở rộng mỗi khi kích thước collapsed được đo lại. Dọn lock khi đổi ngày/unmount; animation hiển thị vẫn tôn trọng Reduce Motion.
+- TypeScript/no-unused, **140/140 tests** và Android/Hermes export đạt. Thêm hồi quy release tap sau drag, hủy drag và auto-collapse trong/sau resize. Chưa xác nhận cử chỉ trên thiết bị thật; không lint/dependency mới.
+
+## Đồng bộ phần đầu Planning / Live · 27/10/2026
+
+- Live dùng cùng bố cục map-first với Planning: header Back/menu gọn trong vùng bản đồ, safe area + khoảng đệm hiện có; bản đồ có mức 35%/80%, thanh gạt, nút định vị preview/mở rộng. Bỏ header tên/ngày/badge lớn và dải ngày dạng card cũ tại phần đầu Live.
+- Dải ngày nằm dưới bản đồ, hai dòng, không nền/bo từng mục, gạch chân teal cho ngày chọn. Khi cuộn, dùng cùng header tên chuyến/sửa/mở lại bản đồ và dải ngày sticky; marker trên sơ đồ cuộn đến timeline đúng vị trí, không bị thanh ghim che. Live không thêm nút + ngày của Planning.
+- Giữ nguyên TripStopRow, trạng thái đã ghé/điểm tiếp theo, thời tiết, chỉ đường, check-in và CTA camera của Live. Tiếp tục một FlatList dọc, không lồng thêm ScrollView/timeline khác. Đánh dấu điểm tiếp theo trên sơ đồ chỉ cho ngày hôm nay; Recap không đổi bố cục.
+- TypeScript/no-unused và bộ **137 tests** đạt; mở rộng kiểm tra dải ngày Live không có nút thêm và kích thước item backlog. Chưa QA trực quan/thiết bị thật cho lượt bố cục này; công cụ trình duyệt đang lỗi khởi tạo. Không dependency mới, không lint.
 
 ## Xem trước kết quả tối ưu · 27/10/2026
 
@@ -7,7 +36,7 @@
 - Modal cao 70% màn hình, giới hạn theo safe area trên. `TripDetailsSheet` nhận footer ngoài ScrollView; nút Áp dụng cố định ở đáy, có đệm safe area dưới. Nội dung cuộn độc lập, nút vẫn disabled nếu thứ tự không đổi/không có gợi ý.
 - `TripOptimizationPreview` tách khỏi panels; `getOptimizationComparison` tính tổng trước/sau từ các chặng mẫu đúng phương tiện; giữ dấu tăng nếu gợi ý dài hơn, thể hiện không đổi nếu bằng nhau. Không bịa tổng/tiết kiệm khi thiếu chặng xuất phát, quay về hoặc bất kỳ chặng nối nào.
 - Danh sách gợi ý đặt trước, đánh số, tên địa điểm, giờ theo vị trí sẽ lưu, biểu tượng ghim. Áp dụng vẫn dùng mutation reorder/mergeScheduledOrder cũ, giữ khung giờ, điểm ghim và địa điểm chưa xếp lịch; không đổi backend/thuật toán tối ưu.
-- Phần gợi ý cho kéo trực tiếp trên số thứ tự; không có nút lên/xuống. Danh sách có khung chung bo 10px, nền mint và viền teal nhạt để phân biệt card hiện tại màu trắng. Từng item không có viền/nền riêng, chỉ có line nhẹ giữa các hàng.
+- Phần gợi ý cho kéo trực tiếp trên số thứ tự; không có nút lên/xuống. Danh sách có khung chung bo 10px, nền trong suốt và viền teal nhạt để phân biệt card hiện tại màu trắng. Từng item không có viền/nền riêng, chỉ có line nhẹ giữa các hàng.
 - `TripOptimizationSheet` sở hữu thứ tự nháp theo phiên mở. Kéo rồi thả cập nhật số liệu so sánh, không thay đổi lịch trình hiện tại cho đến Áp dụng; đóng/mở lại bỏ nháp. Danh sách tái sử dụng `TripReorderList`, hook kéo và geometry đo thực tế của timeline; ghim là ranh giới, giữ khung giờ. Khóa cuộn và CTA khi đang kéo, hỗ trợ bàn phím và thao tác trợ năng. Chưa có tự cuộn sát mép khi kéo.
 - Kiểm tra sau bổ sung kéo thả: TypeScript/no-unused, **137/137 tests** và Android/Hermes export đạt. Tests bổ sung kiểm tra nháp chỉ lưu khi Áp dụng, hủy phiên, khóa khi kéo, thứ tự không đổi/không hỗ trợ. Chưa QA kéo thực tế trên điện thoại; công cụ trình duyệt hiện lỗi khởi tạo. Không lint/dependency mới.
 - TypeScript/no-unused và **133/133 tests** đạt. Có kiểm tra số liệu/rounding, phương tiện, tăng/không đổi, thiếu chặng và thứ tự không hợp lệ. Chưa QA trực quan lượt này do công cụ trình duyệt lỗi khởi tạo; không lint hoặc dependency mới.

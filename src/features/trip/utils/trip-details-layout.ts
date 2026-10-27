@@ -26,6 +26,18 @@ export function scheduledStops(day?: TripDay): TripStop[] {
   return day?.stops.filter((stop) => clockPattern.test(stop.time)) ?? [];
 }
 
+export function getTripStartInfo(trip: Trip, day?: TripDay, live = false) {
+  if (!day) return null;
+  const location =
+    day.startLocation?.trim() || trip.accommodation?.trim() || "";
+  if (live && !location) return null;
+  const time =
+    day.startTime && clockPattern.test(day.startTime)
+      ? day.startTime
+      : undefined;
+  return { location, time };
+}
+
 export function tripBacklog(trip: Trip) {
   return [
     ...(trip.unscheduledStops ?? []).map((stop) => ({

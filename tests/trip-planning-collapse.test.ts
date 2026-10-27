@@ -13,6 +13,13 @@ function harness(enabled = true, reduceMotion = false) {
   const scrolls: { offset: number; animated: boolean }[] = [];
   const effects: (() => void)[] = [];
   let handlers: ScrollHandlers | undefined;
+  let resizeValue = 0;
+  const resizeLock = {
+    get: () => resizeValue,
+    set: (value: number) => {
+      resizeValue = value;
+    },
+  };
   const load = tripModuleLoader({
     react: {
       useState: (initial: boolean) => [
@@ -59,6 +66,7 @@ function harness(enabled = true, reduceMotion = false) {
       enabled: boolean;
       selectionKey: string;
       mapHeight: number;
+      resizeLock: typeof resizeLock;
       list: {
         current: { scrollToOffset: (value: (typeof scrolls)[number]) => void };
       };
@@ -68,6 +76,7 @@ function harness(enabled = true, reduceMotion = false) {
     enabled,
     selectionKey: "day-1",
     mapHeight: 256,
+    resizeLock,
     list: { current: { scrollToOffset: (value) => scrolls.push(value) } },
   });
   effects.forEach((effect) => effect());
@@ -78,6 +87,7 @@ function harness(enabled = true, reduceMotion = false) {
     changes,
     scrolls,
     handlers,
+    resizeLock,
     event: (y: number) => ({ contentOffset: { y } }),
   };
 }
@@ -118,7 +128,22 @@ test("jumping to a numbered stop doesn't snap backwards to the map boundary", ()
   assert.equal(scrolls.length, 0);
 });
 
-test("the explicit map button respects reduced motion; other trip modes don't auto-collapse", () => {
+test("resizing the map cannot trigger auto-collapse; scrolling works again after it settles", () => {
+  const h = harness();
+  h.resizeLock.set(1);
+  h.handlers.onScroll(h.event(64));
+  h.handlers.onScroll(h.event(180));
+  assert.equal(h.changes.length, 0);
+  assert.equal(h.scrolls.length, 0);
+  h.resizeLock.set(0);
+  h.handlers.onScroll(h.event(180));
+  assert.equal(h.changes.length, 0);
+  h.handlers.onBeginDrag(h.event(180));
+  h.handlers.onScroll(h.event(240));
+  assert.deepEqual(h.changes, [true]);
+});
+
+test("the explicit map button respects reduced motion; disabled layouts don't auto-collapse", () => {
   const reduced = harness(true, true);
   reduced.handlers.onScroll(reduced.event(64));
   reduced.motion.show();

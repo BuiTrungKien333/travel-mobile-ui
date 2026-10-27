@@ -7,4 +7,5 @@ export const tripRouteSchema = z.object({
     .max(120)
     .regex(/^[\w-]+$/),
   day: z.string().refine(isCalendarDate).optional(),
+  map: z.literal("expanded").optional(),
 });

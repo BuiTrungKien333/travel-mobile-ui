@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
-import Animated from "react-native-reanimated";
+import Animated, { useSharedValue } from "react-native-reanimated";
 import { ScreenSafeArea } from "@/components/common/screen-safe-area";
 import { AppButton } from "@/components/ui/app-button";
 import { AppText } from "@/components/ui/app-text";
@@ -40,7 +40,6 @@ import {
   TripTimelineEmpty,
   TripTimelineTail,
 } from "../components/trip-timeline-states";
-import { TripDirectionsButton } from "../components/trip-directions-button";
 import { useTripTimelineScroll } from "../hooks/use-trip-timeline-scroll";
 import { useTripTimelineDrag } from "../hooks/use-trip-timeline-drag";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
@@ -51,6 +50,7 @@ import type {
 } from "../types/trip-details-types";
 import {
   getTripDetailsMode,
+  getTripStartInfo,
   scheduledStops,
   tripBacklog,
   mergeScheduledOrder,
@@ -79,9 +79,11 @@ function backToTrips() {
 export function TripDetailsScreen({
   tripId,
   selectedDate,
+  expandMap = false,
 }: {
   tripId?: string;
   selectedDate?: string;
+  expandMap?: boolean;
 }) {
   const trip = useTripPreview((state) =>
     state.trips.find((item) => item.id === tripId),
@@ -111,20 +113,27 @@ export function TripDetailsScreen({
       </ScreenSafeArea>
     );
   return (
-    <TripDetailsContent key={trip.id} trip={trip} selectedDate={selectedDate} />
+    <TripDetailsContent
+      key={trip.id}
+      trip={trip}
+      selectedDate={selectedDate}
+      expandMap={expandMap}
+    />
   );
 }
 
 function TripDetailsContent({
   trip,
   selectedDate,
+  expandMap,
 }: {
   trip: Trip;
   selectedDate?: string;
+  expandMap: boolean;
 }) {
   const theme = useAppTheme();
   const insets = useScreenInsets();
-  const { copy, locale } = useTripDetailsCopy();
+  const { copy } = useTripDetailsCopy();
   const {
     today,
     visited,
@@ -152,6 +161,8 @@ function TripDetailsContent({
     id: string;
   } | null>(null);
   const [availableHeight, setAvailableHeight] = useState(0);
+  const mapResizeLock = useSharedValue(0);
+  const [mapExpandRequest, setMapExpandRequest] = useState(expandMap ? 1 : 0);
   const [planningMapGeometry, setPlanningMapGeometry] =
     useState<PlanningMapGeometry>({
       height: theme.layout.tripMapMinimumHeight,
@@ -166,12 +177,16 @@ function TripDetailsContent({
     message: string;
   } | null>(null);
   const mode = getTripDetailsMode(trip, today);
+  const mapFirstLayout = mode === "planning" || mode === "live";
   const canEdit = mode === "planning" || mode === "live" || editHistory;
   const defaultDay =
     trip.days.find((day) => day.date === today) ?? trip.days[0];
   const day =
     trip.days.find((item) => item.date === selectedDate) ?? defaultDay;
+  const isLiveToday = mode === "live" && day?.date === today;
+  const startInfo = getTripStartInfo(trip, day, mode === "live");
   const timedStops = scheduledStops(day);
+  const hasStartNode = !!startInfo && (timedStops.length > 0 || canEdit);
   const canOptimize = timedStops.length > 1 && !backlog;
   const timedDay = day ? { ...day, stops: timedStops } : undefined;
   const unscheduled = tripBacklog(trip);
@@ -190,17 +205,13 @@ function TripDetailsContent({
   });
   const { list, jump, onScrollToIndexFailed } = useTripTimelineScroll<Row>(
     selectionKey,
-    mode === "planning"
+    mapFirstLayout
       ? planningMapGeometry.headerHeight + selectorHeight + theme.spacing.lg
       : 0,
   );
   const progress = getDayProgress(
     timedStops,
     visited[`${trip.id}:${day?.date}`] ?? [],
-  );
-  const todayProgress = getDayProgress(
-    scheduledStops(trip.days.find((item) => item.date === today)),
-    visited[`${trip.id}:${today}`] ?? [],
   );
   const tripMemories = memories.filter((memory) => memory.tripId === trip.id);
   const dayMemories = day
@@ -217,16 +228,17 @@ function TripDetailsContent({
     !!day &&
     (mode === "planning" || mode === "live" || editHistory);
   const planningScroll = usePlanningMapCollapse<Row>({
-    enabled: mode === "planning" && showMap,
+    enabled: mapFirstLayout && showMap,
     selectionKey,
     mapHeight: planningMapGeometry.height,
     list,
+    resizeLock: mapResizeLock,
   });
   const rows: TimelineRow[] = backlog
     ? unscheduled.map((entry) => ({ ...entry, kind: "backlog" }))
     : day
       ? [
-          ...(timedStops.length || canEdit
+          ...(hasStartNode
             ? [{ kind: "start", key: "start" } satisfies TimelineRow]
             : []),
           ...timedStops.map(
@@ -240,14 +252,13 @@ function TripDetailsContent({
           ),
         ]
       : [];
-  const listRows: Row[] =
-    mode === "planning"
-      ? [
-          { kind: "planning-days", key: "planning-days" },
-          { kind: "summary", key: "summary" },
-          ...rows,
-        ]
-      : rows;
+  const listRows: Row[] = mapFirstLayout
+    ? [
+        { kind: "planning-days", key: "planning-days" },
+        { kind: "summary", key: "summary" },
+        ...rows,
+      ]
+    : rows;
 
   function commit(mutation: TripMutation) {
     const snapshot = {
@@ -283,16 +294,15 @@ function TripDetailsContent({
   function openJournal() {
     openPanel({ kind: "journal", tripId: trip.id });
   }
-  function capture() {
-    openPanel({
-      kind: "camera",
-      tripId: trip.id,
-      date: today,
-      stopId: todayProgress.nextStop?.id,
-    });
-  }
   function addPlace() {
-    setSheet(backlog ? { kind: "place-picker", date: null } : { kind: "add" });
+    openPlacePicker(backlog ? null : (day?.date ?? null));
+  }
+  function openPlacePicker(date: string | null) {
+    setUndo(null);
+    router.push({
+      pathname: "/trip/add-places",
+      params: { tripId: trip.id, ...(date ? { day: date } : {}) },
+    });
   }
   function selectDate(date: string | null) {
     if (date === null ? !backlog : backlog || date !== day?.date) setUndo(null);
@@ -319,7 +329,7 @@ function TripDetailsContent({
     <TripDetailsHeader
       trip={trip}
       mode={mode}
-      hideTripInfo={mode === "planning"}
+      hideTripInfo={mapFirstLayout}
       onBack={backToTrips}
       onMenu={() => setSheet({ kind: "menu" })}
     />
@@ -340,6 +350,10 @@ function TripDetailsContent({
           trip={trip}
           day={day}
           canEdit={canEdit}
+          live={mode === "live"}
+          markerWidth={
+            isLiveToday ? theme.layout.compactTouchTarget : undefined
+          }
           onPress={() => setSheet({ kind: "day" })}
         />
       );
@@ -349,7 +363,7 @@ function TripDetailsContent({
         previous={item.previous}
         number={item.number}
         last={item.number === timedStops.length}
-        fromStart={item.number === 1}
+        fromStart={item.number === 1 && hasStartNode}
         highlighted={
           highlight?.date === day?.date && highlight?.id === item.stop.id
         }
@@ -408,27 +422,6 @@ function TripDetailsContent({
           {mode === "recap" && !editHistory ? (
             <TripRecapContent memories={dayMemories} onJournal={openJournal} />
           ) : null}
-          {mode === "live" && day?.date === today ? (
-            <View
-              style={{ gap: theme.spacing.sm, paddingBottom: theme.spacing.lg }}
-            >
-              <AppText variant="caption" tone="muted">
-                {progress.nextStop ? copy.next : copy.allVisited}
-              </AppText>
-              {progress.nextStop ? (
-                <>
-                  <AppText variant="label">
-                    {progress.nextStop.time} · {progress.nextStop.name[locale]}
-                  </AppText>
-                  <TripDirectionsButton
-                    stop={progress.nextStop}
-                    destination={trip.destination}
-                    primary
-                  />
-                </>
-              ) : null}
-            </View>
-          ) : null}
           {mode === "recap" ? (
             <AppText
               variant="label"
@@ -444,7 +437,8 @@ function TripDetailsContent({
               today={today}
               canEdit={canEdit && (mode === "planning" || editHistory)}
               editHistory={editHistory}
-              showWeather={mode === "live"}
+              showWeather={false}
+              showOptimize={mode === "live" && canOptimize}
               reorderAtEnd={mode === "planning"}
               onSheetChange={setSheet}
             />
@@ -465,12 +459,21 @@ function TripDetailsContent({
       viewportHeight={availableHeight}
       selectorHeight={selectorHeight}
       stops={timedStops}
-      selectedId={highlight?.date === day?.date ? highlight.id : undefined}
-      startLabel={day?.startLocation || trip.accommodation || copy.chooseStart}
+      selectedId={
+        highlight?.date === day?.date
+          ? highlight.id
+          : mode === "live" && day?.date === today
+            ? progress.nextStop?.id
+            : undefined
+      }
+      startLabel={startInfo?.location || copy.chooseStart}
+      showStart={mode !== "live" || !!startInfo}
       onSelect={selectStop}
       onStart={() => jump(2)}
       onGeometryChange={setPlanningMapGeometry}
+      resizeLock={mapResizeLock}
       collapsedByScroll={planningScroll.hidden}
+      expandRequest={mapExpandRequest}
     />
   ) : (
     <View style={{ paddingHorizontal: theme.spacing.lg }}>{header}</View>
@@ -507,7 +510,7 @@ function TripDetailsContent({
               backlog={backlog}
               backlogCount={unscheduled.length}
               onSelect={selectDate}
-              onAddDay={addDay}
+              onAddDay={mode === "planning" ? addDay : undefined}
               addDayDisabled={tripDuration(trip) >= tripFormLimits.days}
             />
           </View>
@@ -534,7 +537,7 @@ function TripDetailsContent({
     return (
       <View
         style={{
-          paddingHorizontal: mode === "planning" ? theme.spacing.lg : 0,
+          paddingHorizontal: mapFirstLayout ? theme.spacing.lg : 0,
         }}
       >
         {renderTimelineRow({ item })}
@@ -553,7 +556,7 @@ function TripDetailsContent({
           }
           style={styles.fill}
         >
-          {mode !== "planning" ? (
+          {!mapFirstLayout ? (
             <View
               style={[styles.frame, { paddingHorizontal: theme.spacing.lg }]}
             >
@@ -573,7 +576,7 @@ function TripDetailsContent({
               setAvailableHeight(event.nativeEvent.layout.height)
             }
           >
-            {mode !== "planning" && showMap ? (
+            {!mapFirstLayout && showMap ? (
               <View
                 style={{
                   paddingHorizontal: theme.spacing.lg,
@@ -629,22 +632,20 @@ function TripDetailsContent({
                         : 0,
                 })}
                 ListHeaderComponent={
-                  mode === "planning" ? planningHeader : listHeader
+                  mapFirstLayout ? planningHeader : listHeader
                 }
-                stickyHeaderIndices={mode === "planning" ? [1] : undefined}
-                onScroll={
-                  mode === "planning" ? planningScroll.onScroll : undefined
-                }
+                stickyHeaderIndices={mapFirstLayout ? [1] : undefined}
+                onScroll={mapFirstLayout ? planningScroll.onScroll : undefined}
                 scrollEventThrottle={16}
                 showsVerticalScrollIndicator={false}
                 style={styles.fill}
                 contentContainerStyle={{
-                  padding: mode === "planning" ? 0 : theme.spacing.lg,
+                  padding: mapFirstLayout ? 0 : theme.spacing.lg,
                   paddingBottom:
                     theme.spacing.xxl +
                     (mode === "planning" && !canOptimize ? insets.bottom : 0),
                   minHeight:
-                    mode === "planning" && showMap
+                    mapFirstLayout && showMap
                       ? availableHeight + planningMapGeometry.height
                       : undefined,
                 }}
@@ -661,8 +662,9 @@ function TripDetailsContent({
                   !backlog ? (
                     <View
                       style={{
-                        paddingHorizontal:
-                          mode === "planning" ? theme.spacing.lg : 0,
+                        paddingHorizontal: mapFirstLayout
+                          ? theme.spacing.lg
+                          : 0,
                       }}
                     >
                       <TripTimelineTail
@@ -672,10 +674,7 @@ function TripDetailsContent({
                         empty={!timedStops.length}
                         backlogCount={unscheduled.length}
                         onBacklog={() => selectDate(null)}
-                        onAdd={() =>
-                          day &&
-                          setSheet({ kind: "place-picker", date: day.date })
-                        }
+                        onAdd={() => day && openPlacePicker(day.date)}
                       />
                     </View>
                   ) : null
@@ -701,7 +700,17 @@ function TripDetailsContent({
             mode={mode}
             canOptimize={canOptimize}
             onOptimize={() => setSheet({ kind: "optimize" })}
-            onCapture={capture}
+            nextStop={isLiveToday && !backlog ? progress.nextStop : undefined}
+            onDirections={() => {
+              if (progress.nextStop && day)
+                setHighlight({ date: day.date, id: progress.nextStop.id });
+              planningScroll.show();
+              setMapExpandRequest((request) => request + 1);
+            }}
+            onVisited={() => {
+              if (isLiveToday && !backlog && progress.nextStop)
+                setVisited(trip.id, today, progress.nextStop.id, true);
+            }}
             onJournal={openJournal}
             onInfo={() => setSheet({ kind: "info" })}
           />

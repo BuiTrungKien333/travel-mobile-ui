@@ -16,6 +16,7 @@ export function TripMapPreview({
   onSelect,
   onStart,
   fitContainer = false,
+  showStart = true,
 }: {
   stops: TripStop[];
   height?: number;
@@ -24,16 +25,20 @@ export function TripMapPreview({
   onSelect: (stop: TripStop) => void;
   onStart: () => void;
   fitContainer?: boolean;
+  showStart?: boolean;
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
   const [width, setWidth] = useState(0);
   const graphWidth = Math.max(
     width,
-    (stops.length + 1) * theme.layout.tripMapNodeSpacing,
+    Math.max(1, stops.length + (showStart ? 1 : 0)) *
+      theme.layout.tripMapNodeSpacing,
   );
   const nodes = [
-    { id: "start", label: "S", name: startLabel, stop: null },
+    ...(showStart
+      ? [{ id: "start", label: "S", name: startLabel, stop: null }]
+      : []),
     ...stops.map((stop, index) => ({
       id: stop.id,
       label: `${index + 1}`,

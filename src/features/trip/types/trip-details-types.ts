@@ -41,11 +41,9 @@ export type TripDetailsSheetState =
         | "info"
         | "day"
         | "transport"
-        | "add"
         | "weather"
         | "reorder"
         | "optimize"
         | "dates";
     }
-  | { kind: "place-picker"; date: string | null }
   | { kind: "stop"; stopId: string; date: string | null };

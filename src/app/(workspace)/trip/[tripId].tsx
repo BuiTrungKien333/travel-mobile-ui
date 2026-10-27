@@ -7,11 +7,13 @@ export default function TripDetailsRoute() {
   const parsed = tripRouteSchema.safeParse({
     tripId: params.tripId,
     day: params.day,
+    map: params.map,
   });
   return (
     <TripDetailsScreen
       tripId={parsed.success ? parsed.data.tripId : undefined}
       selectedDate={parsed.success ? parsed.data.day : undefined}
+      expandMap={parsed.success && parsed.data.map === "expanded"}
     />
   );
 }

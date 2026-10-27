@@ -42,7 +42,7 @@ import {
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 import { DateRangeSheet } from "./date-range-sheet";
 import { DestinationPickerSheet } from "./destination-picker-sheet";
-import { PlacePickerSheet } from "./place-picker-sheet";
+import { PlacePickerScreen } from "../screens/place-picker-screen";
 
 type CreateTripModalProps = {
   visible: boolean;
@@ -196,8 +196,22 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
       visible
       animationType={reduceMotion ? "none" : "slide"}
       statusBarTranslucent
-      onRequestClose={requestClose}
+      onRequestClose={
+        showPlaceSheet ? () => setShowPlaceSheet(false) : requestClose
+      }
     >
+      {showPlaceSheet ? (
+        <PlacePickerScreen
+          destination={destination}
+          initialSelected={selectedStops}
+          onApply={(stops) => {
+            setValue("initialStops", stops, { shouldDirty: true });
+            setNotice("");
+            setShowPlaceSheet(false);
+          }}
+          onClose={() => setShowPlaceSheet(false)}
+        />
+      ) : null}
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={[styles.container, { backgroundColor: theme.colors.background }]}
@@ -616,6 +630,7 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
                   if (!destination.trim()) {
                     setShowDestSheet(true);
                   } else {
+                    Keyboard.dismiss();
                     setShowPlaceSheet(true);
                   }
                 }}
@@ -719,7 +734,9 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
                         hitSlop={8}
                         style={({ pressed }) => [
                           styles.removeStopBtn,
-                          { opacity: pressed ? theme.motion.pressOpacity : 1 },
+                          {
+                            opacity: pressed ? theme.motion.pressOpacity : 1,
+                          },
                         ]}
                       >
                         <AppIcon
@@ -735,7 +752,10 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={copy.addMorePlaces}
-                  onPress={() => setShowPlaceSheet(true)}
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setShowPlaceSheet(true);
+                  }}
                   style={({ pressed }) => [
                     styles.addMoreStopsBtn,
                     {
@@ -1051,17 +1071,6 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
           today={today}
           onApply={handleApplyDateRange}
           onClose={() => setShowDateSheet(false)}
-        />
-
-        <PlacePickerSheet
-          visible={showPlaceSheet}
-          destination={destination}
-          initialSelected={selectedStops}
-          onApply={(stops) => {
-            setValue("initialStops", stops, { shouldDirty: true });
-            setNotice("");
-          }}
-          onClose={() => setShowPlaceSheet(false)}
         />
       </KeyboardAvoidingView>
     </Modal>

@@ -1,4 +1,5 @@
 import { JournalAlbum } from "../components/journal-album";
+import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Image } from "expo-image";
 import { View } from "react-native";
@@ -7,10 +8,7 @@ import { useAppTheme } from "@/hooks/use-app-theme";
 import { CheckInPrompt } from "../components/check-in-prompt";
 import { HomePage } from "../components/home-primitives";
 import { OngoingTripHeader } from "../components/ongoing-trip-header";
-import {
-  NextStopCard,
-  TodayTimeline,
-} from "../components/ongoing-trip-components";
+import { NextStopCard } from "../components/ongoing-trip-components";
 import { useOngoingCopy } from "../i18n/ongoing-copy";
 import { useTripPreview } from "../providers/trip-preview-provider";
 import type { Trip, TripStop } from "../types/home-types";
@@ -95,7 +93,12 @@ export function OngoingHomeScreen({
         <NextStopCard
           key={progress.nextStop?.id ?? "finished"}
           stop={progress.nextStop}
-          destination={trip.destination}
+          onDirections={() =>
+            router.push({
+              pathname: "/trip/[tripId]",
+              params: { tripId: trip.id, day: today, map: "expanded" },
+            })
+          }
           hasStops={stops.length > 0}
           onVisited={() => {
             if (progress.nextStop) handleVisit(progress.nextStop.id, true);
@@ -103,13 +106,6 @@ export function OngoingHomeScreen({
           onJournal={openJournal}
           onPlan={openPlan}
         />
-        {stops.length ? (
-          <TodayTimeline
-            progress={progress}
-            onToggle={handleVisit}
-            onFullDay={openPlan}
-          />
-        ) : null}
         <JournalAlbum
           memories={todayMemories}
           onOpen={openJournal}

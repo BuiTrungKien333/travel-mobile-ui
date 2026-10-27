@@ -23,7 +23,7 @@ export function TripPlanningDaySelector({
   backlog: boolean;
   backlogCount: number;
   onSelect: (date: string | null) => void;
-  onAddDay: () => void;
+  onAddDay?: () => void;
   addDayDisabled: boolean;
 }) {
   const theme = useAppTheme();
@@ -40,7 +40,7 @@ export function TripPlanningDaySelector({
       }),
     ),
     { key: "backlog", kind: "backlog" },
-    { key: "add", kind: "add" },
+    ...(onAddDay ? [{ key: "add", kind: "add" } as const] : []),
   ];
   const current = backlog
     ? trip.days.length
@@ -55,7 +55,7 @@ export function TripPlanningDaySelector({
       style={{ flexGrow: 0 }}
       initialScrollIndex={current}
       getItemLayout={(_, index) => ({
-        length: index === data.length - 1 ? theme.layout.touchTarget : width,
+        length: data[index]?.kind === "add" ? theme.layout.touchTarget : width,
         offset: (width + theme.spacing.sm) * index,
         index,
       })}

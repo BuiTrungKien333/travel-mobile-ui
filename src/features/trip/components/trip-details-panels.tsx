@@ -15,7 +15,6 @@ import type {
 } from "../types/trip-details-types";
 import { getTripTitle, formatTripDates } from "../utils/trip-formatters";
 import { DateRangeSheet } from "./date-range-sheet";
-import { PlacePickerSheet } from "./place-picker-sheet";
 import { TripDetailsSheet } from "./trip-details-sheet";
 import { StopDetailsForm } from "./trip-details-forms";
 import { TripEditForm } from "./trip-edit-form";
@@ -80,13 +79,11 @@ export function TripDetailsPanels({
         info: copy.edit,
         day: copy.daySettings,
         transport: copy.transport,
-        add: copy.add,
         weather: copy.weather,
         reorder: copy.reorder,
         optimize: copy.optimizeTitle,
         stop: copy.stopDetails,
         dates: copy.dates,
-        "place-picker": copy.add,
       }[sheet.kind]
     : "";
   return (
@@ -211,29 +208,6 @@ export function TripDetailsPanels({
               ))}
             </>
           ) : null}
-          {sheet.kind === "add" ? (
-            <>
-              <AppText variant="caption" tone="muted">
-                {copy.addHint}
-              </AppText>
-              {day ? (
-                <AppButton
-                  variant="gradient"
-                  onPress={() =>
-                    setSheet({ kind: "place-picker", date: day.date })
-                  }
-                >
-                  {copy.addToDay}
-                </AppButton>
-              ) : null}
-              <AppButton
-                variant="outline"
-                onPress={() => setSheet({ kind: "place-picker", date: null })}
-              >
-                {copy.saveForLater}
-              </AppButton>
-            </>
-          ) : null}
           {sheet.kind === "stop" && stopInSheet ? (
             <>
               <TripDirectionsButton
@@ -298,11 +272,6 @@ export function TripDetailsPanels({
               {copy.datesHint}
             </AppText>
           ) : null}
-          {sheet.kind === "place-picker" ? (
-            <AppText variant="caption" tone="muted">
-              {copy.addHint}
-            </AppText>
-          ) : null}
         </TripDetailsSheet>
       ) : null}
       {sheet?.kind === "optimize" ? (
@@ -331,20 +300,6 @@ export function TripDetailsPanels({
           onApply={(startDate, endDate) =>
             commit({ kind: "dates", startDate, endDate })
           }
-          onClose={closeSheet}
-        />
-      ) : hostReady && sheet?.kind === "place-picker" ? (
-        <PlacePickerSheet
-          visible
-          destination={trip.destination}
-          initialSelected={[]}
-          excludedIds={(sheet.date === null
-            ? pool
-            : (trip.days.find((item) => item.date === sheet.date)?.stops ?? [])
-          ).map((stop) => stop.id)}
-          onApply={(stops) => {
-            commit({ kind: "add", date: sheet.date, stops });
-          }}
           onClose={closeSheet}
         />
       ) : null}

@@ -1,6 +1,5 @@
 import { Image } from "expo-image";
 import { Pressable, StyleSheet, View } from "react-native";
-import { AppButton } from "@/components/ui/app-button";
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
 import type { TripStop, TravelMode } from "@/features/home/types/home-types";
@@ -69,6 +68,52 @@ export function TripStopRow({
     arrival !== null &&
     before !== null &&
     arrival < before + (previous?.durationMinutes ?? 45) + (leg?.minutes ?? 0);
+  const markerWidth = onVisited
+    ? theme.layout.compactTouchTarget
+    : theme.layout.sampleStopNumberSize;
+  const marker = (
+    <View
+      style={{
+        width: theme.layout.sampleStopNumberSize,
+        height: theme.layout.sampleStopNumberSize,
+        borderRadius: theme.radius.full,
+        borderWidth: 1,
+        borderColor: visited
+          ? theme.colors.success
+          : onVisited && !next
+            ? theme.colors.borderStrong
+            : theme.colors.primaryText,
+        backgroundColor: visited
+          ? theme.colors.success
+          : onVisited && !next
+            ? theme.colors.glassInset
+            : theme.colors.gradientActionStart,
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      {visited ? (
+        <AppIcon
+          name="check"
+          size={theme.layout.iconSmall}
+          color={theme.colors.onGradientAction}
+        />
+      ) : (
+        <AppText
+          variant="caption"
+          style={{
+            color:
+              onVisited && !next
+                ? theme.colors.textSecondary
+                : theme.colors.onGradientAction,
+            fontFamily: theme.typography.fontFamily.semibold,
+          }}
+        >
+          {number}
+        </AppText>
+      )}
+    </View>
+  );
   return (
     <TripStopDragFrame id={stop.id} drag={drag}>
       {previous || fromStart ? (
@@ -80,7 +125,7 @@ export function TripStopRow({
         >
           <View
             style={{
-              width: theme.layout.sampleStopNumberSize,
+              width: markerWidth,
               alignItems: "center",
             }}
           >
@@ -110,34 +155,32 @@ export function TripStopRow({
           style={[
             styles.marker,
             {
-              width: theme.layout.sampleStopNumberSize,
-              paddingTop: theme.spacing.md,
+              width: markerWidth,
+              paddingTop: onVisited ? theme.spacing.xxs : theme.spacing.md,
               alignSelf: "stretch",
             },
           ]}
         >
-          <View
-            style={{
-              width: theme.layout.sampleStopNumberSize,
-              height: theme.layout.sampleStopNumberSize,
-              borderRadius: theme.radius.full,
-              borderWidth: 1,
-              borderColor: theme.colors.gradientActionStart,
-              backgroundColor: theme.colors.gradientActionStart,
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <AppText
-              variant="caption"
-              style={{
-                color: theme.colors.onGradientAction,
-                fontFamily: theme.typography.fontFamily.semibold,
-              }}
+          {onVisited ? (
+            <Pressable
+              accessibilityRole="checkbox"
+              accessibilityLabel={`${visited ? copy.unvisit : copy.markVisited}: ${stop.name[locale]}`}
+              accessibilityState={{ checked: visited }}
+              aria-checked={visited}
+              onPress={onVisited}
+              style={({ pressed }) => ({
+                width: theme.layout.compactTouchTarget,
+                minHeight: theme.layout.compactTouchTarget,
+                alignItems: "center",
+                justifyContent: "center",
+                opacity: pressed ? theme.motion.pressOpacity : 1,
+              })}
             >
-              {number}
-            </AppText>
-          </View>
+              {marker}
+            </Pressable>
+          ) : (
+            marker
+          )}
           {!last ? (
             <View
               style={{
@@ -163,7 +206,7 @@ export function TripStopRow({
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={`${number}. ${stop.name[locale]}, ${range?.label || copy.noTime}${range?.nextDay ? `, ${copy.nextDay}` : ""}, ${metadata}`}
-                accessibilityState={{ selected: highlighted }}
+                accessibilityState={{ selected: highlighted || next }}
                 accessibilityHint={
                   drag
                     ? stop.pinned
@@ -209,9 +252,13 @@ export function TripStopRow({
                       next || highlighted
                         ? theme.colors.surfaceTint
                         : theme.colors.surface,
-                    borderWidth: StyleSheet.hairlineWidth,
-                    borderColor:
-                      next || highlighted
+                    borderWidth: next ? 1 : StyleSheet.hairlineWidth,
+                    borderLeftWidth: next
+                      ? theme.spacing.xs
+                      : StyleSheet.hairlineWidth,
+                    borderColor: next
+                      ? theme.colors.primaryText
+                      : highlighted
                         ? theme.colors.borderStrong
                         : theme.colors.softActionBorder,
                     boxShadow: [
@@ -253,21 +300,18 @@ export function TripStopRow({
                         {range?.label || copy.noTime}
                         {range?.nextDay ? ` (${copy.nextDay})` : ""}
                       </AppText>
-                      {next || visited ? (
-                        <View
-                          style={[styles.connector, { gap: theme.spacing.xs }]}
+                      {visited || next ? (
+                        <AppText
+                          variant="caption"
+                          tone={next ? "primary" : "muted"}
+                          style={{
+                            fontFamily: next
+                              ? theme.typography.fontFamily.semibold
+                              : theme.typography.fontFamily.regular,
+                          }}
                         >
-                          {visited ? (
-                            <AppIcon
-                              name="check"
-                              size={theme.layout.iconSmall}
-                              color={theme.colors.primaryText}
-                            />
-                          ) : null}
-                          <AppText variant="caption" tone="muted">
-                            {visited ? copy.visited : copy.next}
-                          </AppText>
-                        </View>
+                          {next ? copy.next : copy.visited}
+                        </AppText>
                       ) : null}
                       {stop.pinned ? (
                         <AppIcon name="pin" size={theme.layout.iconSmall} />
@@ -291,15 +335,6 @@ export function TripStopRow({
             >
               {copy.conflict}
             </AppText>
-          ) : null}
-          {onVisited ? (
-            <View
-              style={{ paddingTop: theme.spacing.sm, alignSelf: "flex-start" }}
-            >
-              <AppButton size="small" variant="soft" onPress={onVisited}>
-                {visited ? copy.unvisit : copy.markVisited}
-              </AppButton>
-            </View>
           ) : null}
         </View>
       </View>

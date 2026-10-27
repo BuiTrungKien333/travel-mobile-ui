@@ -18,6 +18,7 @@ type AppInputProps = ComponentProps<typeof TextInput> & {
   error?: string;
   helperText?: string;
   label: string;
+  hideLabel?: boolean;
   password?: boolean;
   leadingIcon?: ReactNode;
   trailingAction?: ReactNode;
@@ -33,6 +34,7 @@ export const AppInput = forwardRef<TextInput, AppInputProps>(function AppInput(
     error,
     helperText,
     label,
+    hideLabel = false,
     leadingIcon,
     trailingAction,
     onBlur,
@@ -51,7 +53,7 @@ export const AppInput = forwardRef<TextInput, AppInputProps>(function AppInput(
 
   return (
     <View style={{ gap: theme.spacing.xs }}>
-      <AppText variant="label">{label}</AppText>
+      {!hideLabel ? <AppText variant="label">{label}</AppText> : null}
       <View
         style={[
           styles.inputShell,

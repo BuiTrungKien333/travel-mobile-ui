@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { tripModuleLoader } from "./helpers/load-trip-module.ts";
 import { loadHomePreview } from "./helpers/load-home-preview.ts";
-import type { TripStop } from "../src/features/home/types/home-types.ts";
+import type { Trip, TripStop } from "../src/features/home/types/home-types.ts";
 
 type Element = {
   type: string | ((props: any) => Element | null);
@@ -35,6 +35,15 @@ function uiHarness() {
         ];
       },
       useMemo: (get: () => unknown) => get(),
+      useDeferredValue: (value: unknown) => value,
+    },
+    "react-hook-form": {
+      Controller: "Controller",
+      useForm: () => ({
+        control: {},
+        reset: () => {},
+        handleSubmit: () => () => {},
+      }),
     },
     "react/jsx-runtime": {
       jsx: (type: Element["type"], props: Element["props"]) => ({
@@ -47,6 +56,7 @@ function uiHarness() {
       }),
     },
     "react-native": {
+      Keyboard: { dismiss: () => {} },
       Modal: "Modal",
       View: "View",
       Pressable: "Pressable",
@@ -78,6 +88,17 @@ function uiHarness() {
     "@/features/home/providers/trip-preview-provider": {
       useTripPreview: (select: (state: unknown) => unknown) =>
         select(store.getState()),
+    },
+    "@/hooks/use-screen-insets": { useScreenInsets: () => ({ bottom: 24 }) },
+    "@/components/ui/app-input": { AppInput: "AppInput" },
+    "@/components/common/glass-backdrop": { GlassBackdrop: "GlassBackdrop" },
+    "../components/trip-details-header": {
+      DetailIconButton: "DetailIconButton",
+    },
+    "../components/place-search-map": { PlaceSearchMap: "PlaceSearchMap" },
+    "../components/place-picker-list-items": {
+      PlaceSearchResultRow: "PlaceSearchResultRow",
+      PlaceTargetSelector: "PlaceTargetSelector",
     },
     "@/components/ui/app-text": { AppText: "AppText" },
     "@/components/ui/app-button": { AppButton: "AppButton" },
@@ -158,18 +179,16 @@ test("TripsScreen displays all created trips from its actual store and opens the
   const card = list.props.renderItem({ item: trip });
   card.props.onPress(trip);
   assert.equal(harness.store.getState().panel?.kind, "plan");
-  harness.store
-    .getState()
-    .mutateTrip(trip.id, {
-      kind: "add",
-      date: trip.days[0].date,
-      stops: harness
-        .load<
-          typeof import("../src/features/trip/data/place-bank.ts")
-        >("src/features/trip/data/place-bank.ts")
-        .getPlacesForDestination("Đà Lạt")
-        .slice(0, 1),
-    });
+  harness.store.getState().mutateTrip(trip.id, {
+    kind: "add",
+    date: trip.days[0].date,
+    stops: harness
+      .load<
+        typeof import("../src/features/trip/data/place-bank.ts")
+      >("src/features/trip/data/place-bank.ts")
+      .getPlacesForDestination("Đà Lạt")
+      .slice(0, 1),
+  });
   assert.equal(
     harness.store.getState().trips.find((item) => item.id === trip.id)?.days[0]
       .stops.length,
@@ -177,50 +196,138 @@ test("TripsScreen displays all created trips from its actual store and opens the
   );
 });
 
-test("place picker discards cancelled changes and reopening respects removals in the parent", () => {
+test("place picker keeps draft selection through search and map confirmation, and cancels without committing", () => {
   const harness = uiHarness();
-  const { PlacePickerSheet } = harness.load<{
-    PlacePickerSheet: (props: any) => Element | null;
-  }>("src/features/trip/components/place-picker-sheet.tsx");
+  const { PlacePickerScreen } = harness.load<{
+    PlacePickerScreen: (props: {
+      destination: string;
+      initialSelected: TripStop[];
+      onApply: (stops: TripStop[]) => void;
+      onClose: () => void;
+    }) => Element | null;
+  }>("src/features/trip/screens/place-picker-screen.tsx");
   const applied: TripStop[][] = [];
+  let closed = 0;
   const props = {
-    visible: true,
     destination: "Đà Lạt",
     initialSelected: [],
-    onApply: (stops: TripStop[]) => applied.push(stops),
-    onClose: () => {},
+    onApply: (stops: TripStop[]) => {
+      applied.push(stops);
+    },
+    onClose: () => {
+      closed++;
+    },
   };
-  const first = nodes(harness.render(PlacePickerSheet, props), "FlatList")[0];
+  let tree = harness.render(PlacePickerScreen, props);
+  assert.equal(nodes(tree, "Modal").length, 0);
+  const first = nodes(tree, "FlatList")[0];
   const stop = first.props.data[0];
-  const row = first.props.renderItem({ item: stop });
-  row.props.onPress();
-  let tree = harness.render(PlacePickerSheet, props);
+  first.props.renderItem({ item: stop }).props.onToggle();
+  tree = harness.render(PlacePickerScreen, props);
   assert.equal(
-    nodes(tree, "FlatList")[0].props.renderItem({ item: stop }).props
-      .accessibilityState.checked,
+    nodes(tree, "FlatList")[0].props.renderItem({ item: stop }).props.checked,
     true,
   );
-  nodes(tree, "Modal")[0].props.onRequestClose();
+  nodes(tree, "AppInput")[0].props.onChangeText("quang truong");
+  tree = harness.render(PlacePickerScreen, props);
+  const results = nodes(tree, "FlatList")[0];
+  assert.equal(results.props.data.length, 1);
+  const square = results.props.data[0];
+  results.props.renderItem({ item: square }).props.onPreview();
+  tree = harness.render(PlacePickerScreen, props);
+  assert.equal(nodes(tree, "PlaceSearchMap")[0].props.focused.id, "square");
   assert.equal(applied.length, 0);
-  harness.render(PlacePickerSheet, { ...props, visible: false });
-  tree = harness.render(PlacePickerSheet, {
+  nodes(tree, "AppButton")[0].props.onPress();
+  tree = harness.render(PlacePickerScreen, props);
+  assert.equal(
+    nodes(tree, "FlatList")[0].props.renderItem({ item: square }).props.checked,
+    true,
+  );
+  nodes(tree, "DetailIconButton")[0].props.onPress();
+  assert.equal(closed, 1);
+  assert.equal(applied.length, 0);
+  harness.render(PlacePickerScreen, { ...props, visible: false });
+  tree = harness.render(PlacePickerScreen, {
     ...props,
     initialSelected: [stop],
   });
   assert.equal(
-    nodes(tree, "FlatList")[0].props.renderItem({ item: stop }).props
-      .accessibilityState.checked,
+    nodes(tree, "FlatList")[0].props.renderItem({ item: stop }).props.checked,
     true,
   );
-  harness.render(PlacePickerSheet, { ...props, visible: false });
-  tree = harness.render(PlacePickerSheet, props);
+  nodes(tree, "AppButton")[0].props.onPress();
+  assert.equal(applied.length, 1);
+  assert.equal(applied[0][0].id, stop.id);
+  nodes(tree, "FlatList")[0].props.renderItem({ item: stop }).props.onToggle();
+  tree = harness.render(PlacePickerScreen, {
+    ...props,
+    initialSelected: [stop],
+  });
+  assert.equal(nodes(tree, "AppButton")[0].props.disabled, false);
+  nodes(tree, "AppButton")[0].props.onPress();
+  assert.equal(applied[1].length, 0);
+  harness.render(PlacePickerScreen, { ...props, visible: false });
+  tree = harness.render(PlacePickerScreen, props);
   assert.equal(
-    nodes(tree, "FlatList")[0].props.renderItem({ item: stop }).props
-      .accessibilityState.checked,
+    nodes(tree, "FlatList")[0].props.renderItem({ item: stop }).props.checked,
     false,
   );
+  nodes(tree, "FlatList")[0].props.renderItem({ item: stop }).props.onToggle();
+  const failedProps = { ...props, onApply: () => false };
+  tree = harness.render(PlacePickerScreen, failedProps);
   nodes(tree, "AppButton")[0].props.onPress();
-  assert.equal(applied[0].length, 0);
+  tree = harness.render(PlacePickerScreen, failedProps);
+  assert.ok(
+    nodes(tree, "AppText").some(
+      (node) => node.props.accessibilityRole === "alert",
+    ),
+  );
+  assert.equal(
+    nodes(tree, "FlatList")[0].props.renderItem({ item: stop }).props.checked,
+    true,
+  );
+});
+
+test("place search hides places saved anywhere in the trip, including search results after changing day", () => {
+  const harness = uiHarness();
+  const { PlacePickerScreen } = harness.load<{
+    PlacePickerScreen: (props: Record<string, unknown>) => Element | null;
+  }>("src/features/trip/screens/place-picker-screen.tsx");
+  const { getPlaceSearchPreview } = harness.load<
+    typeof import("../src/features/trip/data/place-search-preview.ts")
+  >("src/features/trip/data/place-search-preview.ts");
+  const places = getPlaceSearchPreview("Đà Lạt");
+  const trip: Trip = {
+    id: "trip",
+    destination: "Đà Lạt",
+    status: "planned",
+    days: [
+      { date: "2026-10-24", stops: [places[0]] },
+      { date: "2026-10-25", stops: [places[1]] },
+    ],
+    unscheduledStops: [places[2]],
+  };
+  const props = {
+    trip,
+    destination: trip.destination,
+    initialDate: trip.days[0].date,
+    onApply: () => {},
+    onClose: () => {},
+  };
+  let tree = harness.render(PlacePickerScreen, props);
+  const list = nodes(tree, "FlatList")[0];
+  assert.equal(list.props.data.length, places.length - 3);
+  for (const place of places.slice(0, 3))
+    assert.equal(
+      list.props.data.some((item: TripStop) => item.id === place.id),
+      false,
+    );
+  nodes(tree, "PlaceTargetSelector")[0].props.onChange(trip.days[1].date);
+  tree = harness.render(PlacePickerScreen, props);
+  assert.equal(nodes(tree, "FlatList")[0].props.data.length, places.length - 3);
+  nodes(tree, "AppInput")[0].props.onChangeText("ho xuan huong");
+  tree = harness.render(PlacePickerScreen, props);
+  assert.equal(nodes(tree, "FlatList")[0].props.data.length, 0);
 });
 
 test("calendar uses localized labels, announces selection and applies a single-day range", () => {

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Pressable, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
@@ -7,7 +7,10 @@ import Animated, {
   ReduceMotion,
   useAnimatedStyle,
   useSharedValue,
+  type SharedValue,
+  withDelay,
   withSpring,
+  withTiming,
 } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 import { useAppTheme } from "@/hooks/use-app-theme";
@@ -30,7 +33,10 @@ export function TripPlanningMap({
   onSelect,
   onStart,
   onGeometryChange,
+  resizeLock,
+  showStart = true,
   collapsedByScroll = false,
+  expandRequest = 0,
 }: {
   header: ReactNode;
   viewportHeight: number;
@@ -41,7 +47,10 @@ export function TripPlanningMap({
   onSelect: (stop: TripStop) => void;
   onStart: () => void;
   onGeometryChange: (geometry: PlanningMapGeometry) => void;
+  resizeLock: SharedValue<number>;
+  showStart?: boolean;
   collapsedByScroll?: boolean;
+  expandRequest?: number;
 }) {
   const theme = useAppTheme();
   const { copy } = useTripDetailsCopy();
@@ -64,12 +73,19 @@ export function TripPlanningMap({
   const height = useSharedValue(collapsed);
   const startHeight = useSharedValue(collapsed);
   const targetExpanded = useSharedValue(false);
+  const previouslyHidden = useRef(collapsedByScroll);
+  const handledExpandRequest = useRef(0);
+  const suppressTap = useSharedValue(0);
+  const resizeSettleDuration = theme.motion.tripMapScrollSettleDuration;
+  const tapGuardDuration = theme.motion.shutterPressDuration;
   const spring = {
     ...theme.motion.photoViewerSpring,
     reduceMotion: ReduceMotion.System,
   };
   useEffect(() => {
-    if (!collapsedByScroll) {
+    const restored = previouslyHidden.current && !collapsedByScroll;
+    previouslyHidden.current = collapsedByScroll;
+    if (restored) {
       targetExpanded.set(false);
       setExpanded(false);
       height.set(collapsed);
@@ -82,8 +98,50 @@ export function TripPlanningMap({
     // Rotation/font scaling changes the available pane, not the selected day or scroll.
     cancelAnimation(height);
     height.set(targetExpanded.get() ? maximum : collapsed);
-    return () => cancelAnimation(height);
-  }, [collapsed, maximum, height, targetExpanded]);
+    return () => {
+      cancelAnimation(height);
+      cancelAnimation(resizeLock);
+      resizeLock.set(0);
+    };
+  }, [collapsed, maximum, height, targetExpanded, resizeLock]);
+  function releaseResizeLock() {
+    "worklet";
+    resizeLock.set(
+      withDelay(
+        resizeSettleDuration,
+        withTiming(0, { duration: 0, reduceMotion: ReduceMotion.Never }),
+        ReduceMotion.Never,
+      ),
+    );
+  }
+  useEffect(() => {
+    if (handledExpandRequest.current === expandRequest) return;
+    handledExpandRequest.current = expandRequest;
+    cancelAnimation(resizeLock);
+    resizeLock.set(1);
+    targetExpanded.set(true);
+    setExpanded(true);
+    height.set(
+      withSpring(
+        maximum,
+        {
+          ...theme.motion.photoViewerSpring,
+          reduceMotion: ReduceMotion.System,
+        },
+        (finished) => {
+          if (finished) releaseResizeLock();
+        },
+      ),
+    );
+  }, [
+    expandRequest,
+    maximum,
+    height,
+    targetExpanded,
+    resizeLock,
+    theme.motion.photoViewerSpring,
+    resizeSettleDuration,
+  ]);
   const motion = useAnimatedStyle(() => ({ height: height.get() }));
   const projection = theme.motion.tripMapVelocityProjection;
   const drag = Gesture.Pan()
@@ -91,6 +149,9 @@ export function TripPlanningMap({
     .failOffsetX([-theme.spacing.lg, theme.spacing.lg])
     .onStart(() => {
       cancelAnimation(height);
+      cancelAnimation(resizeLock);
+      resizeLock.set(1);
+      suppressTap.set(1);
       startHeight.set(height.get());
     })
     .onUpdate((event) => {
@@ -105,20 +166,44 @@ export function TripPlanningMap({
       const next =
         height.get() + event.velocityY * projection > (collapsed + maximum) / 2;
       targetExpanded.set(next);
-      height.set(withSpring(next ? maximum : collapsed, spring));
+      height.set(
+        withSpring(next ? maximum : collapsed, spring, (finished) => {
+          if (finished) releaseResizeLock();
+        }),
+      );
       scheduleOnRN(setExpanded, next);
     })
     .onFinalize((_event, success) => {
+      // Input gate only: a released pan must not trigger the Pressable's tap as well.
+      suppressTap.set(
+        withTiming(0, {
+          duration: tapGuardDuration,
+          reduceMotion: ReduceMotion.Never,
+        }),
+      );
       if (!success)
         height.set(
-          withSpring(targetExpanded.get() ? maximum : collapsed, spring),
+          withSpring(
+            targetExpanded.get() ? maximum : collapsed,
+            spring,
+            (finished) => {
+              if (finished) releaseResizeLock();
+            },
+          ),
         );
     });
   function toggle() {
-    const next = !expanded;
+    if (suppressTap.get() > 0) return;
+    cancelAnimation(resizeLock);
+    resizeLock.set(1);
+    const next = !targetExpanded.get();
     targetExpanded.set(next);
     setExpanded(next);
-    height.set(withSpring(next ? maximum : collapsed, spring));
+    height.set(
+      withSpring(next ? maximum : collapsed, spring, (finished) => {
+        if (finished) releaseResizeLock();
+      }),
+    );
   }
   return (
     <Animated.View
@@ -141,6 +226,7 @@ export function TripPlanningMap({
       </View>
       <TripMapPreview
         stops={stops}
+        showStart={showStart}
         selectedId={selectedId}
         startLabel={startLabel}
         onSelect={onSelect}
