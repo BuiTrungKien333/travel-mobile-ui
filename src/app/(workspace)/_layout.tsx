@@ -17,6 +17,7 @@ export default function WorkspaceLayout() {
         <Stack.Screen name="tabs" />
         <Stack.Screen name="trip/[tripId]" />
         <Stack.Screen name="trip/add-places" />
+        <Stack.Screen name="trip/place-details" />
       </Stack>
       <PreviewPanels />
     </TripPreviewProvider>

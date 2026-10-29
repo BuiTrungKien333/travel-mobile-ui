@@ -17,6 +17,7 @@ export type TripMutation =
   | {
       kind: "day";
       date: string;
+      durations?: { stopId: string; durationMinutes: number }[];
       values: Pick<
         TripDay,
         "startLocation" | "startTime" | "returnToStart" | "transport"
@@ -34,16 +35,14 @@ export type TripMutation =
   | { kind: "reorder"; date: string; ids: string[] }
   | { kind: "restore"; snapshot: TripScheduleSnapshot };
 
-export type TripDetailsSheetState =
-  | {
-      kind:
-        | "menu"
-        | "info"
-        | "day"
-        | "transport"
-        | "weather"
-        | "reorder"
-        | "optimize"
-        | "dates";
-    }
-  | { kind: "stop"; stopId: string; date: string | null };
+export type TripDetailsSheetState = {
+  kind:
+    | "menu"
+    | "info"
+    | "day"
+    | "transport"
+    | "weather"
+    | "reorder"
+    | "optimize"
+    | "dates";
+};

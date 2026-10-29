@@ -22,7 +22,10 @@ import { ScreenSafeArea } from "@/components/common/screen-safe-area";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useScreenInsets } from "@/hooks/use-screen-insets";
 import type { Trip, TripStop } from "@/features/home/types/home-types";
-import { getPlaceSearchPreview } from "../data/place-search-preview";
+import {
+  getAddressSearchPreview,
+  getPlaceSearchPreview,
+} from "../data/place-search-preview";
 import { usePlaceSearchCopy } from "../i18n/place-search-copy";
 import { tripMessage } from "../utils/create-trip-formatters";
 import {
@@ -32,6 +35,7 @@ import {
 } from "../utils/place-search";
 import { DetailIconButton } from "../components/trip-details-header";
 import { PlaceSearchMap } from "../components/place-search-map";
+import { PlaceDetailsContent } from "../components/place-details-content";
 import {
   PlaceSearchResultRow,
   PlaceTargetSelector,
@@ -55,7 +59,7 @@ export function PlacePickerScreen({
 }) {
   const theme = useAppTheme();
   const insets = useScreenInsets();
-  const { copy, locale } = usePlaceSearchCopy();
+  const { copy } = usePlaceSearchCopy();
   const [catalog] = useState(() => getPlaceSearchPreview(destination));
   const region = useMemo(() => getPlaceMapRegion(catalog), [catalog]);
   const [selected, setSelected] = useState(() =>
@@ -70,6 +74,11 @@ export function PlacePickerScreen({
   const [selectedOnly, setSelectedOnly] = useState(false);
   // undefined = results, null = custom map pin, otherwise a result awaiting confirmation.
   const [focus, setFocus] = useState<TripStop | null | undefined>(undefined);
+  const previewPlaces = focus?.locationType === "address" ? [focus] : catalog;
+  const previewRegion =
+    focus?.locationType === "address"
+      ? getPlaceMapRegion(previewPlaces)
+      : region;
   const [coordinate, setCoordinate] = useState<PlaceCoordinate | null>(
     region ? { latitude: region.latitude, longitude: region.longitude } : null,
   );
@@ -97,6 +106,11 @@ export function PlacePickerScreen({
   );
   const available = [
     ...catalog,
+    ...(deferredQuery.trim()
+      ? getAddressSearchPreview().filter(
+          (entry) => !selected.some((stop) => stop.id === entry.id),
+        )
+      : []),
     ...selected.filter(
       (stop) => !catalog.some((entry) => entry.id === stop.id),
     ),
@@ -125,6 +139,10 @@ export function PlacePickerScreen({
       return;
     }
     setFocus(place);
+    if (place?.locationType === "address") {
+      const saved = selected.find((stop) => stop.id === place.id);
+      reset({ name: saved?.name.vi ?? "" });
+    }
     if (!place && region) {
       reset({ name: "" });
       setCoordinate({ latitude: region.latitude, longitude: region.longitude });
@@ -150,6 +168,20 @@ export function PlacePickerScreen({
     setFocus(undefined);
   });
   function confirmPlace() {
+    if (focus?.locationType === "address") {
+      void handleSubmit(({ name }) => {
+        const stop = { ...focus, name: { vi: name, en: name } };
+        setSelected((stops) => [
+          ...stops.filter((entry) => entry.id !== stop.id),
+          stop,
+        ]);
+        setSaveError(false);
+        setQuery("");
+        setFocus(undefined);
+        Keyboard.dismiss();
+      })();
+      return;
+    }
     if (!focus) {
       void chooseCustom();
       return;
@@ -164,6 +196,25 @@ export function PlacePickerScreen({
     setSaveError(onApply(chosen, date) === false);
   }
   const emptyTitle = selectedOnly ? copy.emptySelection : copy.empty;
+  const nameInput = (
+    <Controller
+      control={control}
+      name="name"
+      render={({ field, fieldState }) => (
+        <AppInput
+          label={copy.customName}
+          placeholder={copy.customPlaceholder}
+          value={field.value}
+          onChangeText={field.onChange}
+          onBlur={field.onBlur}
+          error={fieldState.error?.message}
+          maxLength={120}
+          returnKeyType="done"
+          onSubmitEditing={confirmPlace}
+        />
+      )}
+    />
+  );
   return (
     <GestureHandlerRootView style={styles.fill}>
       <ScreenSafeArea
@@ -181,32 +232,45 @@ export function PlacePickerScreen({
             },
           ]}
         >
-          <View
-            style={[
-              styles.row,
-              {
-                gap: theme.spacing.sm,
-                paddingHorizontal: theme.spacing.md,
-                paddingTop: theme.spacing.xxl,
-                paddingBottom: theme.spacing.xs,
-              },
-            ]}
-          >
-            <DetailIconButton
-              name="back"
-              label={inPreview ? copy.returnResults : copy.back}
-              onPress={() => (inPreview ? setFocus(undefined) : onClose())}
-            />
-            <View style={styles.fill}>
-              <AppText
-                variant="heading"
-                style={{ fontSize: theme.typography.fontSize.lg }}
-              >
-                {inPreview ? copy.mapTitle : copy.title}
-              </AppText>
+          {!focus ? (
+            <View
+              style={[
+                styles.row,
+                {
+                  gap: theme.spacing.sm,
+                  paddingHorizontal: theme.spacing.md,
+                  paddingTop: theme.spacing.xxl,
+                  paddingBottom: theme.spacing.xs,
+                },
+              ]}
+            >
+              <DetailIconButton
+                name="back"
+                label={inPreview ? copy.returnResults : copy.back}
+                onPress={() => (inPreview ? setFocus(undefined) : onClose())}
+              />
+              <View style={styles.fill}>
+                <AppText
+                  variant="heading"
+                  style={{ fontSize: theme.typography.fontSize.lg }}
+                >
+                  {inPreview ? copy.mapTitle : copy.title}
+                </AppText>
+              </View>
             </View>
-          </View>
-          {!inPreview ? (
+          ) : null}
+          {focus ? (
+            <PlaceDetailsContent
+              key={focus.id}
+              place={focus}
+              places={previewPlaces}
+              region={previewRegion}
+              onBack={() => setFocus(undefined)}
+              nameInput={
+                focus.locationType === "address" ? nameInput : undefined
+              }
+            />
+          ) : !inPreview ? (
             <>
               <PlaceTargetSelector
                 destination={destination}
@@ -303,26 +367,95 @@ export function PlacePickerScreen({
                 ListEmptyComponent={
                   <View
                     style={{
-                      paddingVertical: theme.spacing.xl,
-                      gap: theme.spacing.sm,
+                      marginTop: theme.spacing.sm,
+                      padding: theme.spacing.lg,
+                      gap: theme.spacing.md,
+                      alignItems: "center",
+                      borderWidth: StyleSheet.hairlineWidth,
+                      borderColor: theme.colors.softActionBorder,
+                      borderRadius: theme.radius.lg,
+                      overflow: "hidden",
                     }}
                   >
-                    <AppIcon name="search" size={theme.layout.iconLarge} />
-                    <AppText variant="label">{emptyTitle}</AppText>
-                    <AppText tone="muted">
-                      {selectedOnly ? copy.emptySelectionHint : copy.emptyHint}
-                    </AppText>
+                    <GlassBackdrop borderRadius={theme.radius.lg} />
+                    <View
+                      style={{
+                        width: theme.layout.touchTarget,
+                        height: theme.layout.touchTarget,
+                        borderRadius: theme.radius.full,
+                        backgroundColor: theme.colors.surfaceTint,
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <AppIcon
+                        name="search"
+                        variant="light"
+                        size={theme.layout.iconMedium}
+                        color={theme.colors.primaryText}
+                      />
+                    </View>
+                    <View style={{ gap: theme.spacing.sm }}>
+                      <AppText
+                        variant="label"
+                        accessibilityLiveRegion="polite"
+                        style={{ textAlign: "center" }}
+                      >
+                        {emptyTitle}
+                      </AppText>
+                      <AppText
+                        variant="caption"
+                        tone="muted"
+                        style={{ textAlign: "center" }}
+                      >
+                        {selectedOnly
+                          ? copy.emptySelectionHint
+                          : !region
+                            ? copy.noMap
+                            : copy.emptyHint}
+                      </AppText>
+                    </View>
                     {region && !selectedOnly ? (
                       <AppButton
-                        variant="outline"
+                        variant="soft"
+                        size="small"
+                        style={{ width: "100%" }}
+                        leadingIcon={
+                          <AppIcon
+                            name="pin"
+                            variant="light"
+                            size={theme.layout.iconSmall}
+                            color={theme.colors.onSoftAction}
+                          />
+                        }
                         onPress={() => openPreview(null)}
                       >
                         {copy.map}
                       </AppButton>
-                    ) : !region ? (
-                      <AppText variant="caption" tone="muted">
-                        {copy.noMap}
-                      </AppText>
+                    ) : null}
+                    {selectedOnly || query.trim() ? (
+                      <Pressable
+                        accessibilityRole="button"
+                        onPress={() => {
+                          setSelectedOnly(false);
+                          setQuery("");
+                        }}
+                        style={({ pressed }) => ({
+                          minHeight: theme.layout.compactTouchTarget,
+                          justifyContent: "center",
+                          alignItems: "center",
+                          paddingHorizontal: theme.spacing.sm,
+                          opacity: pressed ? theme.motion.pressOpacity : 1,
+                        })}
+                      >
+                        <AppText
+                          variant="caption"
+                          tone="primary"
+                          style={{ textAlign: "center" }}
+                        >
+                          {selectedOnly ? copy.all : copy.resetSearch}
+                        </AppText>
+                      </Pressable>
                     ) : null}
                   </View>
                 }
@@ -333,7 +466,11 @@ export function PlacePickerScreen({
                       place={item}
                       checked={checked}
                       onPreview={() => openPreview(item)}
-                      onToggle={() => toggle(item)}
+                      onToggle={() => {
+                        if (item.locationType === "address" && !checked)
+                          openPreview(item);
+                        else toggle(item);
+                      }}
                     />
                   );
                 }}
@@ -349,54 +486,21 @@ export function PlacePickerScreen({
             >
               {region ? (
                 <PlaceSearchMap
-                  key={focus?.id ?? "custom"}
+                  key="custom"
                   places={catalog}
                   region={region}
-                  focused={focus ?? undefined}
-                  custom={focus === null}
+                  custom
                   onMove={setCoordinate}
                 />
               ) : null}
-              {focus ? (
-                <View style={{ gap: theme.spacing.sm }}>
-                  <AppText
-                    variant="heading"
-                    style={{ fontSize: theme.typography.fontSize.lg }}
-                  >
-                    {focus.name[locale]}
-                  </AppText>
-                  <AppText tone="muted">
-                    {focus.address?.[locale] ?? focus.kind[locale]}
-                  </AppText>
-                  <AppText variant="caption" tone="primary">
-                    {focus.kind[locale]}
-                  </AppText>
-                </View>
-              ) : (
-                <>
-                  <AppText variant="caption" tone="primary">
-                    {copy.mapHint}
-                  </AppText>
-                  <Controller
-                    control={control}
-                    name="name"
-                    render={({ field, fieldState }) => (
-                      <AppInput
-                        label={copy.customName}
-                        placeholder={copy.customPlaceholder}
-                        value={field.value}
-                        onChangeText={field.onChange}
-                        onBlur={field.onBlur}
-                        error={fieldState.error?.message}
-                        maxLength={120}
-                      />
-                    )}
-                  />
-                  <AppText variant="caption" tone="muted">
-                    {copy.customHint}
-                  </AppText>
-                </>
-              )}
+
+              <AppText variant="caption" tone="primary">
+                {copy.mapHint}
+              </AppText>
+              {nameInput}
+              <AppText variant="caption" tone="muted">
+                {copy.customHint}
+              </AppText>
             </ScrollView>
           )}
           <View

@@ -9,3 +9,7 @@ export const tripRouteSchema = z.object({
   day: z.string().refine(isCalendarDate).optional(),
   map: z.literal("expanded").optional(),
 });
+
+export const tripStopRouteSchema = tripRouteSchema
+  .pick({ tripId: true, day: true })
+  .extend({ stopId: tripRouteSchema.shape.tripId });

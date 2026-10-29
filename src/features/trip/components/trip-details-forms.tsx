@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
-import { ScrollView, Switch, View } from "react-native";
+import { View } from "react-native";
 import { z } from "zod";
 import { AppButton } from "@/components/ui/app-button";
 import { AppInput } from "@/components/ui/app-input";
@@ -9,6 +9,8 @@ import type { Trip, TripStop } from "@/features/home/types/home-types";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 import { stopDetailsSchema } from "../schemas/trip-details-schema";
+import { TripStartTimeField } from "./trip-start-time-field";
+import { PlaceTargetSelector } from "./place-picker-list-items";
 import type { TripMutation } from "../types/trip-details-types";
 
 type Commit = (mutation: TripMutation) => boolean;
@@ -18,15 +20,13 @@ export function StopDetailsForm({
   stop,
   date,
   onCommit,
-  onRemove,
 }: {
   trip: Trip;
   stop: TripStop;
   date: string | null;
   onCommit: Commit;
-  onRemove: () => void;
 }) {
-  const { copy, locale } = useTripDetailsCopy();
+  const { copy } = useTripDetailsCopy();
   const theme = useAppTheme();
   const schema = stopDetailsSchema(copy);
   const {
@@ -46,60 +46,32 @@ export function StopDetailsForm({
   });
   return (
     <>
-      <AppText variant="heading">{stop.name[locale]}</AppText>
-      {stop.quickInfo?.admission ? (
-        <AppText tone="muted" variant="caption">
-          {copy.admission}: {stop.quickInfo.admission[locale]}
-        </AppText>
-      ) : null}
-      {stop.quickInfo?.closesAt ? (
-        <AppText tone="muted" variant="caption">
-          {copy.closes}: {stop.quickInfo.closesAt}
-        </AppText>
-      ) : null}
-      <AppText variant="label">{copy.chooseDay}</AppText>
       <Controller
         control={control}
         name="targetDate"
         render={({ field }) => (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: theme.spacing.sm }}
-          >
-            <AppButton
-              size="small"
-              accessibilityState={{ selected: field.value === null }}
-              variant={field.value === null ? "soft" : "outline"}
-              onPress={() => field.onChange(null)}
-            >
-              {copy.pool}
-            </AppButton>
-            {trip.days.map((day, index) => (
-              <AppButton
-                key={day.date}
-                accessibilityState={{ selected: field.value === day.date }}
-                size="small"
-                variant={field.value === day.date ? "soft" : "outline"}
-                onPress={() => field.onChange(day.date)}
-              >{`${copy.day} ${index + 1}`}</AppButton>
-            ))}
-          </ScrollView>
+          <View style={{ marginHorizontal: -theme.spacing.lg }}>
+            <PlaceTargetSelector
+              destination={trip.destination}
+              days={trip.days}
+              date={field.value}
+              onChange={field.onChange}
+            />
+          </View>
         )}
       />
       <Controller
         control={control}
         name="time"
         render={({ field, fieldState }) => (
-          <AppInput
+          <TripStartTimeField
+            compact
             label={copy.arrival}
-            placeholder="09:30"
-            keyboardType="numbers-and-punctuation"
+            hint={copy.stopArrivalHint}
             value={field.value}
-            ref={field.ref}
-            onChangeText={field.onChange}
+            onChange={field.onChange}
+            onBlur={field.onBlur}
             error={fieldState.error?.message}
-            maxLength={5}
           />
         )}
       />
@@ -108,6 +80,7 @@ export function StopDetailsForm({
         name="durationMinutes"
         render={({ field, fieldState }) => (
           <AppInput
+            compact
             label={copy.duration}
             keyboardType="number-pad"
             value={field.value}
@@ -120,34 +93,10 @@ export function StopDetailsForm({
       />
       <Controller
         control={control}
-        name="pinned"
-        render={({ field }) => (
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <View style={{ flex: 1 }}>
-              <AppText variant="label">{copy.pin}</AppText>
-              <AppText tone="muted" variant="caption">
-                {copy.pinnedHint}
-              </AppText>
-            </View>
-            <Switch
-              accessibilityLabel={copy.pin}
-              value={field.value}
-              onValueChange={field.onChange}
-            />
-          </View>
-        )}
-      />
-      <Controller
-        control={control}
         name="note"
         render={({ field, fieldState }) => (
           <AppInput
+            compact
             label={copy.note}
             placeholder={copy.notePlaceholder}
             multiline
@@ -165,6 +114,7 @@ export function StopDetailsForm({
         </AppText>
       ) : null}
       <AppButton
+        size="small"
         variant="gradient"
         onPress={handleSubmit(({ targetDate, ...values }) => {
           if (
@@ -176,13 +126,10 @@ export function StopDetailsForm({
               values,
             })
           )
-            setError("root", { message: copy.duplicate });
+            setError("root", { message: copy.stopUpdateError });
         })}
       >
         {copy.save}
-      </AppButton>
-      <AppButton variant="outline" onPress={onRemove}>
-        {date === null ? copy.remove : copy.unschedule}
       </AppButton>
     </>
   );

@@ -99,3 +99,23 @@ export function tripStartPointSchema(copy: TripDetailsCopy) {
       }
     });
 }
+
+export function tripDayScheduleSchema(copy: TripDetailsCopy) {
+  return tripStartPointSchema(copy).and(
+    z.object({
+      durations: z.array(
+        z.object({
+          stopId: z.string().min(1),
+          minutes: z
+            .string()
+            .regex(/^\d+$/, copy.invalidDuration)
+            .transform(Number)
+            .refine(
+              (value) => value >= 5 && value <= 480,
+              copy.invalidDuration,
+            ),
+        }),
+      ),
+    }),
+  );
+}

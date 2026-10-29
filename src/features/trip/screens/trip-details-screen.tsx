@@ -289,7 +289,15 @@ function TripDetailsContent({
     return success;
   }
   function openStop(stop: TripStop, date: string | null = day?.date ?? null) {
-    setSheet({ kind: "stop", stopId: stop.id, date });
+    setUndo(null);
+    router.push({
+      pathname: "/trip/place-details",
+      params: {
+        tripId: trip.id,
+        stopId: stop.id,
+        ...(date ? { day: date } : {}),
+      },
+    });
   }
   function openJournal() {
     openPanel({ kind: "journal", tripId: trip.id });

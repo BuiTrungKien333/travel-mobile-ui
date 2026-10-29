@@ -96,6 +96,9 @@ function uiHarness() {
       DetailIconButton: "DetailIconButton",
     },
     "../components/place-search-map": { PlaceSearchMap: "PlaceSearchMap" },
+    "../components/place-details-content": {
+      PlaceDetailsContent: "PlaceDetailsContent",
+    },
     "../components/place-picker-list-items": {
       PlaceSearchResultRow: "PlaceSearchResultRow",
       PlaceTargetSelector: "PlaceTargetSelector",
@@ -235,7 +238,7 @@ test("place picker keeps draft selection through search and map confirmation, an
   const square = results.props.data[0];
   results.props.renderItem({ item: square }).props.onPreview();
   tree = harness.render(PlacePickerScreen, props);
-  assert.equal(nodes(tree, "PlaceSearchMap")[0].props.focused.id, "square");
+  assert.equal(nodes(tree, "PlaceDetailsContent")[0].props.place.id, "square");
   assert.equal(applied.length, 0);
   nodes(tree, "AppButton")[0].props.onPress();
   tree = harness.render(PlacePickerScreen, props);
@@ -286,6 +289,41 @@ test("place picker keeps draft selection through search and map confirmation, an
     nodes(tree, "FlatList")[0].props.renderItem({ item: stop }).props.checked,
     true,
   );
+});
+
+test("an address checkbox opens naming preview instead of adding an unnamed stop", () => {
+  const harness = uiHarness();
+  const { PlacePickerScreen } = harness.load<{
+    PlacePickerScreen: (props: Record<string, unknown>) => Element | null;
+  }>("src/features/trip/screens/place-picker-screen.tsx");
+  let applied = false;
+  const props = {
+    destination: "Đà Lạt",
+    onApply: () => {
+      applied = true;
+    },
+    onClose: () => {},
+  };
+  let tree = harness.render(PlacePickerScreen, props);
+  nodes(tree, "AppInput")[0].props.onChangeText("100/25 quang trung go vap");
+  tree = harness.render(PlacePickerScreen, props);
+  const list = nodes(tree, "FlatList")[0];
+  assert.equal(list.props.data.length, 1);
+  const address = list.props.data[0];
+  list.props.renderItem({ item: address }).props.onToggle();
+  tree = harness.render(PlacePickerScreen, props);
+  const preview = nodes(tree, "PlaceDetailsContent")[0];
+  assert.equal(preview.props.place.locationType, "address");
+  assert.equal(preview.props.nameInput.type, "Controller");
+  assert.equal(preview.props.region.latitude, address.location.latitude);
+  preview.props.onBack();
+  tree = harness.render(PlacePickerScreen, props);
+  assert.equal(nodes(tree, "AppButton")[0].props.disabled, true);
+  assert.equal(
+    nodes(tree, "AppInput")[0].props.value,
+    "100/25 quang trung go vap",
+  );
+  assert.equal(applied, false);
 });
 
 test("place search hides places saved anywhere in the trip, including search results after changing day", () => {

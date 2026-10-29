@@ -13,6 +13,9 @@ export type TripStartTimeFieldProps = {
   onChange: (value: string) => void;
   onBlur: () => void;
   error?: string;
+  label?: string;
+  hint?: string;
+  compact?: boolean;
 };
 
 export function TripStartTimeField({
@@ -20,6 +23,9 @@ export function TripStartTimeField({
   onChange,
   onBlur,
   error,
+  label,
+  hint,
+  compact = false,
 }: TripStartTimeFieldProps) {
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
@@ -33,11 +39,13 @@ export function TripStartTimeField({
     onBlur();
   }
   return (
-    <View style={{ gap: theme.spacing.sm }}>
-      <AppText variant="label">{copy.startTime}</AppText>
+    <View style={{ gap: compact ? theme.spacing.xs : theme.spacing.sm }}>
+      <AppText variant={compact ? "caption" : "label"}>
+        {label ?? copy.startTime}
+      </AppText>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${copy.chooseTime}${value ? `, ${timeLabel}` : ""}`}
+        accessibilityLabel={`${label ?? copy.chooseTime}${value ? `, ${timeLabel}` : ""}`}
         accessibilityState={{ expanded: open }}
         onPress={() => {
           Keyboard.dismiss();
@@ -48,7 +56,9 @@ export function TripStartTimeField({
           flexDirection: "row",
           alignItems: "center",
           gap: theme.spacing.sm,
-          minHeight: theme.layout.touchTarget,
+          minHeight: compact
+            ? theme.layout.compactTouchTarget
+            : theme.layout.touchTarget,
           paddingHorizontal: theme.spacing.md,
           borderRadius: theme.radius.md,
           borderWidth: 1,
@@ -113,13 +123,15 @@ export function TripStartTimeField({
           ) : null}
         </>
       ) : null}
-      <AppText
-        variant="caption"
-        tone={error ? "error" : "muted"}
-        accessibilityLiveRegion={error ? "polite" : "none"}
-      >
-        {error || copy.originTimeHint}
-      </AppText>
+      {error || !compact ? (
+        <AppText
+          variant="caption"
+          tone={error ? "error" : "muted"}
+          accessibilityLiveRegion={error ? "polite" : "none"}
+        >
+          {error || hint || copy.originTimeHint}
+        </AppText>
+      ) : null}
     </View>
   );
 }

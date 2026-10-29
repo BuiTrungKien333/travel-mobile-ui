@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Image } from "expo-image";
 import { StyleSheet, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
@@ -31,16 +31,25 @@ export function PlaceSearchMap({
   focused,
   custom,
   onMove,
+  fitContainer = false,
+  controlsTop,
+  extraControl,
 }: {
   places: TripStop[];
   region: PlaceMapRegion;
   focused?: TripStop;
   custom: boolean;
-  onMove: (coordinate: PlaceCoordinate) => void;
+  onMove?: (coordinate: PlaceCoordinate) => void;
+  fitContainer?: boolean;
+  controlsTop?: number;
+  extraControl?: ReactNode;
 }) {
   const theme = useAppTheme();
   const { copy } = usePlaceSearchCopy();
-  const [frame, setFrame] = useState({ width: 0, height: 0 });
+  const width = useSharedValue(0),
+    height = useSharedValue(0);
+  const focusX = useSharedValue(0.5),
+    focusY = useSharedValue(0.5);
   const initialZoom = focused ? 2.5 : 1;
   const x = useSharedValue(0),
     y = useSharedValue(0),
@@ -52,14 +61,14 @@ export function PlaceSearchMap({
     const point = focused?.location
       ? projectPlace(focused.location, region)
       : { x: 0.5, y: 0.5 };
-    x.set(
-      withTiming((0.5 - point.x) * frame.width * initialZoom, {
+    focusX.set(
+      withTiming(point.x, {
         duration,
         reduceMotion: ReduceMotion.System,
       }),
     );
-    y.set(
-      withTiming((0.5 - point.y) * frame.height * initialZoom, {
+    focusY.set(
+      withTiming(point.y, {
         duration,
         reduceMotion: ReduceMotion.System,
       }),
@@ -67,21 +76,15 @@ export function PlaceSearchMap({
     scale.set(
       withTiming(initialZoom, { duration, reduceMotion: ReduceMotion.System }),
     );
-  }, [
-    focused,
-    region,
-    frame.width,
-    frame.height,
-    initialZoom,
-    x,
-    y,
-    scale,
-    duration,
-  ]);
+  }, [focused, region, initialZoom, focusX, focusY, scale, duration]);
   const motion = useAnimatedStyle(() => ({
     transform: [
-      { translateX: x.get() },
-      { translateY: y.get() },
+      {
+        translateX: (0.5 - focusX.get()) * width.get() * scale.get() + x.get(),
+      },
+      {
+        translateY: (0.5 - focusY.get()) * height.get() * scale.get() + y.get(),
+      },
       { scale: scale.get() },
     ],
   }));
@@ -90,11 +93,11 @@ export function PlaceSearchMap({
     offsetY: number,
     currentScale: number,
   ) {
-    if (custom && frame.width && frame.height)
-      onMove(
+    if (custom && width.get() && height.get())
+      onMove?.(
         unprojectPlace(
-          0.5 - offsetX / (frame.width * currentScale),
-          0.5 - offsetY / (frame.height * currentScale),
+          focusX.get() - offsetX / (width.get() * currentScale),
+          focusY.get() - offsetY / (height.get() * currentScale),
           region,
         ),
       );
@@ -119,18 +122,18 @@ export function PlaceSearchMap({
     .onUpdate((event) => {
       x.set(
         Math.max(
-          (-frame.width * scale.get()) / 2,
+          (-width.get() * scale.get()) / 2,
           Math.min(
-            (frame.width * scale.get()) / 2,
+            (width.get() * scale.get()) / 2,
             startX.get() + event.translationX,
           ),
         ),
       );
       y.set(
         Math.max(
-          (-frame.height * scale.get()) / 2,
+          (-height.get() * scale.get()) / 2,
           Math.min(
-            (frame.height * scale.get()) / 2,
+            (height.get() * scale.get()) / 2,
             startY.get() + event.translationY,
           ),
         ),
@@ -143,17 +146,17 @@ export function PlaceSearchMap({
   return (
     <View
       style={{
-        height: theme.layout.tripMapPreviewHeight,
+        height: fitContainer ? undefined : theme.layout.tripMapPreviewHeight,
+        flex: fitContainer ? 1 : undefined,
+        minHeight: 0,
         overflow: "hidden",
-        borderRadius: theme.radius.lg,
+        borderRadius: fitContainer ? theme.radius.none : theme.radius.lg,
         backgroundColor: theme.colors.surfaceTint,
       }}
-      onLayout={(event) =>
-        setFrame({
-          width: event.nativeEvent.layout.width,
-          height: event.nativeEvent.layout.height,
-        })
-      }
+      onLayout={(event) => {
+        width.set(event.nativeEvent.layout.width);
+        height.set(event.nativeEvent.layout.height);
+      }}
     >
       <GestureDetector gesture={pan}>
         <Animated.View
@@ -180,12 +183,12 @@ export function PlaceSearchMap({
               y.get() +
               (name === "north" ? step : name === "south" ? -step : 0);
             const boundedX = Math.max(
-              (-frame.width * scale.get()) / 2,
-              Math.min((frame.width * scale.get()) / 2, nextX),
+              (-width.get() * scale.get()) / 2,
+              Math.min((width.get() * scale.get()) / 2, nextX),
             );
             const boundedY = Math.max(
-              (-frame.height * scale.get()) / 2,
-              Math.min((frame.height * scale.get()) / 2, nextY),
+              (-height.get() * scale.get()) / 2,
+              Math.min((height.get() * scale.get()) / 2, nextY),
             );
             x.set(boundedX);
             y.set(boundedY);
@@ -209,7 +212,10 @@ export function PlaceSearchMap({
                       <PlaceMapMarker
                         key={place.id}
                         point={projectPlace(place.location, region)}
-                        frame={frame}
+                        width={width}
+                        height={height}
+                        focusX={focusX}
+                        focusY={focusY}
                         active={place.id === focused?.id}
                         x={x}
                         y={y}
@@ -240,20 +246,23 @@ export function PlaceSearchMap({
         style={{
           position: "absolute",
           right: theme.spacing.sm,
-          top: theme.spacing.sm,
+          top: controlsTop ?? theme.spacing.sm,
           gap: theme.spacing.xs,
         }}
       >
         <DetailIconButton
+          compact
           name="plus"
           label={copy.zoomIn}
           onPress={() => changeZoom(0.5)}
         />
         <DetailIconButton
+          compact
           name="minus"
           label={copy.zoomOut}
           onPress={() => changeZoom(-0.5)}
         />
+        {extraControl}
       </View>
       <View
         pointerEvents="none"
@@ -277,14 +286,20 @@ export function PlaceSearchMap({
 
 function PlaceMapMarker({
   point,
-  frame,
+  width,
+  height,
+  focusX,
+  focusY,
   active,
   x,
   y,
   scale,
 }: {
   point: { x: number; y: number };
-  frame: { width: number; height: number };
+  width: SharedValue<number>;
+  height: SharedValue<number>;
+  focusX: SharedValue<number>;
+  focusY: SharedValue<number>;
   active: boolean;
   x: SharedValue<number>;
   y: SharedValue<number>;
@@ -293,8 +308,14 @@ function PlaceMapMarker({
   const theme = useAppTheme();
   const motion = useAnimatedStyle(() => ({
     transform: [
-      { translateX: (point.x - 0.5) * frame.width * scale.get() + x.get() },
-      { translateY: (point.y - 0.5) * frame.height * scale.get() + y.get() },
+      {
+        translateX:
+          (point.x - focusX.get()) * width.get() * scale.get() + x.get(),
+      },
+      {
+        translateY:
+          (point.y - focusY.get()) * height.get() * scale.get() + y.get(),
+      },
     ],
   }));
   return (

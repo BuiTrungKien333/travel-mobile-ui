@@ -67,13 +67,43 @@ export function applyTripMutation(
   const day = trip.days.find((item) => item.date === mutation.date);
   const pool = trip.unscheduledStops ?? [];
   if (mutation.date !== null && !day) return null;
-  if (mutation.kind === "day")
+  if (mutation.kind === "day") {
+    const durations = mutation.durations ?? [];
+    if (
+      !day ||
+      new Set(durations.map((entry) => entry.stopId)).size !==
+        durations.length ||
+      durations.some(
+        (entry) =>
+          !day.stops.some((stop) => stop.id === entry.stopId) ||
+          !Number.isInteger(entry.durationMinutes) ||
+          entry.durationMinutes < 5 ||
+          entry.durationMinutes > 480,
+      )
+    )
+      return null;
+    const byId = new Map(
+      durations.map((entry) => [entry.stopId, entry.durationMinutes]),
+    );
     return {
       ...trip,
       days: trip.days.map((item) =>
-        item === day ? { ...item, ...mutation.values } : item,
+        item === day
+          ? {
+              ...item,
+              ...mutation.values,
+              stops: durations.length
+                ? item.stops.map((stop) =>
+                    byId.has(stop.id)
+                      ? { ...stop, durationMinutes: byId.get(stop.id) }
+                      : stop,
+                  )
+                : item.stops,
+            }
+          : item,
       ),
     };
+  }
   if (mutation.kind === "add") {
     const existing = mutation.date === null ? pool : (day?.stops ?? []);
     const additions = uniquePlaces(mutation.stops)

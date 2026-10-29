@@ -8,6 +8,7 @@ export type TripStop = {
   name: LocalizedText;
   kind: LocalizedText;
   address?: LocalizedText;
+  locationType?: "address";
   location?: { latitude: number; longitude: number };
   durationMinutes?: number;
   pinned?: boolean;

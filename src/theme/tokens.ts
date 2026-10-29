@@ -40,6 +40,7 @@ export const layout = {
   tripCardImageWidth: 104,
   tripCardImageHeight: 120,
   pickerListMaxHeight: 280,
+  tripDayEditorSheetHeightRatio: 0.75,
   touchTarget: 48,
   compactTouchTarget: 44,
   compactIconButtonSurfaceSize: 32,

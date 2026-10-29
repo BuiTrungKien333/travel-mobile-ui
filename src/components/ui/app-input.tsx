@@ -19,6 +19,7 @@ type AppInputProps = ComponentProps<typeof TextInput> & {
   helperText?: string;
   label: string;
   hideLabel?: boolean;
+  compact?: boolean;
   password?: boolean;
   leadingIcon?: ReactNode;
   trailingAction?: ReactNode;
@@ -35,6 +36,7 @@ export const AppInput = forwardRef<TextInput, AppInputProps>(function AppInput(
     helperText,
     label,
     hideLabel = false,
+    compact = false,
     leadingIcon,
     trailingAction,
     onBlur,
@@ -53,11 +55,14 @@ export const AppInput = forwardRef<TextInput, AppInputProps>(function AppInput(
 
   return (
     <View style={{ gap: theme.spacing.xs }}>
-      {!hideLabel ? <AppText variant="label">{label}</AppText> : null}
+      {!hideLabel ? (
+        <AppText variant={compact ? "caption" : "label"}>{label}</AppText>
+      ) : null}
       <View
         style={[
           styles.inputShell,
           {
+            ...(compact ? { minHeight: theme.layout.compactTouchTarget } : {}),
             backgroundColor: theme.colors.surface,
             borderColor: error
               ? theme.colors.error
@@ -105,6 +110,14 @@ export const AppInput = forwardRef<TextInput, AppInputProps>(function AppInput(
               paddingHorizontal: theme.spacing.lg,
               paddingVertical: theme.spacing.md,
             },
+            compact
+              ? {
+                  minHeight:
+                    theme.layout.compactTouchTarget - theme.spacing.xxs,
+                  paddingVertical: theme.spacing.sm,
+                  paddingHorizontal: theme.spacing.md,
+                }
+              : null,
             style,
           ]}
         />

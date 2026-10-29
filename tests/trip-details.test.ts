@@ -21,6 +21,7 @@ const {
   tripInfoSchema,
   daySettingsSchema,
   tripStartPointSchema,
+  tripDayScheduleSchema,
   tripEditSchema,
 } = load<typeof import("../src/features/trip/schemas/trip-details-schema.ts")>(
   "src/features/trip/schemas/trip-details-schema.ts",
@@ -452,6 +453,86 @@ test("changing transport preserves departure settings and accepts a motorbike", 
   assert.equal(updated.days[0].startTime, "08:00");
   assert.equal(updated.days[0].returnToStart, true);
   assert.equal(updated.days[0].stops, day.stops);
+});
+
+test("daily editor validates custom visit durations and return-to-start together", () => {
+  const schema = tripDayScheduleSchema(copy);
+  const input = {
+    startLocation: "Khách sạn",
+    startTime: "08:30",
+    returnToStart: true,
+    durations: [{ stopId: "lake", minutes: "75" }],
+  };
+  assert.equal(schema.parse(input).durations[0].minutes, 75);
+  for (const minutes of ["", "abc", "4", "481", "60.5", "-30"])
+    assert.equal(
+      schema.safeParse({ ...input, durations: [{ stopId: "lake", minutes }] })
+        .success,
+      false,
+    );
+  assert.equal(
+    schema.safeParse({ ...input, startLocation: "  " }).success,
+    false,
+  );
+  assert.equal(schema.safeParse({ ...input, durations: [] }).success, true);
+});
+
+test("daily edits save all durations atomically while preserving arrival times, order and transport", () => {
+  const { trip } = fixture();
+  const source = {
+    ...trip,
+    days: trip.days.map((day) => ({
+      ...day,
+      transport: "motorcycle" as const,
+    })),
+  };
+  const day = source.days[0];
+  const updated = applyTripMutation(source, {
+    kind: "day",
+    date: day.date,
+    values: {
+      startLocation: "Nhà mình",
+      startTime: "08:15",
+      returnToStart: true,
+    },
+    durations: day.stops.map((stop, index) => ({
+      stopId: stop.id,
+      durationMinutes: index ? 45 : 75,
+    })),
+  });
+  assert.ok(updated);
+  assert.equal(updated.days[0].startLocation, "Nhà mình");
+  assert.equal(updated.days[0].startTime, "08:15");
+  assert.equal(updated.days[0].returnToStart, true);
+  assert.equal(updated.days[0].transport, "motorcycle");
+  assert.equal(updated.days[0].stops[0].durationMinutes, 75);
+  assert.equal(updated.days[0].stops[1].durationMinutes, 45);
+  updated.days[0].stops.forEach((stop, index) => {
+    assert.equal(stop.id, day.stops[index].id);
+    assert.equal(stop.time, day.stops[index].time);
+    assert.equal(stop.pinned, day.stops[index].pinned);
+  });
+  assert.equal(updated.days[1], source.days[1]);
+  assert.equal(source.days[0].startLocation, day.startLocation);
+  for (const durations of [
+    [{ stopId: "missing", durationMinutes: 60 }],
+    [{ stopId: day.stops[0].id, durationMinutes: 0 }],
+    [{ stopId: day.stops[0].id, durationMinutes: 481 }],
+    [{ stopId: day.stops[0].id, durationMinutes: 30.5 }],
+    [
+      { stopId: day.stops[0].id, durationMinutes: 60 },
+      { stopId: day.stops[0].id, durationMinutes: 75 },
+    ],
+  ])
+    assert.equal(
+      applyTripMutation(source, {
+        kind: "day",
+        date: day.date,
+        values: { startLocation: "Must not be saved" },
+        durations,
+      }),
+      null,
+    );
 });
 
 test("starting-point editor validates return trips and preserves transport when saving", () => {

@@ -9,13 +9,18 @@ import { AppInput } from "@/components/ui/app-input";
 import { AppText } from "@/components/ui/app-text";
 import type { Trip, TripDay } from "@/features/home/types/home-types";
 import { useAppTheme } from "@/hooks/use-app-theme";
-import { getPlacesForDestination } from "../data/place-bank";
+import {
+  getAddressSearchPreview,
+  getPlaceSearchPreview,
+} from "../data/place-search-preview";
+import { searchPlaces } from "../utils/place-search";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
-import { tripStartPointSchema } from "../schemas/trip-details-schema";
+import { tripDayScheduleSchema } from "../schemas/trip-details-schema";
 import type { TripMutation } from "../types/trip-details-types";
 import { TripStartTimeField } from "./trip-start-time-field";
+import { TripVisitDurationRow } from "./trip-visit-duration-row";
 
-export function TripStartPointForm({
+export function TripDayScheduleForm({
   trip,
   day,
   onCommit,
@@ -29,29 +34,65 @@ export function TripStartPointForm({
   const [shortcut, setShortcut] = useState<"home" | "stay" | null>(null);
   const [searching, setSearching] = useState(false);
   const [locationNotice, setLocationNotice] = useState(false);
-  const schema = tripStartPointSchema(copy);
-  const { control, handleSubmit, setValue, setFocus } = useForm<
-    z.infer<typeof schema>
-  >({
+  const [dayChoicesOpen, setDayChoicesOpen] = useState(false);
+  const [expandedStop, setExpandedStop] = useState<string | null>(null);
+  const schema = tripDayScheduleSchema(copy);
+  const {
+    control,
+    handleSubmit,
+    setValue,
+    setFocus,
+    setError,
+    formState: { errors },
+  } = useForm<z.input<typeof schema>, unknown, z.output<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: {
       startLocation: day.startLocation || trip.accommodation || "",
       startTime: day.startTime ?? "08:30",
       returnToStart: day.returnToStart ?? false,
+      durations: day.stops.map((stop) => ({
+        stopId: stop.id,
+        minutes: String(stop.durationMinutes ?? 45),
+      })),
     },
   });
   const location = useWatch({ control, name: "startLocation" });
-  const query = location.trim().toLocaleLowerCase(locale);
+  const durationValues = useWatch({ control, name: "durations" });
+  const total = durationValues.reduce((sum, entry) => {
+    const value = Number(entry.minutes);
+    return (
+      sum + (Number.isInteger(value) && value >= 5 && value <= 480 ? value : 0)
+    );
+  }, 0);
+  const totalText =
+    total >= 60
+      ? `${Math.floor(total / 60)} ${copy.timeHour.toLocaleLowerCase(locale)}${total % 60 ? ` ${total % 60} ${copy.minutes}` : ""}`
+      : `${total} ${copy.minutes}`;
+  const query = location.trim();
+  const candidates = Array.from(
+    new Map(
+      [
+        ...day.stops,
+        ...getPlaceSearchPreview(trip.destination),
+        ...getAddressSearchPreview(),
+      ].map((place) => [place.id, place]),
+    ).values(),
+  );
   const matches =
     searching && query.length > 1
-      ? getPlacesForDestination(trip.destination)
-          .filter(
-            (place) =>
-              place.name.vi.toLowerCase().includes(query) ||
-              place.name.en.toLowerCase().includes(query),
-          )
-          .slice(0, 3)
+      ? searchPlaces(candidates, query).slice(0, 4)
       : [];
+  function choosePlace(name: string) {
+    setValue("startLocation", name, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setSearching(false);
+    setDayChoicesOpen(false);
+    setShortcut(null);
+    setLocationNotice(false);
+    Keyboard.dismiss();
+  }
   const options: {
     id: "current" | "home" | "stay";
     icon: AppIconName;
@@ -63,6 +104,7 @@ export function TripStartPointForm({
   ];
   function chooseShortcut(id: (typeof options)[number]["id"]) {
     setSearching(false);
+    setDayChoicesOpen(false);
     setLocationNotice(id === "current");
     if (id === "current") {
       setFocus("startLocation");
@@ -78,12 +120,13 @@ export function TripStartPointForm({
   }
   return (
     <>
-      <View style={{ gap: theme.spacing.md }}>
+      <View style={{ gap: theme.spacing.sm }}>
         <Controller
           control={control}
           name="startLocation"
           render={({ field, fieldState }) => (
             <AppInput
+              compact
               label={copy.originSearch}
               placeholder={
                 shortcut === "home"
@@ -108,6 +151,7 @@ export function TripStartPointForm({
                     onPress={() => {
                       field.onChange("");
                       setSearching(false);
+                      setDayChoicesOpen(false);
                       setShortcut(null);
                       setLocationNotice(false);
                       setFocus("startLocation");
@@ -133,6 +177,7 @@ export function TripStartPointForm({
               onChangeText={(value) => {
                 field.onChange(value);
                 setSearching(true);
+                setDayChoicesOpen(false);
                 setLocationNotice(false);
               }}
               returnKeyType="search"
@@ -146,7 +191,9 @@ export function TripStartPointForm({
             />
           )}
         />
-        <View style={[styles.row, { gap: theme.spacing.sm }]}>
+        <View
+          style={[styles.row, { gap: theme.spacing.xs, alignItems: "stretch" }]}
+        >
           {options.map((option) => (
             <Pressable
               key={option.id}
@@ -155,10 +202,11 @@ export function TripStartPointForm({
               onPress={() => chooseShortcut(option.id)}
               style={({ pressed }) => ({
                 flex: 1,
+                flexBasis: 0,
                 minWidth: 0,
-                minHeight: theme.layout.touchTarget + theme.spacing.lg,
-                padding: theme.spacing.sm,
-                gap: theme.spacing.xs,
+                minHeight: theme.layout.touchTarget,
+                padding: theme.spacing.xxs,
+                gap: theme.spacing.xxs,
                 alignItems: "center",
                 justifyContent: "center",
                 borderRadius: theme.radius.sm,
@@ -179,12 +227,90 @@ export function TripStartPointForm({
                 size={theme.layout.iconSmall}
                 color={theme.colors.primaryText}
               />
-              <AppText variant="caption" style={{ textAlign: "center" }}>
-                {option.label}
-              </AppText>
+              <View
+                style={{
+                  minHeight: theme.typography.lineHeight.xs * 2,
+                  justifyContent: "center",
+                }}
+              >
+                <AppText variant="caption" style={{ textAlign: "center" }}>
+                  {option.label}
+                </AppText>
+              </View>
             </Pressable>
           ))}
         </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ expanded: dayChoicesOpen }}
+          onPress={() => {
+            Keyboard.dismiss();
+            setSearching(false);
+            setDayChoicesOpen((value) => !value);
+          }}
+          style={[
+            styles.row,
+            {
+              minHeight: theme.layout.compactTouchTarget,
+              gap: theme.spacing.sm,
+            },
+          ]}
+        >
+          <AppIcon
+            name="route"
+            size={theme.layout.iconSmall}
+            color={theme.colors.primaryText}
+          />
+          <AppText variant="caption" tone="primary" style={{ flex: 1 }}>
+            {copy.originDayPlaces} ({day.stops.length})
+          </AppText>
+          <AppIcon
+            name={dayChoicesOpen ? "up" : "down"}
+            size={theme.layout.iconSmall}
+            color={theme.colors.primaryText}
+          />
+        </Pressable>
+        {dayChoicesOpen ? (
+          <View
+            style={{
+              borderWidth: StyleSheet.hairlineWidth,
+              borderColor: theme.colors.softActionBorder,
+              borderRadius: theme.radius.sm,
+              paddingHorizontal: theme.spacing.sm,
+            }}
+          >
+            {day.stops.length ? (
+              day.stops.map((stop, index) => (
+                <Pressable
+                  key={stop.id}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${copy.originChoose} ${stop.name[locale]}`}
+                  onPress={() => choosePlace(stop.name[locale])}
+                  style={({ pressed }) => ({
+                    minHeight: theme.layout.compactTouchTarget,
+                    justifyContent: "center",
+                    borderBottomWidth:
+                      index < day.stops.length - 1
+                        ? StyleSheet.hairlineWidth
+                        : 0,
+                    borderBottomColor: theme.colors.softActionBorder,
+                    opacity: pressed ? theme.motion.pressOpacity : 1,
+                  })}
+                >
+                  <AppText variant="caption">{stop.name[locale]}</AppText>
+                </Pressable>
+              ))
+            ) : (
+              <AppText
+                variant="caption"
+                tone="muted"
+                style={{ paddingVertical: theme.spacing.sm }}
+              >
+                {copy.originNoDayPlaces}
+              </AppText>
+            )}
+          </View>
+        ) : null}
         {locationNotice ? (
           <AppText
             variant="caption"
@@ -202,13 +328,11 @@ export function TripStartPointForm({
                 accessibilityRole="button"
                 accessibilityLabel={`${copy.originChoose} ${place.name[locale]}`}
                 onPress={() => {
-                  setValue("startLocation", place.name[locale], {
-                    shouldDirty: true,
-                    shouldValidate: true,
-                  });
-                  setSearching(false);
-                  setShortcut(null);
-                  Keyboard.dismiss();
+                  choosePlace(
+                    place.locationType === "address"
+                      ? (place.address?.[locale] ?? place.name[locale])
+                      : place.name[locale],
+                  );
                 }}
                 style={({ pressed }) => [
                   styles.row,
@@ -235,19 +359,74 @@ export function TripStartPointForm({
             </AppText>
           </View>
         ) : null}
+        {searching && query.length > 1 && !matches.length ? (
+          <AppText variant="caption" tone="muted">
+            {copy.originSearchEmpty}
+          </AppText>
+        ) : null}
       </View>
-      <Controller
-        control={control}
-        name="startTime"
-        render={({ field, fieldState }) => (
-          <TripStartTimeField
-            value={field.value}
-            onChange={field.onChange}
-            onBlur={field.onBlur}
-            error={fieldState.error?.message}
-          />
+      <View style={{ marginTop: theme.spacing.sm }}>
+        <Controller
+          control={control}
+          name="startTime"
+          render={({ field, fieldState }) => (
+            <TripStartTimeField
+              compact
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              error={fieldState.error?.message}
+            />
+          )}
+        />
+      </View>
+      <View style={{ gap: theme.spacing.sm, marginTop: theme.spacing.sm }}>
+        <View
+          style={[
+            styles.row,
+            {
+              justifyContent: "space-between",
+              gap: theme.spacing.sm,
+              flexWrap: "wrap",
+            },
+          ]}
+        >
+          <AppText variant="label">{copy.dayVisitDurations}</AppText>
+          <AppText
+            variant="caption"
+            tone="muted"
+            accessibilityLiveRegion="polite"
+          >
+            {copy.dayVisitTotal}: {totalText}
+          </AppText>
+        </View>
+        {day.stops.length ? (
+          day.stops.map((stop, index) => (
+            <Controller
+              key={stop.id}
+              control={control}
+              name={`durations.${index}.minutes`}
+              render={({ field, fieldState }) => (
+                <TripVisitDurationRow
+                  stop={stop}
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  expanded={expandedStop === stop.id}
+                  onToggle={() =>
+                    setExpandedStop((id) => (id === stop.id ? null : stop.id))
+                  }
+                  error={fieldState.error?.message}
+                />
+              )}
+            />
+          ))
+        ) : (
+          <AppText variant="caption" tone="muted">
+            {copy.dayVisitEmpty}
+          </AppText>
         )}
-      />
+      </View>
       <Controller
         control={control}
         name="returnToStart"
@@ -256,7 +435,8 @@ export function TripStartPointForm({
             style={[
               styles.row,
               {
-                padding: theme.spacing.md,
+                marginTop: theme.spacing.sm,
+                padding: theme.spacing.sm,
                 gap: theme.spacing.sm,
                 borderRadius: theme.radius.sm,
                 backgroundColor: theme.colors.surfaceTint,
@@ -266,7 +446,7 @@ export function TripStartPointForm({
             ]}
           >
             <View style={{ flex: 1, gap: theme.spacing.xs }}>
-              <AppText variant="label">{copy.returnToStart}</AppText>
+              <AppText variant="caption">{copy.returnToStart}</AppText>
               <AppText variant="caption" tone="muted">
                 {copy.originReturnHint}
               </AppText>
@@ -291,15 +471,40 @@ export function TripStartPointForm({
         )}
       />
       <AppButton
+        size="small"
         variant="gradient"
-        style={{ borderRadius: theme.radius.sm }}
-        onPress={handleSubmit((values) => {
-          Keyboard.dismiss();
-          onCommit({ kind: "day", date: day.date, values });
-        })}
+        style={{ borderRadius: theme.radius.sm, marginTop: theme.spacing.sm }}
+        onPress={handleSubmit(
+          ({ durations, ...values }) => {
+            Keyboard.dismiss();
+            if (
+              !onCommit({
+                kind: "day",
+                date: day.date,
+                values,
+                durations: durations.map((entry) => ({
+                  stopId: entry.stopId,
+                  durationMinutes: entry.minutes,
+                })),
+              })
+            )
+              setError("root", { message: copy.stopUpdateError });
+          },
+          (fieldErrors) => {
+            const index = day.stops.findIndex(
+              (_stop, index) => !!fieldErrors.durations?.[index]?.minutes,
+            );
+            if (index >= 0) setExpandedStop(day.stops[index]?.id ?? null);
+          },
+        )}
       >
-        {copy.originSave}
+        {copy.dayVisitSave}
       </AppButton>
+      {errors.root?.message ? (
+        <AppText accessibilityRole="alert" tone="error" variant="caption">
+          {errors.root.message}
+        </AppText>
+      ) : null}
     </>
   );
 }

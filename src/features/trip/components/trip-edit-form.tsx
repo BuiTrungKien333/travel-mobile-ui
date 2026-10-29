@@ -69,12 +69,12 @@ export function TripEditForm({
     ),
   );
   const card = {
-    padding: theme.spacing.md,
+    padding: theme.spacing.sm,
     borderRadius: theme.radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.softActionBorder,
     backgroundColor: theme.colors.surface,
-    gap: theme.spacing.md,
+    gap: theme.spacing.sm,
   };
   return (
     <>
@@ -93,7 +93,7 @@ export function TripEditForm({
       >
         <AppIcon
           name="pin"
-          size={theme.layout.iconMedium}
+          size={theme.layout.iconSmall}
           color={theme.colors.primaryText}
         />
         <View style={[styles.grow, { gap: theme.spacing.xs }]}>
@@ -102,7 +102,7 @@ export function TripEditForm({
           </AppText>
           <AppText
             variant="label"
-            style={{ fontSize: theme.typography.fontSize.md }}
+            style={{ fontSize: theme.typography.fontSize.sm }}
           >
             {destination || formCopy.chooseDestination}
           </AppText>
@@ -206,6 +206,7 @@ export function TripEditForm({
         name="title"
         render={({ field, fieldState }) => (
           <AppInput
+            compact
             label={formCopy.tripTitle}
             placeholder={formCopy.titlePlaceholder}
             value={field.value}
@@ -268,12 +269,13 @@ export function TripEditForm({
           />
         </Pressable>
         {moreOpen ? (
-          <View style={{ gap: theme.spacing.lg }}>
+          <View style={{ gap: theme.spacing.sm }}>
             <Controller
               control={control}
               name="budget"
               render={({ field, fieldState }) => (
                 <AppInput
+                  compact
                   label={formCopy.budget}
                   placeholder={formCopy.budgetPlaceholder}
                   keyboardType="number-pad"
@@ -301,7 +303,7 @@ export function TripEditForm({
               )}
             />
             <View style={{ gap: theme.spacing.sm }}>
-              <AppText variant="label">{formCopy.preferencesTitle}</AppText>
+              <AppText variant="caption">{formCopy.preferencesTitle}</AppText>
               <Controller
                 control={control}
                 name="preferences"
@@ -309,7 +311,7 @@ export function TripEditForm({
                   <View
                     style={[
                       styles.row,
-                      { flexWrap: "wrap", gap: theme.spacing.sm },
+                      { flexWrap: "wrap", gap: theme.spacing.xs },
                     ]}
                   >
                     {tripPreferenceIds.map((id) => {
@@ -329,8 +331,8 @@ export function TripEditForm({
                           }
                           style={({ pressed }) => ({
                             minHeight: theme.layout.compactTouchTarget,
-                            paddingHorizontal: theme.spacing.md,
-                            paddingVertical: theme.spacing.sm,
+                            paddingHorizontal: theme.spacing.sm,
+                            paddingVertical: theme.spacing.xs,
                             borderRadius: theme.radius.full,
                             borderWidth: StyleSheet.hairlineWidth,
                             borderColor: selected
@@ -370,6 +372,7 @@ export function TripEditForm({
               name="accommodation"
               render={({ field, fieldState }) => (
                 <AppInput
+                  compact
                   label={copy.accommodation}
                   placeholder={copy.accommodationPlaceholder}
                   value={field.value}
@@ -386,6 +389,7 @@ export function TripEditForm({
               name="notes"
               render={({ field, fieldState }) => (
                 <AppInput
+                  compact
                   label={copy.tripNotes}
                   multiline
                   value={field.value}
@@ -395,7 +399,7 @@ export function TripEditForm({
                   error={fieldState.error?.message}
                   maxLength={1000}
                   style={{
-                    minHeight: theme.layout.touchTarget * 2,
+                    minHeight: theme.layout.touchTarget + theme.spacing.lg,
                     textAlignVertical: "top",
                   }}
                 />
@@ -405,6 +409,7 @@ export function TripEditForm({
         ) : null}
       </View>
       <AppButton
+        size="small"
         variant="gradient"
         disabled={!isDirty}
         onPress={handleSubmit(

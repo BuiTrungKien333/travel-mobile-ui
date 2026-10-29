@@ -37,20 +37,26 @@ export function TripPlanningMap({
   showStart = true,
   collapsedByScroll = false,
   expandRequest = 0,
+  mapContent,
+  showLocationControl = true,
+  overlayHeader = false,
 }: {
   header: ReactNode;
   viewportHeight: number;
   selectorHeight: number;
-  stops: TripStop[];
+  stops?: TripStop[];
   selectedId?: string;
-  startLabel: string;
-  onSelect: (stop: TripStop) => void;
-  onStart: () => void;
-  onGeometryChange: (geometry: PlanningMapGeometry) => void;
+  startLabel?: string;
+  onSelect?: (stop: TripStop) => void;
+  onStart?: () => void;
+  onGeometryChange?: (geometry: PlanningMapGeometry) => void;
   resizeLock: SharedValue<number>;
   showStart?: boolean;
   collapsedByScroll?: boolean;
   expandRequest?: number;
+  mapContent?: ReactNode;
+  showLocationControl?: boolean;
+  overlayHeader?: boolean;
 }) {
   const theme = useAppTheme();
   const { copy } = useTripDetailsCopy();
@@ -92,7 +98,10 @@ export function TripPlanningMap({
     }
   }, [collapsedByScroll, collapsed, targetExpanded, height]);
   useEffect(() => {
-    onGeometryChange({ height: expanded ? maximum : collapsed, headerHeight });
+    onGeometryChange?.({
+      height: expanded ? maximum : collapsed,
+      headerHeight,
+    });
   }, [collapsed, maximum, expanded, headerHeight, onGeometryChange]);
   useEffect(() => {
     // Rotation/font scaling changes the available pane, not the selected day or scroll.
@@ -218,21 +227,26 @@ export function TripPlanningMap({
         motion,
       ]}
     >
-      <View
-        onLayout={(event) => setHeaderHeight(event.nativeEvent.layout.height)}
-        style={{ paddingHorizontal: theme.spacing.lg }}
-      >
-        {header}
-      </View>
-      <TripMapPreview
-        stops={stops}
-        showStart={showStart}
-        selectedId={selectedId}
-        startLabel={startLabel}
-        onSelect={onSelect}
-        onStart={onStart}
-        fitContainer
-      />
+      {!overlayHeader ? (
+        <View
+          onLayout={(event) => setHeaderHeight(event.nativeEvent.layout.height)}
+          style={{ paddingHorizontal: theme.spacing.lg }}
+        >
+          {header}
+        </View>
+      ) : null}
+      {mapContent ??
+        (onSelect && onStart ? (
+          <TripMapPreview
+            stops={stops ?? []}
+            showStart={showStart}
+            selectedId={selectedId}
+            startLabel={startLabel ?? ""}
+            onSelect={onSelect}
+            onStart={onStart}
+            fitContainer
+          />
+        ) : null)}
       <GestureDetector gesture={drag}>
         <Pressable
           accessibilityRole="button"
@@ -286,12 +300,14 @@ export function TripPlanningMap({
           gap: theme.spacing.xs,
         }}
       >
-        <DetailIconButton
-          compact
-          name="locate"
-          label={copy.locateMe}
-          onPress={() => setLocationNotice((shown) => !shown)}
-        />
+        {showLocationControl ? (
+          <DetailIconButton
+            compact
+            name="locate"
+            label={copy.locateMe}
+            onPress={() => setLocationNotice((shown) => !shown)}
+          />
+        ) : null}
         <DetailIconButton
           compact
           name={expanded ? "collapse" : "expand"}
@@ -300,6 +316,21 @@ export function TripPlanningMap({
           onPress={toggle}
         />
       </View>
+      {overlayHeader ? (
+        <View
+          pointerEvents="box-none"
+          onLayout={(event) => setHeaderHeight(event.nativeEvent.layout.height)}
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            paddingHorizontal: theme.spacing.lg,
+          }}
+        >
+          {header}
+        </View>
+      ) : null}
     </Animated.View>
   );
 }

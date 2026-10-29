@@ -34,6 +34,7 @@ export function TripDetailsSheet({
   footer,
   scrollEnabled = true,
   variant = "default",
+  contentGap,
 }: {
   title: string;
   children: ReactNode;
@@ -45,6 +46,7 @@ export function TripDetailsSheet({
   footer?: ReactNode;
   scrollEnabled?: boolean;
   variant?: "default" | "weather";
+  contentGap?: number;
 }) {
   const theme = useAppTheme();
   const insets = useScreenInsets();
@@ -211,7 +213,7 @@ export function TripDetailsSheet({
                 paddingHorizontal: theme.spacing.lg,
                 paddingTop: theme.spacing.sm,
                 paddingBottom: footer ? theme.spacing.lg : undefined,
-                gap: theme.spacing.lg,
+                gap: contentGap ?? theme.spacing.lg,
               }}
             >
               {children}

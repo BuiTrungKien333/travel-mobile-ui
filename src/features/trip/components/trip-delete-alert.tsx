@@ -9,9 +9,13 @@ import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 export function TripDeleteAlert({
   onCancel,
   onConfirm,
+  title,
+  hint,
 }: {
   onCancel: () => void;
   onConfirm: () => void;
+  title?: string;
+  hint?: string;
 }) {
   const theme = useAppTheme();
   const insets = useScreenInsets();
@@ -41,8 +45,8 @@ export function TripDeleteAlert({
           role="alertdialog"
           aria-modal
           accessibilityViewIsModal
-          accessibilityLabel={copy.deleteTitle}
-          accessibilityHint={copy.deleteHint}
+          accessibilityLabel={title ?? copy.deleteTitle}
+          accessibilityHint={hint ?? copy.deleteHint}
           onAccessibilityEscape={onCancel}
           style={{
             width: "100%",
@@ -63,9 +67,9 @@ export function TripDeleteAlert({
               tone="primary"
               style={{ fontSize: theme.typography.fontSize.md }}
             >
-              {copy.deleteTitle}
+              {title ?? copy.deleteTitle}
             </AppText>
-            <AppText tone="muted">{copy.deleteHint}</AppText>
+            <AppText tone="muted">{hint ?? copy.deleteHint}</AppText>
           </View>
           <View
             style={{

@@ -4,10 +4,22 @@ Cập nhật: **27/10/2026**. Phạm vi: frontend Home, danh sách/tạo/chi ti�
 
 ## Tìm và thêm địa điểm · 27/10/2026
 
+- Cập nhật chi tiết địa điểm: khung bản đồ kéo giãn dùng chung với trip details, thông tin/ảnh/địa chỉ/giờ/giá bên dưới, nút chọn cố định. Header không có tiêu đề chữ, nút map compact 32px với vùng chạm 44px. TypeScript, 153 tests và export Android/Hermes đạt; thông tin vẫn là fixture.
+
 - Chi tiết mở màn Stack riêng `/trip/add-places`, thay picker modal và bước hỏi thêm vào ngày/pool. Giao diện dùng chung ở bước tạo chuyến, giữ dữ liệu form khi quay lại.
 - Tìm tên VI/EN, không dấu và địa chỉ; xem ghim/phóng tới vị trí, xác nhận, chọn nhiều điểm, chọn ngày/chờ xếp, lọc đã chọn, đặt ghim riêng có tên. Draft chỉ được lưu khi bấm thêm. Địa chỉ và tọa độ được giữ trong store.
 - Bản đồ và dữ liệu tìm kiếm là preview cục bộ, có nhãn ngay trong UI; chưa kết nối Google Maps, API Places hoặc GPS. Không thêm dependency. Xem [PLACE-SEARCH.md](PLACE-SEARCH.md).
 - TypeScript/no-unused, toàn bộ 149 tests và export Android/Hermes đạt. Công cụ trình duyệt lỗi môi trường nên chưa QA trực quan hoặc trên điện thoại; không chạy lint theo yêu cầu.
+
+## Tìm địa chỉ cụ thể · 28/10/2026
+
+- 29/10: modal Điểm xuất phát đổi thành Sửa lịch trình trong ngày. Tìm tên/địa chỉ mẫu không dấu, nhập địa chỉ riêng hoặc chọn nhanh từ các điểm trong ngày. Có danh sách thời lượng 30/60/90 phút/Khác (5–480), tổng thời gian trực tiếp. Lưu origin + thời lượng bằng một mutation nguyên tử, giữ giờ đến/thứ tự/phương tiện. TypeScript và 164 tests đạt; chưa QA trên điện thoại.
+
+- Chi tiết điểm trên timeline: thêm phân loại/trạng thái mẫu, chip tiện ích/lưu ý, card lịch ghé thăm có switch ghim và nút Sửa mở modal riêng. Lưu giữ người dùng tại màn chi tiết, card tự cập nhật. Bổ sung giới thiệu và dải ảnh địa điểm/khu vực từ asset có sẵn; chưa có API thông tin/mở cửa.
+
+- Chi tiết địa điểm từ timeline chuyển sang route Stack riêng, dùng lại giao diện/bản đồ của thêm địa điểm. Có form giờ/thời lượng/ghi chú/ghim, lưu về timeline, bỏ điểm có xác nhận; trạng thái Đã ghé đồng bộ store, footer Chỉ đường mở rộng bản đồ + Đã ghé. Chuyến hủy chỉ xem, check-in tương lai/pool tạm khóa. Xem [PLACE-SEARCH.md](PLACE-SEARCH.md).
+
+- Thêm kết quả địa chỉ với màn “Vị trí đã chọn”: địa chỉ, tên riêng bắt buộc, thông tin chưa có dữ liệu. Dùng lại bản đồ kéo mở rộng, lấy vùng riêng cho địa chỉ. Có fixture Quang Trung/Gò Vấp để thử tìm kiếm; chưa kết nối Google Maps. Xem [PLACE-SEARCH.md](PLACE-SEARCH.md).
 
 ## Chi tiết chuyến đi · 21/10/2026
 

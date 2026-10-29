@@ -16,13 +16,11 @@ import type {
 import { getTripTitle, formatTripDates } from "../utils/trip-formatters";
 import { DateRangeSheet } from "./date-range-sheet";
 import { TripDetailsSheet } from "./trip-details-sheet";
-import { StopDetailsForm } from "./trip-details-forms";
 import { TripEditForm } from "./trip-edit-form";
-import { TripStartPointForm } from "./trip-start-point-form";
+import { TripDayScheduleForm } from "./trip-day-schedule-form";
 import { TripForecastDetails } from "./trip-forecast-details";
 import { TripReorder } from "./trip-reorder";
 import { TripOptimizationSheet } from "./trip-optimization-preview";
-import { TripDirectionsButton } from "./trip-directions-button";
 import { TripDeleteAlert } from "./trip-delete-alert";
 import { tripTransportModes } from "../constants/trip-form";
 import {
@@ -59,30 +57,23 @@ export function TripDetailsPanels({
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
   const closeSheet = () => setSheet(null);
-  const pool = trip.unscheduledStops ?? [];
   const forecast = getTripForecast(trip, day?.date);
   const currentWeather =
     ongoingWeatherSnapshot.tripId === trip.id &&
     ongoingWeatherSnapshot.date === day?.date &&
     day?.date === today;
   const scheduledDay = day ? { ...day, stops: scheduledStops(day) } : undefined;
-  const stopInSheet =
-    sheet?.kind === "stop"
-      ? (sheet.date === null
-          ? pool
-          : (trip.days.find((item) => item.date === sheet.date)?.stops ?? [])
-        ).find((stop) => stop.id === sheet.stopId)
-      : undefined;
   const sheetTitle = sheet
     ? {
         menu: copy.menu,
         info: copy.edit,
-        day: copy.daySettings,
+        day: day
+          ? `${copy.daySettings} ${trip.days.findIndex((entry) => entry.date === day.date) + 1} (${new Intl.DateTimeFormat(locale, { day: "2-digit", month: "2-digit", timeZone: "UTC" }).format(new Date(`${day.date}T12:00:00Z`))})`
+          : copy.daySettings,
         transport: copy.transport,
         weather: copy.weather,
         reorder: copy.reorder,
         optimize: copy.optimizeTitle,
-        stop: copy.stopDetails,
         dates: copy.dates,
       }[sheet.kind]
     : "";
@@ -90,9 +81,19 @@ export function TripDetailsPanels({
     <>
       {sheet && sheet.kind !== "optimize" ? (
         <TripDetailsSheet
-          contentKey={`${sheet.kind}:${sheet.kind === "stop" ? sheet.stopId : ""}`}
+          contentKey={sheet.kind}
           variant={sheet.kind === "weather" ? "weather" : "default"}
           topSpacing={sheet.kind === "info" ? theme.spacing.xxl : undefined}
+          heightRatio={
+            sheet.kind === "day"
+              ? theme.layout.tripDayEditorSheetHeightRatio
+              : undefined
+          }
+          contentGap={
+            sheet.kind === "info" || sheet.kind === "day"
+              ? theme.spacing.sm
+              : undefined
+          }
           onShow={() => setHostReady(true)}
           title={sheetTitle}
           onClose={closeSheet}
@@ -170,7 +171,7 @@ export function TripDetailsPanels({
           ) : null}
           {sheet.kind === "day" && day ? (
             canEdit ? (
-              <TripStartPointForm trip={trip} day={day} onCommit={commit} />
+              <TripDayScheduleForm trip={trip} day={day} onCommit={commit} />
             ) : (
               <>
                 <AppText>
@@ -206,39 +207,6 @@ export function TripDetailsPanels({
                   {copy[transport]}
                 </AppButton>
               ))}
-            </>
-          ) : null}
-          {sheet.kind === "stop" && stopInSheet ? (
-            <>
-              <TripDirectionsButton
-                stop={stopInSheet}
-                destination={trip.destination}
-              />
-              {canEdit ? (
-                <StopDetailsForm
-                  trip={trip}
-                  stop={stopInSheet}
-                  date={sheet.date}
-                  onCommit={commit}
-                  onRemove={() =>
-                    commit({
-                      kind: "remove",
-                      date: sheet.date,
-                      stopId: stopInSheet.id,
-                    })
-                  }
-                />
-              ) : (
-                <>
-                  <AppText variant="heading">
-                    {stopInSheet.name[locale]}
-                  </AppText>
-                  <AppText>{stopInSheet.time || copy.noTime}</AppText>
-                  {stopInSheet.note ? (
-                    <AppText>{stopInSheet.note}</AppText>
-                  ) : null}
-                </>
-              )}
             </>
           ) : null}
           {sheet.kind === "reorder" && day && scheduledDay ? (

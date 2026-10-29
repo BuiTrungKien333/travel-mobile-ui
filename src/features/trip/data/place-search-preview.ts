@@ -1,6 +1,24 @@
 import type { TripStop } from "@/features/home/types/home-types";
 import { getPlacesForDestination } from "./place-bank";
 
+// Address-only search fixtures. Coordinates are approximate, not geocoded results.
+export function getAddressSearchPreview(): TripStop[] {
+  return [
+    {
+      id: "address-preview-quang-trung",
+      time: "",
+      name: { vi: "100/25 Quang Trung", en: "100/25 Quang Trung" },
+      address: {
+        vi: "100/25 Quang Trung, Gò Vấp, TP. Hồ Chí Minh",
+        en: "100/25 Quang Trung, Go Vap, Ho Chi Minh City",
+      },
+      kind: { vi: "Địa chỉ", en: "Address" },
+      locationType: "address",
+      location: { latitude: 10.834, longitude: 106.666 },
+    },
+  ];
+}
+
 // UI fixtures only. These approximate coordinates and addresses are not a geocoding service.
 const locations: Record<string, [number, number, string]> = {
   lake: [11.9416, 108.4422, "Hồ Xuân Hương, Đà Lạt"],
