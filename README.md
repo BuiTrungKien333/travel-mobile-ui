@@ -48,4 +48,4 @@ ESLint đã được cấu hình qua `npm run lint`. Đợt rà soát Home ngày
 - [Thiết lập Google Sign-In](docs/google-auth.md)
 - [Quy định phát triển](AGENTS.md)
 
-Khi quay lại tích hợp auth, đổi `UI_PREVIEW_ENABLED` trong `src/constants/development.ts` thành `false`. Cờ hiện tại dùng `__DEV__`, vì vậy bản release vẫn yêu cầu xác thực. Các luồng Home vẫn đang dùng mock và cần được nối API riêng khi backend sẵn sàng.
+Auth dùng backend thật cả trong development và release. Sao chép `.env.example` thành `.env` và chọn `EXPO_PUBLIC_API_URL` phù hợp với web/iOS simulator, Android emulator hoặc điện thoại thật; khởi động lại Metro sau khi đổi env. Các luồng Home và chuyến đi hiện vẫn dùng dữ liệu preview, độc lập với auth.
