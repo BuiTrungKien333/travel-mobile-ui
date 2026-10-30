@@ -10,6 +10,7 @@ import { getDayProgress } from "@/features/home/utils/day-progress";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useScreenInsets } from "@/hooks/use-screen-insets";
 import { useTripPreview } from "@/features/home/providers/trip-preview-provider";
+import { useMemoriesQuery } from "@/features/home/api/memory-hooks";
 import { layout } from "@/theme/tokens";
 import {
   TripDaySelector,
@@ -163,13 +164,11 @@ function TripDetailsContent({
   const removePlaceMutation = useDeleteTripPlaceMutation(trip.id);
   const deleteTripMutation = useDeleteTripMutation();
   const [commitError, setCommitError] = useState<string | null>(null);
-  const { today, visited, memories, openPanel, panelOpen } = useTripPreview((state) => ({
+  const { today, panelOpen } = useTripPreview((state) => ({
     today: state.today,
-    visited: state.visited,
-    memories: state.memories,
-    openPanel: state.openPanel,
     panelOpen: state.panel !== null,
   }));
+  const memoriesQuery = useMemoriesQuery(trip.id);
   const [backlog, setBacklog] = useState(() => (trip.unscheduledStops?.length ?? 0) > 0);
   const [sheet, setSheet] = useState<TripDetailsSheetState | null>(null);
   const [editHistory, setEditHistory] = useState(false);
@@ -224,12 +223,9 @@ function TripDetailsContent({
   );
   const progress = getDayProgress(
     timedStops,
-    visited[`${trip.id}:${day?.date}`] ?? [],
+    timedStops.filter((stop) => stop.visited).map((stop) => stop.id),
   );
-  const tripMemories = memories.filter((memory) => memory.tripId === trip.id);
-  const dayMemories = day
-    ? tripMemories.filter((memory) => memory.date === day.date)
-    : tripMemories;
+  const dayMemories = memoriesQuery.data?.content ?? [];
   const mapHeight = availableHeight
     ? Math.min(
         theme.layout.tripMapPreviewHeight,
@@ -341,7 +337,7 @@ function TripDetailsContent({
     });
   }
   function openJournal() {
-    openPanel({ kind: "journal", tripId: trip.id });
+    router.push("/tabs/memories");
   }
   function addPlace() {
     openPlacePicker(backlog ? null : (day?.date ?? null));
@@ -476,7 +472,7 @@ function TripDetailsContent({
       ) : (
         <>
           {mode === "recap" && !editHistory ? (
-            <TripRecapContent memories={dayMemories} onJournal={openJournal} />
+            <TripRecapContent memories={dayMemories} />
           ) : null}
           {mode === "recap" ? (
             <AppText

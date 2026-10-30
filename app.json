@@ -38,6 +38,14 @@
       "expo-secure-store",
       "expo-sharing",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow WeGo to access the photos you choose to attach to a memory.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ],
+      [
         "expo-media-library",
         {
           "photosPermission": false,
