@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { useState } from "react";
-import { KeyboardAvoidingView, Platform, StyleSheet, View } from "react-native";
+import { ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ScreenSafeArea } from "@/components/common/screen-safe-area";
 import { GlassBackdrop } from "@/components/common/glass-backdrop";
@@ -28,6 +28,8 @@ import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 import type { TripMutation } from "../types/trip-details-types";
 import { getTripDetailsMode } from "../utils/trip-details-layout";
 import { getPlaceMapRegion } from "../utils/place-search";
+import { useDeleteTripPlaceMutation, useTripPlacesQuery, useTripQuery, useUpdateTripPlaceMutation } from "../api/trip-hooks";
+import { toTrip } from "../api/trip-adapters";
 
 function goBack() {
   if (router.canGoBack()) router.back();
@@ -43,11 +45,13 @@ export function TripStopDetailsScreen({
   stopId?: string;
   day?: string;
 }) {
-  const trip = useTripPreview((state) =>
-    state.trips.find((entry) => entry.id === tripId),
-  );
+  const tripQuery = useTripQuery(tripId);
+  const placesQuery = useTripPlacesQuery(tripId);
+  const trip = tripQuery.data ? toTrip(tripQuery.data, placesQuery.data ?? []) : undefined;
   const theme = useAppTheme();
   const { copy } = useTripDetailsCopy();
+  if (tripQuery.isPending || placesQuery.isPending)
+    return <ScreenSafeArea style={[styles.fill, { backgroundColor: theme.colors.background }]}><View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}><ActivityIndicator color={theme.colors.primary} /></View></ScreenSafeArea>;
   const stop = (
     day
       ? trip?.days.find((entry) => entry.date === day)?.stops
@@ -88,18 +92,15 @@ function StopDetailsContent({
   const { copy } = useTripDetailsCopy();
   const { copy: ongoingCopy } = useOngoingCopy();
   const today = useTripPreview((state) => state.today);
-  const visited = useTripPreview(
-    (state) =>
-      !!date && (state.visited[`${trip.id}:${date}`] ?? []).includes(stop.id),
-  );
-  const setVisited = useTripPreview((state) => state.setVisited);
-  const mutateTrip = useTripPreview((state) => state.mutateTrip);
+  const updatePlace = useUpdateTripPlaceMutation(trip.id);
+  const removePlace = useDeleteTripPlaceMutation(trip.id);
+  const visited = stop.visited ?? false;
   const [expandRequest, setExpandRequest] = useState(0);
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [removeError, setRemoveError] = useState(false);
   const [editing, setEditing] = useState(false);
   const editable = getTripDetailsMode(trip, today) !== "cancelled";
-  const canVisit = editable && !!date && date <= today;
+  const canVisit = editable;
   const catalogue = getPlaceSearchPreview(trip.destination);
   // Enrich legacy preview stops without overwriting saved coordinates or addresses.
   const place = { ...catalogue.find((entry) => entry.id === stop.id), ...stop };
@@ -107,15 +108,30 @@ function StopDetailsContent({
   const region = getPlaceMapRegion(mapPlaces);
   function commit(mutation: TripMutation) {
     if (!editable) return false;
-    const success = mutateTrip(trip.id, mutation);
-    if (success) {
+    if (mutation.kind === "remove") {
+      void removePlace.mutateAsync(mutation.stopId).then(() => {
+        setEditing(false);
+        setRemoveError(false);
+        goBack();
+      }).catch(() => setRemoveError(true));
+      return true;
+    }
+    if (mutation.kind !== "stop") return false;
+    if (mutation.targetDate !== date || mutation.values.time !== stop.time) {
+      setRemoveError(true);
+      return false;
+    }
+    void updatePlace.mutateAsync({
+      placeId: stop.id,
+      request: {
+        estimatedDuration: mutation.values.durationMinutes,
+        notes: mutation.values.note,
+      },
+    }).then(() => {
       setEditing(false);
       setRemoveError(false);
-      if (mutation.kind === "remove") goBack();
-      else if (mutation.kind === "stop" && mutation.targetDate !== date)
-        router.setParams({ day: mutation.targetDate ?? undefined });
-    }
-    return success;
+    }).catch(() => setRemoveError(true));
+    return true;
   }
   return (
     <GestureHandlerRootView style={styles.fill}>
@@ -196,26 +212,7 @@ function StopDetailsContent({
               date={date}
               onEdit={editable ? () => setEditing(true) : undefined}
               onRemove={editable ? () => setConfirmRemove(true) : undefined}
-              onPin={
-                editable
-                  ? (pinned) => {
-                      setRemoveError(
-                        !mutateTrip(trip.id, {
-                          kind: "stop",
-                          date,
-                          stopId: stop.id,
-                          targetDate: date,
-                          values: {
-                            time: stop.time,
-                            durationMinutes: stop.durationMinutes,
-                            note: stop.note,
-                            pinned,
-                          },
-                        }),
-                      );
-                    }
-                  : undefined
-              }
+              onPin={undefined}
             />
             <PlaceIntroduction place={place} />
           </PlaceDetailsContent>
@@ -290,8 +287,11 @@ function StopDetailsContent({
                   />
                 }
                 onPress={() => {
-                  if (canVisit && date)
-                    setVisited(trip.id, date, stop.id, !visited);
+                  if (canVisit)
+                    void updatePlace.mutateAsync({
+                      placeId: stop.id,
+                      request: { visited: !visited },
+                    }).catch(() => setRemoveError(true));
                 }}
               >
                 {copy.visited}

@@ -13,6 +13,8 @@ export type TripStop = {
   durationMinutes?: number;
   pinned?: boolean;
   note?: string;
+  visited?: boolean;
+  plannedOrder?: number | null;
   quickInfo?: {
     admission?: LocalizedText;
     closesAt?: string;

@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import {
   Keyboard,
   KeyboardAvoidingView,
+  Alert,
   Modal,
   Platform,
   Pressable,
@@ -43,10 +44,13 @@ import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 import { DateRangeSheet } from "./date-range-sheet";
 import { DestinationPickerSheet } from "./destination-picker-sheet";
 import { PlacePickerScreen } from "../screens/place-picker-screen";
+import { useCreateTripMutation } from "../api/trip-hooks";
+import { tripApi } from "../api/trip-api";
 
 type CreateTripModalProps = {
   visible: boolean;
   onClose: () => void;
+  onCreated?: (tripId: string) => void;
 };
 
 const webInputReset: TextStyle = Platform.select({
@@ -58,7 +62,7 @@ export function CreateTripModal(props: CreateTripModalProps) {
   return props.visible ? <CreateTripForm onClose={props.onClose} /> : null;
 }
 
-function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
+function CreateTripForm({ onClose, onCreated }: Omit<CreateTripModalProps, "visible">) {
   const theme = useAppTheme();
   const insets = useScreenInsets();
   const reduceMotion = useReducedMotion();
@@ -69,6 +73,7 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
     today: state.today,
     createDraft: state.createDraft,
   }));
+  const createTripMutation = useCreateTripMutation();
   const { control, setValue, handleSubmit, setError, setFocus, formState } =
     useForm<CreateTripInput, unknown, CreateTripOutput>({
       resolver: zodResolver(createTripSchema(copy, today)),
@@ -156,8 +161,43 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
   const handleBudgetChange = (text: string) =>
     budgetField.onChange(text.replace(/\D/g, ""));
   const submit = handleSubmit(
-    (values) => {
+    async (values) => {
       Keyboard.dismiss();
+      if (onCreated) {
+        try {
+          const created = await createTripMutation.mutateAsync({
+            name: values.title || generateDefaultTitle(values.destination, values.startDate, values.endDate, copy),
+            destination: values.destination,
+            startDate: values.startDate,
+            endDate: values.endDate,
+            ...(values.budget !== undefined ? { budget: values.budget } : {}),
+            ...(values.preferences.length ? { preferences: values.preferences } : {}),
+          });
+          const geocodedStops = values.initialStops.filter((stop) => stop.location);
+          try {
+            for (const [index, stop] of geocodedStops.entries()) {
+              await tripApi.addPlace(created.id, {
+                name: stop.name.vi,
+                latitude: stop.location!.latitude,
+                longitude: stop.location!.longitude,
+                ...(stop.address?.vi ? { address: stop.address.vi } : {}),
+                category: stop.kind.vi,
+                ...(stop.durationMinutes ? { estimatedDuration: stop.durationMinutes } : {}),
+                plannedOrder: index,
+              });
+            }
+          } catch {
+            Alert.alert("Chuyến đi đã được tạo", "Một số địa điểm chưa lưu được. Bạn có thể thêm lại trong chi tiết chuyến đi.");
+          }
+          if (values.initialStops.some((stop) => !stop.location)) {
+            Alert.alert("Một số địa điểm chưa được lưu", "Các địa điểm không có tọa độ không thể đồng bộ lên máy chủ.");
+          }
+          onCreated(created.id);
+        } catch {
+          setError("root", { message: "Không thể tạo chuyến đi. Hãy kiểm tra kết nối và thử lại." });
+        }
+        return;
+      }
       const success = createDraft({
         ...values,
         title:
@@ -1045,7 +1085,7 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
         >
           <AppButton
             variant="raised"
-            loading={isSubmitting}
+            loading={isSubmitting || createTripMutation.isPending}
             onPress={submit}
             style={styles.createButton}
           >

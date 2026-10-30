@@ -1,33 +1,29 @@
+import { router } from "expo-router";
 import { useBottomTabBarHeight } from "expo-router/js-tabs";
-import { FlatList, StyleSheet, View } from "react-native";
+import { ActivityIndicator, FlatList, StyleSheet, View } from "react-native";
 import { ScreenSafeArea } from "@/components/common/screen-safe-area";
 
 import { AppButton } from "@/components/ui/app-button";
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
 import { HomeHeader } from "@/features/home/components/home-header";
-import { PreviewNotice } from "@/features/home/components/home-primitives";
-import { useTripPreview } from "@/features/home/providers/trip-preview-provider";
-import type { Trip } from "@/features/home/types/home-types";
+import { toTrip } from "../api/trip-adapters";
+import { useTripsQuery } from "../api/trip-hooks";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { spacing, typography } from "@/theme/tokens";
 import { TripCard } from "../components/trip-card";
 import { useTripCopy } from "../i18n/trip-copy";
+import { CreateTripModal } from "../components/create-trip-modal";
+import { useState } from "react";
 
 export function TripsScreen() {
   const theme = useAppTheme();
   const tabBarHeight = useBottomTabBarHeight();
   const { copy, locale } = useTripCopy();
-
-  const { trips, today, openPanel } = useTripPreview((state) => ({
-    trips: state.trips,
-    today: state.today,
-    openPanel: state.openPanel,
-  }));
-
-  const handleTripPress = (trip: Trip) => {
-    openPanel({ kind: "plan", tripId: trip.id });
-  };
+  const [createVisible, setCreateVisible] = useState(false);
+  const tripsQuery = useTripsQuery();
+  const trips = tripsQuery.data?.map((trip) => toTrip(trip)) ?? [];
+  const today = new Date().toLocaleDateString("en-CA");
 
   return (
     <ScreenSafeArea
@@ -78,7 +74,7 @@ export function TripsScreen() {
                     color={theme.colors.onRaisedAction}
                   />
                 }
-                onPress={() => openPanel({ kind: "create" })}
+                onPress={() => setCreateVisible(true)}
                 style={styles.largeCreateButton}
               >
                 {copy.createTrip}
@@ -87,6 +83,16 @@ export function TripsScreen() {
           </View>
         }
         ListEmptyComponent={
+          tripsQuery.isPending ? (
+            <View style={{ padding: theme.spacing.xl, alignItems: "center" }}>
+              <ActivityIndicator color={theme.colors.primary} />
+            </View>
+          ) : tripsQuery.isError ? (
+            <View style={{ gap: theme.spacing.md, padding: theme.spacing.lg }}>
+              <AppText accessibilityRole="alert" tone="error">Không tải được danh sách chuyến đi.</AppText>
+              <AppButton variant="outline" onPress={() => void tripsQuery.refetch()}>Thử lại</AppButton>
+            </View>
+          ) : trips.length === 0 ? (
           <View
             style={[
               styles.emptyCard,
@@ -142,20 +148,24 @@ export function TripsScreen() {
               {copy.noTripsHint}
             </AppText>
           </View>
+          ) : null
         }
         renderItem={({ item }) => (
           <TripCard
             trip={item}
             today={today}
             locale={locale}
-            onPress={handleTripPress}
+            onPress={(trip) => router.push({ pathname: "/trip/[tripId]", params: { tripId: trip.id } })}
           />
         )}
-        ListFooterComponent={
-          <View style={{ marginTop: theme.spacing.sm }}>
-            <PreviewNotice />
-          </View>
-        }
+      />
+      <CreateTripModal
+        visible={createVisible}
+        onClose={() => setCreateVisible(false)}
+        onCreated={(tripId) => {
+          setCreateVisible(false);
+          router.push({ pathname: "/trip/[tripId]", params: { tripId } });
+        }}
       />
     </ScreenSafeArea>
   );

@@ -11,19 +11,20 @@ export function TripBacklogRow({
   stop,
   canEdit,
   onPress,
+  onMoveUp,
+  onMoveDown,
 }: {
   stop: TripStop;
   canEdit: boolean;
   onPress: () => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`${stop.name[locale]}, ${canEdit ? copy.schedule : copy.stopDetails}`}
-      onPress={onPress}
-      style={({ pressed }) => ({
+    <View
+      style={{
         flexDirection: "row",
         alignItems: "center",
         gap: theme.spacing.md,
@@ -31,27 +32,40 @@ export function TripBacklogRow({
         marginBottom: theme.spacing.sm,
         borderRadius: theme.radius.md,
         backgroundColor: theme.colors.surface,
-        opacity: pressed ? theme.motion.pressOpacity : 1,
-      })}
+        opacity: 1,
+      }}
     >
-      <Image
-        source={getStopImage(stop.id)}
-        contentFit="cover"
-        cachePolicy="memory-disk"
-        accessible={false}
-        style={{
-          width: theme.layout.sampleStopImageSize,
-          height: theme.layout.sampleStopImageSize,
-          borderRadius: theme.radius.sm,
-        }}
-      />
-      <View style={{ flex: 1, minWidth: 0, gap: theme.spacing.xs }}>
-        <AppText variant="label">{stop.name[locale]}</AppText>
-        <AppText variant="caption" tone="primary">
-          {canEdit ? copy.schedule : copy.noTime}
-        </AppText>
-      </View>
-      <AppIcon name="chevron" size={theme.layout.iconSmall} />
-    </Pressable>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${stop.name[locale]}, ${canEdit ? copy.schedule : copy.stopDetails}`}
+        onPress={onPress}
+        style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: theme.spacing.md }}
+      >
+        <Image
+          source={getStopImage(stop.id)}
+          contentFit="cover"
+          cachePolicy="memory-disk"
+          accessible={false}
+          style={{
+            width: theme.layout.sampleStopImageSize,
+            height: theme.layout.sampleStopImageSize,
+            borderRadius: theme.radius.sm,
+          }}
+        />
+        <View style={{ flex: 1, minWidth: 0, gap: theme.spacing.xs }}>
+          <AppText variant="label">{stop.name[locale]}</AppText>
+          <AppText variant="caption" tone="primary">
+            {stop.visited ? copy.visited : canEdit ? copy.schedule : copy.noTime}
+          </AppText>
+        </View>
+        <AppIcon name="chevron" size={theme.layout.iconSmall} />
+      </Pressable>
+      {canEdit && (onMoveUp || onMoveDown) ? (
+        <View style={{ gap: theme.spacing.xxs }}>
+          {onMoveUp ? <Pressable accessibilityRole="button" accessibilityLabel="Move place up" onPress={onMoveUp} hitSlop={8}><AppText tone="primary">↑</AppText></Pressable> : null}
+          {onMoveDown ? <Pressable accessibilityRole="button" accessibilityLabel="Move place down" onPress={onMoveDown} hitSlop={8}><AppText tone="primary">↓</AppText></Pressable> : null}
+        </View>
+      ) : null}
+    </View>
   );
 }

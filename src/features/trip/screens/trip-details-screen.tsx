@@ -1,15 +1,15 @@
 import { router } from "expo-router";
 import { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
 import Animated, { useSharedValue } from "react-native-reanimated";
 import { ScreenSafeArea } from "@/components/common/screen-safe-area";
 import { AppButton } from "@/components/ui/app-button";
 import { AppText } from "@/components/ui/app-text";
-import { useTripPreview } from "@/features/home/providers/trip-preview-provider";
 import type { Trip, TripStop } from "@/features/home/types/home-types";
 import { getDayProgress } from "@/features/home/utils/day-progress";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useScreenInsets } from "@/hooks/use-screen-insets";
+import { useTripPreview } from "@/features/home/providers/trip-preview-provider";
 import { layout } from "@/theme/tokens";
 import {
   TripDaySelector,
@@ -34,7 +34,6 @@ import { TripStopRow } from "../components/trip-stop-row";
 import { TripBacklogRow } from "../components/trip-backlog-row";
 import { TripRecapContent } from "../components/trip-recap-content";
 import { TripDetailsActions } from "../components/trip-details-actions";
-import { TripUndoNotice } from "../components/trip-undo-notice";
 import {
   TripStartNode,
   TripTimelineEmpty,
@@ -43,9 +42,18 @@ import {
 import { useTripTimelineScroll } from "../hooks/use-trip-timeline-scroll";
 import { useTripTimelineDrag } from "../hooks/use-trip-timeline-drag";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
+import { toTrip } from "../api/trip-adapters";
+import {
+  useAddTripPlaceMutation,
+  useDeleteTripMutation,
+  useDeleteTripPlaceMutation,
+  useTripPlacesQuery,
+  useTripQuery,
+  useUpdateTripMutation,
+  useUpdateTripPlaceMutation,
+} from "../api/trip-hooks";
 import type {
   TripMutation,
-  TripScheduleSnapshot,
   TripDetailsSheetState,
 } from "../types/trip-details-types";
 import {
@@ -85,11 +93,23 @@ export function TripDetailsScreen({
   selectedDate?: string;
   expandMap?: boolean;
 }) {
-  const trip = useTripPreview((state) =>
-    state.trips.find((item) => item.id === tripId),
-  );
+  const tripQuery = useTripQuery(tripId);
+  const placesQuery = useTripPlacesQuery(tripId);
   const { copy } = useTripDetailsCopy();
   const theme = useAppTheme();
+  if (tripQuery.isPending || placesQuery.isPending)
+    return <ScreenSafeArea style={[styles.fill, { backgroundColor: theme.colors.background }]}>
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}><ActivityIndicator color={theme.colors.primary} /></View>
+    </ScreenSafeArea>;
+  if (tripQuery.isError || placesQuery.isError)
+    return <ScreenSafeArea style={[styles.fill, { backgroundColor: theme.colors.background }]}>
+      <View style={{ padding: theme.spacing.xl, gap: theme.spacing.lg }}>
+        <DetailIconButton name="back" label={copy.back} onPress={backToTrips} />
+        <AppText accessibilityRole="alert" tone="error">Không tải được chuyến đi.</AppText>
+        <AppButton variant="outline" onPress={() => { void tripQuery.refetch(); void placesQuery.refetch(); }}>Thử lại</AppButton>
+      </View>
+    </ScreenSafeArea>;
+  const trip = tripQuery.data ? toTrip(tripQuery.data, placesQuery.data ?? []) : undefined;
   if (!trip)
     return (
       <ScreenSafeArea
@@ -134,26 +154,21 @@ function TripDetailsContent({
   const theme = useAppTheme();
   const insets = useScreenInsets();
   const { copy } = useTripDetailsCopy();
-  const {
-    today,
-    visited,
-    memories,
-    mutateTrip,
-    deleteTrip,
-    setVisited,
-    openPanel,
-    panelOpen,
-  } = useTripPreview((state) => ({
+  const placesQuery = useTripPlacesQuery(trip.id);
+  const updateTrip = useUpdateTripMutation(trip.id);
+  const addPlaceMutation = useAddTripPlaceMutation(trip.id);
+  const updatePlaceMutation = useUpdateTripPlaceMutation(trip.id);
+  const removePlaceMutation = useDeleteTripPlaceMutation(trip.id);
+  const deleteTripMutation = useDeleteTripMutation();
+  const [commitError, setCommitError] = useState<string | null>(null);
+  const { today, visited, memories, openPanel, panelOpen } = useTripPreview((state) => ({
     today: state.today,
     visited: state.visited,
     memories: state.memories,
-    mutateTrip: state.mutateTrip,
-    deleteTrip: state.deleteTrip,
-    setVisited: state.setVisited,
     openPanel: state.openPanel,
     panelOpen: state.panel !== null,
   }));
-  const [backlog, setBacklog] = useState(false);
+  const [backlog, setBacklog] = useState(() => (trip.unscheduledStops?.length ?? 0) > 0);
   const [sheet, setSheet] = useState<TripDetailsSheetState | null>(null);
   const [editHistory, setEditHistory] = useState(false);
   const [highlight, setHighlight] = useState<{
@@ -172,10 +187,6 @@ function TripDetailsContent({
   const [selectorHeight, setSelectorHeight] = useState<number>(
     theme.layout.touchTarget,
   );
-  const [undo, setUndo] = useState<{
-    snapshot: TripScheduleSnapshot;
-    message: string;
-  } | null>(null);
   const mode = getTripDetailsMode(trip, today);
   const mapFirstLayout = mode === "planning" || mode === "live";
   const canEdit = mode === "planning" || mode === "live" || editHistory;
@@ -261,35 +272,62 @@ function TripDetailsContent({
     : rows;
 
   function commit(mutation: TripMutation) {
-    const snapshot = {
-      days: trip.days,
-      unscheduledStops: trip.unscheduledStops,
-      startDate: trip.startDate,
-      endDate: trip.endDate,
-    };
-    const success = mutateTrip(trip.id, mutation);
-    if (success) {
-      if (mutation.kind === "info") setUndo(null);
-      else
-        setUndo({
-          snapshot,
-          message: mutation.kind === "remove" ? copy.removed : copy.changed,
+    setCommitError(null);
+    const perform = async () => {
+      if (mutation.kind === "info") {
+        await updateTrip.mutateAsync({
+          name: mutation.values.title,
+          destination: mutation.values.destination ?? trip.destination,
+          ...(mutation.dateRange ? mutation.dateRange : { startDate: trip.startDate, endDate: trip.endDate }),
+          preferences: mutation.values.preferences,
+          ...(mutation.values.budget ? { budget: mutation.values.budget.amount } : {}),
+          ...(mutation.values.notes ? { description: mutation.values.notes } : { description: "" }),
         });
-      if (mutation.kind === "add") setBacklog(true);
-      if (
-        mutation.kind === "stop" &&
-        mutation.targetDate &&
-        mutation.values.time
-      ) {
-        setBacklog(false);
-        router.setParams({ day: mutation.targetDate });
+      } else if (mutation.kind === "dates") {
+        await updateTrip.mutateAsync({ startDate: mutation.startDate, endDate: mutation.endDate });
+      } else if (mutation.kind === "add") {
+        for (const [index, stop] of mutation.stops.entries()) {
+          if (!stop.location) throw new Error("PLACE_COORDINATES_REQUIRED");
+          await addPlaceMutation.mutateAsync({
+            name: stop.name.vi,
+            latitude: stop.location.latitude,
+            longitude: stop.location.longitude,
+            ...(stop.address?.vi ? { address: stop.address.vi } : {}),
+            category: stop.kind.vi,
+            ...(stop.durationMinutes ? { estimatedDuration: stop.durationMinutes } : {}),
+            ...(stop.note ? { notes: stop.note } : {}),
+            plannedOrder: (placesQuery.data?.length ?? 0) + index,
+          });
+        }
+        setBacklog(true);
+      } else if (mutation.kind === "remove") {
+        await removePlaceMutation.mutateAsync(mutation.stopId);
+      } else if (mutation.kind === "reorder") {
+        for (const [index, placeId] of mutation.ids.entries()) {
+          await updatePlaceMutation.mutateAsync({ placeId, request: { plannedOrder: index } });
+        }
+      } else if (mutation.kind === "stop") {
+        const stop = trip.unscheduledStops?.find((item) => item.id === mutation.stopId);
+        await updatePlaceMutation.mutateAsync({
+          placeId: mutation.stopId,
+          request: {
+            ...(mutation.values.durationMinutes ? { estimatedDuration: mutation.values.durationMinutes } : {}),
+            ...(mutation.values.note !== undefined ? { notes: mutation.values.note } : {}),
+            ...(stop ? { visited: stop.visited ?? false } : {}),
+          },
+        });
+      } else {
+        throw new Error("ITINERARY_FIELDS_NOT_SUPPORTED");
       }
-      setSheet(null);
-    }
-    return success;
+    };
+    void perform().then(() => setSheet(null)).catch((error: unknown) => {
+      setCommitError(error instanceof Error && error.message === "PLACE_COORDINATES_REQUIRED"
+        ? "Địa điểm cần có tọa độ để lưu lên máy chủ."
+        : "Không lưu được thay đổi. Hãy thử lại.");
+    });
+    return true;
   }
   function openStop(stop: TripStop, date: string | null = day?.date ?? null) {
-    setUndo(null);
     router.push({
       pathname: "/trip/place-details",
       params: {
@@ -306,14 +344,12 @@ function TripDetailsContent({
     openPlacePicker(backlog ? null : (day?.date ?? null));
   }
   function openPlacePicker(date: string | null) {
-    setUndo(null);
     router.push({
       pathname: "/trip/add-places",
       params: { tripId: trip.id, ...(date ? { day: date } : {}) },
     });
   }
   function selectDate(date: string | null) {
-    if (date === null ? !backlog : backlog || date !== day?.date) setUndo(null);
     setBacklog(date === null);
     if (date) router.setParams({ day: date });
   }
@@ -333,6 +369,16 @@ function TripDetailsContent({
     );
     if (index >= 0) jump(index);
   }
+  function movePlace(index: number, offset: -1 | 1) {
+    const destinationIndex = index + offset;
+    const current = unscheduled[index];
+    const neighbor = unscheduled[destinationIndex];
+    if (!current || !neighbor) return;
+    void Promise.all([
+      updatePlaceMutation.mutateAsync({ placeId: current.stop.id, request: { plannedOrder: destinationIndex } }),
+      updatePlaceMutation.mutateAsync({ placeId: neighbor.stop.id, request: { plannedOrder: index } }),
+    ]).catch(() => setCommitError("Không đổi được thứ tự địa điểm."));
+  }
   const header = (
     <TripDetailsHeader
       trip={trip}
@@ -344,14 +390,18 @@ function TripDetailsContent({
   );
 
   function renderTimelineRow({ item }: { item: TimelineRow }) {
-    if (item.kind === "backlog")
+    if (item.kind === "backlog") {
+      const index = unscheduled.findIndex((entry) => entry.stop.id === item.stop.id);
       return (
         <TripBacklogRow
           stop={item.stop}
           canEdit={canEdit}
           onPress={() => openStop(item.stop, item.date)}
+          onMoveUp={index > 0 ? () => movePlace(index, -1) : undefined}
+          onMoveDown={index >= 0 && index < unscheduled.length - 1 ? () => movePlace(index, 1) : undefined}
         />
       );
+    }
     if (item.kind === "start")
       return (
         <TripStartNode
@@ -392,15 +442,10 @@ function TripDetailsContent({
         }
         onVisited={
           mode === "live" && day?.date === today
-            ? () =>
-                setVisited(
-                  trip.id,
-                  today,
-                  item.stop.id,
-                  !(visited[`${trip.id}:${today}`] ?? []).includes(
-                    item.stop.id,
-                  ),
-                )
+            ? () => void updatePlaceMutation.mutateAsync({
+                placeId: item.stop.id,
+                request: { visited: !item.stop.visited },
+              }).catch(() => setCommitError("Không cập nhật được trạng thái địa điểm."))
             : undefined
         }
       />
@@ -690,19 +735,7 @@ function TripDetailsContent({
               />
             </View>
           </View>
-          {undo ? (
-            <TripUndoNotice
-              message={undo.message}
-              onDismiss={() => setUndo(null)}
-              onUndo={() => {
-                mutateTrip(trip.id, {
-                  kind: "restore",
-                  snapshot: undo.snapshot,
-                });
-                setUndo(null);
-              }}
-            />
-          ) : null}
+          {commitError ? <AppText accessibilityRole="alert" tone="error" style={{ paddingHorizontal: theme.spacing.lg }}>{commitError}</AppText> : null}
           <TripDetailsActions
             trip={trip}
             mode={mode}
@@ -717,7 +750,8 @@ function TripDetailsContent({
             }}
             onVisited={() => {
               if (isLiveToday && !backlog && progress.nextStop)
-                setVisited(trip.id, today, progress.nextStop.id, true);
+                void updatePlaceMutation.mutateAsync({ placeId: progress.nextStop.id, request: { visited: true } })
+                  .catch(() => setCommitError("Không cập nhật được trạng thái địa điểm."));
             }}
             onJournal={openJournal}
             onInfo={() => setSheet({ kind: "info" })}
@@ -736,8 +770,7 @@ function TripDetailsContent({
           onEditHistory={() => setEditHistory(true)}
           onJournal={openJournal}
           onDelete={() => {
-            deleteTrip(trip.id);
-            backToTrips();
+            void deleteTripMutation.mutateAsync(trip.id).then(backToTrips).catch(() => setCommitError("Không xóa được chuyến đi."));
           }}
         />
       ) : null}

@@ -54,7 +54,7 @@ export function PlacePickerScreen({
   trip?: Trip;
   initialDate?: string | null;
   initialSelected?: TripStop[];
-  onApply: (stops: TripStop[], date: string | null) => boolean | void;
+  onApply: (stops: TripStop[], date: string | null) => boolean | void | Promise<boolean | void>;
   onClose: () => void;
 }) {
   const theme = useAppTheme();
@@ -83,6 +83,7 @@ export function PlacePickerScreen({
     region ? { latitude: region.latitude, longitude: region.longitude } : null,
   );
   const [saveError, setSaveError] = useState(false);
+  const [saving, setSaving] = useState(false);
   const { control, handleSubmit, reset } = useForm<{ name: string }>({
     defaultValues: { name: "" },
     resolver: zodResolver(
@@ -190,10 +191,17 @@ export function PlacePickerScreen({
       setSelected((stops) => [...stops, focus]);
     setFocus(undefined);
   }
-  function apply() {
+  async function apply() {
     if (!canApply) return;
     Keyboard.dismiss();
-    setSaveError(onApply(chosen, date) === false);
+    setSaving(true);
+    try {
+      setSaveError((await onApply(chosen, date)) === false);
+    } catch {
+      setSaveError(true);
+    } finally {
+      setSaving(false);
+    }
   }
   const emptyTitle = selectedOnly ? copy.emptySelection : copy.empty;
   const nameInput = (
@@ -532,6 +540,7 @@ export function PlacePickerScreen({
             ) : null}
             <AppButton
               variant="raised"
+              loading={saving}
               disabled={!inPreview && !canApply}
               onPress={inPreview ? confirmPlace : apply}
             >
