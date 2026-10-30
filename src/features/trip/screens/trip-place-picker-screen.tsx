@@ -56,6 +56,7 @@ export function TripPlacePickerScreen({
         for (const [index, stop] of stops.entries()) {
           if (!stop.location) throw new Error("PLACE_COORDINATES_REQUIRED");
           await addPlace.mutateAsync({
+            ...(stop.providerPlaceId ? { providerPlaceId: stop.providerPlaceId } : {}),
             name: stop.name.vi,
             latitude: stop.location.latitude,
             longitude: stop.location.longitude,

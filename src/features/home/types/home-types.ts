@@ -4,6 +4,7 @@ export type HomeScenario = "new" | "upcoming" | "ongoing" | "returning";
 export type LocalizedText = { vi: string; en: string };
 export type TripStop = {
   id: string;
+  providerPlaceId?: string;
   time: string;
   name: LocalizedText;
   kind: LocalizedText;

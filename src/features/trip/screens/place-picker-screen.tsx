@@ -1,4 +1,4 @@
-import { useDeferredValue, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -36,6 +36,7 @@ import {
 import { DetailIconButton } from "../components/trip-details-header";
 import { PlaceSearchMap } from "../components/place-search-map";
 import { PlaceDetailsContent } from "../components/place-details-content";
+import { useDebouncedValue, usePlaceSearchQuery } from "../api/maps-hooks";
 import {
   PlaceSearchResultRow,
   PlaceTargetSelector,
@@ -70,7 +71,8 @@ export function PlacePickerScreen({
   );
   const [date, setDate] = useState(initialDate);
   const [query, setQuery] = useState("");
-  const deferredQuery = useDeferredValue(query);
+  const deferredQuery = useDebouncedValue(query);
+  const remoteSearch = usePlaceSearchQuery(deferredQuery, region ? { latitude: region.latitude, longitude: region.longitude } : undefined);
   const [selectedOnly, setSelectedOnly] = useState(false);
   // undefined = results, null = custom map pin, otherwise a result awaiting confirmation.
   const [focus, setFocus] = useState<TripStop | null | undefined>(undefined);
@@ -116,7 +118,22 @@ export function PlacePickerScreen({
       (stop) => !catalog.some((entry) => entry.id === stop.id),
     ),
   ];
-  const results = searchPlaces(
+  const remotePlaces: TripStop[] = (remoteSearch.data ?? []).flatMap((place) => {
+    if (place.latitude === null || place.longitude === null) return [];
+    const id = place.providerPlaceId ? `google:${place.providerPlaceId}` : `google:${place.name}:${place.latitude}:${place.longitude}`;
+    return [{
+      id,
+      ...(place.providerPlaceId ? { providerPlaceId: place.providerPlaceId } : {}),
+      time: "",
+      name: { vi: place.name, en: place.name },
+      kind: { vi: place.category ?? "Äá»‹a Ä‘iá»ƒm", en: place.category ?? "Place" },
+      ...(place.address ? { address: { vi: place.address, en: place.address } } : {}),
+      location: { latitude: place.latitude, longitude: place.longitude },
+    }];
+  });
+  const results = deferredQuery.trim().length >= 2
+    ? searchPlaces((selectedOnly ? chosen : remotePlaces).filter((stop) => !existing.some((entry) => entry.id === stop.id || (!!stop.providerPlaceId && entry.providerPlaceId === stop.providerPlaceId))), "")
+    : searchPlaces(
     (selectedOnly ? chosen : available).filter(
       (stop) => !existing.some((entry) => entry.id === stop.id),
     ),
@@ -152,7 +169,7 @@ export function PlacePickerScreen({
   const chooseCustom = handleSubmit(({ name }) => {
     if (!coordinate) return;
     const stop: TripStop = {
-      id: `custom-${Date.now()}`,
+      id: `custom-${selected.length + 1}`,
       time: "",
       name: { vi: name, en: name },
       kind: { vi: "Địa điểm riêng", en: "Private place" },
@@ -265,6 +282,9 @@ export function PlacePickerScreen({
                   {inPreview ? copy.mapTitle : copy.title}
                 </AppText>
               </View>
+              {deferredQuery.trim().length >= 2 && !remoteSearch.isFetching && !remoteSearch.isError ? (
+                <AppText variant="caption" tone="muted" style={{ paddingHorizontal: theme.spacing.lg }}>Powered by Geoapify · © OpenStreetMap contributors</AppText>
+              ) : null}
             </View>
           ) : null}
           {focus ? (
@@ -322,6 +342,12 @@ export function PlacePickerScreen({
                   }
                 />
               </View>
+              {deferredQuery.trim().length >= 2 && remoteSearch.isFetching ? (
+                <AppText variant="caption" tone="muted" style={{ paddingHorizontal: theme.spacing.lg }}>{copy.searchLoading}</AppText>
+              ) : null}
+              {deferredQuery.trim().length >= 2 && remoteSearch.isError ? (
+                <AppText accessibilityRole="alert" variant="caption" tone="error" style={{ paddingHorizontal: theme.spacing.lg }}>{copy.searchFailed}</AppText>
+              ) : null}
               <FlatList
                 data={results}
                 keyExtractor={(item) => item.id}

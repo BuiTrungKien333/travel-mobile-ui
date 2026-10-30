@@ -21,6 +21,7 @@ import {
 } from "../components/trip-details-header";
 import { TripDetailsPanels } from "../components/trip-details-panels";
 import { TripMapPreview } from "../components/trip-map-preview";
+import { PlaceSearchMap } from "../components/place-search-map";
 import {
   TripPlanningMap,
   type PlanningMapGeometry,
@@ -28,6 +29,7 @@ import {
 import { usePlanningMapCollapse } from "../hooks/use-planning-map-collapse";
 import { TripPlanningDaySelector } from "../components/trip-planning-day-selector";
 import { appendTripDayRange } from "../utils/append-trip-day";
+import { getPlaceMapRegion } from "../utils/place-search";
 import { tripDuration } from "@/features/home/utils/select-home";
 import { tripFormLimits } from "../constants/trip-form";
 import { TripStopRow } from "../components/trip-stop-row";
@@ -289,6 +291,7 @@ function TripDetailsContent({
         for (const [index, stop] of mutation.stops.entries()) {
           if (!stop.location) throw new Error("PLACE_COORDINATES_REQUIRED");
           await addPlaceMutation.mutateAsync({
+            ...(stop.providerPlaceId ? { providerPlaceId: stop.providerPlaceId } : {}),
             name: stop.name.vi,
             latitude: stop.location.latitude,
             longitude: stop.location.longitude,
@@ -506,6 +509,7 @@ function TripDetailsContent({
     </View>
   );
 
+  const planningMapRegion = getPlaceMapRegion(timedStops);
   const planningHeader = showMap ? (
     <TripPlanningMap
       header={header}
@@ -527,6 +531,7 @@ function TripDetailsContent({
       resizeLock={mapResizeLock}
       collapsedByScroll={planningScroll.hidden}
       expandRequest={mapExpandRequest}
+      mapContent={planningMapRegion ? <PlaceSearchMap places={timedStops} region={planningMapRegion} custom={false} fitContainer showRoute /> : undefined}
     />
   ) : (
     <View style={{ paddingHorizontal: theme.spacing.lg }}>{header}</View>

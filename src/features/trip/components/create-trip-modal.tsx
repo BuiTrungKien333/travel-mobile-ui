@@ -177,6 +177,7 @@ function CreateTripForm({ onClose, onCreated }: Omit<CreateTripModalProps, "visi
           try {
             for (const [index, stop] of geocodedStops.entries()) {
               await tripApi.addPlace(created.id, {
+                ...(stop.providerPlaceId ? { providerPlaceId: stop.providerPlaceId } : {}),
                 name: stop.name.vi,
                 latitude: stop.location!.latitude,
                 longitude: stop.location!.longitude,

@@ -22,6 +22,7 @@ export function toTripStop(value: TripPlaceResponse): TripStop {
   const category = place.category ?? "Place";
   return {
     id: place.id,
+    ...(place.providerPlaceId ? { providerPlaceId: place.providerPlaceId } : {}),
     time: "",
     name: { vi: name, en: name },
     kind: { vi: category, en: category },

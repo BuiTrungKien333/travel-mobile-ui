@@ -5,9 +5,7 @@ import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import type { Trip, TripDay } from "@/features/home/types/home-types";
-import { OngoingWeatherDetails } from "@/features/home/components/ongoing-weather-details";
-import { ongoingWeatherSnapshot } from "@/features/home/data/ongoing-preview";
-import { getTripForecast } from "../data/trip-details-preview";
+import { useWeatherForecastQuery } from "../api/maps-hooks";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 import type {
   TripDetailsSheetState,
@@ -57,11 +55,12 @@ export function TripDetailsPanels({
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
   const closeSheet = () => setSheet(null);
-  const forecast = getTripForecast(trip, day?.date);
-  const currentWeather =
-    ongoingWeatherSnapshot.tripId === trip.id &&
-    ongoingWeatherSnapshot.date === day?.date &&
-    day?.date === today;
+  const weatherPoint = day?.stops.find((stop) => stop.location)?.location
+    ?? trip.unscheduledStops?.find((stop) => stop.location)?.location;
+  const weatherQuery = useWeatherForecastQuery(
+    weatherPoint?.latitude, weatherPoint?.longitude, day?.date, sheet?.kind === "weather",
+  );
+  const forecast = weatherQuery.data?.dailySummaries.find((entry) => entry.date === day?.date);
   const scheduledDay = day ? { ...day, stops: scheduledStops(day) } : undefined;
   const sheetTitle = sheet
     ? {
@@ -222,18 +221,8 @@ export function TripDetailsPanels({
             />
           ) : null}
           {sheet.kind === "weather" ? (
-            currentWeather ? (
-              <OngoingWeatherDetails
-                tripId={trip.id}
-                today={today}
-                destination={trip.destination}
-              />
-            ) : (
-              <TripForecastDetails
-                forecast={forecast}
-                destination={trip.destination}
-              />
-            )
+            <TripForecastDetails forecast={forecast} destination={trip.destination}
+              loading={weatherQuery.isFetching} error={weatherQuery.isError} hasCoordinates={!!weatherPoint} />
           ) : null}
           {sheet.kind === "dates" ? (
             <AppText variant="caption" tone="muted">
