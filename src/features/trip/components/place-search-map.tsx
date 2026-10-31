@@ -1,87 +1,100 @@
 import type { ReactNode } from "react";
-import { Platform, View } from "react-native";
-import MapView, { Marker, Polyline, PROVIDER_GOOGLE, type Region } from "react-native-maps";
+import { View } from "react-native";
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
-import { useAppTheme } from "@/hooks/use-app-theme";
 import type { TripStop } from "@/features/home/types/home-types";
+import { useAppTheme } from "@/hooks/use-app-theme";
 import { usePlaceRouteQuery } from "../api/maps-hooks";
 import { usePlaceSearchCopy } from "../i18n/place-search-copy";
 import type { PlaceCoordinate, PlaceMapRegion } from "../utils/place-search";
 
-function decodePolyline(encoded: string) {
-  const points: PlaceCoordinate[] = [];
-  let index = 0, latitude = 0, longitude = 0;
-  while (index < encoded.length) {
-    let result = 0, shift = 0, value: number;
-    do { value = encoded.charCodeAt(index++) - 63; result |= (value & 0x1f) << shift; shift += 5; } while (value >= 0x20 && index < encoded.length);
-    latitude += result & 1 ? ~(result >> 1) : result >> 1;
-    result = 0; shift = 0;
-    do { value = encoded.charCodeAt(index++) - 63; result |= (value & 0x1f) << shift; shift += 5; } while (value >= 0x20 && index < encoded.length);
-    longitude += result & 1 ? ~(result >> 1) : result >> 1;
-    points.push({ latitude: latitude / 1e5, longitude: longitude / 1e5 });
-  }
-  return points;
-}
-
+/** Web fallback: the native map package is intentionally not loaded by SSR. */
 export function PlaceSearchMap({
-  places, region, focused, custom, onMove, fitContainer = false, controlsTop, extraControl, showRoute = false,
+  places,
+  custom,
+  fitContainer = false,
+  controlsTop,
+  extraControl,
+  showRoute = false,
 }: {
-  places: TripStop[]; region: PlaceMapRegion; focused?: TripStop; custom: boolean;
-  onMove?: (coordinate: PlaceCoordinate) => void; fitContainer?: boolean;
-  controlsTop?: number; extraControl?: ReactNode;
+  places: TripStop[];
+  region: PlaceMapRegion;
+  focused?: TripStop;
+  custom: boolean;
+  onMove?: (coordinate: PlaceCoordinate) => void;
+  fitContainer?: boolean;
+  controlsTop?: number;
+  extraControl?: ReactNode;
   showRoute?: boolean;
 }) {
   const theme = useAppTheme();
-  const { copy, locale } = usePlaceSearchCopy();
+  const { copy } = usePlaceSearchCopy();
   const coordinates = places.flatMap((place) => place.location ? [place.location] : []);
   const route = usePlaceRouteQuery(coordinates, showRoute && !custom);
-  const routeCoordinates = route.data?.encodedPolyline ? decodePolyline(route.data.encodedPolyline) : [];
-  const center = focused?.location ?? { latitude: region.latitude, longitude: region.longitude };
-  const span = focused?.location ? 0.02 : Math.max(region.span, 0.02);
-  const initialRegion: Region = { ...center, latitudeDelta: span * 1.5, longitudeDelta: span * 1.5 };
-  const mapStyle = { flex: fitContainer ? 1 : undefined, height: fitContainer ? undefined : theme.layout.tripMapPreviewHeight, minHeight: fitContainer ? 0 : undefined, overflow: "hidden" as const, borderRadius: fitContainer ? theme.radius.none : theme.radius.lg };
-  const onMapClick = custom && onMove ? (event: { nativeEvent: { coordinate: { latitude: number; longitude: number } } }) => {
-    onMove(event.nativeEvent.coordinate);
-  } : undefined;
+  const routeLabel = route.isError
+    ? copy.routeUnavailable
+    : route.data
+      ? (route.data.distanceMeters / 1000).toFixed(1) + " km · " +
+        Math.max(1, Math.round(route.data.durationSeconds / 60)) + " min"
+      : copy.liveMapLabel;
 
   return (
-    <View style={[mapStyle, { backgroundColor: theme.colors.surfaceTint }]}>
-      {Platform.OS === "android" || Platform.OS === "ios" ? (
-        <MapView
-          key={`${center.latitude}:${center.longitude}:${places.map((place) => place.id).join(",")}`}
-          provider={PROVIDER_GOOGLE}
-          style={{ flex: 1 }}
-          initialRegion={initialRegion}
-          onPress={onMapClick}
-          onLongPress={onMapClick}
-          showsCompass
-          showsUserLocation={false}
-          toolbarEnabled={false}
-        >
-          {places.flatMap((place, index) => place.location ? [
-            <Marker key={place.id} identifier={place.id} coordinate={place.location}
-              title={place.name[locale]} description={place.address?.[locale]}
-              pinColor={index === 0 ? theme.colors.primary : undefined} draggable={custom && place.id === focused?.id}
-              onDragEnd={custom && onMove ? (event) => onMove(event.nativeEvent.coordinate) : undefined} />,
-          ] : [])}
-          {routeCoordinates.length > 1 ? <Polyline coordinates={routeCoordinates} strokeColor={theme.colors.primary} strokeWidth={5} /> : null}
-        </MapView>
-      ) : (
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: theme.spacing.lg, gap: theme.spacing.sm }}>
-          <AppIcon name="pin" size={theme.layout.iconLarge} color={theme.colors.textSecondary} />
-          <AppText variant="caption" tone="muted">{copy.nativeMapRequired}</AppText>
-        </View>
-      )}
+    <View
+      style={{
+        flex: fitContainer ? 1 : undefined,
+        height: fitContainer ? undefined : theme.layout.tripMapPreviewHeight,
+        minHeight: fitContainer ? 0 : undefined,
+        overflow: "hidden",
+        borderRadius: fitContainer ? theme.radius.none : theme.radius.lg,
+        backgroundColor: theme.colors.surfaceTint,
+        alignItems: "center",
+        justifyContent: "center",
+        padding: theme.spacing.lg,
+        gap: theme.spacing.sm,
+      }}
+    >
+      <AppIcon
+        name="pin"
+        size={theme.layout.iconLarge}
+        color={theme.colors.textSecondary}
+      />
+      <AppText variant="caption" tone="muted">
+        {copy.nativeMapRequired}
+      </AppText>
       {custom ? (
-        <View pointerEvents="none" style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0, alignItems: "center", justifyContent: "center" }}>
-          <AppIcon name="pin" size={theme.layout.iconLarge} color={theme.colors.primaryText} />
+        <View pointerEvents="none" style={{ position: "absolute" }}>
+          <AppIcon
+            name="pin"
+            size={theme.layout.iconLarge}
+            color={theme.colors.primaryText}
+          />
         </View>
       ) : null}
-      {extraControl ? <View style={{ position: "absolute", left: theme.spacing.sm, top: controlsTop ?? theme.spacing.sm }}>{extraControl}</View> : null}
-      <View pointerEvents="none" style={{ position: "absolute", top: theme.spacing.sm, left: theme.spacing.sm, maxWidth: "55%", padding: theme.spacing.xs, backgroundColor: theme.colors.glassFallback, borderRadius: theme.radius.sm }}>
+      {extraControl ? (
+        <View
+          style={{
+            position: "absolute",
+            left: theme.spacing.sm,
+            top: controlsTop ?? theme.spacing.sm,
+          }}
+        >
+          {extraControl}
+        </View>
+      ) : null}
+      <View
+        pointerEvents="none"
+        style={{
+          position: "absolute",
+          top: theme.spacing.sm,
+          left: theme.spacing.sm,
+          maxWidth: "55%",
+          padding: theme.spacing.xs,
+          backgroundColor: theme.colors.glassFallback,
+          borderRadius: theme.radius.sm,
+        }}
+      >
         <AppText variant="caption" tone="muted">
-          {route.isError ? copy.routeUnavailable : route.data ? `${(route.data.distanceMeters / 1000).toFixed(1)} km · ${Math.max(1, Math.round(route.data.durationSeconds / 60))} min` : copy.liveMapLabel} · Geoapify · © OpenStreetMap contributors
+          {routeLabel} · Geoapify · © OpenStreetMap contributors
         </AppText>
       </View>
     </View>
