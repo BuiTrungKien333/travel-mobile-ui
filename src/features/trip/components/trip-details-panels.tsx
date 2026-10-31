@@ -21,6 +21,7 @@ import { TripReorder } from "./trip-reorder";
 import { TripOptimizationSheet } from "./trip-optimization-preview";
 import { TripDeleteAlert } from "./trip-delete-alert";
 import { tripTransportModes } from "../constants/trip-form";
+import type { ItineraryOptimizationProposal } from "../api/itinerary-types";
 import {
   mergeScheduledOrder,
   scheduledStops,
@@ -37,6 +38,12 @@ type Props = {
   onEditHistory: () => void;
   onJournal: () => void;
   onDelete: () => void;
+  optimization?: { sourceUpdatedAt: string; proposal: ItineraryOptimizationProposal };
+  optimizing: boolean;
+  applyingOptimization: boolean;
+  optimizationError?: string;
+  onRetryOptimization: () => void;
+  onApplyOptimization: () => void;
 };
 
 export function TripDetailsPanels({
@@ -50,6 +57,12 @@ export function TripDetailsPanels({
   onEditHistory,
   onJournal: openJournal,
   onDelete,
+  optimization,
+  optimizing,
+  applyingOptimization,
+  optimizationError,
+  onRetryOptimization,
+  onApplyOptimization,
 }: Props) {
   const [hostReady, setHostReady] = useState(false);
   const theme = useAppTheme();
@@ -170,7 +183,12 @@ export function TripDetailsPanels({
           ) : null}
           {sheet.kind === "day" && day ? (
             canEdit ? (
-              <TripDayScheduleForm trip={trip} day={day} onCommit={commit} />
+              <>
+                <AppText variant="caption" tone="muted">
+                  {copy.daySettingsBackendHint}
+                </AppText>
+                <TripDayScheduleForm trip={trip} day={day} onCommit={commit} />
+              </>
             ) : (
               <>
                 <AppText>
@@ -185,6 +203,9 @@ export function TripDetailsPanels({
           ) : null}
           {sheet.kind === "transport" && day && canEdit ? (
             <>
+              <AppText variant="caption" tone="muted">
+                {copy.daySettingsBackendHint}
+              </AppText>
               {tripTransportModes.map((transport) => (
                 <AppButton
                   key={transport}
@@ -234,16 +255,13 @@ export function TripDetailsPanels({
       {sheet?.kind === "optimize" ? (
         <TripOptimizationSheet
           key={`${trip.id}:${day?.date ?? "none"}`}
-          day={scheduledDay}
+          proposal={optimization?.proposal}
+          loading={optimizing}
+          applying={applyingOptimization}
+          error={optimizationError}
+          onRetry={onRetryOptimization}
           onClose={closeSheet}
-          onApply={(ids) => {
-            if (day)
-              commit({
-                kind: "reorder",
-                date: day.date,
-                ids: mergeScheduledOrder(day, ids),
-              });
-          }}
+          onApply={onApplyOptimization}
         />
       ) : null}
       {hostReady && sheet?.kind === "dates" ? (

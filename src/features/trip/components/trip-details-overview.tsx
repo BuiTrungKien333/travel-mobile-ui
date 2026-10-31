@@ -96,7 +96,7 @@ export function TripDayTools({
               : copy.unknownRoute}
           </AppText>
         </View>
-        {showOptimize && day && day.stops.length > 1 ? (
+        {showOptimize && day ? (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={copy.optimize}

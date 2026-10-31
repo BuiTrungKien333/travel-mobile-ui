@@ -30,7 +30,7 @@ export function useUpdateTripMutation(tripId: string) {
 }
 export function useDeleteTripMutation() {
   const client = useQueryClient();
-  return useMutation({ mutationFn: (tripId: string) => tripApi.remove(tripId), onSuccess: async (_, tripId) => { await client.invalidateQueries({ queryKey: tripQueryKeys.all }); client.removeQueries({ queryKey: tripQueryKeys.detail(tripId) }); client.removeQueries({ queryKey: tripQueryKeys.places(tripId) }); } });
+  return useMutation({ mutationFn: (tripId: string) => tripApi.remove(tripId), onSuccess: async (_, tripId) => { await client.invalidateQueries({ queryKey: tripQueryKeys.all }); client.removeQueries({ queryKey: tripQueryKeys.detail(tripId) }); client.removeQueries({ queryKey: tripQueryKeys.places(tripId) }); client.removeQueries({ queryKey: tripQueryKeys.itinerary(tripId) }); } });
 }
 export function useAddTripPlaceMutation(tripId: string) {
   const client = useQueryClient();

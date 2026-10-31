@@ -29,7 +29,9 @@ import type { TripMutation } from "../types/trip-details-types";
 import { getTripDetailsMode } from "../utils/trip-details-layout";
 import { getPlaceMapRegion } from "../utils/place-search";
 import { useDeleteTripPlaceMutation, useTripPlacesQuery, useTripQuery, useUpdateTripPlaceMutation } from "../api/trip-hooks";
-import { toTrip } from "../api/trip-adapters";
+import { useSaveItineraryMutation, useTripItineraryQuery } from "../api/itinerary-hooks";
+import { toSaveItineraryRequest, toTrip } from "../api/trip-adapters";
+import { applyTripMutation } from "../utils/trip-mutations";
 
 function goBack() {
   if (router.canGoBack()) router.back();
@@ -47,16 +49,19 @@ export function TripStopDetailsScreen({
 }) {
   const tripQuery = useTripQuery(tripId);
   const placesQuery = useTripPlacesQuery(tripId);
-  const trip = tripQuery.data ? toTrip(tripQuery.data, placesQuery.data ?? []) : undefined;
+  const itineraryQuery = useTripItineraryQuery(tripId);
+  const trip = tripQuery.data ? toTrip(tripQuery.data, placesQuery.data ?? [], itineraryQuery.data) : undefined;
   const theme = useAppTheme();
   const { copy } = useTripDetailsCopy();
-  if (tripQuery.isPending || placesQuery.isPending)
+  if (tripQuery.isPending || placesQuery.isPending || itineraryQuery.isPending)
     return <ScreenSafeArea style={[styles.fill, { backgroundColor: theme.colors.background }]}><View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}><ActivityIndicator color={theme.colors.primary} /></View></ScreenSafeArea>;
   const stop = (
     day
       ? trip?.days.find((entry) => entry.date === day)?.stops
       : trip?.unscheduledStops
   )?.find((entry) => entry.id === stopId);
+  if (tripQuery.isError || placesQuery.isError || itineraryQuery.isError)
+    return <ScreenSafeArea style={[styles.fill, { backgroundColor: theme.colors.background }]}><View style={{ padding: theme.spacing.xl, gap: theme.spacing.lg }}><AppText accessibilityRole="alert" tone="error">{copy.itineraryLoadError}</AppText><AppButton variant="outline" onPress={() => { void tripQuery.refetch(); void placesQuery.refetch(); void itineraryQuery.refetch(); }}>{copy.retry}</AppButton></View></ScreenSafeArea>;
   if (!trip || !stop)
     return (
       <ScreenSafeArea
@@ -94,6 +99,7 @@ function StopDetailsContent({
   const today = useTripPreview((state) => state.today);
   const updatePlace = useUpdateTripPlaceMutation(trip.id);
   const removePlace = useDeleteTripPlaceMutation(trip.id);
+  const saveItinerary = useSaveItineraryMutation(trip.id);
   const visited = stop.visited ?? false;
   const [expandRequest, setExpandRequest] = useState(0);
   const [confirmRemove, setConfirmRemove] = useState(false);
@@ -109,7 +115,23 @@ function StopDetailsContent({
   function commit(mutation: TripMutation) {
     if (!editable) return false;
     if (mutation.kind === "remove") {
-      void removePlace.mutateAsync(mutation.stopId).then(() => {
+      const remove = async () => {
+        if (date !== null) {
+          const candidate = applyTripMutation(trip, mutation);
+          if (!candidate) throw new Error("INVALID_TRIP_MUTATION");
+          await updatePlace.mutateAsync({
+            placeId: stop.id,
+            request: {
+              estimatedDuration: stop.durationMinutes ?? 45,
+              notes: stop.note?.trim() ?? "",
+            },
+          });
+          await saveItinerary.mutateAsync(toSaveItineraryRequest(candidate));
+        } else {
+          await removePlace.mutateAsync(mutation.stopId);
+        }
+      };
+      void remove().then(() => {
         setEditing(false);
         setRemoveError(false);
         goBack();
@@ -117,17 +139,31 @@ function StopDetailsContent({
       return true;
     }
     if (mutation.kind !== "stop") return false;
-    if (mutation.targetDate !== date || mutation.values.time !== stop.time) {
-      setRemoveError(true);
-      return false;
-    }
-    void updatePlace.mutateAsync({
-      placeId: stop.id,
-      request: {
-        estimatedDuration: mutation.values.durationMinutes,
-        notes: mutation.values.note,
-      },
-    }).then(() => {
+    const save = async () => {
+      if (date !== null || mutation.targetDate !== null) {
+        const candidate = applyTripMutation(trip, mutation);
+        if (!candidate) throw new Error("INVALID_TRIP_MUTATION");
+        if (date !== null && mutation.targetDate === null) {
+          await updatePlace.mutateAsync({
+            placeId: stop.id,
+            request: {
+              estimatedDuration: mutation.values.durationMinutes ?? 45,
+              notes: mutation.values.note?.trim() ?? "",
+            },
+          });
+        }
+        await saveItinerary.mutateAsync(toSaveItineraryRequest(candidate));
+      } else {
+        await updatePlace.mutateAsync({
+          placeId: stop.id,
+          request: {
+            estimatedDuration: mutation.values.durationMinutes,
+            notes: mutation.values.note,
+          },
+        });
+      }
+    };
+    void save().then(() => {
       setEditing(false);
       setRemoveError(false);
     }).catch(() => setRemoveError(true));
