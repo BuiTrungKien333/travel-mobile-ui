@@ -86,7 +86,18 @@ export function RegisterScreen() {
           </AppButton>
         }
       >
-        <CheckEmail {...pendingEmail} purpose="verify" />
+        <View style={{ gap: theme.spacing.lg }}>
+          <CheckEmail {...pendingEmail} purpose="verify" />
+          <AppButton
+            variant="outline"
+            onPress={() => {
+              setPendingEmail(null);
+              register.reset();
+            }}
+          >
+            {t("auth.email.differentEmail")}
+          </AppButton>
+        </View>
       </AuthScaffold>
     );
 
