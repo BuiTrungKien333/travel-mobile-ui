@@ -147,3 +147,94 @@ test("old development builds show a camera module notice before importing native
   tree.props.onHome();
   assert.equal(navigation[1], "/tabs");
 });
+
+test("the camera releases its view when its tab is unfocused, a picker is open, or the app is backgrounded", () => {
+  const store = loadHomePreview().createPreviewStore();
+  const tokens = load<typeof import("../src/theme/tokens.ts")>(
+    "src/theme/tokens.ts",
+  );
+  let focused = true;
+  const appState = { currentState: "active" };
+  const nativeLoad = tripModuleLoader({
+    react: {
+      useState: (initial: unknown) => [
+        typeof initial === "function" ? initial() : initial,
+        () => {},
+      ],
+      useRef: (current: unknown) => ({ current }),
+      useEffect: () => {},
+      useCallback: (callback: unknown) => callback,
+    },
+    "expo-camera": {
+      CameraView: "CameraView",
+      useCameraPermissions: () => [{ granted: true }, () => {}, () => {}],
+    },
+    "../hooks/use-camera-access": {
+      useCameraAccess: () => ({
+        permission: { granted: true },
+        issue: null,
+        requesting: false,
+        request: () => {},
+      }),
+    },
+    "@/features/home/services/journal-photo-actions": {
+      saveJournalPhoto: async () => {},
+    },
+    "expo-image": { Image: "Image" },
+    "expo-router/react-navigation": { useIsFocused: () => focused },
+    "react-native": {
+      View: "View",
+      ActivityIndicator: "Spinner",
+      AppState: appState,
+      Platform: { OS: "android" },
+      StyleSheet: { absoluteFill: {} },
+    },
+    "react-native-reanimated": {
+      __esModule: true,
+      default: { View: "AnimatedView" },
+      useSharedValue: () => ({ get: () => 1, set: () => {} }),
+      useAnimatedStyle: () => ({}),
+      ReduceMotion: { System: "system" },
+    },
+    "@/hooks/use-app-theme": { useAppTheme: () => ({ ...tokens, colors: {} }) },
+    "@/hooks/use-i18n": { useI18n: () => ({ locale: "vi" }) },
+    "@/features/home/providers/trip-preview-provider": {
+      useTripPreview: (
+        select: (state: ReturnType<typeof store.getState>) => unknown,
+      ) => select(store.getState()),
+    },
+    "@/components/ui/app-button": { AppButton: "AppButton" },
+    "@/components/ui/app-text": { AppText: "AppText" },
+    "../services/camera-photos": { prepareCameraPhoto: () => {} },
+    "./camera-layout": { CameraLayout: "CameraLayout" },
+    "./camera-icon-button": { CameraIconButton: "CameraIconButton" },
+  });
+  const { NativeTripCamera } = nativeLoad<
+    typeof import("../src/features/camera/components/native-trip-camera.tsx")
+  >("src/features/camera/components/native-trip-camera.tsx");
+  function containsCamera(node: unknown): boolean {
+    if (Array.isArray(node)) return node.some(containsCamera);
+    if (!isValidElement<{ children?: unknown }>(node)) return false;
+    return node.type === "CameraView" || containsCamera(node.props.children);
+  }
+  function cameraVisible(suspended = false) {
+    const tree = NativeTripCamera({
+      title: "Memories",
+      count: 0,
+      date: "2026-10-21",
+      suspended,
+      onBack: () => {},
+      onHome: () => {},
+      onDetails: () => {},
+      onJournal: () => {},
+    });
+    return containsCamera(tree.props.frame);
+  }
+  assert.equal(cameraVisible(), true);
+  focused = false;
+  assert.equal(cameraVisible(), false);
+  focused = true;
+  assert.equal(cameraVisible(true), false);
+  appState.currentState = "background";
+  assert.equal(cameraVisible(), false);
+});

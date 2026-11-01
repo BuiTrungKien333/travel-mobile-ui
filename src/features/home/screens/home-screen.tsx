@@ -117,14 +117,14 @@ export function HomeScreen() {
           <FootprintCard
             provinces={provinces}
             visitedPlaces={visitedPlaces}
-            onPress={() => router.push("/tabs/memories")}
+            onPress={() => router.push("/memories/history")}
           />
         ) : null}
         {selection.kind === "returning" || selection.kind === "upcoming" ? (
           <JournalAlbum
             variant="recent"
             memories={recentMemories}
-            onOpen={() => router.push("/tabs/memories")}
+            onOpen={() => router.push("/memories/history")}
           />
         ) : null}
         <View style={{ paddingTop: theme.spacing.sm }}>

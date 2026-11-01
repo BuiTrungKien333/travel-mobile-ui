@@ -72,9 +72,7 @@ export function TripCameraScreen({
   };
   const available =
     Platform.OS === "web" ||
-    ["ExpoCamera", "ExpoImageManipulator", "ExponentImagePicker"].every(
-      (name) => !!requireOptionalNativeModule(name),
-    );
+    !!requireOptionalNativeModule("ExpoCamera");
   if (!available)
     return (
       <CameraLayout

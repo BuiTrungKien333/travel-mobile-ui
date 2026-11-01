@@ -1,4 +1,5 @@
 import type { CapturePhotoId } from "../data/ongoing-preview";
+import type { LocalMemory } from "@/features/memories/schemas/local-memory-schema";
 import type { TripMutation } from "@/features/trip/types/trip-details-types";
 import type {
   HomeScenario,
@@ -27,6 +28,20 @@ export type PreviewState = {
   scenario: HomeScenario;
   trips: Trip[];
   memories: Memory[];
+  localPhotoStatus: "idle" | "loading" | "ready" | "error";
+  loadLocalPhotos: () => Promise<void>;
+  saveLocalPhoto: (values: {
+    uri: string;
+    tripId?: string;
+    date?: string;
+    stopId?: string;
+  }) => Promise<LocalMemory>;
+  markLocalPhotoSaved: (id: string) => Promise<void>;
+  exportLocalPhoto: (id: string) => Promise<void>;
+  assignLocalPhoto: (
+    id: string,
+    values: { tripId: string; day: string; stopId: string },
+  ) => Promise<void>;
   today: string;
   panel: PreviewPanel | JourneyPanel | null;
   openPanel: (panel: PreviewPanel | JourneyPanel) => void;
@@ -55,7 +70,7 @@ export type PreviewState = {
     date: string;
     photoId: CapturePhotoId;
   }) => Memory | null;
-  updateMemoryNote: (id: string, text: string) => void;
+  updateMemoryNote: (id: string, text: string) => void | Promise<void>;
   saveCapturedMoment: (values: {
     tripId: string;
     date: string;
@@ -63,5 +78,5 @@ export type PreviewState = {
     time: string;
     stopId?: string;
   }) => Memory | null;
-  removeMemory: (id: string) => void;
+  removeMemory: (id: string) => void | Promise<void>;
 };

@@ -7,6 +7,7 @@ import { AppIcon } from "@/components/ui/app-icon";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useHomeCopy } from "../i18n/home-copy";
 import { useTripPreview } from "../providers/trip-preview-provider";
+import { useNavigationCapture } from "../hooks/use-navigation-capture";
 
 // Align the visible artwork, compensating for logo.png's transparent left inset.
 const logoLeftInsetRatio = 307 / 2172;
@@ -14,6 +15,7 @@ const logoLeftInsetRatio = 307 / 2172;
 export function HomeHeader() {
   const theme = useAppTheme();
   const { copy } = useHomeCopy();
+  const onCapture = useNavigationCapture();
   const { openPanel, closePanel } = useTripPreview((state) => ({
     openPanel: state.openPanel,
     closePanel: state.closePanel,
@@ -52,6 +54,23 @@ export function HomeHeader() {
             maxWidth: "100%",
           }}
         />
+      </Pressable>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={copy.capture}
+        onPress={onCapture}
+        style={({ pressed }) => [
+          styles.control,
+          {
+            minWidth: theme.layout.touchTarget,
+            minHeight: theme.layout.touchTarget,
+            borderRadius: theme.radius.full,
+            backgroundColor: theme.colors.surfaceTint,
+            opacity: pressed ? theme.motion.pressOpacity : 1,
+          },
+        ]}
+      >
+        <AppIcon name="camera" variant="light" />
       </Pressable>
       <Pressable
         accessibilityRole="button"

@@ -58,6 +58,7 @@ export type HomeSelection =
   | { kind: "returning" }
   | { kind: "new" };
 export type Memory = {
+  local?: { capturedAt: string; deviceSaved: boolean };
   id: string;
   destination: string;
   text: string;

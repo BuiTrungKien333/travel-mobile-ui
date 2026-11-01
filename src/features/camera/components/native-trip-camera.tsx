@@ -1,4 +1,4 @@
-import { CameraView, useCameraPermissions, type CameraType } from "expo-camera";
+import { CameraView, type CameraType } from "expo-camera";
 import { Image } from "expo-image";
 import Animated, {
   ReduceMotion,
@@ -6,7 +6,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
-import { useFocusEffect } from "expo-router";
+import { useIsFocused } from "expo-router/react-navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -24,13 +24,25 @@ import { prepareCameraPhoto } from "../services/camera-photos";
 import { useCameraCopy } from "../i18n/camera-copy";
 import { CameraLayout, type CameraLayoutProps } from "./camera-layout";
 import { CameraIconButton } from "./camera-icon-button";
+import { useCameraAccess } from "../hooks/use-camera-access";
+import { PhotoActionError } from "@/features/home/services/photo-action-error";
+import { usePhotoViewerCopy } from "@/features/home/i18n/photo-viewer-copy";
+
+const CAMERA_READY_TIMEOUT_MS = 15000;
 
 export function NativeTripCamera(
-  props: CameraLayoutProps & { tripId: string; date: string; stopId?: string },
+  props: CameraLayoutProps & {
+    tripId?: string;
+    date: string;
+    stopId?: string;
+    suspended?: boolean;
+    quick?: boolean;
+  },
 ) {
   const theme = useAppTheme();
   const { copy } = useCameraCopy();
-  const [permission, requestPermission, getPermission] = useCameraPermissions();
+  const { copy: photoCopy } = usePhotoViewerCopy();
+  const { permission, issue, requesting, request } = useCameraAccess();
   const camera = useRef<CameraView>(null);
   const mounted = useRef(true);
   const operation = useRef(false);
@@ -55,43 +67,45 @@ export function NativeTripCamera(
   const [mountError, setMountError] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
-  const [pending, setPending] = useState<{ uri: string } | null>(null);
-  const [foreground, setForeground] = useState(
-    AppState.currentState === "active",
+  const [pending, setPending] = useState<{ uri: string; id?: string } | null>(
+    null,
   );
-  const [focused, setFocused] = useState(true);
+  const [foreground, setForeground] = useState(
+    AppState.currentState !== "background" &&
+      AppState.currentState !== "inactive",
+  );
+  const focused = useIsFocused();
   const panelOpen = useTripPreview((state) => state.panel !== null);
-  const saveMoment = useTripPreview((state) => state.saveCapturedMoment);
-  const active = foreground && focused && !panelOpen;
+  const savePhoto = useTripPreview((state) => state.saveLocalPhoto);
+  const exportPhoto = useTripPreview((state) => state.exportLocalPhoto);
+  const memories = useTripPreview((state) => state.memories);
+  const active = foreground && focused && !panelOpen && !props.suspended;
   useEffect(() => {
     mounted.current = true;
     const subscription = AppState.addEventListener("change", (value) => {
       setForeground(value === "active");
-      if (value === "active")
-        void getPermission().catch(() => {
-          if (mounted.current) setError(copy.error);
-        });
     });
     return () => {
       mounted.current = false;
       subscription.remove();
     };
-  }, [getPermission, copy.error]);
+  }, []);
   useEffect(() => {
     if (!pending) operation.current = false;
   }, [pending]);
-  useFocusEffect(
-    useCallback(() => {
-      setFocused(true);
-      return () => {
-        setFocused(false);
-        setReady(false);
-      };
-    }, []),
-  );
+  const handleCameraRef = useCallback((instance: CameraView | null) => {
+    camera.current = instance;
+    if (!instance) setReady(false);
+  }, []);
   useEffect(() => {
-    if (!active) setReady(false);
-  }, [active]);
+    if (!active || !permission?.granted || pending || ready || mountError)
+      return;
+    const timer = setTimeout(
+      () => setMountError(true),
+      CAMERA_READY_TIMEOUT_MS,
+    );
+    return () => clearTimeout(timer);
+  }, [active, permission?.granted, pending, ready, mountError]);
   useEffect(() => {
     if (!saved) return;
     const timer = setTimeout(
@@ -108,37 +122,44 @@ export function NativeTripCamera(
     setSaved(false);
     try {
       await task();
-    } catch {
-      if (mounted.current) setError(copy.photoError);
+    } catch (error) {
+      if (mounted.current)
+        setError(
+          error instanceof PhotoActionError
+            ? photoCopy[error.code]
+            : copy.photoError,
+        );
     } finally {
       operation.current = false;
       if (mounted.current) setBusy(false);
     }
   }
-  function capture() {
-    if (pending) {
-      if (operation.current) return;
-      operation.current = true;
-      const memory = saveMoment({
-        tripId: props.tripId,
+  async function persistPhoto(photo: { uri: string; id?: string }) {
+    const existing = photo.id
+      ? memories.find((item) => item.id === photo.id)
+      : undefined;
+    const memory =
+      existing ??
+      (await savePhoto({
+        uri: photo.uri,
+        tripId: props.quick ? undefined : props.tripId,
         date: props.date,
         stopId: props.stopId,
-        uri: pending.uri,
-        time: new Intl.DateTimeFormat("en-GB", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        }).format(new Date()),
-      });
-      if (!memory) {
-        operation.current = false;
-        setError(copy.saveError);
-        return;
-      }
+      }));
+    if (!memory.photo || typeof memory.photo !== "string")
+      throw new Error("Photo unavailable");
+    if (mounted.current) setPending({ uri: memory.photo, id: memory.id });
+    await exportPhoto(memory.id);
+    if (mounted.current) {
       setPending(null);
       setReady(false);
       setSaved(true);
       setError("");
+    }
+  }
+  function capture() {
+    if (pending) {
+      void run(() => persistPhoto(pending));
       return;
     }
     if (!ready || !active || !camera.current) return;
@@ -153,6 +174,7 @@ export function NativeTripCamera(
       if (mounted.current) {
         setPending(result);
         setReady(false);
+        if (props.quick) await persistPhoto(result);
       }
     });
   }
@@ -171,6 +193,7 @@ export function NativeTripCamera(
       if (mounted.current) {
         setPending(photo);
         setReady(false);
+        if (props.quick) await persistPhoto(photo);
       }
     });
   }
@@ -208,7 +231,7 @@ export function NativeTripCamera(
         <AppButton
           variant="gradient"
           size="small"
-          disabled={busy}
+          disabled={busy || requesting}
           onPress={action.onPress}
           style={{
             alignSelf: "center",
@@ -230,20 +253,27 @@ export function NativeTripCamera(
       contentFit="cover"
       style={StyleSheet.absoluteFill}
     />
-  ) : !permission ? (
+  ) : issue === "insecure" || issue === "unsupported" ? (
+    notice(copy.error, copy[issue])
+  ) : !permission && !issue ? (
     <ActivityIndicator style={{ flex: 1 }} color={theme.colors.primary} />
-  ) : !permission.granted ? (
-    notice(copy.permission, copy.permissionHint, {
-      label: permission.canAskAgain ? copy.allow : copy.settings,
+  ) : !permission?.granted ? (
+    notice(copy.permission, issue ? copy[issue] : copy.permissionHint, {
+      label:
+        Platform.OS === "web" || permission?.canAskAgain !== false
+          ? copy.allow
+          : copy.settings,
       onPress: () => {
-        void run(async () => {
-          if (permission.canAskAgain) await requestPermission();
-          else await Linking.openSettings();
-        });
+        if (Platform.OS === "web" || permission?.canAskAgain !== false)
+          void request();
+        else
+          void Linking.openSettings().catch(() =>
+            setError(copy.permissionError),
+          );
       },
     })
   ) : mountError ? (
-    notice(copy.error, copy.permissionHint, {
+    notice(copy.error, copy.startError, {
       label: copy.retry,
       onPress: () => {
         setMountError(false);
@@ -256,7 +286,7 @@ export function NativeTripCamera(
       {active ? (
         <Animated.View style={[StyleSheet.absoluteFill, previewMotion]}>
           <CameraView
-            ref={camera}
+            ref={handleCameraRef}
             key={`${facing}:${attempt}`}
             facing={facing}
             mode="picture"
@@ -315,7 +345,19 @@ export function NativeTripCamera(
         setMountError(false);
       }}
       error={error}
-      status={pending ? copy.confirmHint : saved ? copy.saved : undefined}
+      status={
+        pending
+          ? pending.id
+            ? copy.savedPrivate
+            : copy.confirmHint
+          : saved
+            ? Platform.OS === "web"
+              ? copy.savedDownload
+              : props.quick || !props.tripId
+                ? copy.savedInbox
+                : copy.savedDevice
+            : undefined
+      }
       frameControls={
         !pending ? (
           <View

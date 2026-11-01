@@ -3,6 +3,7 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Modal,
   Platform,
   Pressable,
@@ -52,7 +53,7 @@ export function JournalPhotoViewer({
   getSelection: (id: string) => PhotoSelection | null;
   onActiveChange: (id: string) => void;
   onClose: () => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => void | Promise<void>;
 }) {
   const theme = useAppTheme();
   const insets = useScreenInsets();
@@ -148,7 +149,10 @@ export function JournalPhotoViewer({
     onToggleControls: toggleControls,
     onDismiss: () => {
       onClose();
-      if (removeAfterClose.current) onDelete(memory.id);
+      if (removeAfterClose.current)
+        void Promise.resolve(onDelete(memory.id)).catch(() =>
+          Alert.alert(copy.actionError),
+        );
     },
   });
 
