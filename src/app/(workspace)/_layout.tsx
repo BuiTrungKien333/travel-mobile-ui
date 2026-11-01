@@ -18,6 +18,10 @@ export default function WorkspaceLayout() {
         <Stack.Screen name="trip/[tripId]" />
         <Stack.Screen name="trip/add-places" />
         <Stack.Screen name="trip/place-details" />
+        <Stack.Screen
+          name="trip/camera"
+          options={{ animation: "slide_from_bottom" }}
+        />
       </Stack>
       <PreviewPanels />
     </TripPreviewProvider>

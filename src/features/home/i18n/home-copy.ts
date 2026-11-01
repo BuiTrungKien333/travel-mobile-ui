@@ -56,7 +56,10 @@ const vi = {
   myJourney: "Nhìn lại hành trình",
   capture: "Ghi lại khoảnh khắc",
   cameraNeedsTrip: "Chưa có chuyến đi đang diễn ra",
-  cameraNeedsTripHint: "Bắt đầu một chuyến đi để lưu khoảnh khắc vào nhật ký.",
+  cameraNeedsTripHint:
+    "Camera cần một chuyến đi đang diễn ra để lưu ảnh vào đúng nhật ký. Bạn có thể kiểm tra ngày khởi hành trong mục Chuyến đi.",
+  cameraViewTrips: "Xem chuyến đi của tôi",
+  cameraLater: "Để sau",
   sample: "Dữ liệu minh họa",
   sampleHint: "Bản xem trước · Không đồng bộ máy chủ",
   preview: "Đổi trạng thái",
@@ -155,7 +158,10 @@ const en: HomeCopy = {
   myJourney: "Look back on your journey",
   capture: "Save a moment",
   cameraNeedsTrip: "No trip in progress yet",
-  cameraNeedsTripHint: "Start a trip to save moments to your journal.",
+  cameraNeedsTripHint:
+    "The camera needs a trip in progress to save photos to the right journal. Check your departure dates in Trips.",
+  cameraViewTrips: "View my trips",
+  cameraLater: "Maybe later",
   sample: "Sample data",
   sampleHint: "Preview · Not synced to a server",
   preview: "Change scenario",

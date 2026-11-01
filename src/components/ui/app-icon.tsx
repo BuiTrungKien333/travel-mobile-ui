@@ -6,6 +6,27 @@ import { StyleSheet, View } from "react-native";
 import { useAppTheme } from "@/hooks/use-app-theme";
 
 const symbols = {
+  cameraGallery: {
+    ios: "photo.on.rectangle",
+    android: "photo_library",
+    web: "photo_library",
+  },
+  cameraRotate: {
+    ios: "arrow.triangle.2.circlepath",
+    android: "sync",
+    web: "sync",
+  },
+  cameraTrip: {
+    ios: "point.topleft.down.to.point.bottomright.curvepath",
+    android: "route",
+    web: "route",
+  },
+  cameraHome: { ios: "house", android: "home", web: "home" },
+  cameraAlbum: {
+    ios: "photo.on.rectangle.angled",
+    android: "photo_library",
+    web: "photo_library",
+  },
   more: { ios: "ellipsis", android: "more_horiz", web: "more_horiz" },
   search: { ios: "magnifyingglass", android: "search", web: "search" },
   edit: { ios: "square.and.pencil", android: "edit", web: "edit" },
@@ -109,6 +130,13 @@ const symbols = {
   cloud: { ios: "cloud.fill", android: "cloud", web: "cloud" },
   umbrella: { ios: "umbrella.fill", android: "umbrella", web: "umbrella" },
   camera: { ios: "camera", android: "photo_camera", web: "photo_camera" },
+  cameraFlip: {
+    ios: "arrow.triangle.2.circlepath.camera",
+    android: "cameraswitch",
+    web: "cameraswitch",
+  },
+  flashOn: { ios: "bolt.fill", android: "flash_on", web: "flash_on" },
+  flashOff: { ios: "bolt.slash", android: "flash_off", web: "flash_off" },
   tune: { ios: "slider.horizontal.3", android: "tune", web: "tune" },
   bell: { ios: "bell", android: "notifications", web: "notifications" },
   sparkles: { ios: "sparkles", android: "auto_awesome", web: "auto_awesome" },
@@ -146,6 +174,11 @@ const navigationAssets = {
   },
 };
 const lightAssets = {
+  cameraGallery: require("@/assets/icons/camera/gallery.svg"),
+  cameraRotate: require("@/assets/icons/camera/rotate-arrows.svg"),
+  cameraTrip: require("@/assets/icons/camera/trip.svg"),
+  cameraHome: require("@/assets/icons/camera/home.svg"),
+  cameraAlbum: require("@/assets/icons/camera/album.svg"),
   locate: require("@/assets/icons/navigation/map-locate.svg"),
   expand: require("@/assets/icons/navigation/map-expand.svg"),
   collapse: require("@/assets/icons/navigation/map-collapse.svg"),
@@ -164,6 +197,11 @@ const lightAssets = {
 };
 function isLightIcon(name: AppIconName): name is keyof typeof lightAssets {
   return (
+    name === "cameraGallery" ||
+    name === "cameraRotate" ||
+    name === "cameraTrip" ||
+    name === "cameraHome" ||
+    name === "cameraAlbum" ||
     name === "locate" ||
     name === "expand" ||
     name === "collapse" ||

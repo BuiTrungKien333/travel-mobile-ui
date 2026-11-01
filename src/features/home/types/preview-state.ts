@@ -56,5 +56,12 @@ export type PreviewState = {
     photoId: CapturePhotoId;
   }) => Memory | null;
   updateMemoryNote: (id: string, text: string) => void;
+  saveCapturedMoment: (values: {
+    tripId: string;
+    date: string;
+    uri: string;
+    time: string;
+    stopId?: string;
+  }) => Memory | null;
   removeMemory: (id: string) => void;
 };

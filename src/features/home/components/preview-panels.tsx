@@ -1,5 +1,6 @@
 import { router } from "expo-router";
 import { TripDetailsRedirect } from "@/features/trip/components/trip-details-redirect";
+import { CaptureScreenRedirect } from "@/features/camera/components/capture-screen-redirect";
 import {
   KeyboardAvoidingView,
   Modal,
@@ -15,6 +16,7 @@ import { useScreenInsets } from "@/hooks/use-screen-insets";
 import { AppButton } from "@/components/ui/app-button";
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
+import { GlassBackdrop } from "@/components/common/glass-backdrop";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useHomeCopy } from "../i18n/home-copy";
 import { useTripPreview } from "../providers/trip-preview-provider";
@@ -34,6 +36,8 @@ export function PreviewPanels() {
   const insets = useScreenInsets();
   const reduceMotion = useReducedMotion();
   if (!panel) return null;
+  if (panel.kind === "camera")
+    return <CaptureScreenRedirect panel={panel} onClose={closePanel} />;
   if (panel.kind === "plan" || panel.kind === "trip-details")
     return (
       <TripDetailsRedirect
@@ -45,11 +49,7 @@ export function PreviewPanels() {
   if (panel.kind === "create") {
     return <CreateTripModal visible onClose={closePanel} />;
   }
-  if (
-    panel.kind === "camera" ||
-    panel.kind === "journal" ||
-    panel.kind === "current-weather"
-  ) {
+  if (panel.kind === "journal" || panel.kind === "current-weather") {
     return (
       <OngoingTripPanels key={`${panel.kind}:${panel.tripId}`} panel={panel} />
     );
@@ -93,8 +93,14 @@ export function PreviewPanels() {
             styles.sheet,
             {
               maxWidth: theme.layout.contentMaxWidth,
-              borderTopLeftRadius: theme.radius.xxl,
-              borderTopRightRadius: theme.radius.xxl,
+              borderTopLeftRadius:
+                panel.kind === "capture-start"
+                  ? theme.radius.xl
+                  : theme.radius.xxl,
+              borderTopRightRadius:
+                panel.kind === "capture-start"
+                  ? theme.radius.xl
+                  : theme.radius.xxl,
               backgroundColor: theme.colors.background,
               paddingBottom: insets.bottom + theme.spacing.lg,
             },
@@ -175,22 +181,82 @@ export function PreviewPanels() {
             ) : null}
             {panel.kind === "sample" ? <SampleItineraryPanel /> : null}
             {panel.kind === "capture-start" ? (
-              <>
-                <AppIcon name="camera" size={theme.layout.iconLarge} />
-                <AppText variant="label">{copy.cameraNeedsTrip}</AppText>
-                <AppText tone="muted">{copy.cameraNeedsTripHint}</AppText>
-                <AppButton
-                  variant="gradient"
-                  onPress={() => {
-                    closePanel();
-                    router.push("/tabs/trips");
+              <View style={{ alignItems: "center", gap: theme.spacing.md }}>
+                <View
+                  style={{
+                    padding: theme.spacing.lg,
+                    borderRadius: theme.radius.lg,
+                    backgroundColor: theme.colors.surfaceTint,
+                    borderWidth: StyleSheet.hairlineWidth,
+                    borderColor: theme.colors.softActionBorder,
                   }}
                 >
-                  {copy.trips}
-                </AppButton>
-              </>
+                  <GlassBackdrop borderRadius={theme.radius.lg} />
+                  <AppIcon
+                    name="camera"
+                    variant="light"
+                    size={theme.layout.iconLarge}
+                    color={theme.colors.primaryText}
+                  />
+                </View>
+                <View style={{ gap: theme.spacing.sm }}>
+                  <AppText
+                    variant="label"
+                    style={{
+                      textAlign: "center",
+                      fontSize: theme.typography.fontSize.md,
+                    }}
+                  >
+                    {copy.cameraNeedsTrip}
+                  </AppText>
+                  <AppText tone="muted" style={{ textAlign: "center" }}>
+                    {copy.cameraNeedsTripHint}
+                  </AppText>
+                </View>
+                <View
+                  style={{
+                    width: "100%",
+                    gap: theme.spacing.xs,
+                    marginTop: theme.spacing.sm,
+                  }}
+                >
+                  <AppButton
+                    variant="soft"
+                    size="small"
+                    leadingIcon={
+                      <AppIcon
+                        name="trips"
+                        variant="light"
+                        size={theme.layout.iconSmall}
+                        color={theme.colors.onSoftAction}
+                      />
+                    }
+                    onPress={() => {
+                      closePanel();
+                      router.dismissTo("/tabs/trips");
+                    }}
+                  >
+                    {copy.cameraViewTrips}
+                  </AppButton>
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={closePanel}
+                    style={({ pressed }) => ({
+                      minHeight: theme.layout.compactTouchTarget,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      opacity: pressed ? theme.motion.pressOpacity : 1,
+                    })}
+                  >
+                    <AppText variant="caption" tone="muted">
+                      {copy.cameraLater}
+                    </AppText>
+                  </Pressable>
+                </View>
+              </View>
             ) : null}
-            {panel.kind !== "notifications" ? (
+            {panel.kind !== "notifications" &&
+            panel.kind !== "capture-start" ? (
               <AppText variant="caption" tone="muted">
                 {copy.sampleHint}
               </AppText>

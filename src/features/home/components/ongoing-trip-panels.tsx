@@ -43,7 +43,6 @@ import { useTripPreview } from "../providers/trip-preview-provider";
 import type { JourneyPanel } from "../types/preview-state";
 import type { Memory } from "../types/home-types";
 import { formatTripDates } from "../utils/select-home";
-import { CaptureMomentPreview } from "./capture-moment-preview";
 import { homeStyles, TextAction } from "./home-primitives";
 import { OngoingWeatherDetails } from "./ongoing-weather-details";
 import { WeatherAtmosphere } from "./weather-atmosphere";
@@ -51,7 +50,7 @@ import { WeatherAtmosphere } from "./weather-atmosphere";
 export function OngoingTripPanels({
   panel,
 }: {
-  panel: Exclude<JourneyPanel, { kind: "trip-details" }>;
+  panel: Exclude<JourneyPanel, { kind: "trip-details" | "camera" }>;
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useOngoingCopy();
@@ -75,8 +74,6 @@ export function OngoingTripPanels({
         <AppText tone="muted">{copy.noTrip}</AppText>
       </JourneySheet>
     );
-  if (panel.kind === "camera")
-    return <CaptureMomentPreview panel={panel} trip={trip} />;
   if (panel.kind === "current-weather")
     return (
       <JourneySheet
