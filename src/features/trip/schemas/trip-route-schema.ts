@@ -13,3 +13,7 @@ export const tripRouteSchema = z.object({
 export const tripStopRouteSchema = tripRouteSchema
   .pick({ tripId: true, day: true })
   .extend({ stopId: tripRouteSchema.shape.tripId });
+
+export const tripCameraRouteSchema = tripRouteSchema
+  .pick({ tripId: true, day: true })
+  .extend({ stopId: tripRouteSchema.shape.tripId.optional() });

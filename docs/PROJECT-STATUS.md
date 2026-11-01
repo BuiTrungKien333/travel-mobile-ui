@@ -13,6 +13,8 @@ Cập nhật: **27/10/2026**. Phạm vi: frontend Home, danh sách/tạo/chi ti�
 
 ## Tìm địa chỉ cụ thể · 28/10/2026
 
+- 29/10: hoàn thiện màn camera riêng từ nút giữa navigation: khung vuông, flash, zoom kỹ thuật số 1×/2×/3×, chọn ảnh hệ thống, camera trước/sau, xem trước/xác nhận, counter ảnh chuyến và lối tắt. Ba module Expo camera/image-picker/image-manipulator mới; cần development build mới. Ảnh vẫn thuộc phiên preview, chưa backend/persistence. Có native-module guard cho build cũ. Xem [CAMERA.md](CAMERA.md).
+
 - 29/10: modal Điểm xuất phát đổi thành Sửa lịch trình trong ngày. Tìm tên/địa chỉ mẫu không dấu, nhập địa chỉ riêng hoặc chọn nhanh từ các điểm trong ngày. Có danh sách thời lượng 30/60/90 phút/Khác (5–480), tổng thời gian trực tiếp. Lưu origin + thời lượng bằng một mutation nguyên tử, giữ giờ đến/thứ tự/phương tiện. TypeScript và 164 tests đạt; chưa QA trên điện thoại.
 
 - Chi tiết điểm trên timeline: thêm phân loại/trạng thái mẫu, chip tiện ích/lưu ý, card lịch ghé thăm có switch ghim và nút Sửa mở modal riêng. Lưu giữ người dùng tại màn chi tiết, card tự cập nhật. Bổ sung giới thiệu và dải ảnh địa điểm/khu vực từ asset có sẵn; chưa có API thông tin/mở cửa.

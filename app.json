@@ -38,10 +38,19 @@
       "expo-secure-store",
       "expo-sharing",
       [
+        "expo-camera",
+        {
+          "cameraPermission": "Cho phép WeGo dùng camera để ghi lại khoảnh khắc trong chuyến đi.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": false
+        }
+      ],
+      [
         "expo-image-picker",
         {
-          "photosPermission": "Allow WeGo to access the photos you choose to attach to a memory.",
-          "cameraPermission": false,
+          "photosPermission": "Cho phép WeGo chọn ảnh để thêm vào kỷ niệm chuyến đi.",
+          "cameraPermission": "Cho phép WeGo dùng camera để ghi lại khoảnh khắc trong chuyến đi.",
           "microphonePermission": false
         }
       ],

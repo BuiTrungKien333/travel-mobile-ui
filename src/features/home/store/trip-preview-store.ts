@@ -169,6 +169,32 @@ export function createPreviewStore() {
           memory.id === id ? { ...memory, text } : memory,
         ),
       })),
+    saveCapturedMoment: ({ tripId, date, uri, time, stopId }) => {
+      const state = get();
+      const trip = state.trips.find((entry) => entry.id === tripId);
+      const day = trip?.days.find((entry) => entry.date === date);
+      if (
+        !trip ||
+        !day ||
+        trip.status === "cancelled" ||
+        !/^(file:|content:|blob:|data:image\/)/i.test(uri) ||
+        !/^([01]\d|2[0-3]):[0-5]\d$/.test(time) ||
+        state.memories.length >= PREVIEW_ENTRY_LIMIT
+      )
+        return null;
+      const memory: Memory = {
+        id: `photo-${++nextId}`,
+        tripId,
+        destination: trip.destination,
+        date,
+        time,
+        place: day.stops.find((entry) => entry.id === stopId)?.name,
+        photo: uri,
+        text: "",
+      };
+      set({ memories: [memory, ...state.memories] });
+      return memory;
+    },
     removeMemory: (id) =>
       set((state) => ({
         memories: state.memories.filter((memory) => memory.id !== id),

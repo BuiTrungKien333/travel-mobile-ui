@@ -126,6 +126,13 @@ export type AppColorTokens = {
   journalFrameHighlight: string;
   journalFrameShadow: string;
   photoViewerBackdrop: string;
+  cameraGlassBorder: string;
+  cameraControlSurface: string;
+  cameraOverlaySurface: string;
+  cameraNavigationSurface: string;
+  cameraNavigationActive: string;
+  cameraMemoryBadge: string;
+  cameraShutterAccent: string;
   photoViewerControls: string;
   photoViewerText: string;
   photoViewerMuted: string;
@@ -246,6 +253,13 @@ export const lightColors: AppColorTokens = {
   journalFrameHighlight: "#FAF3E8",
   journalFrameShadow: "rgba(105, 78, 44, 0.18)",
   photoViewerBackdrop: "#000000",
+  cameraGlassBorder: "rgba(255, 255, 255, 0.16)",
+  cameraControlSurface: "rgba(28, 30, 33, 0.78)",
+  cameraOverlaySurface: "rgba(0, 0, 0, 0.4)",
+  cameraNavigationSurface: "rgba(38, 44, 48, 0.52)",
+  cameraNavigationActive: "rgba(220, 238, 240, 0.16)",
+  cameraMemoryBadge: "#FFAE00",
+  cameraShutterAccent: "#49DCE2",
   photoViewerControls: "rgba(16, 24, 30, 0.76)",
   photoViewerText: "#FFFFFF",
   photoViewerMuted: "#D5E2E6",
@@ -267,6 +281,13 @@ export const lightColors: AppColorTokens = {
 };
 
 export const darkColors: AppColorTokens = {
+  cameraOverlaySurface: "rgba(0, 0, 0, 0.4)",
+  cameraControlSurface: "rgba(28, 30, 33, 0.78)",
+  cameraNavigationSurface: "rgba(38, 44, 48, 0.52)",
+  cameraNavigationActive: "rgba(220, 238, 240, 0.16)",
+  cameraMemoryBadge: "#FFAE00",
+  cameraShutterAccent: "#49DCE2",
+  cameraGlassBorder: "rgba(255, 255, 255, 0.16)",
   primary: "#4ECFD9",
   primaryPressed: "#21B5C3",
   primaryText: "#7ADBE3",
