@@ -20,9 +20,9 @@ import { useScreenInsets } from "@/hooks/use-screen-insets";
 import { AppButton } from "@/components/ui/app-button";
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
-import { useTripPreview } from "@/features/home/providers/trip-preview-provider";
 import type { TripPreference } from "@/features/home/types/home-types";
 import { dayDistance } from "@/features/home/utils/select-home";
+import { todayCalendarDate } from "@/utils/calendar-date";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { spacing, typography, layout } from "@/theme/tokens";
 import { tripFormLimits, tripPreferenceIds } from "../constants/trip-form";
@@ -50,7 +50,7 @@ import { tripApi } from "../api/trip-api";
 type CreateTripModalProps = {
   visible: boolean;
   onClose: () => void;
-  onCreated?: (tripId: string) => void;
+  onCreated: (tripId: string) => void;
 };
 
 const webInputReset: TextStyle = Platform.select({
@@ -59,7 +59,9 @@ const webInputReset: TextStyle = Platform.select({
 });
 
 export function CreateTripModal(props: CreateTripModalProps) {
-  return props.visible ? <CreateTripForm onClose={props.onClose} /> : null;
+  return props.visible ? (
+    <CreateTripForm onClose={props.onClose} onCreated={props.onCreated} />
+  ) : null;
 }
 
 function CreateTripForm({ onClose, onCreated }: Omit<CreateTripModalProps, "visible">) {
@@ -69,10 +71,7 @@ function CreateTripForm({ onClose, onCreated }: Omit<CreateTripModalProps, "visi
   const { copy, locale } = useTripCopy();
   const { copy: detailsCopy } = useTripDetailsCopy();
   const scrollRef = useRef<ScrollView>(null);
-  const { today, createDraft } = useTripPreview((state) => ({
-    today: state.today,
-    createDraft: state.createDraft,
-  }));
+  const today = todayCalendarDate();
   const createTripMutation = useCreateTripMutation();
   const { control, setValue, handleSubmit, setError, setFocus, formState } =
     useForm<CreateTripInput, unknown, CreateTripOutput>({
@@ -163,55 +162,46 @@ function CreateTripForm({ onClose, onCreated }: Omit<CreateTripModalProps, "visi
   const submit = handleSubmit(
     async (values) => {
       Keyboard.dismiss();
-      if (onCreated) {
-        try {
-          const created = await createTripMutation.mutateAsync({
-            name: values.title || generateDefaultTitle(values.destination, values.startDate, values.endDate, copy),
-            destination: values.destination,
-            startDate: values.startDate,
-            endDate: values.endDate,
-            ...(values.budget !== undefined ? { budget: values.budget } : {}),
-            ...(values.preferences.length ? { preferences: values.preferences } : {}),
-          });
-          const geocodedStops = values.initialStops.filter((stop) => stop.location);
+      try {
+        const created = await createTripMutation.mutateAsync({
+          name: values.title || generateDefaultTitle(values.destination, values.startDate, values.endDate, copy),
+          destination: values.destination,
+          startDate: values.startDate,
+          endDate: values.endDate,
+          ...(values.budget !== undefined ? { budget: values.budget } : {}),
+          ...(values.preferences.length ? { preferences: values.preferences } : {}),
+        });
+        let placesSaved = true;
+        for (const [index, stop] of values.initialStops.entries()) {
+          if (!stop.location) {
+            placesSaved = false;
+            continue;
+          }
           try {
-            for (const [index, stop] of geocodedStops.entries()) {
-              await tripApi.addPlace(created.id, {
-                ...(stop.providerPlaceId ? { providerPlaceId: stop.providerPlaceId } : {}),
-                name: stop.name.vi,
-                latitude: stop.location!.latitude,
-                longitude: stop.location!.longitude,
-                ...(stop.address?.vi ? { address: stop.address.vi } : {}),
-                category: stop.kind.vi,
-                ...(stop.durationMinutes ? { estimatedDuration: stop.durationMinutes } : {}),
-                plannedOrder: index,
-              });
-            }
+            await tripApi.addPlace(created.id, {
+              ...(stop.providerPlaceId ? { providerPlaceId: stop.providerPlaceId } : {}),
+              name: stop.name.vi,
+              latitude: stop.location.latitude,
+              longitude: stop.location.longitude,
+              ...(stop.address?.vi ? { address: stop.address.vi } : {}),
+              category: stop.kind.vi,
+              ...(stop.durationMinutes ? { estimatedDuration: stop.durationMinutes } : {}),
+              plannedOrder: index,
+            });
           } catch {
-            Alert.alert("Chuyến đi đã được tạo", "Một số địa điểm chưa lưu được. Bạn có thể thêm lại trong chi tiết chuyến đi.");
+            placesSaved = false;
           }
-          if (values.initialStops.some((stop) => !stop.location)) {
-            Alert.alert("Một số địa điểm chưa được lưu", "Các địa điểm không có tọa độ không thể đồng bộ lên máy chủ.");
-          }
-          onCreated(created.id);
-        } catch {
-          setError("root", { message: "Không thể tạo chuyến đi. Hãy kiểm tra kết nối và thử lại." });
         }
-        return;
+        if (!placesSaved) {
+          Alert.alert(
+            "Chuyến đi đã được tạo",
+            "Một số địa điểm chưa đồng bộ được. Bạn có thể thêm lại trong chi tiết chuyến đi.",
+          );
+        }
+        onCreated(created.id);
+      } catch {
+        setError("root", { message: "Không thể tạo chuyến đi. Hãy kiểm tra kết nối và thử lại." });
       }
-      const success = createDraft({
-        ...values,
-        title:
-          values.title ||
-          generateDefaultTitle(
-            values.destination,
-            values.startDate,
-            values.endDate,
-            copy,
-          ),
-      });
-      // The store switches directly from this form to the created trip's plan.
-      if (!success) setError("root", { message: copy.capacity });
     },
     (fieldErrors) => {
       Keyboard.dismiss();

@@ -1,10 +1,8 @@
-import { Image } from "expo-image";
 import { Pressable, View } from "react-native";
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
 import type { TripStop } from "@/features/home/types/home-types";
 import { useAppTheme } from "@/hooks/use-app-theme";
-import { getStopImage } from "../data/trip-details-preview";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 
 export function TripBacklogRow({
@@ -41,17 +39,9 @@ export function TripBacklogRow({
         onPress={onPress}
         style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: theme.spacing.md }}
       >
-        <Image
-          source={getStopImage(stop.id)}
-          contentFit="cover"
-          cachePolicy="memory-disk"
-          accessible={false}
-          style={{
-            width: theme.layout.sampleStopImageSize,
-            height: theme.layout.sampleStopImageSize,
-            borderRadius: theme.radius.sm,
-          }}
-        />
+        <View style={{ width: theme.layout.sampleStopImageSize, height: theme.layout.sampleStopImageSize, borderRadius: theme.radius.sm, backgroundColor: theme.colors.surfaceTint, alignItems: "center", justifyContent: "center" }}>
+          <AppIcon name="pin" size={theme.layout.iconSmall} color={theme.colors.primaryText} />
+        </View>
         <View style={{ flex: 1, minWidth: 0, gap: theme.spacing.xs }}>
           <AppText variant="label">{stop.name[locale]}</AppText>
           <AppText variant="caption" tone="primary">

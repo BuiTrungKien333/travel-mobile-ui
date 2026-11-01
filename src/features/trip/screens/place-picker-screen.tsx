@@ -22,10 +22,6 @@ import { ScreenSafeArea } from "@/components/common/screen-safe-area";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useScreenInsets } from "@/hooks/use-screen-insets";
 import type { Trip, TripStop } from "@/features/home/types/home-types";
-import {
-  getAddressSearchPreview,
-  getPlaceSearchPreview,
-} from "../data/place-search-preview";
 import { usePlaceSearchCopy } from "../i18n/place-search-copy";
 import { tripMessage } from "../utils/create-trip-formatters";
 import {
@@ -61,22 +57,32 @@ export function PlacePickerScreen({
   const theme = useAppTheme();
   const insets = useScreenInsets();
   const { copy } = usePlaceSearchCopy();
-  const [catalog] = useState(() => getPlaceSearchPreview(destination));
-  const region = useMemo(() => getPlaceMapRegion(catalog), [catalog]);
-  const [selected, setSelected] = useState(() =>
-    initialSelected.map((stop) => ({
-      ...catalog.find((entry) => entry.id === stop.id),
-      ...stop,
-    })),
-  );
+  const [selected, setSelected] = useState(() => initialSelected);
   const [date, setDate] = useState(initialDate);
   const [query, setQuery] = useState("");
   const deferredQuery = useDebouncedValue(query);
-  const remoteSearch = usePlaceSearchQuery(deferredQuery, region ? { latitude: region.latitude, longitude: region.longitude } : undefined);
+  const destinationSearch = usePlaceSearchQuery(destination);
+  const destinationRegion = getPlaceMapRegion((destinationSearch.data ?? []).flatMap((place): TripStop[] =>
+      place.latitude === null || place.longitude === null
+        ? []
+        : [{
+            id: place.providerPlaceId ?? `${place.name}:${place.latitude}:${place.longitude}`,
+            time: "",
+            name: { vi: place.name, en: place.name },
+            kind: { vi: place.category ?? "Địa điểm", en: place.category ?? "Place" },
+            location: { latitude: place.latitude, longitude: place.longitude },
+          }],
+    ));
+  const selectedRegion = useMemo(() => getPlaceMapRegion(selected), [selected]);
+  const region = destinationRegion ?? selectedRegion;
+  const remoteSearch = usePlaceSearchQuery(
+    deferredQuery,
+    region ? { latitude: region.latitude, longitude: region.longitude } : undefined,
+  );
   const [selectedOnly, setSelectedOnly] = useState(false);
   // undefined = results, null = custom map pin, otherwise a result awaiting confirmation.
   const [focus, setFocus] = useState<TripStop | null | undefined>(undefined);
-  const previewPlaces = focus?.locationType === "address" ? [focus] : catalog;
+  const previewPlaces = focus ? [focus] : selected;
   const previewRegion =
     focus?.locationType === "address"
       ? getPlaceMapRegion(previewPlaces)
@@ -107,17 +113,6 @@ export function PlacePickerScreen({
   const chosen = selected.filter(
     (stop) => !existing.some((entry) => entry.id === stop.id),
   );
-  const available = [
-    ...catalog,
-    ...(deferredQuery.trim()
-      ? getAddressSearchPreview().filter(
-          (entry) => !selected.some((stop) => stop.id === entry.id),
-        )
-      : []),
-    ...selected.filter(
-      (stop) => !catalog.some((entry) => entry.id === stop.id),
-    ),
-  ];
   const remotePlaces: TripStop[] = (remoteSearch.data ?? []).flatMap((place) => {
     if (place.latitude === null || place.longitude === null) return [];
     const id = place.providerPlaceId ? `google:${place.providerPlaceId}` : `google:${place.name}:${place.latitude}:${place.longitude}`;
@@ -133,12 +128,9 @@ export function PlacePickerScreen({
   });
   const results = deferredQuery.trim().length >= 2
     ? searchPlaces((selectedOnly ? chosen : remotePlaces).filter((stop) => !existing.some((entry) => entry.id === stop.id || (!!stop.providerPlaceId && entry.providerPlaceId === stop.providerPlaceId))), "")
-    : searchPlaces(
-    (selectedOnly ? chosen : available).filter(
-      (stop) => !existing.some((entry) => entry.id === stop.id),
-    ),
-    deferredQuery,
-  );
+    : selectedOnly
+      ? chosen.filter((stop) => !existing.some((entry) => entry.id === stop.id))
+      : [];
   const targetIndex = trip?.days.findIndex((day) => day.date === date) ?? -1;
   const canApply = chosen.length > 0 || (!trip && initialSelected.length > 0);
   const inPreview = focus !== undefined;
@@ -521,7 +513,7 @@ export function PlacePickerScreen({
               {region ? (
                 <PlaceSearchMap
                   key="custom"
-                  places={catalog}
+                  places={selected}
                   region={region}
                   custom
                   onMove={setCoordinate}

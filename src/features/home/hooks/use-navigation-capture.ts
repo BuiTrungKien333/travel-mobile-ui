@@ -1,31 +1,20 @@
-import { useTripPreview } from "../providers/trip-preview-provider";
-import { getDayProgress } from "../utils/day-progress";
-import { selectHome } from "../utils/select-home";
+import { router } from "expo-router";
+import { useTripsQuery } from "@/features/trip/api/trip-hooks";
+import { todayCalendarDate } from "@/utils/calendar-date";
 
 export function useNavigationCapture() {
-  const { trips, today, visited, openPanel } = useTripPreview((state) => ({
-    trips: state.trips,
-    today: state.today,
-    visited: state.visited,
-    openPanel: state.openPanel,
-  }));
+  const tripsQuery = useTripsQuery();
+  const trips = tripsQuery.data ?? [];
+  const today = todayCalendarDate();
   return () => {
-    const selection = selectHome(trips, today);
-    if (selection.kind !== "ongoing") {
-      openPanel({ kind: "capture-start" });
+    const trip = trips.find((item) => item.status === "ACTIVE" || (
+      item.status !== "CANCELLED" && item.status !== "COMPLETED" &&
+      item.startDate && item.endDate && item.startDate <= today && item.endDate >= today
+    ));
+    if (!trip) {
+      router.navigate("/tabs/trips");
       return;
     }
-    const trip = selection.trip;
-    const stops = trip.days.find((day) => day.date === today)?.stops ?? [];
-    const progress = getDayProgress(
-      stops,
-      visited[`${trip.id}:${today}`] ?? [],
-    );
-    openPanel({
-      kind: "camera",
-      tripId: trip.id,
-      date: today,
-      stopId: visited[`${trip.id}:${today}`]?.at(-1) ?? progress.nextStop?.id,
-    });
+    router.push({ pathname: "/trip/camera", params: { tripId: trip.id, day: today } });
   };
 }

@@ -20,7 +20,7 @@ export const mapsApi = {
     });
     return parse(weatherEnvelopeSchema, response.data);
   },
-  async route(request: { origin: { latitude: number; longitude: number }; destination: { latitude: number; longitude: number }; travelMode?: "DRIVE" | "WALK" | "BICYCLE" | "TWO_WHEELER" }, signal?: AbortSignal) {
+  async route(request: { origin: { latitude: number; longitude: number }; destination: { latitude: number; longitude: number }; intermediates?: { latitude: number; longitude: number }[]; travelMode?: "DRIVE" | "WALK" | "BICYCLE" | "TWO_WHEELER" }, signal?: AbortSignal) {
     const response = await apiClient.post<{ success: true; data: { distanceMeters: number; durationSeconds: number; encodedPolyline: string; provider: string } }>("/api/v1/routes", request, { signal });
     return response.data.data;
   },

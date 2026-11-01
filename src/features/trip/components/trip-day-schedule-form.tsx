@@ -9,10 +9,6 @@ import { AppInput } from "@/components/ui/app-input";
 import { AppText } from "@/components/ui/app-text";
 import type { Trip, TripDay } from "@/features/home/types/home-types";
 import { useAppTheme } from "@/hooks/use-app-theme";
-import {
-  getAddressSearchPreview,
-  getPlaceSearchPreview,
-} from "../data/place-search-preview";
 import { searchPlaces } from "../utils/place-search";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 import { tripDayScheduleSchema } from "../schemas/trip-details-schema";
@@ -71,11 +67,7 @@ export function TripDayScheduleForm({
   const query = location.trim();
   const candidates = Array.from(
     new Map(
-      [
-        ...day.stops,
-        ...getPlaceSearchPreview(trip.destination),
-        ...getAddressSearchPreview(),
-      ].map((place) => [place.id, place]),
+      day.stops.map((place) => [place.id, place]),
     ).values(),
   );
   const matches =

@@ -63,6 +63,7 @@ const symbols = {
     android: "account_circle",
     web: "account_circle",
   },
+  email: { ios: "envelope", android: "mail", web: "mail" },
   route: {
     ios: "point.topleft.down.to.point.bottomright.curvepath",
     android: "route",

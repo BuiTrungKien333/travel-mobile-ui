@@ -7,7 +7,7 @@ import { GlassBackdrop } from "@/components/common/glass-backdrop";
 import { AppButton } from "@/components/ui/app-button";
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
-import { useTripPreview } from "@/features/home/providers/trip-preview-provider";
+import { todayCalendarDate } from "@/utils/calendar-date";
 import type { Trip, TripStop } from "@/features/home/types/home-types";
 import { useOngoingCopy } from "@/features/home/i18n/ongoing-copy";
 import { useAppTheme } from "@/hooks/use-app-theme";
@@ -23,7 +23,6 @@ import {
   PlaceClassification,
   PlaceIntroduction,
 } from "../components/place-details-editorial";
-import { getPlaceSearchPreview } from "../data/place-search-preview";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 import type { TripMutation } from "../types/trip-details-types";
 import { getTripDetailsMode } from "../utils/trip-details-layout";
@@ -96,7 +95,7 @@ function StopDetailsContent({
   const insets = useScreenInsets();
   const { copy } = useTripDetailsCopy();
   const { copy: ongoingCopy } = useOngoingCopy();
-  const today = useTripPreview((state) => state.today);
+  const today = todayCalendarDate();
   const updatePlace = useUpdateTripPlaceMutation(trip.id);
   const removePlace = useDeleteTripPlaceMutation(trip.id);
   const saveItinerary = useSaveItineraryMutation(trip.id);
@@ -107,9 +106,7 @@ function StopDetailsContent({
   const [editing, setEditing] = useState(false);
   const editable = getTripDetailsMode(trip, today) !== "cancelled";
   const canVisit = editable;
-  const catalogue = getPlaceSearchPreview(trip.destination);
-  // Enrich legacy preview stops without overwriting saved coordinates or addresses.
-  const place = { ...catalogue.find((entry) => entry.id === stop.id), ...stop };
+  const place = stop;
   const mapPlaces = place.location ? [place] : [];
   const region = getPlaceMapRegion(mapPlaces);
   function commit(mutation: TripMutation) {

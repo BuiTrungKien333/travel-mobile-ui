@@ -19,7 +19,7 @@ import {
 import { AppButton } from "@/components/ui/app-button";
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
-import { useTripPreview } from "@/features/home/providers/trip-preview-provider";
+import { useCreateMemoryWithMediaMutation } from "@/features/home/api/memory-hooks";
 import { prepareCameraPhoto } from "../services/camera-photos";
 import { useCameraCopy } from "../i18n/camera-copy";
 import { CameraLayout, type CameraLayoutProps } from "./camera-layout";
@@ -60,9 +60,8 @@ export function NativeTripCamera(
     AppState.currentState === "active",
   );
   const [focused, setFocused] = useState(true);
-  const panelOpen = useTripPreview((state) => state.panel !== null);
-  const saveMoment = useTripPreview((state) => state.saveCapturedMoment);
-  const active = foreground && focused && !panelOpen;
+  const createMemory = useCreateMemoryWithMediaMutation();
+  const active = foreground && focused;
   useEffect(() => {
     mounted.current = true;
     const subscription = AppState.addEventListener("change", (value) => {
@@ -118,27 +117,21 @@ export function NativeTripCamera(
   function capture() {
     if (pending) {
       if (operation.current) return;
-      operation.current = true;
-      const memory = saveMoment({
-        tripId: props.tripId,
-        date: props.date,
-        stopId: props.stopId,
-        uri: pending.uri,
-        time: new Intl.DateTimeFormat("en-GB", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        }).format(new Date()),
+      void run(async () => {
+        await createMemory.mutateAsync({
+          request: {
+            tripId: props.tripId,
+            ...(props.stopId ? { placeId: props.stopId } : {}),
+            experiencedAt: new Date().toISOString(),
+          },
+          photos: [{ uri: pending.uri, fileName: `wego-${Date.now()}.jpg`, mimeType: "image/jpeg" }],
+        });
+        if (!mounted.current) return;
+        setPending(null);
+        setReady(false);
+        setSaved(true);
+        setError("");
       });
-      if (!memory) {
-        operation.current = false;
-        setError(copy.saveError);
-        return;
-      }
-      setPending(null);
-      setReady(false);
-      setSaved(true);
-      setError("");
       return;
     }
     if (!ready || !active || !camera.current) return;

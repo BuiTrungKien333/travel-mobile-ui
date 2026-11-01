@@ -1,10 +1,9 @@
-import { Image } from "expo-image";
 import { Pressable, StyleSheet, View } from "react-native";
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
 import type { TripStop, TravelMode } from "@/features/home/types/home-types";
 import { useAppTheme } from "@/hooks/use-app-theme";
-import { getPreviewLeg, getStopImage } from "../data/trip-details-preview";
+import { usePlaceRouteQuery } from "../api/maps-hooks";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 import { clockPattern } from "../schemas/trip-details-schema";
 import { visitTimeRange } from "../utils/trip-details-layout";
@@ -51,7 +50,13 @@ export function TripStopRow({
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
-  const leg = previous ? getPreviewLeg(previous, stop, mode) : null;
+  const legQuery = usePlaceRouteQuery(
+    previous?.location && stop.location ? [previous.location, stop.location] : [],
+    !!previous?.location && !!stop.location,
+  );
+  const leg = legQuery.data
+    ? { km: legQuery.data.distanceMeters / 1000, minutes: Math.round(legQuery.data.durationSeconds / 60) }
+    : null;
   const range = visitTimeRange(stop);
   const metadata = [
     `${stop.durationMinutes ?? 45} ${copy.minutes}`,
@@ -272,17 +277,9 @@ export function TripStopRow({
                 ]}
               >
                 <View style={[styles.connector, { gap: theme.spacing.sm }]}>
-                  <Image
-                    source={getStopImage(stop.id)}
-                    contentFit="cover"
-                    cachePolicy="memory-disk"
-                    accessible={false}
-                    style={{
-                      width: theme.layout.sampleStopImageSize,
-                      height: theme.layout.sampleStopImageSize,
-                      borderRadius: theme.radius.sm,
-                    }}
-                  />
+                  <View style={{ width: theme.layout.sampleStopImageSize, height: theme.layout.sampleStopImageSize, borderRadius: theme.radius.sm, backgroundColor: theme.colors.surfaceTint, alignItems: "center", justifyContent: "center" }}>
+                    <AppIcon name="pin" size={theme.layout.iconSmall} color={theme.colors.primaryText} />
+                  </View>
                   <View style={[styles.grow, { gap: theme.spacing.xs }]}>
                     <View
                       style={[

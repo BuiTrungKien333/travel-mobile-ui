@@ -10,6 +10,7 @@ import { getDayProgress } from "@/features/home/utils/day-progress";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useScreenInsets } from "@/hooks/use-screen-insets";
 import { useTripPreview } from "@/features/home/providers/trip-preview-provider";
+import { todayCalendarDate } from "@/utils/calendar-date";
 import { useMemoriesQuery } from "@/features/home/api/memory-hooks";
 import { layout } from "@/theme/tokens";
 import {
@@ -179,10 +180,8 @@ function TripDetailsContent({
   const optimizeItineraryMutation = useOptimizeItineraryMutation(trip.id);
   const applyItineraryOptimizationMutation = useApplyItineraryOptimizationMutation(trip.id);
   const [commitError, setCommitError] = useState<string | null>(null);
-  const { today, panelOpen } = useTripPreview((state) => ({
-    today: state.today,
-    panelOpen: state.panel !== null,
-  }));
+  const today = todayCalendarDate();
+  const panelOpen = useTripPreview((state) => state.panel !== null);
   const memoriesQuery = useMemoriesQuery(trip.id);
   const [backlog, setBacklog] = useState(() => (trip.unscheduledStops?.length ?? 0) > 0);
   const [sheet, setSheet] = useState<TripDetailsSheetState | null>(null);

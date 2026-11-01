@@ -6,7 +6,11 @@ import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
 import { ScreenSafeArea } from "@/components/common/screen-safe-area";
 import { useAppTheme } from "@/hooks/use-app-theme";
-import { useTripPreview } from "@/features/home/providers/trip-preview-provider";
+import { useTripQuery, useTripPlacesQuery } from "@/features/trip/api/trip-hooks";
+import { useTripItineraryQuery } from "@/features/trip/api/itinerary-hooks";
+import { toTrip } from "@/features/trip/api/trip-adapters";
+import { useMemoriesQuery } from "@/features/home/api/memory-hooks";
+import { todayCalendarDate } from "@/utils/calendar-date";
 import { getTripTitle } from "@/features/trip/utils/trip-formatters";
 import { CameraLayout } from "../components/camera-layout";
 import { useCameraCopy } from "../i18n/camera-copy";
@@ -28,17 +32,18 @@ export function TripCameraScreen({
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useCameraCopy();
-  const trip = useTripPreview((state) =>
-    state.trips.find((entry) => entry.id === tripId),
-  );
-  const today = useTripPreview((state) => state.today);
-  const count = useTripPreview(
-    (state) =>
-      state.memories.filter((entry) => entry.tripId === tripId && !!entry.photo)
-        .length,
-  );
-  const openPanel = useTripPreview((state) => state.openPanel);
+  const tripQuery = useTripQuery(tripId);
+  const placesQuery = useTripPlacesQuery(tripId);
+  const itineraryQuery = useTripItineraryQuery(tripId);
+  const memoriesQuery = useMemoriesQuery(tripId);
+  const trip = tripQuery.data
+    ? toTrip(tripQuery.data, placesQuery.data ?? [], itineraryQuery.data)
+    : undefined;
+  const count = memoriesQuery.data?.content.reduce((total, memory) => total + memory.mediaCount, 0) ?? 0;
+  const today = todayCalendarDate();
   const date = day ?? today;
+  if (tripQuery.isPending || placesQuery.isPending || itineraryQuery.isPending)
+    return <ScreenSafeArea style={{ flex: 1, justifyContent: "center", backgroundColor: theme.colors.photoViewerBackdrop }}><AppText style={{ color: theme.colors.photoViewerText, textAlign: "center" }}>{copy.ready}</AppText></ScreenSafeArea>;
   if (
     !trip ||
     trip.status === "cancelled" ||
@@ -68,7 +73,7 @@ export function TripCameraScreen({
         pathname: "/trip/[tripId]",
         params: { tripId: trip.id, day: date },
       }),
-    onJournal: () => openPanel({ kind: "journal", tripId: trip.id }),
+    onJournal: () => router.push("/tabs/memories"),
   };
   const available =
     Platform.OS === "web" ||

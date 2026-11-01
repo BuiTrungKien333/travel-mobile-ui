@@ -3,10 +3,9 @@ import { GlassBackdrop } from "@/components/common/glass-backdrop";
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
 import type { Trip, TripDay } from "@/features/home/types/home-types";
-import { ongoingWeatherSnapshot } from "@/features/home/data/ongoing-preview";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
-import { getDayTravel, getTripForecast } from "../data/trip-details-preview";
+import { usePlaceRouteQuery, useWeatherForecastQuery } from "../api/maps-hooks";
 import type { TripDetailsSheetState } from "../types/trip-details-types";
 
 /** Summary includes scheduled visits only; origin legs aren't invented. */
@@ -33,12 +32,16 @@ export function TripDayTools({
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
-  const travel = day ? getDayTravel(day) : null;
-  const forecast = getTripForecast(trip, day?.date);
-  const currentWeather =
-    ongoingWeatherSnapshot.tripId === trip.id &&
-    ongoingWeatherSnapshot.date === day?.date &&
-    day?.date === today;
+  const routePoints = (day?.stops ?? []).flatMap((stop) => stop.location ? [stop.location] : []);
+  const routeQuery = usePlaceRouteQuery(routePoints, routePoints.length === day?.stops.length);
+  const weatherLocation = day?.stops.find((stop) => stop.location)?.location;
+  const weatherQuery = useWeatherForecastQuery(weatherLocation?.latitude, weatherLocation?.longitude, day?.date, showWeather);
+  const summary = weatherQuery.data?.dailySummaries.find((item) => item.date === day?.date);
+  const weatherCondition = summary?.dominantCondition;
+  const forecast: { condition: "sun" | "rain" | "cloud"; temperature: number } | undefined = summary ? { condition: weatherCondition === "CLEAR_SKY" ? "sun" : weatherCondition === "LIGHT_RAIN" || weatherCondition === "RAINY" || weatherCondition === "HEAVY_RAIN" || weatherCondition === "THUNDERSTORM" ? "rain" : "cloud", temperature: Math.round((summary.minTemperature + summary.maxTemperature) / 2) } : undefined;
+  const currentWeather = false;
+  const ongoingWeatherSnapshot = forecast ?? { condition: "cloud" as const, temperature: 0 };
+  const travel = routeQuery.data ? { complete: true, km: routeQuery.data.distanceMeters / 1000, minutes: Math.round(routeQuery.data.durationSeconds / 60) } : null;
   const reorderLink =
     canEdit && day && day.stops.length > 1 ? (
       <Pressable
@@ -147,9 +150,7 @@ export function TripDayTools({
           >
             <AppIcon
               name={
-                currentWeather
-                  ? ongoingWeatherSnapshot.condition
-                  : (forecast?.condition ?? "cloud")
+                forecast?.condition ?? "cloud"
               }
               size={theme.layout.iconMedium}
             />

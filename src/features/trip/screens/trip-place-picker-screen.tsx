@@ -3,7 +3,7 @@ import { ActivityIndicator, View } from "react-native";
 import { ScreenSafeArea } from "@/components/common/screen-safe-area";
 import { AppText } from "@/components/ui/app-text";
 import { AppButton } from "@/components/ui/app-button";
-import { useTripPreview } from "@/features/home/providers/trip-preview-provider";
+import { todayCalendarDate } from "@/utils/calendar-date";
 import type { TripStop } from "@/features/home/types/home-types";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
@@ -32,7 +32,7 @@ export function TripPlacePickerScreen({
   const addPlace = useAddTripPlaceMutation(tripId ?? "");
   const saveItinerary = useSaveItineraryMutation(tripId ?? "");
   const trip = tripQuery.data ? toTrip(tripQuery.data, placesQuery.data ?? [], itineraryQuery.data) : undefined;
-  const today = useTripPreview((state) => state.today);
+  const today = todayCalendarDate();
   const theme = useAppTheme();
   const { copy } = usePlaceSearchCopy();
   const { copy: detailsCopy } = useTripDetailsCopy();
