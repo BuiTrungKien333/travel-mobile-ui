@@ -223,13 +223,17 @@ function CreateTripForm({ onClose, onCreated }: Omit<CreateTripModalProps, "visi
   );
 
   return (
+    <>
     <Modal
       visible
       animationType={reduceMotion ? "none" : "slide"}
       statusBarTranslucent
-      onRequestClose={
-        showPlaceSheet ? () => setShowPlaceSheet(false) : requestClose
-      }
+      onRequestClose={() => {
+        if (showPlaceSheet) setShowPlaceSheet(false);
+        else if (showDestSheet) setShowDestSheet(false);
+        else if (showDateSheet) setShowDateSheet(false);
+        else requestClose();
+      }}
     >
       {showPlaceSheet ? (
         <PlacePickerScreen
@@ -1087,24 +1091,23 @@ function CreateTripForm({ onClose, onCreated }: Omit<CreateTripModalProps, "visi
           </AppText>
         </View>
 
-        {/* Modal Pickers */}
-        <DestinationPickerSheet
-          visible={showDestSheet}
-          currentDestination={destination}
-          onSelect={handleSelectDestination}
-          onClose={() => setShowDestSheet(false)}
-        />
-
-        <DateRangeSheet
-          visible={showDateSheet}
-          startDate={startDate}
-          endDate={endDate}
-          today={today}
-          onApply={handleApplyDateRange}
-          onClose={() => setShowDateSheet(false)}
-        />
       </KeyboardAvoidingView>
     </Modal>
+    <DestinationPickerSheet
+      visible={showDestSheet}
+      currentDestination={destination}
+      onSelect={handleSelectDestination}
+      onClose={() => setShowDestSheet(false)}
+    />
+    <DateRangeSheet
+      visible={showDateSheet}
+      startDate={startDate}
+      endDate={endDate}
+      today={today}
+      onApply={handleApplyDateRange}
+      onClose={() => setShowDateSheet(false)}
+    />
+    </>
   );
 }
 

@@ -14,6 +14,7 @@ import { AppButton } from "@/components/ui/app-button";
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
 import { dayDistance } from "@/features/home/utils/select-home";
+import { todayCalendarDate } from "@/utils/calendar-date";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { spacing, typography, layout, radius } from "@/theme/tokens";
 
@@ -41,11 +42,15 @@ function DateRangeSession({
   const theme = useAppTheme();
   const insets = useSafeAreaInsets();
 
-  const [selectedStart, setSelectedStart] = useState(startDate);
-  const [selectedEnd, setSelectedEnd] = useState(endDate);
+  const [selectedRange, setSelectedRange] = useState({ start: startDate, end: endDate });
+  const [activeDateField, setActiveDateField] = useState<"start" | "end">(
+    startDate ? "end" : "start",
+  );
+  const selectedStart = selectedRange.start;
+  const selectedEnd = selectedRange.end;
 
   const initialMonthDate = useMemo(() => {
-    const base = startDate || today || new Date().toISOString().slice(0, 10);
+    const base = startDate || today || todayCalendarDate();
     const [y, m] = base.split("-").map(Number);
     return new Date(Date.UTC(y, m - 1, 1));
   }, [startDate, today]);
@@ -102,16 +107,18 @@ function DateRangeSession({
   const handleDatePress = (dateStr: string) => {
     if (dateStr < today) return;
 
-    if (!selectedStart || (selectedStart && selectedEnd)) {
-      setSelectedStart(dateStr);
-      setSelectedEnd("");
-    } else if (selectedStart && !selectedEnd) {
-      if (dateStr < selectedStart) {
-        setSelectedStart(dateStr);
-      } else {
-        setSelectedEnd(dateStr);
+    setSelectedRange((current) => {
+      if (activeDateField === "start" || !current.start) {
+        return {
+          start: dateStr,
+          end: current.end && current.end >= dateStr ? current.end : "",
+        };
       }
-    }
+      if (dateStr < current.start) return { start: dateStr, end: "" };
+      return { ...current, end: dateStr };
+    });
+    if (activeDateField === "start") setActiveDateField("end");
+    else if (dateStr >= selectedStart) setActiveDateField("start");
   };
 
   const durationDays = useMemo(() => {
@@ -226,7 +233,7 @@ function DateRangeSession({
                   },
                 ]}
               >
-                <View style={styles.bannerColumn}>
+                <Pressable accessibilityRole="button" accessibilityState={{ selected: activeDateField === "start" }} onPress={() => setActiveDateField("start")} style={[styles.bannerColumn, activeDateField === "start" && { backgroundColor: theme.colors.surface, borderRadius: theme.radius.sm }]}>
                   <AppText variant="caption" tone="muted">
                     {copy.startDate}
                   </AppText>
@@ -234,14 +241,14 @@ function DateRangeSession({
                     style={[
                       styles.bannerDate,
                       {
-                        color: theme.colors.text,
+                        color: activeDateField === "start" ? theme.colors.primaryText : theme.colors.text,
                         fontFamily: theme.typography.fontFamily.bold,
                       },
                     ]}
                   >
                     {formatDisplayDate(selectedStart, locale) || "--/--/----"}
                   </AppText>
-                </View>
+                </Pressable>
 
                 <View
                   style={[
@@ -250,7 +257,7 @@ function DateRangeSession({
                   ]}
                 />
 
-                <View style={styles.bannerColumn}>
+                <Pressable accessibilityRole="button" accessibilityState={{ selected: activeDateField === "end" }} onPress={() => setActiveDateField("end")} style={[styles.bannerColumn, activeDateField === "end" && { backgroundColor: theme.colors.surface, borderRadius: theme.radius.sm }]}>
                   <AppText variant="caption" tone="muted">
                     {copy.endDate}
                   </AppText>
@@ -258,7 +265,7 @@ function DateRangeSession({
                     style={[
                       styles.bannerDate,
                       {
-                        color: theme.colors.text,
+                        color: activeDateField === "end" ? theme.colors.primaryText : theme.colors.text,
                         fontFamily: theme.typography.fontFamily.bold,
                       },
                     ]}
@@ -266,8 +273,16 @@ function DateRangeSession({
                     {formatDisplayDate(selectedEnd || selectedStart, locale) ||
                       "--/--/----"}
                   </AppText>
-                </View>
+                </Pressable>
               </View>
+
+              {selectedStart && !selectedEnd ? (
+                <AppText variant="caption" tone="muted" style={{ marginBottom: theme.spacing.md, textAlign: "center" }}>
+                  {locale === "vi"
+                    ? activeDateField === "start" ? "Chọn ngày đi trên lịch." : "Chọn ngày về sau ngày đi trên lịch."
+                    : activeDateField === "start" ? "Choose your departure date on the calendar." : "Choose a return date after departure on the calendar."}
+                </AppText>
+              ) : null}
 
               {/* Month Navigation */}
               <View style={styles.monthNavRow}>

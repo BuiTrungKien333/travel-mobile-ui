@@ -1,5 +1,6 @@
 import { ApiError } from "@/services/api/api-error";
 import { apiClient } from "@/services/api/client";
+import { Platform } from "react-native";
 import {
   memoriesEnvelopeSchema,
   memoryEnvelopeSchema,
@@ -30,14 +31,22 @@ export const memoryApi = {
   },
   async upload(memory: MemoryResponse, photo: LocalPhoto) {
     const body = new FormData();
-    body.append("file", {
-      uri: photo.uri,
-      name: photo.fileName,
-      type: photo.mimeType,
-    } as unknown as Blob);
+    if (Platform.OS === "web") {
+      // ImagePicker returns a browser URL on web. FormData cannot consume the
+      // React Native { uri, name, type } file descriptor used on native.
+      const fileResponse = await fetch(photo.uri);
+      if (!fileResponse.ok) throw new ApiError("NETWORK");
+      const file = await fileResponse.blob();
+      body.append("file", file, photo.fileName);
+    } else {
+      body.append("file", {
+        uri: photo.uri,
+        name: photo.fileName,
+        type: photo.mimeType,
+      } as unknown as Blob);
+    }
     const response = await apiClient.post<unknown>("/api/v1/media/upload", body, {
       params: { tripId: memory.tripId, memoryId: memory.id },
-      headers: { "Content-Type": "multipart/form-data" },
       timeout: 60000,
     });
     return parse(uploadedMediaEnvelopeSchema, response.data);
