@@ -3,7 +3,7 @@
   "info": {
     "title": "WeGo Trip CRUD - MVP contract",
     "version": "1.1.0",
-    "description": "Implemented: create/list/detail/PATCH/date-impact preview/DELETE. Destinations catalog remains planned. Android/web online MVP; no draft/AI or provider calls. See TRIP-CRUD-CONTRACT.md for transaction and migration rules."
+    "description": "Implemented: create/list/detail/PATCH/date-impact preview/DELETE/destinations. Android/web online MVP; no draft/AI or provider calls. Province master data import and device/live e2e acceptance remain open. See TRIP-CRUD-CONTRACT.md."
   },
   "servers": [
     {
@@ -632,12 +632,26 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DestinationPageResponse"
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "content": [],
+                    "page": 0,
+                    "size": 20,
+                    "totalElements": 0,
+                    "totalPages": 0,
+                    "context": {
+                      "serverTime": "2026-11-03T00:00:00Z",
+                      "evaluatedDate": "2026-11-03"
+                    }
+                  }
                 }
               }
             }
           },
           "400": {
-            "description": "COMMON_003/006/008 or TRIP_005: invalid input/reference.",
+            "description": "COMMON_003: invalid query, page or size.",
             "content": {
               "application/json": {
                 "schema": {
@@ -667,7 +681,8 @@
             }
           }
         },
-        "x-implementation-status": "planned"
+        "x-implementation-status": "implemented",
+        "description": "Authenticated internal Province catalog. Trim q (max 120); accent/case-insensitive Vietnamese name substring or code search. LIKE metacharacters are literal. Stable order code,id. Main migrations do not seed Province; an empty catalog is valid and free-text destination.name with provinceId=null remains supported."
       }
     }
   },
@@ -1361,6 +1376,9 @@
           "totalPages": {
             "type": "integer",
             "minimum": 0
+          },
+          "context": {
+            "$ref": "#/components/schemas/ReadContext"
           }
         },
         "required": [
@@ -1368,7 +1386,8 @@
           "page",
           "size",
           "totalElements",
-          "totalPages"
+          "totalPages",
+          "context"
         ]
       },
       "TripResponse": {

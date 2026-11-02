@@ -157,6 +157,7 @@ export function tripViewModel(
     id: dto.id,
     title: dto.title,
     destination: dto.destination.name,
+    destinationProvinceId: dto.destination.provinceId,
     startDate: dto.startDate ?? undefined,
     endDate: dto.endDate ?? undefined,
     status:

@@ -1,17 +1,8 @@
-import { useEffect, useState } from "react";
+import { useDebouncedValue } from "../hooks/use-debounced-value";
 import { useQuery } from "@tanstack/react-query";
 import { ApiError } from "@/services/api/api-error";
 import { useProfile } from "@/features/auth/hooks/use-auth";
 import { mapsApi } from "./maps-api";
-
-export function useDebouncedValue<T>(value: T, delay = 400): T {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const timer = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(timer);
-  }, [value, delay]);
-  return debounced;
-}
 
 export function usePlaceSearchQuery(
   query: string,

@@ -2,7 +2,7 @@
 
 Ngày: **02/11/2026**, cập nhật **03/11/2026**. Phiên bản hợp đồng: **1.1.0**.
 
-**Trạng thái:** đã triển khai create/list/detail/PATCH/date-preview/DELETE và nối UI sửa/xóa. GET destinations vẫn là đặc tả; không coi cả 7 operations đã hoạt động. Xem [Phase 2](PHASE-2-TRIP-MUTATIONS.md) và [hướng dẫn tích hợp](TRIP-API-INTEGRATION.md).
+**Trạng thái:** đã triển khai cả 7 operations create/list/detail/PATCH/date-preview/DELETE/destinations và nối UI tạo/sửa/xóa/chọn điểm đến. Chưa nghiệm thu môi trường thực hoặc master data. Xem [Phase 2](PHASE-2-TRIP-MUTATIONS.md), [danh mục điểm đến](DESTINATIONS-INTEGRATION.md) và [hướng dẫn tích hợp](TRIP-API-INTEGRATION.md).
 
 Tài liệu máy đọc: [trip-crud.openapi.json](api/trip-crud.openapi.json). Roadmap: [FRONTEND-BACKEND-INTEGRATION-PLAN.md](FRONTEND-BACKEND-INTEGRATION-PLAN.md).
 
@@ -261,7 +261,8 @@ Output data:
 - Dùng danh mục Province nội bộ; không gọi Places/Google khi mở picker.
 - Mỗi item `{id,code,name}` là Province. Client gửi selected item.id thành destination.provinceId, và name hiển thị phù hợp.
 - Tên thành phố như Đà Lạt vẫn được nhập ở destination.name khi chưa có danh mục city; provinceId nullable, không dùng ID tỉnh giả làm ID thành phố.
-- Seed “63 tỉnh/thành” trong V1 là dữ liệu lịch sử cần kiểm kê theo nguồn hành chính hiện hành trước production; task này không tự thay danh mục hoặc mã.
+- Main migrations chỉ tạo bảng Province, **không seed danh mục**; “63 tỉnh/thành” trong V1 là comment. Seed rag-demo là opt-in, không phải master data production. Cần import nguồn chính thức được duyệt trước production; task này không tự thay danh mục hoặc mã.
+- Đã triển khai tìm theo tên không phân biệt dấu/hoa-thường hoặc code, escape ký tự LIKE, thứ tự `code,id`; page có `context.serverTime/evaluatedDate` (Asia/Ho_Chi_Minh). Chi tiết và cách thử: [DESTINATIONS-INTEGRATION.md](DESTINATIONS-INTEGRATION.md).
 - Page có metadata giống chuẩn; không trả tất cả không giới hạn. Trip vẫn tạo với name + provinceId=null nếu master data chưa sẵn sàng.
 
 ## 7. Migration và nguồn dữ liệu — kế hoạch triển khai

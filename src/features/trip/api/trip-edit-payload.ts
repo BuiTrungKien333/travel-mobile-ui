@@ -21,14 +21,17 @@ export function tripEditPayload(
   return {
     version,
     ...(fields.includes("title") ? { title: values.title ?? "" } : {}),
-    ...(fields.includes("destination")
+    ...(fields.includes("destination") ||
+    fields.includes("destinationProvinceId")
       ? {
           destination: {
-            name: values.destination ?? "",
+            name: values.destination ?? base.destination.name,
             provinceId:
-              values.destination === base.destination.name
-                ? base.destination.provinceId
-                : null,
+              values.destinationProvinceId !== undefined
+                ? values.destinationProvinceId
+                : values.destination === base.destination.name
+                  ? base.destination.provinceId
+                  : null,
           },
         }
       : {}),

@@ -4,7 +4,14 @@ Cập nhật: **03/11/2026**. Phạm vi: frontend Home, danh sách/tạo/chi ti�
 
 ## Hợp đồng Trip CRUD · 02/11/2026
 
-### Phase 2 — Sửa/xóa chuyến đi và kết nối UI · 03/11/2026
+### Phase 2 — Danh mục điểm đến và picker API · 03/11/2026
+
+- Đã thêm GET `/api/v1/destinations`: authentication, pagination, tìm tên có/không dấu hoặc code, ký tự LIKE được escape. Chỉ đọc Province nội bộ; không gọi Google/provider.
+- Picker tạo/sửa dùng ID Province thật, RHF giữ tên + ID; tên tự nhập bỏ ID cũ kể cả tên trùng. Có debounce/cancellation, loading/empty/error/retry/load more, VI/EN và preview cục bộ giữ nguyên.
+- **357 backend tests, 215 mobile tests**, TypeScript/no-unused và export web + Android/Hermes đạt. Không lint/dependency/migration mới, chưa QA thiết bị/HTTP e2e hoặc đo latency production.
+- **7/7 operations Trip CRUD đã triển khai**; main migrations không seed Province, cần import nguồn chính thức trước production. Backend đồng đội chưa merge; Phase 1 production gates vẫn mở. Xem [DESTINATIONS-INTEGRATION.md](DESTINATIONS-INTEGRATION.md).
+
+### Mốc trước: Phase 2 — Sửa/xóa chuyến đi và kết nối UI · 03/11/2026
 
 - Theo chỉ định chuyển phase của người dùng sau review Phase 1: đã triển khai PATCH, date-change-preview, DELETE trên backend hiện tại; không merge `integration/team-sync`, không sửa planning/AI/auth.
 - Owner scope trước conflict, khóa Trip + version, PATCH phân biệt omitted/null, no-op giữ version/updatedAt; đổi ngày atomic và kiểm lại impact khi ghi; DELETE soft-delete Memory liên quan, không xóa media/Place dùng chung.

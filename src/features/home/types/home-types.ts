@@ -44,6 +44,7 @@ export type TripPreference =
   | "shopping"
   | "beach";
 export type Trip = {
+  destinationProvinceId?: string | null;
   serverMode?: "PLANNING" | "LIVE" | "RECAP" | "CANCELLED";
   serverStopCount?: number;
   serverDayCount?: number;

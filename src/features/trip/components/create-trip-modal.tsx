@@ -93,6 +93,7 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
       resolver: zodResolver(createTripSchema(copy, today)),
       defaultValues: {
         destination: "",
+        destinationProvinceId: null,
         startDate: "",
         endDate: "",
         title: "",
@@ -107,6 +108,7 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
   const budgetField = useController({ name: "budget", control }).field;
   const {
     destination = "",
+    destinationProvinceId = null,
     startDate = "",
     endDate = "",
     title: tripTitle = "",
@@ -136,7 +138,10 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
     if (isDirty) confirmDiscard(copy, onClose);
     else onClose();
   };
-  const handleSelectDestination = (newDest: string) => {
+  const handleSelectDestination = (
+    newDest: string,
+    provinceId: string | null = null,
+  ) => {
     const previousCity = destination.split(",")[0].trim().toLowerCase();
     const nextCity = newDest.split(",")[0].trim().toLowerCase();
     if (previousCity !== nextCity && selectedStops.length) {
@@ -144,6 +149,10 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
       setNotice(copy.destinationChanged);
     }
     setValue("destination", newDest, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setValue("destinationProvinceId", provinceId, {
       shouldDirty: true,
       shouldValidate: true,
     });
@@ -188,7 +197,10 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
               values.endDate,
               copy,
             ),
-          destination: { name: values.destination, provinceId: null },
+          destination: {
+            name: values.destination,
+            provinceId: values.destinationProvinceId,
+          },
           startDate: values.startDate,
           endDate: values.endDate,
           timeZone: "Asia/Ho_Chi_Minh",
@@ -230,7 +242,10 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
             }
             if (failure.fields["destination.name"])
               setError("destination", { message: integrationCopy.invalid });
-            if (failure.fields["budget.amount"] || failure.fields["budget.currency"])
+            if (
+              failure.fields["budget.amount"] ||
+              failure.fields["budget.currency"]
+            )
               setError("budget", { message: integrationCopy.invalid });
           }
           setError("root", {
@@ -1145,6 +1160,7 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
         <DestinationPickerSheet
           visible={showDestSheet}
           currentDestination={destination}
+          currentProvinceId={destinationProvinceId}
           onSelect={handleSelectDestination}
           onClose={() => setShowDestSheet(false)}
         />

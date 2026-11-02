@@ -11,6 +11,7 @@ import type { TripDetailsCopy } from "../i18n/trip-details-copy";
 export const clockPattern = /^([01]\d|2[0-3]):[0-5]\d$/;
 export function tripInfoSchema(copy: TripDetailsCopy) {
   return z.object({
+    destinationProvinceId: z.guid().nullable().default(null),
     title: z
       .string()
       .trim()

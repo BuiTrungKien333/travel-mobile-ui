@@ -11,6 +11,7 @@ export type TripMutation =
       changedFields?: readonly (
         | "title"
         | "destination"
+        | "destinationProvinceId"
         | "budget"
         | "preferences"
         | "accommodation"
@@ -19,7 +20,7 @@ export type TripMutation =
       values: Pick<
         Trip,
         "title" | "budget" | "preferences" | "accommodation" | "notes"
-      > & { destination?: string };
+      > & { destination?: string; destinationProvinceId?: string | null };
     }
   | { kind: "dates"; startDate: string; endDate: string }
   | {

@@ -50,6 +50,7 @@ export function TripEditForm({
     resolver: zodResolver(schema),
     defaultValues: {
       destination: trip.destination,
+      destinationProvinceId: trip.destinationProvinceId ?? null,
       startDate: trip.startDate ?? "",
       endDate: trip.endDate ?? "",
       title: getTripTitle(trip, locale),
@@ -60,9 +61,9 @@ export function TripEditForm({
     },
   });
   const busy = pending || isSubmitting;
-  const [destination, startDate, endDate] = useWatch({
+  const [destination, startDate, endDate, destinationProvinceId] = useWatch({
     control,
-    name: ["destination", "startDate", "endDate"],
+    name: ["destination", "startDate", "endDate", "destinationProvinceId"],
   });
   const [picker, setPicker] = useState<"destination" | "dates" | null>(null);
   const [moreOpen, setMoreOpen] = useState(
@@ -440,6 +441,7 @@ export function TripEditForm({
                 [
                   "title",
                   "destination",
+                  "destinationProvinceId",
                   "budget",
                   "preferences",
                   "accommodation",
@@ -471,7 +473,11 @@ export function TripEditForm({
         <DestinationPickerSheet
           visible
           currentDestination={destination}
-          onSelect={(value) => {
+          currentProvinceId={destinationProvinceId}
+          onSelect={(value, provinceId) => {
+            setValue("destinationProvinceId", provinceId ?? null, {
+              shouldDirty: true,
+            });
             setValue("destination", value, {
               shouldDirty: true,
               shouldValidate: true,

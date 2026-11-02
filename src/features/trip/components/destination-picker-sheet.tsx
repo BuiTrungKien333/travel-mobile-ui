@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import {
   FlatList,
+  ActivityIndicator,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -15,7 +16,11 @@ import {
   GestureHandlerRootView,
 } from "react-native-gesture-handler";
 import Animated from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useScreenInsets } from "@/hooks/use-screen-insets";
+import { UI_PREVIEW_ENABLED } from "@/constants/development";
+import { useDestinationsQuery } from "../api/destinations-queries";
+import { tripFormLimits } from "../constants/trip-form";
+import { AppButton } from "@/components/ui/app-button";
 import { usePickerSheetMotion } from "../hooks/use-picker-sheet-motion";
 import { useTripCopy } from "../i18n/trip-copy";
 
@@ -32,7 +37,8 @@ const webInputReset: TextStyle = Platform.select({
 type DestinationPickerSheetProps = {
   visible: boolean;
   currentDestination: string;
-  onSelect: (dest: string) => void;
+  currentProvinceId?: string | null;
+  onSelect: (dest: string, provinceId?: string | null) => void;
   onClose: () => void;
 };
 
@@ -46,6 +52,12 @@ const popularDestinations = [
   { name: "Hà Nội", city: "Hà Nội" },
   { name: "Quy Nhơn, Bình Định", city: "Quy Nhơn" },
 ];
+type DestinationItem = {
+  name: string;
+  city: string;
+  id?: string;
+  custom?: boolean;
+};
 
 export function DestinationPickerSheet(props: DestinationPickerSheetProps) {
   return props.visible ? <DestinationPickerSession {...props} /> : null;
@@ -54,29 +66,48 @@ export function DestinationPickerSheet(props: DestinationPickerSheetProps) {
 function DestinationPickerSession({
   visible,
   currentDestination,
+  currentProvinceId,
   onSelect,
   onClose,
 }: DestinationPickerSheetProps) {
   const theme = useAppTheme();
-  const insets = useSafeAreaInsets();
+  const insets = useScreenInsets();
   const [customInput, setCustomInput] = useState("");
   const [isInputFocused, setIsInputFocused] = useState(false);
+  const { query: catalog, isDebouncing } = useDestinationsQuery(
+    customInput,
+    !UI_PREVIEW_ENABLED,
+  );
+  const catalogRows = useMemo(
+    () => catalog.data?.pages.flatMap((page) => page.content) ?? [],
+    [catalog.data],
+  );
 
   const { sheetMotion, backdropMotion, dragGesture, close, reduceMotion } =
     usePickerSheetMotion(onClose);
   const { copy } = useTripCopy();
-  const handleSelect = (dest: string) => {
-    close(() => onSelect(dest));
+  const handleSelect = (dest: string, provinceId: string | null = null) => {
+    close(() => onSelect(dest, provinceId));
   };
 
   const handleCustomSubmit = () => {
     if (customInput.trim()) {
-      close(() => onSelect(customInput.trim()));
+      close(() => onSelect(customInput.trim(), null));
     }
   };
 
-  const filteredDestinations = useMemo(() => {
+  const filteredDestinations = useMemo<DestinationItem[]>(() => {
     const q = customInput.trim();
+    if (!UI_PREVIEW_ENABLED) {
+      const items = isDebouncing
+        ? []
+        : catalogRows.map((item) => ({
+            id: item.id,
+            name: item.name,
+            city: item.name,
+          }));
+      return q ? [{ name: q, city: q, custom: true }, ...items] : items;
+    }
     if (!q) return popularDestinations;
     const lower = q.toLowerCase();
     const matched = popularDestinations.filter(
@@ -91,7 +122,7 @@ function DestinationPickerSession({
       return [{ name: q, city: q }, ...matched];
     }
     return matched;
-  }, [customInput]);
+  }, [customInput, catalogRows, isDebouncing]);
 
   return (
     <Modal
@@ -104,7 +135,14 @@ function DestinationPickerSession({
       <GestureHandlerRootView style={styles.root}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : undefined}
-          style={styles.backdrop}
+          style={[
+            styles.backdrop,
+            {
+              paddingTop: insets.top + theme.spacing.lg,
+              paddingLeft: insets.left,
+              paddingRight: insets.right,
+            },
+          ]}
         >
           <Animated.View
             style={[
@@ -204,6 +242,7 @@ function DestinationPickerSession({
                 placeholder={copy.destinationSearch}
                 placeholderTextColor={theme.colors.textDisabled}
                 value={customInput}
+                maxLength={tripFormLimits.destination}
                 onChangeText={setCustomInput}
                 onFocus={() => setIsInputFocused(true)}
                 onBlur={() => setIsInputFocused(false)}
@@ -237,29 +276,121 @@ function DestinationPickerSession({
             <AppText variant="caption" tone="muted" style={styles.sectionLabel}>
               {customInput.trim()
                 ? copy.searchResults
-                : copy.popularDestinations}
+                : UI_PREVIEW_ENABLED
+                  ? copy.popularDestinations
+                  : copy.provinceCatalog}
             </AppText>
 
             {/* Destinations List */}
             <FlatList
               data={filteredDestinations}
-              keyExtractor={(item) => item.name}
+              keyExtractor={(item) =>
+                item.custom ? "custom" : (item.id ?? item.name)
+              }
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
               style={styles.list}
+              ListHeaderComponent={
+                !UI_PREVIEW_ENABLED && (catalog.isPending || isDebouncing) ? (
+                  <View
+                    style={{
+                      padding: theme.spacing.md,
+                      gap: theme.spacing.sm,
+                      alignItems: "center",
+                    }}
+                  >
+                    <ActivityIndicator
+                      accessibilityLabel={copy.catalogLoading}
+                      color={theme.colors.primaryText}
+                    />
+                    <AppText
+                      variant="caption"
+                      tone="muted"
+                      accessibilityLiveRegion="polite"
+                    >
+                      {copy.catalogLoading}
+                    </AppText>
+                  </View>
+                ) : null
+              }
+              ListFooterComponent={
+                !UI_PREVIEW_ENABLED ? (
+                  <View
+                    style={{
+                      gap: theme.spacing.sm,
+                      paddingVertical: theme.spacing.sm,
+                    }}
+                  >
+                    {!isDebouncing && catalog.isError ? (
+                      <>
+                        <AppText
+                          accessibilityRole="alert"
+                          variant="caption"
+                          tone="error"
+                        >
+                          {copy.catalogError}
+                        </AppText>
+                        <AppButton
+                          variant="outline"
+                          size="small"
+                          loading={catalog.isFetching}
+                          onPress={() => {
+                            if (catalog.isFetchNextPageError)
+                              void catalog.fetchNextPage();
+                            else void catalog.refetch();
+                          }}
+                        >
+                          {copy.catalogRetry}
+                        </AppButton>
+                      </>
+                    ) : !catalog.isPending &&
+                      !isDebouncing &&
+                      catalogRows.length === 0 ? (
+                      <AppText
+                        variant="caption"
+                        tone="muted"
+                        accessibilityLiveRegion="polite"
+                      >
+                        {customInput.trim()
+                          ? copy.catalogNoMatch
+                          : copy.catalogEmpty}
+                      </AppText>
+                    ) : null}
+                    {!catalog.isError &&
+                    !isDebouncing &&
+                    catalog.hasNextPage ? (
+                      <AppButton
+                        variant="outline"
+                        size="small"
+                        loading={catalog.isFetchingNextPage}
+                        disabled={catalog.isFetching}
+                        onPress={() => {
+                          void catalog.fetchNextPage();
+                        }}
+                      >
+                        {copy.catalogMore}
+                      </AppButton>
+                    ) : null}
+                  </View>
+                ) : null
+              }
               renderItem={({ item }) => {
-                const isSelected =
-                  currentDestination
-                    .toLowerCase()
-                    .includes(item.city.toLowerCase()) ||
-                  currentDestination.toLowerCase() === item.name.toLowerCase();
+                const isSelected = !UI_PREVIEW_ENABLED
+                  ? item.id
+                    ? currentProvinceId === item.id
+                    : !currentProvinceId && currentDestination === item.name
+                  : currentDestination
+                      .toLowerCase()
+                      .includes(item.city.toLowerCase()) ||
+                    currentDestination.toLowerCase() ===
+                      item.name.toLowerCase();
                 return (
                   <Pressable
                     accessibilityRole="button"
                     accessibilityState={{
-                      selected: currentDestination === item.name,
+                      selected: isSelected,
                     }}
-                    onPress={() => handleSelect(item.name)}
+                    onPress={() => handleSelect(item.name, item.id ?? null)}
                     style={({ pressed }) => [
                       styles.item,
                       {
@@ -278,21 +409,30 @@ function DestinationPickerSession({
                             : theme.colors.textSecondary
                         }
                       />
-                      <AppText
-                        style={[
-                          styles.itemText,
-                          {
-                            color: isSelected
-                              ? theme.colors.primaryText
-                              : theme.colors.text,
-                            fontFamily: isSelected
-                              ? theme.typography.fontFamily.semibold
-                              : theme.typography.fontFamily.regular,
-                          },
-                        ]}
+                      <View
+                        style={{ flex: 1, minWidth: 0, gap: theme.spacing.xxs }}
                       >
-                        {item.name}
-                      </AppText>
+                        <AppText
+                          style={[
+                            styles.itemText,
+                            {
+                              color: isSelected
+                                ? theme.colors.primaryText
+                                : theme.colors.text,
+                              fontFamily: isSelected
+                                ? theme.typography.fontFamily.semibold
+                                : theme.typography.fontFamily.regular,
+                            },
+                          ]}
+                        >
+                          {item.name}
+                        </AppText>
+                        {item.custom ? (
+                          <AppText variant="caption" tone="muted">
+                            {copy.customDestination}
+                          </AppText>
+                        ) : null}
+                      </View>
                     </View>
                     {isSelected ? (
                       <AppIcon

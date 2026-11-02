@@ -2,7 +2,7 @@
 
 **Ngày lập:** 02/11/2026
 
-**Trạng thái:** Đã bắt đầu triển khai theo từng module; chưa hoàn tất tích hợp MVP. Mốc mới nhất: merge mobile `minhduc`, backend `integration/team-sync` tạm hoãn theo yêu cầu.
+**Trạng thái:** Đã bắt đầu triển khai theo từng module; chưa hoàn tất tích hợp MVP. Mốc mới nhất: Phase 2 đủ 7 operations và picker Province tạo/sửa, 357 backend/215 mobile tests đạt. Backend `integration/team-sync` vẫn tạm hoãn theo yêu cầu; master data và QA môi trường thực còn mở.
 
 **Frontend:** `E:\travel-mobile-ui`
 
@@ -10,9 +10,9 @@
 
 > Tài liệu xuất từ kế hoạch đã trao đổi trong chat. Việc xuất file không triển khai API, migration hay thay đổi code ứng dụng. Các endpoint ghi “mới” là hợp đồng đề xuất, không phải endpoint hiện đang tồn tại.
 
-**Bổ sung 02/11/2026:** người dùng xác nhận draft dành cho AI sau này, **ngoài MVP**. Chuyến được tạo qua UI hiện tại là chuyến thật `PLANNING`, không có bước publish. Quy tắc chi tiết và OpenAPI Trip CRUD được chốt tại [TRIP-CRUD-CONTRACT.md](TRIP-CRUD-CONTRACT.md); đặc tả này ưu tiên khi ví dụ roadmap chưa đủ cụ thể. Create/list/detail và migration đã triển khai như ghi bên dưới; các operation còn lại vẫn là kế hoạch.
+**Bổ sung 02/11/2026:** người dùng xác nhận draft dành cho AI sau này, **ngoài MVP**. Chuyến được tạo qua UI hiện tại là chuyến thật `PLANNING`, không có bước publish. Quy tắc chi tiết và OpenAPI Trip CRUD được chốt tại [TRIP-CRUD-CONTRACT.md](TRIP-CRUD-CONTRACT.md); đặc tả này ưu tiên khi ví dụ roadmap chưa đủ cụ thể. Đến 03/11, cả 7 operations Trip CRUD đã triển khai; các phase/module ngoài phạm vi vẫn theo roadmap.
 
-**Tiến độ sau bước đặc tả:** đã triển khai create/list/detail metadata và Flyway V10, nối frontend bằng flag API riêng. Xem [TRIP-API-INTEGRATION.md](TRIP-API-INTEGRATION.md). Bảng hiện trạng bên dưới giữ mốc khảo sát ban đầu; không hiểu là mọi module đã nối. PATCH/delete và các phase Places/Itinerary/Map/Media/Weather/Home tổng hợp/AI còn lại theo roadmap.
+**Tiến độ sau bước đặc tả:** create/list/detail metadata, PATCH/date-preview/DELETE, danh mục Province và Flyway V10–V11 đã nối frontend; auth/API mặc định development, preview opt-in. Xem [TRIP-API-INTEGRATION.md](TRIP-API-INTEGRATION.md). Bảng hiện trạng bên dưới giữ mốc khảo sát ban đầu; không hiểu là mọi module đã nối. Places/Itinerary/Map/Media/Weather/Home tổng hợp/AI còn theo roadmap; draft/AI ngoài MVP.
 
 ### Mốc merge mobile · 02/11/2026
 
@@ -238,7 +238,7 @@ AuthData {
 
 ## 4. Phase 2 — Quản lý chuyến đi
 
-**Triển khai 03/11/2026 theo chỉ định của người dùng:** thêm PATCH/date-preview/DELETE và UI sửa/xóa, V11 archive appointment bị bỏ ngày; 350 tests backend, 208 mobile và TypeScript đạt. Create/list/detail trước đó vẫn giữ. GET destinations, danh mục chuẩn và nghiệm thu thiết bị/provider chưa hoàn tất. Các điều kiện production của Phase 1 vẫn mở; không merge backend đồng đội hoặc nối planning/AI. Chi tiết: [PHASE-2-TRIP-MUTATIONS.md](PHASE-2-TRIP-MUTATIONS.md).
+**Triển khai 03/11/2026 theo chỉ định của người dùng:** PATCH/date-preview/DELETE và UI sửa/xóa, V11 archive appointment bị bỏ ngày; đã bổ sung GET destinations + picker Province trong tạo/sửa, **7/7 operations**. 357 backend/215 mobile tests, TypeScript và export web/Android đạt. Danh mục chính thức chưa import (main migrations không seed Province); QA thiết bị/HTTP e2e chưa hoàn tất. Các điều kiện production Phase 1 vẫn mở; không merge backend đồng đội hoặc nối planning/AI. Chi tiết: [Phase 2](PHASE-2-TRIP-MUTATIONS.md), [danh mục điểm đến](DESTINATIONS-INTEGRATION.md).
 
 **Module:** Trip CRUD.
 

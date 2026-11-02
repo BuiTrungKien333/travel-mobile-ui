@@ -22,6 +22,7 @@ export function createTripSchema(copy: TripValidationCopy, today: string) {
     .refine((value) => !value || isCalendarDate(value), copy.invalidDate);
   return z
     .object({
+      destinationProvinceId: z.guid().nullable().default(null),
       destination: z
         .string()
         .trim()

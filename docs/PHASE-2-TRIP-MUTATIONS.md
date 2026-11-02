@@ -59,4 +59,4 @@ TripPlace là canonical membership/pool; estimated_duration/notes/visited hiện
 
 ## Chưa hoàn tất toàn bộ Phase 2
 
-GET `/destinations`, chuẩn hóa danh mục Province và QA môi trường thực còn mở. Hiện có **6/7 operations** trong OpenAPI được triển khai; flag `x-implementation-status` phân biệt rõ. Thay đổi chưa commit/push. Không đánh dấu MVP/production complete chỉ từ tests/export.
+**Bổ sung cùng ngày:** GET `/destinations` và picker tạo/sửa đã triển khai, nâng lên **7/7 operations**. Mốc mới: 357 backend/215 mobile tests, TypeScript và web/Android export đạt. Xem [danh mục điểm đến](DESTINATIONS-INTEGRATION.md). Main migrations không seed Province; import danh mục chính thức và QA môi trường thực còn mở. Không đánh dấu MVP/production complete chỉ từ tests/export.
