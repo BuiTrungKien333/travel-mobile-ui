@@ -9,7 +9,10 @@ const require = createRequire(import.meta.url);
 const root = fileURLToPath(new URL("../../", import.meta.url));
 
 /** Execute project TS/TSX with explicit platform/hook doubles; no native runtime needed. */
-export function tripModuleLoader(mocks: Record<string, unknown> = {}) {
+export function tripModuleLoader(
+  mocks: Record<string, unknown> = {},
+  globals: Record<string, unknown> = {},
+) {
   const cache = new Map<string, { exports: Record<string, unknown> }>();
   function load(path: string): Record<string, unknown> {
     const filename = [path, `${path}.ts`, `${path}.tsx`].find(existsSync);
@@ -28,6 +31,7 @@ export function tripModuleLoader(mocks: Record<string, unknown> = {}) {
     runInNewContext(
       code,
       {
+        ...globals,
         module,
         exports: module.exports,
         require: (id: string) => {

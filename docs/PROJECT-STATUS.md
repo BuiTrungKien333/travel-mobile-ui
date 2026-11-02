@@ -4,6 +4,13 @@ Cập nhật: **03/11/2026**. Phạm vi: frontend Home, danh sách/tạo/chi ti�
 
 ## Hợp đồng Trip CRUD · 02/11/2026
 
+### Review Phase 1 · 03/11/2026
+
+- Đối chiếu backend/frontend Auth/session/profile, chạy toàn bộ backend **337 tests đạt** (131 thuộc Auth/User/Security, PostgreSQL Testcontainers) và mobile **194 tests đạt**, TypeScript/no-unused và export web + Android/Hermes đạt.
+- Sửa cache còn lại khi Google magic link chuyển từ account A sang B không qua logout; refresh cùng user vẫn giữ cache. Thêm test SessionManager + QueryClient và real Axios/Auth API pipeline (HTTP adapter thay server).
+- Code/contract đạt các kiểm tra đã chạy; **chưa chốt nghiệm thu môi trường thực/production**. Còn rate limit trước public, URL email dev cần khớp web/native, SMTP/Google/deep-link/device QA thật; PUT profile chưa nối UI.
+- Không merge/sửa backend, không Phase 2. Chi tiết mức độ tác động, đánh đổi logout/email/web session và checklist nghiệm thu: [PHASE-1-AUTH-REVIEW-2026-11-03.md](PHASE-1-AUTH-REVIEW-2026-11-03.md).
+
 ### Bổ sung Auth/Cá nhân từ `minhduc` · 03/11/2026
 
 - Đưa UI Cá nhân mở rộng (tên/email/vai trò/avatar chữ cái, ngôn ngữ, đặt lại mật khẩu qua email, đăng xuất), nút đổi email sau đăng ký và logo WeGo vào code hiện tại. Không nhập lại service auth trùng lặp.

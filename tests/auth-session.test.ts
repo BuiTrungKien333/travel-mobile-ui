@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { QueryClient } from "@tanstack/react-query";
 import { SessionManager } from "../src/features/auth/services/session-manager.ts";
 import { ApiError } from "../src/services/api/api-error.ts";
 import type { AuthData, AuthStatus } from "../src/features/auth/types/auth-types.ts";
@@ -28,6 +29,43 @@ function fixture(initial: string | null = null) {
   };
   return { state, dependencies };
 }
+
+test("a warm Google-link account switch clears the previous account cache before publishing the new profile", async () => {
+  const { dependencies } = fixture();
+  const cache = new QueryClient();
+  dependencies.onClear = () => cache.clear();
+  dependencies.onUser = (current) => {
+    cache.setQueryData(["auth", "profile"], current);
+  };
+  const session = new SessionManager(dependencies);
+  await session.authenticate(async () => data("first"));
+  cache.setQueryData(["private-trip", user.id], { title: "Private itinerary" });
+  const other = {
+    ...data("second"),
+    user: {
+      ...user,
+      id: "00000000-0000-4000-8000-000000000002",
+      email: "other@example.com",
+    },
+  };
+  await session.authenticate(async () => other);
+  assert.equal(cache.getQueryData(["private-trip", user.id]), undefined);
+  assert.equal(
+    cache.getQueryData<typeof user>(["auth", "profile"])?.id,
+    other.user.id,
+  );
+  assert.equal(session.getAccessToken(), "second.access");
+  cache.clear();
+});
+
+test("normal same-account refresh preserves cached application data", async () => {
+  const { state, dependencies } = fixture();
+  const session = new SessionManager(dependencies);
+  await session.authenticate(async () => data("first"));
+  await session.refresh();
+  assert.equal(state.cleared, 0);
+  assert.equal(session.getAccessToken(), "new.access");
+});
 
 test("fresh install becomes anonymous without calling refresh", async () => {
   const { state, dependencies } = fixture();

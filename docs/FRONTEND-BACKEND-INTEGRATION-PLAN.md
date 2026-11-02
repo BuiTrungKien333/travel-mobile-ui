@@ -187,6 +187,8 @@ Backend đang có `PLANNING`, `ACTIVE`, `COMPLETED`, `CANCELLED`; frontend có e
 
 ## 3. Phase 1 — Auth, session và hồ sơ
 
+**Review 03/11/2026:** code/contract qua backend 337 tests (131 Auth/User/Security), mobile 194 tests và TypeScript. Đã sửa cache khi chuyển account bằng Google link. Chưa nghiệm thu SMTP/Google/deep links trên môi trường thực; rate limit trước public còn thiếu, PUT profile chưa nối UI. **Chưa đánh dấu Phase 1 complete hoặc chuyển Phase 2.** Xem [báo cáo](PHASE-1-AUTH-REVIEW-2026-11-03.md).
+
 **Module:** Authentication và User.
 
 **Phụ thuộc:** Phase 0.

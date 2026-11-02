@@ -1,5 +1,7 @@
 # Tích hợp auth
 
+**Review Phase 1 · 03/11/2026:** đã chạy 337 tests backend/194 mobile, sửa cache khi Google link đổi account; các giới hạn và nghiệm thu còn lại được ghi ở [PHASE-1-AUTH-REVIEW-2026-11-03.md](PHASE-1-AUTH-REVIEW-2026-11-03.md). Không coi build/tests là xác nhận SMTP/Google/device thật.
+
 ## Bổ sung từ `minhduc` · 03/11/2026
 
 - Đã đưa phần Cá nhân mở rộng và nút “Dùng email khác” sau đăng ký vào nhánh hiện tại, sau khi review. Service login/register/magic link/reset/Google/session vốn đã có ở nhánh nhận và được giữ nguyên.

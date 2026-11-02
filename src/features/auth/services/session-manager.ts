@@ -19,6 +19,7 @@ type SessionDependencies = {
 export class SessionManager {
   private accessToken: string | null = null;
   private refreshToken: string | null = null;
+  private userId: string | null = null;
   private version = 0;
   private refreshPromise?: Promise<AuthData>;
   private restorePromise?: Promise<void>;
@@ -47,6 +48,10 @@ export class SessionManager {
       throw new ApiError("STORAGE");
     }
     if (version !== this.version) throw new ApiError("CANCELLED");
+    // A confirmed Google email link can switch accounts without passing through logout.
+    if (this.userId !== null && this.userId !== data.user.id)
+      this.dependencies.onClear();
+    this.userId = data.user.id;
     this.accessToken = data.accessToken;
     this.refreshToken = data.refreshToken;
     this.restoreError = null;
@@ -163,6 +168,7 @@ export class SessionManager {
     ++this.version;
     this.accessToken = null;
     this.refreshToken = null;
+    this.userId = null;
     this.refreshPromise = undefined;
     this.dependencies.onClear();
     try {
