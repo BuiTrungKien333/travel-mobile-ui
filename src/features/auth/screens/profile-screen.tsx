@@ -1,5 +1,6 @@
 import { router } from "expo-router";
 import { useBottomTabBarHeight } from "expo-router/js-tabs";
+import { Image } from "expo-image";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -66,14 +67,20 @@ export function ProfileScreen() {
         <View style={[styles.container, { gap: theme.spacing.xl }]}>
           <View style={styles.topBar}>
             <View style={{ gap: theme.spacing.xxs }}>
-              <AppText variant="caption" tone="muted">
-                WEGO
-              </AppText>
+              <Image
+                accessible
+                accessibilityLabel="Wego"
+                source={require("@/assets/images/logo.png")}
+                contentFit="contain"
+                style={{
+                  width: theme.layout.headerLogoWidth,
+                  height: theme.layout.headerLogoHeight,
+                }}
+              />
               <AppText accessibilityRole="header" variant="heading">
                 {t("auth.profile.title")}
               </AppText>
             </View>
-            <LanguageSwitcher />
           </View>
 
           <AppText tone="muted">{t("auth.profile.subtitle")}</AppText>
