@@ -16,6 +16,8 @@
 
 ### Mốc merge mobile · 02/11/2026
 
+**Follow-up Auth/Profile 03/11:** đã nhận UI Cá nhân và phần đổi email sau đăng ký từ nhánh nguồn sau review; auth thật mặc định development, fixture preview opt-in. Giữ API/session hiện có, sửa loading/tokens/recovery/logout feedback. Đây là hoàn thiện frontend Phase 1/9, chưa xác nhận e2e SMTP/Google hay hoàn tất Profile CRUD/backend phase. Xem [auth-integration.md](auth-integration.md).
+
 | Module/phase | Kết quả lần gộp này | Chưa hoàn tất |
 | --- | --- | --- |
 | Phase 0 / 2 · Trip | Giữ canonical DTO, list phân trang, create request key, owner-scoped cache và nhánh API tạo/list/detail đã có | PATCH/delete/date preview, QA thiết bị |

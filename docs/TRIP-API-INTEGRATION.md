@@ -20,6 +20,8 @@ Cập nhật: **02/11/2026**. Phạm vi: **tạo → danh sách → chi tiết m
 
 ## Bật chế độ API
 
+Từ 03/11/2026, auth/API là mặc định cả development khi không đặt `EXPO_PUBLIC_UI_PREVIEW`. Flag `false` bên dưới là tường minh; `true` chỉ dành cho preview UI. Không cần sửa hằng số TypeScript để chuyển chế độ.
+
 Trong `.env.local` của mobile (giữ các giá trị khác bạn đang dùng):
 
 ```dotenv

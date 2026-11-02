@@ -4,6 +4,13 @@ Cập nhật: **03/11/2026**. Phạm vi: frontend Home, danh sách/tạo/chi ti�
 
 ## Hợp đồng Trip CRUD · 02/11/2026
 
+### Bổ sung Auth/Cá nhân từ `minhduc` · 03/11/2026
+
+- Đưa UI Cá nhân mở rộng (tên/email/vai trò/avatar chữ cái, ngôn ngữ, đặt lại mật khẩu qua email, đăng xuất), nút đổi email sau đăng ký và logo WeGo vào code hiện tại. Không nhập lại service auth trùng lặp.
+- Review sửa: bỏ cắt tên “Demo”, dùng token thay kích thước viết tay, giữ tên dài, error/retry và loading đúng khi query bị disable, điều hướng recovery về đúng tài khoản; logout cục bộ có thông báo trên web/native và không chuyển trang theo response của phiên cũ.
+- Auth/API thật mặc định development; preview là opt-in `EXPO_PUBLIC_UI_PREVIEW=true`, release luôn auth. Không sửa env cá nhân. Input giữ 14, theme sáng và VI/EN; không thay UI các module khác hoặc merge backend.
+- TypeScript/no-unused và **186/186 tests**, export web và Android/Hermes đạt. Không lint, không dependency/config native mới, chưa e2e backend/email/Google hoặc QA thiết bị. Xem [hướng dẫn auth](auth-integration.md).
+
 ### Merge mobile `minhduc`
 
 - Gộp vào `feat/ui/memory`, ưu tiên UI và chuẩn hiện tại; giữ Home/camera/album/modal/gesture, không nhập các rewrite giao diện làm mất tính năng đã chốt.

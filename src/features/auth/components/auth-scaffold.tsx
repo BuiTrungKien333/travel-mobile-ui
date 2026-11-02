@@ -58,22 +58,15 @@ export function AuthScaffold({
           </View>
           <View style={[styles.header, { gap: theme.spacing.sm }]}>
             {showLogo ? (
-              <View
-                style={[
-                  styles.logoFrame,
-                  {
-                    backgroundColor: theme.colors.surfaceVariant,
-                    borderColor: theme.colors.border,
-                    borderRadius: theme.radius.xl,
-                    marginBottom: theme.spacing.md,
-                  },
-                ]}
-              >
+              <View style={{ marginBottom: theme.spacing.md }}>
                 <Image
                   accessibilityLabel={t("common.logoAccessibility")}
                   contentFit="contain"
-                  source={require("@/assets/images/react-logo.png")}
-                  style={styles.logo}
+                  source={require("@/assets/images/logo.png")}
+                  style={{
+                    width: theme.layout.headerLogoWidth,
+                    height: theme.layout.headerLogoHeight,
+                  }}
                 />
               </View>
             ) : null}
@@ -116,18 +109,6 @@ const styles = StyleSheet.create({
   },
   languageRow: {
     alignItems: "flex-end",
-  },
-  logoFrame: {
-    width: 72,
-    height: 72,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderCurve: "continuous",
-  },
-  logo: {
-    width: 46,
-    height: 42,
   },
   title: {
     textAlign: "center",

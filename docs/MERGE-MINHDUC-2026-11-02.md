@@ -67,4 +67,6 @@ Expo Doctor cảnh báo `@expo/ui`, `expo`, `expo-constants`, `expo-dev-client`,
 
 ## Bước tiếp theo
 
+**Follow-up 03/11 theo yêu cầu người dùng:** đã bổ sung lại Profile mở rộng và nút đổi email của Register, auth thật mặc định development, logo WeGo; sửa token/layout/loading/điều hướng recovery và logout feedback trước khi nhận. Các quyết định không nhận Profile/Register ở mục merge bên trên là mốc lịch sử của commit `bea85bf`. UI/Places/Itinerary/Memory/Maps và backend không thay phạm vi. Chi tiết kiểm tra trong `auth-integration.md` và `PROJECT-STATUS.md`.
+
 Review kết quả mobile trên preview hiện tại; sau đó tiếp tục Trip PATCH/delete theo contract đã chốt. Backend `integration/team-sync` chỉ merge khi người dùng yêu cầu lại, sau khi xử lý controller/DTO/error code/migration và media/provider. Không cần bật toàn bộ service vừa nhập để thử UI.

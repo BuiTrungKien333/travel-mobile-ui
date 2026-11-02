@@ -9,7 +9,10 @@ export function AuthReturnButton() {
     (state) => state.status === "authenticated",
   );
   return (
-    <AppButton variant="outline" onPress={() => router.replace("/")}>
+    <AppButton
+      variant="outline"
+      onPress={() => router.replace(authenticated ? "/tabs/profile" : "/")}
+    >
       {t(authenticated ? "auth.email.backToAccount" : "auth.register.login")}
     </AppButton>
   );

@@ -1,4 +1,4 @@
-// Development mặc định preview; đặt EXPO_PUBLIC_UI_PREVIEW=false để tích hợp API.
+// Auth/API thật mặc định cả development; preview UI cần bật tường minh.
 // Bản release luôn dùng luồng xác thực thật.
 export const UI_PREVIEW_ENABLED =
-  __DEV__ && process.env.EXPO_PUBLIC_UI_PREVIEW !== "false";
+  __DEV__ && process.env.EXPO_PUBLIC_UI_PREVIEW === "true";

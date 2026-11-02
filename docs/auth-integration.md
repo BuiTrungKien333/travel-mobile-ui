@@ -1,5 +1,15 @@
 # Tích hợp auth
 
+## Bổ sung từ `minhduc` · 03/11/2026
+
+- Đã đưa phần Cá nhân mở rộng và nút “Dùng email khác” sau đăng ký vào nhánh hiện tại, sau khi review. Service login/register/magic link/reset/Google/session vốn đã có ở nhánh nhận và được giữ nguyên.
+- Auth/API thật mặc định cả development: không đặt flag hoặc đặt `EXPO_PUBLIC_UI_PREVIEW=false`. Khi làm UI không cần backend, bật tường minh `EXPO_PUBLIC_UI_PREVIEW=true`; release không cho bypass. `.env.example` đã đổi mặc định; không sửa `.env`/`.env.local` cá nhân.
+- Cá nhân hiển thị tên/email/vai trò từ profile, avatar chữ cái, thông tin cá nhân, VI/EN, đặt lại mật khẩu qua luồng email và đăng xuất. Đây chưa phải chức năng sửa hồ sơ hay đổi mật khẩu bằng mật khẩu hiện tại.
+- Không tự cắt hậu tố “Demo” khỏi tên server, không tự gắn huy hiệu “đã xác minh”. Dùng semantic tokens, safe area và khoảng đệm bottom nav; error có retry, disabled preview query không loading vô hạn. Đã thay logo React tạm ở đăng nhập bằng `logo.png`.
+- “Trở về tài khoản” sau yêu cầu email trở về `/tabs/profile` nếu còn đăng nhập. Sau reset thành công, session vẫn bị vô hiệu theo chính sách hiện có.
+- Nếu chỉ đăng xuất cục bộ vì server revoke thất bại, hiển thị thông báo ở màn đăng nhập trên web/native. Phản hồi logout cũ không điều hướng lại khi đã đăng nhập phiên mới.
+- Frontend kiểm tra TypeScript/no-unused, **186/186 tests** (9 behavior tests mới), export web và Android/Hermes đạt. Không thêm dependency, không lint, chưa chạy e2e với backend/email/Google thật hoặc QA thiết bị. Không merge hay sửa backend.
+
 ## Chạy ứng dụng
 
 1. Backend: khởi động lại `TravelApplication` trong `E:/travel-system/backend` với profile `dev` để áp dụng Flyway V6/V7. Profile này đọc `.env` tại thư mục backend. Cần PostgreSQL và hai biến `JWT_SECRET_KEY`, `JWT_REFRESH_KEY` là khóa Base64 riêng, mỗi khóa ít nhất 32 byte; không dùng khóa ví dụ/test trong môi trường thật.

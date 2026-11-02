@@ -36,6 +36,8 @@ export const layout = {
   tripTimelineConnectorWidth: 1.5,
   tripDateTabWidth: 88,
   contentMaxWidth: 560,
+  profileAvatarSize: 64,
+  profilePreferenceTextMinWidth: 160,
   cameraContentMaxWidth: 440,
   cameraFrameSideInset: 10,
   cameraTinyControlSurface: 28,

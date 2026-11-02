@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useRef } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Keyboard, Pressable, StyleSheet, TextInput, View } from "react-native";
@@ -27,6 +27,7 @@ import { authErrorMessage } from "../utils/auth-error-message";
 export function LoginScreen() {
   const theme = useAppTheme();
   const { locale, t } = useI18n();
+  const { notice } = useLocalSearchParams<{ notice?: string | string[] }>();
   const login = useLogin();
   const google = useGoogleLogin();
   const passwordInputRef = useRef<TextInput>(null);
@@ -77,6 +78,11 @@ export function LoginScreen() {
       title={t("auth.login.title")}
     >
       <View style={{ gap: theme.spacing.lg }}>
+        {notice === "local-logout" ? (
+          <AppText accessibilityRole="alert" tone="muted">
+            {t("auth.session.localLogout")}
+          </AppText>
+        ) : null}
         {login.error ? (
           <AppText accessibilityRole="alert" tone="error">
             {authErrorMessage(login.error, t)}

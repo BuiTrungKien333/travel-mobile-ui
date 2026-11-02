@@ -6,6 +6,12 @@ import { StyleSheet, View } from "react-native";
 import { useAppTheme } from "@/hooks/use-app-theme";
 
 const symbols = {
+  email: { ios: "envelope", android: "mail", web: "mail" },
+  logout: {
+    ios: "rectangle.portrait.and.arrow.right",
+    android: "logout",
+    web: "logout",
+  },
   cameraGallery: {
     ios: "photo.on.rectangle",
     android: "photo_library",
