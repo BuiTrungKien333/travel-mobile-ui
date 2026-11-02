@@ -4,6 +4,14 @@ Cập nhật: **03/11/2026**. Phạm vi: frontend Home, danh sách/tạo/chi ti�
 
 ## Hợp đồng Trip CRUD · 02/11/2026
 
+### Phase 2 — Sửa/xóa chuyến đi và kết nối UI · 03/11/2026
+
+- Theo chỉ định chuyển phase của người dùng sau review Phase 1: đã triển khai PATCH, date-change-preview, DELETE trên backend hiện tại; không merge `integration/team-sync`, không sửa planning/AI/auth.
+- Owner scope trước conflict, khóa Trip + version, PATCH phân biệt omitted/null, no-op giữ version/updatedAt; đổi ngày atomic và kiểm lại impact khi ghi; DELETE soft-delete Memory liên quan, không xóa media/Place dùng chung.
+- V11 thêm `itinerary_items.removed_at` để gỡ lịch mà vẫn giữ note/time legacy; active reads loại archive. Ngày giao nhau giữ ID/cấu hình; TP membership/note/duration/visited được giữ, thiếu membership legacy được đưa lại pool. Không tự chạy migration trên DB cá nhân.
+- UI thật có menu sửa/xóa, dùng lại form/modal, disable pending, xác nhận ngày, giữ form khi lỗi và yêu cầu review version mới; không tự retry 409. Chỉ PATCH dirty fields, sửa được ngày quá khứ; xóa cập nhật list/Home và cache liên quan.
+- **350 backend tests**, **208 mobile tests**, TypeScript/no-unused và export web + Android/Hermes đạt. Không lint/dependency mới, chưa QA browser/thiết bị hoặc HTTP e2e UI → backend thật. GET destinations và nghiệm thu môi trường thực vẫn mở; không coi toàn bộ Phase 2 production-complete. Xem [PHASE-2-TRIP-MUTATIONS.md](PHASE-2-TRIP-MUTATIONS.md).
+
 ### Review Phase 1 · 03/11/2026
 
 - Đối chiếu backend/frontend Auth/session/profile, chạy toàn bộ backend **337 tests đạt** (131 thuộc Auth/User/Security, PostgreSQL Testcontainers) và mobile **194 tests đạt**, TypeScript/no-unused và export web + Android/Hermes đạt.

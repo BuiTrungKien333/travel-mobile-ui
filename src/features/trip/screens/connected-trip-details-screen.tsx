@@ -14,6 +14,7 @@ import {
 } from "../components/trip-details-header";
 import { TripPlanningMap } from "../components/trip-planning-map";
 import { TripPlanningDaySelector } from "../components/trip-planning-day-selector";
+import { ConnectedTripActions } from "../components/connected-trip-actions";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 import {
   tripApiErrorMessage,
@@ -40,6 +41,7 @@ export function ConnectedTripDetailsScreen({
   const [viewport, setViewport] = useState(0);
   const resizeLock = useSharedValue(0);
   const read = query.data;
+  const [actionsOpen, setActionsOpen] = useState(false);
   if (!read)
     return (
       <ScreenSafeArea
@@ -99,6 +101,7 @@ export function ConnectedTripDetailsScreen({
               mode={mode[read.trip.mode]}
               titleOnly
               onBack={back}
+              onMenu={() => setActionsOpen(true)}
             />
           }
           viewportHeight={viewport}
@@ -185,6 +188,17 @@ export function ConnectedTripDetailsScreen({
           ) : null}
         </ScrollView>
       </View>
+      {actionsOpen ? (
+        <ConnectedTripActions
+          read={read}
+          onClose={() => setActionsOpen(false)}
+          onReload={async () => {
+            const result = await query.refetch();
+            return result.isError ? undefined : result.data;
+          }}
+          onDeleted={() => router.replace("/tabs/trips")}
+        />
+      ) : null}
     </ScreenSafeArea>
   );
 }

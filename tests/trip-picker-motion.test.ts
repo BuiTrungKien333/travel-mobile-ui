@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { tripModuleLoader } from "./helpers/load-trip-module.ts";
 
-function motionHarness() {
+function motionHarness(dismissDisabled = false) {
+  let gestureEnabled = true;
   const effects: (() => () => void)[] = [];
   const completions: ((finished: boolean) => void)[] = [];
   const events: string[] = [];
@@ -11,10 +12,11 @@ function motionHarness() {
     (event: { translationY: number; velocityY: number }) => void
   > = {};
   const gesture = Object.fromEntries(
-    ["activeOffsetY", "failOffsetX", "onUpdate", "onEnd", "onFinalize"].map(
+    ["enabled", "activeOffsetY", "failOffsetX", "onUpdate", "onEnd", "onFinalize"].map(
       (key) => [
         key,
         (value: unknown) => {
+          if (key === "enabled") gestureEnabled = value === true;
           if (typeof value === "function")
             handlers[key] = value as (typeof handlers)[string];
           return gesture;
@@ -77,10 +79,19 @@ function motionHarness() {
   const { usePickerSheetMotion } = load<
     typeof import("../src/features/trip/hooks/use-picker-sheet-motion.ts")
   >("src/features/trip/hooks/use-picker-sheet-motion.ts");
-  const motion = usePickerSheetMotion(() => events.push("close"));
+  const motion = usePickerSheetMotion(() => events.push("close"),dismissDisabled);
   const cleanup = effects[0]();
-  return { motion, completions, events, handlers, cleanup };
+  return { motion, completions, events, handlers, cleanup, isGestureEnabled: () => gestureEnabled };
 }
+
+test("a pending server mutation disables swipe and prevents closing the sheet", () => {
+  const h = motionHarness(true);
+  h.motion.close();
+  assert.equal(h.isGestureEnabled(), false);
+  assert.equal(h.completions.length, 0);
+  assert.deepEqual(h.events, []);
+  h.cleanup();
+});
 
 test("Apply commits once after the close animation and duplicate presses cannot replace it", () => {
   const { motion, completions, events } = motionHarness();

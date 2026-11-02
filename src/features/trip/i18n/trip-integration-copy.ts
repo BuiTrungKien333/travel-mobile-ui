@@ -4,6 +4,19 @@ import { ApiError } from "@/services/api/api-error";
 const vi = {
   loading: "Đang tải chuyến đi…",
   retry: "Thử lại",
+  versionConflict:
+    "Chuyến đi đã được thay đổi ở nơi khác. Chỉnh sửa của bạn vẫn được giữ; hãy tải bản mới để xem lại trước khi lưu.",
+  discardReload: "Bỏ chỉnh sửa, tải bản mới",
+  reviewLatest: "Tải bản mới",
+  readOnly: "Chuyến đi đã hủy chỉ có thể xem hoặc xóa.",
+  deletePermanent:
+    "Xóa chuyến đi “{title}” cùng các kỷ niệm liên quan? Thao tác này không thể hoàn tác trong ứng dụng.",
+  dateImpactTitle: "Thay đổi ngày chuyến đi?",
+  dateImpactHint:
+    "{count} địa điểm sẽ chuyển về Chưa xếp lịch. Các ngày còn trùng được giữ nguyên; ghi chú và kỷ niệm vẫn được lưu.",
+  confirmDates: "Xác nhận đổi ngày",
+  dateImpactRequired:
+    "Lịch trình có điểm bị ảnh hưởng. Bấm Lưu để xem lại tác động trước khi xác nhận.",
   more: "Xem thêm",
   unavailable: "Chưa kết nối chức năng này",
   pending:
@@ -32,6 +45,19 @@ const vi = {
 const en: typeof vi = {
   loading: "Loading trips…",
   retry: "Retry",
+  versionConflict:
+    "This trip changed elsewhere. Your edits are kept; load the latest version to review before saving.",
+  discardReload: "Discard edits and load latest",
+  reviewLatest: "Load latest",
+  readOnly: "Cancelled trips can only be viewed or deleted.",
+  deletePermanent:
+    "Delete “{title}” and its related memories? This cannot be undone in the app.",
+  dateImpactTitle: "Change trip dates?",
+  dateImpactHint:
+    "{count} places will move to Unscheduled. Overlapping days are kept; notes and memories remain saved.",
+  confirmDates: "Confirm dates",
+  dateImpactRequired:
+    "Some scheduled places are affected. Select Save to review the impact before confirming.",
   more: "Load more",
   unavailable: "This feature is not connected yet",
   pending:
@@ -64,6 +90,11 @@ export function useTripIntegrationCopy() {
 }
 export function tripApiErrorMessage(error: unknown, copy: typeof vi): string {
   if (!(error instanceof ApiError)) return copy.generic;
+  if (error.code === "TRIP_002") return copy.versionConflict;
+  if (error.code === "TRIP_003") return copy.dateImpactRequired;
+  if (error.code === "TRIP_006") return copy.readOnly;
+  if (error.code === "INVALID_TRIP" || error.code === "COMMON_006")
+    return copy.invalid;
   if (error.code === "NETWORK" || error.code === "TIMEOUT") return copy.network;
   if (error.code === "API_CONFIG") return copy.config;
   if (error.code === "COMMON_003" || error.code === "TRIP_005")

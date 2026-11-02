@@ -8,6 +8,14 @@ export type TripMutation =
   | {
       kind: "info";
       dateRange?: { startDate: string; endDate: string };
+      changedFields?: readonly (
+        | "title"
+        | "destination"
+        | "budget"
+        | "preferences"
+        | "accommodation"
+        | "notes"
+      )[];
       values: Pick<
         Trip,
         "title" | "budget" | "preferences" | "accommodation" | "notes"

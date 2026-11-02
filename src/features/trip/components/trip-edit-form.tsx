@@ -28,10 +28,14 @@ export function TripEditForm({
   trip,
   today,
   onCommit,
+  pending = false,
+  allowPastDates = false,
 }: {
   trip: Trip;
   today: string;
-  onCommit: (mutation: TripMutation) => boolean;
+  onCommit: (mutation: TripMutation) => boolean | Promise<boolean>;
+  pending?: boolean;
+  allowPastDates?: boolean;
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
@@ -41,7 +45,7 @@ export function TripEditForm({
     control,
     setValue,
     handleSubmit,
-    formState: { errors, isDirty },
+    formState: { errors, isDirty, isSubmitting, dirtyFields, defaultValues },
   } = useForm<z.input<typeof schema>, unknown, z.output<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -55,6 +59,7 @@ export function TripEditForm({
       preferences: trip.preferences ?? [],
     },
   });
+  const busy = pending || isSubmitting;
   const [destination, startDate, endDate] = useWatch({
     control,
     name: ["destination", "startDate", "endDate"],
@@ -79,6 +84,7 @@ export function TripEditForm({
   return (
     <>
       <Pressable
+        disabled={busy}
         accessibilityRole="button"
         accessibilityLabel={`${formCopy.destination}: ${destination || formCopy.chooseDestination}`}
         onPress={() => {
@@ -126,6 +132,7 @@ export function TripEditForm({
         </AppText>
       ) : null}
       <Pressable
+        disabled={busy}
         accessibilityRole="button"
         accessibilityLabel={`${formCopy.tripDates}: ${startDate ? formatDisplayDate(startDate, locale) : formCopy.chooseDates}${endDate ? ` – ${formatDisplayDate(endDate, locale)}` : ""}`}
         onPress={() => {
@@ -206,6 +213,7 @@ export function TripEditForm({
         name="title"
         render={({ field, fieldState }) => (
           <AppInput
+            editable={!busy}
             compact
             label={formCopy.tripTitle}
             placeholder={formCopy.titlePlaceholder}
@@ -219,6 +227,7 @@ export function TripEditForm({
             trailingAction={
               field.value ? (
                 <Pressable
+                  disabled={busy}
                   accessibilityRole="button"
                   accessibilityLabel={formCopy.clearTitle}
                   onPress={() => field.onChange("")}
@@ -242,6 +251,7 @@ export function TripEditForm({
       />
       <View style={card}>
         <Pressable
+          disabled={busy}
           accessibilityRole="button"
           accessibilityState={{ expanded: moreOpen }}
           aria-expanded={moreOpen}
@@ -275,6 +285,7 @@ export function TripEditForm({
               name="budget"
               render={({ field, fieldState }) => (
                 <AppInput
+                  editable={!busy}
                   compact
                   label={formCopy.budget}
                   placeholder={formCopy.budgetPlaceholder}
@@ -318,6 +329,7 @@ export function TripEditForm({
                       const selected = field.value.includes(id);
                       return (
                         <Pressable
+                          disabled={busy}
                           key={id}
                           accessibilityRole="checkbox"
                           accessibilityState={{ checked: selected }}
@@ -372,6 +384,7 @@ export function TripEditForm({
               name="accommodation"
               render={({ field, fieldState }) => (
                 <AppInput
+                  editable={!busy}
                   compact
                   label={copy.accommodation}
                   placeholder={copy.accommodationPlaceholder}
@@ -389,6 +402,7 @@ export function TripEditForm({
               name="notes"
               render={({ field, fieldState }) => (
                 <AppInput
+                  editable={!busy}
                   compact
                   label={copy.tripNotes}
                   multiline
@@ -412,15 +426,26 @@ export function TripEditForm({
         size="small"
         variant="gradient"
         disabled={!isDirty}
+        loading={busy}
         onPress={handleSubmit(
-          ({ startDate: nextStart, endDate: nextEnd, ...values }) => {
+          async ({ startDate: nextStart, endDate: nextEnd, ...values }) => {
             Keyboard.dismiss();
             const datesChanged =
-              nextStart !== (trip.startDate ?? "") ||
-              nextEnd !== (trip.endDate ?? "");
-            onCommit({
+              nextStart !== (defaultValues?.startDate ?? "") ||
+              nextEnd !== (defaultValues?.endDate ?? "");
+            await onCommit({
               kind: "info",
               values,
+              changedFields: (
+                [
+                  "title",
+                  "destination",
+                  "budget",
+                  "preferences",
+                  "accommodation",
+                  "notes",
+                ] as const
+              ).filter((field) => dirtyFields[field]),
               ...(datesChanged && nextStart && nextEnd
                 ? { dateRange: { startDate: nextStart, endDate: nextEnd } }
                 : {}),
@@ -459,6 +484,7 @@ export function TripEditForm({
       {picker === "dates" ? (
         <DateRangeSheet
           visible
+          allowPastDates={allowPastDates}
           startDate={startDate}
           endDate={endDate}
           today={

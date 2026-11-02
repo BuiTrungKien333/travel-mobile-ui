@@ -238,6 +238,8 @@ AuthData {
 
 ## 4. Phase 2 — Quản lý chuyến đi
 
+**Triển khai 03/11/2026 theo chỉ định của người dùng:** thêm PATCH/date-preview/DELETE và UI sửa/xóa, V11 archive appointment bị bỏ ngày; 350 tests backend, 208 mobile và TypeScript đạt. Create/list/detail trước đó vẫn giữ. GET destinations, danh mục chuẩn và nghiệm thu thiết bị/provider chưa hoàn tất. Các điều kiện production của Phase 1 vẫn mở; không merge backend đồng đội hoặc nối planning/AI. Chi tiết: [PHASE-2-TRIP-MUTATIONS.md](PHASE-2-TRIP-MUTATIONS.md).
+
 **Module:** Trip CRUD.
 
 **Phụ thuộc:** Phase 1.

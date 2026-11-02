@@ -400,3 +400,13 @@ test("calendar uses localized labels, announces selection and applies a single-d
   nodes(tree, "AppButton")[0].props.onPress();
   assert.deepEqual(applied, [["2026-10-22", "2026-10-22"]]);
 });
+
+test("editing server trips can correct past dates while creation keeps past dates disabled", () => {
+  const h = uiHarness();
+  const { DateRangeSheet } = h.load<typeof import("../src/features/trip/components/date-range-sheet.tsx")>("src/features/trip/components/date-range-sheet.tsx");
+  const props = { visible: true, startDate: "2026-10-20", endDate: "2026-10-22", today: "2026-10-21", onApply: () => {}, onClose: () => {} };
+  let tree = h.render(DateRangeSheet,props);
+  assert.equal(nodes(tree,"Pressable").find((node) => node.props.accessibilityLabel?.includes("October 19, 2026"))?.props.disabled,true);
+  tree = h.render(DateRangeSheet,{ ...props,allowPastDates: true });
+  assert.equal(nodes(tree,"Pressable").find((node) => node.props.accessibilityLabel?.includes("October 19, 2026"))?.props.disabled,false);
+});

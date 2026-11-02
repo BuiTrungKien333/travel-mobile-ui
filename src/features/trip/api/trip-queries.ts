@@ -8,7 +8,12 @@ import { useProfile } from "@/features/auth/hooks/use-auth";
 import { tripApi } from "./trip-api";
 import { authSession } from "@/features/auth/services/auth-session";
 import { ApiError } from "@/services/api/api-error";
-import type { CreateTripPayload } from "./trip-contract";
+import type {
+  CreateTripPayload,
+  UpdateTripPayload,
+  DatePreviewRequest,
+} from "./trip-contract";
+import { memoryQueryKeys } from "@/features/home/api/memory-query-keys";
 
 import { tripQueryKeys } from "./trip-query-keys";
 export { tripQueryKeys } from "./trip-query-keys";
@@ -50,6 +55,75 @@ export function useCreateTripMutation() {
     onSuccess: (read) => {
       client.setQueryData(tripQueryKeys.detail(owner, read.trip.id), read);
       void client.invalidateQueries({ queryKey: tripQueryKeys.list(owner) });
+    },
+  });
+}
+
+export function useUpdateTripMutation(id: string) {
+  const owner = useProfile().data?.id;
+  const client = useQueryClient();
+  return useMutation({
+    retry: false,
+    mutationFn: async (payload: UpdateTripPayload) => {
+      const sessionVersion = authSession.getVersion();
+      const result = await tripApi.update(id, payload);
+      if (sessionVersion !== authSession.getVersion())
+        throw new ApiError("CANCELLED");
+      return { read: result, sessionVersion };
+    },
+    onSuccess: async ({ read, sessionVersion }) => {
+      await client.cancelQueries({ queryKey: tripQueryKeys.detail(owner, id) });
+      if (sessionVersion !== authSession.getVersion())
+        throw new ApiError("CANCELLED");
+      client.setQueryData(tripQueryKeys.detail(owner, id), read);
+      await Promise.all([
+        client.invalidateQueries({ queryKey: tripQueryKeys.list(owner) }),
+        client.invalidateQueries({
+          queryKey: tripQueryKeys.itinerary(owner, id),
+        }),
+        client.invalidateQueries({ queryKey: tripQueryKeys.places(owner, id) }),
+      ]);
+    },
+  });
+}
+export function useTripDatePreviewMutation(id: string) {
+  return useMutation({
+    retry: false,
+    mutationFn: async (payload: DatePreviewRequest) => {
+      const version = authSession.getVersion();
+      const result = await tripApi.previewDates(id, payload);
+      if (version !== authSession.getVersion()) throw new ApiError("CANCELLED");
+      return result;
+    },
+  });
+}
+export function useDeleteTripMutation(id: string) {
+  const owner = useProfile().data?.id;
+  const client = useQueryClient();
+  return useMutation({
+    retry: false,
+    mutationFn: async (version: number) => {
+      const sessionVersion = authSession.getVersion();
+      await tripApi.remove(id, version);
+      if (sessionVersion !== authSession.getVersion())
+        throw new ApiError("CANCELLED");
+      return sessionVersion;
+    },
+    onSuccess: async (sessionVersion) => {
+      await client.cancelQueries({ queryKey: tripQueryKeys.detail(owner, id) });
+      if (sessionVersion !== authSession.getVersion())
+        throw new ApiError("CANCELLED");
+      client.removeQueries({
+        queryKey: tripQueryKeys.detail(owner, id),
+        exact: true,
+      });
+      client.removeQueries({ queryKey: tripQueryKeys.itinerary(owner, id) });
+      client.removeQueries({ queryKey: tripQueryKeys.places(owner, id) });
+      await Promise.all([
+        client.invalidateQueries({ queryKey: tripQueryKeys.list(owner) }),
+        client.invalidateQueries({ queryKey: memoryQueryKeys.list(owner) }),
+        client.invalidateQueries({ queryKey: memoryQueryKeys.list(owner, id) }),
+      ]);
     },
   });
 }

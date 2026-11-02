@@ -1,6 +1,6 @@
 # Trip API — tích hợp đầu tiên
 
-Cập nhật: **02/11/2026**. Phạm vi: **tạo → danh sách → chi tiết metadata → tải lại**. Không phải hoàn thành toàn bộ roadmap Trip CRUD.
+Cập nhật: **03/11/2026**. Phạm vi: **tạo → danh sách → chi tiết metadata → sửa/đổi ngày/xóa → tải lại**. GET destinations và các module khác chưa hoàn tất. Xem [kết quả Phase 2](PHASE-2-TRIP-MUTATIONS.md).
 
 ## Đã triển khai
 
@@ -9,6 +9,9 @@ Cập nhật: **02/11/2026**. Phạm vi: **tạo → danh sách → chi tiết m
 | POST /api/v1/trips | Ghi Trip PLANNING + itinerary mặc định + từng ngày trong một transaction; initialPlaceIds hợp lệ được đưa vào pool |
 | GET /api/v1/trips | Owner scope, pagination, filter mode/q và sort whitelist |
 | GET /api/v1/trips/{id} | Metadata + ngày thực trong DB; UUID/ownership/soft-delete được kiểm tra |
+| PATCH /api/v1/trips/{id} | Sửa các field có mặt trong body, version check, no-op không tăng version, atomic đổi ngày |
+| POST /api/v1/trips/{id}/date-change-preview | Chỉ đọc tác động đổi ngày, cần xác nhận nếu điểm sẽ về pool |
+| DELETE /api/v1/trips/{id}?version=N | Soft-delete Trip + Memory; giữ file reference, gọi lại cùng owner trả 204 |
 
 - Backend: Flyway V10, cột metadata/version/idempotency, bảng trip_days, service và read projections.
 - Idempotency: cùng owner + key + normalized payload không tạo trùng; concurrent requests trả một 201 và một 200. Khác payload trả409.
@@ -16,6 +19,7 @@ Cập nhật: **02/11/2026**. Phạm vi: **tạo → danh sách → chi tiết m
 - Không đưa query data vào preview store. Lúc tích hợp, store fixture được làm rỗng để các route chưa nối không dùng nhầm dữ liệu mẫu.
 - Preview UI vẫn giữ nguyên. Chế độ thật dùng danh sách chuyến đi ở cả tab Home và Chuyến đi trong đợt này; dashboard Home thật nằm ở phase sau.
 - Chi tiết thật tái sử dụng khung map co giãn/header/date selector; hiện metadata thật và trạng thái chưa kết nối, không hiện đường đi/thời tiết/điểm dừng giả.
+- Nút `…` trong chi tiết mở Sửa / Nhật ký / Xóa. Form sửa dùng cùng UI preview, pending/error/retry, xác nhận date impact và giữ form khi 409. Nhật ký vẫn là module chưa nối.
 - Chức năng thêm điểm trong form báo chưa kết nối, không gửi fixture ID. Destination picker hiện nhận tên từ lựa chọn/nhập tay, gửi provinceId=null; chưa nối danh mục Province.
 
 ## Bật chế độ API
@@ -49,6 +53,7 @@ Web có thể dùng `npx expo start --web --clear`. Không cần build lại dev
 - Chuẩn bị PostgreSQL và env backend theo cấu hình local hiện có. Không dùng DB production để thử.
 - Chạy backend từ `E:\travel-system\backend` với `./mvnw.cmd spring-boot:run` trong môi trường dev đã cấu hình.
 - Flyway tự áp V10 khi startup; không chạy lại/sửa V1–V9. Review migration và backup nếu DB local có dữ liệu cần giữ.
+- Phase 2 thêm **V11**, giữ appointment bị gỡ lịch bằng `removed_at`. Không sửa checksum V1–V10; startup backend sẽ áp migration mới. Lượt triển khai chỉ chạy migration trong PostgreSQL Testcontainers, không chạy DB cá nhân.
 - V10 backfill ngày cho legacy range hợp lệ1–365 ngày. Date constraint NOT VALID bảo vệ write mới, không tự sửa dữ liệu cũ bất thường.
 - Preferences legacy TEXT không phải JSON array cần kiểm kê/chuyển đổi riêng trước sử dụng; code không âm thầm xóa dữ liệu cũ. Chuyến tạo mới luôn ghi JSON array đúng kiểu.
 - Chưa đổi danh mục địa giới hành chính/seed cũ hoặc chuẩn hóa toàn bộ itinerary legacy.
@@ -64,9 +69,9 @@ Web có thể dùng `npx expo start --web --clear`. Không cần build lại dev
 7. Thử tài khoản khác: không thấy/đọc được chuyến của tài khoản trước.
 8. Nếu request timeout, giữ form và bấm lại: key cũ cho cùng payload chống duplicate. Không đóng form khi đang gửi.
 
-## Chưa triển khai trong đợt này
+## Chưa triển khai
 
-- PATCH/delete/date impact preview, GET destinations.
+- GET destinations và chuẩn hóa danh mục Province.
 - Places search thật, lịch trình/day items, thêm/sắp xếp/check-in, Google Maps/Routes, tối ưu/AI.
 - Home dashboard tổng hợp, Weather/Packing, Camera upload/Memory server, notification.
 - Tab Kỷ niệm và nút Camera ở API mode mở trạng thái chưa kết nối; không giả báo đã lưu hoặc suy rằng không có chuyến Live từ store rỗng.
@@ -81,4 +86,4 @@ Web có thể dùng `npx expo start --web --clear`. Không cần build lại dev
 
 Kết quả lần triển khai: **337 backend tests**, **171 frontend tests**, TypeScript/no-unused và export **web + Android/Hermes** đều đạt. Test DB dùng PostgreSQL Testcontainers; không chạy migration trực tiếp trên DB cá nhân. Chưa QA thực tế trên Android hoặc browser người dùng, chưa đo latency production.
 
-Đặc tả đầy đủ: [TRIP-CRUD-CONTRACT.md](TRIP-CRUD-CONTRACT.md). OpenAPI dự kiến có7 operations, nhưng runtime đợt này mới có3 operations ở bảng trên.
+Đặc tả đầy đủ: [TRIP-CRUD-CONTRACT.md](TRIP-CRUD-CONTRACT.md). OpenAPI có 7 operations; runtime hiện có 6 operations ở bảng trên, còn GET destinations. Mốc test 337/171 phía trên là lần triển khai đầu; kết quả mới xem [Phase 2](PHASE-2-TRIP-MUTATIONS.md).

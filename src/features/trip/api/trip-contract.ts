@@ -67,6 +67,75 @@ export const tripPageSchema = z.object({
 });
 export type TripSummaryDto = z.infer<typeof tripSummarySchema>;
 export type TripDetailDto = z.infer<typeof tripDetailSchema>;
+export type TripReadDto = z.infer<typeof tripReadSchema>;
+const mutationFields = {
+  title: z.string().trim().min(1).max(120).optional(),
+  destination: z
+    .object({
+      name: z.string().trim().min(1).max(120),
+      provinceId: id.nullable().optional(),
+    })
+    .strict()
+    .optional(),
+  startDate: calendarDate.optional(),
+  endDate: calendarDate.optional(),
+  budget: z
+    .object({
+      amount: count.max(1_000_000_000_000),
+      currency: z.literal("VND"),
+    })
+    .strict()
+    .nullable()
+    .optional(),
+  preferences: z
+    .array(tripPreferenceSchema)
+    .max(8)
+    .refine((values) => new Set(values).size === values.length)
+    .optional(),
+  accommodation: z.string().trim().max(200).nullable().optional(),
+  notes: z.string().trim().max(1000).nullable().optional(),
+};
+export const updateTripSchema = z
+  .object({
+    version: count,
+    ...mutationFields,
+    acknowledgeDateImpact: z.boolean().optional(),
+  })
+  .strict()
+  .refine((value) =>
+    Object.keys(mutationFields).some((key) => Object.hasOwn(value, key)),
+  )
+  .refine(
+    (value) =>
+      (value.startDate === undefined && value.endDate === undefined) ||
+      (value.startDate !== undefined &&
+        value.endDate !== undefined &&
+        value.endDate >= value.startDate &&
+        (Date.parse(value.endDate) - Date.parse(value.startDate)) / 86400000 <
+          365),
+  );
+export const datePreviewRequestSchema = z
+  .object({ version: count, startDate: calendarDate, endDate: calendarDate })
+  .strict()
+  .refine(
+    (value) =>
+      value.endDate >= value.startDate &&
+      (Date.parse(value.endDate) - Date.parse(value.startDate)) / 86400000 <
+        365,
+  );
+export const dateImpactSchema = z.object({
+  baseVersion: count,
+  startDate: calendarDate,
+  endDate: calendarDate,
+  dayCount: count.min(1).max(365),
+  removedDates: z.array(calendarDate).max(365),
+  addedDates: z.array(calendarDate).max(365),
+  movedToPoolCount: count,
+  requiresAcknowledgement: z.boolean(),
+});
+export type UpdateTripPayload = z.infer<typeof updateTripSchema>;
+export type DatePreviewRequest = z.infer<typeof datePreviewRequestSchema>;
+export type TripDateImpact = z.infer<typeof dateImpactSchema>;
 export type CreateTripPayload = {
   clientRequestId: string;
   title?: string;

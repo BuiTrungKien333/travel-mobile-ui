@@ -1,5 +1,7 @@
 # Bàn giao ngữ cảnh cho agent tiếp theo
 
+**Mốc mới nhất 03/11/2026 — Phase 2:** đã thêm PATCH/date-preview/DELETE Trip và UI sửa/xóa theo chỉ định người dùng sau review Phase 1. Xem `PHASE-2-TRIP-MUTATIONS.md`, contract v1.1.0 và status trước các snapshot cũ. V11 dùng `itinerary_items.removed_at`; tất cả lịch active phải loại archive. Giữ TripPlace làm pool; không mất note/time cũ. Backend `integration/team-sync` vẫn chưa merge, GET destinations và các module Places/Itinerary/Maps/Media vẫn còn phase riêng.
+
 **Cập nhật ưu tiên 03/11/2026:** `minhduc` đã merge mobile tại `bea85bf`; backend `integration/team-sync` chưa merge. Sau merge đã bổ sung UI Cá nhân mở rộng, nút đổi email sau đăng ký, logo WeGo và các chỉnh sửa auth UX. Auth/API thật mặc định cả development; preview chỉ bật khi `EXPO_PUBLIC_UI_PREVIEW=true`, release luôn auth. Không khôi phục bypass mặc định từ snapshot lịch sử bên dưới. Xem `PROJECT-STATUS.md`, `auth-integration.md` và `MERGE-MINHDUC-2026-11-02.md` để phân biệt module đã nối với service chỉ mới nhập.
 
 Snapshot: **19/10/2026**. Repository mobile: **`E:/travel-mobile-ui`**. Mốc Git quan sát khi bắt đầu bàn giao: **`4b19a3e` — `complete code ui home page`**, working tree sạch trước khi thêm tài liệu này. Đây là thông tin lịch sử, không phải yêu cầu checkout/reset về commit đó.

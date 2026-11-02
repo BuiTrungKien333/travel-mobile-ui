@@ -1,5 +1,11 @@
 import { useRef } from "react";
-import { Modal, Pressable, StyleSheet, View } from "react-native";
+import {
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  StyleSheet,
+  View,
+} from "react-native";
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useScreenInsets } from "@/hooks/use-screen-insets";
@@ -11,11 +17,21 @@ export function TripDeleteAlert({
   onConfirm,
   title,
   hint,
+  busy = false,
+  error,
+  confirmLabel,
+  cancelLabel,
+  destructive = true,
 }: {
   onCancel: () => void;
   onConfirm: () => void;
   title?: string;
   hint?: string;
+  busy?: boolean;
+  error?: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  destructive?: boolean;
 }) {
   const theme = useAppTheme();
   const insets = useScreenInsets();
@@ -26,7 +42,9 @@ export function TripDeleteAlert({
       transparent
       visible
       animationType="none"
-      onRequestClose={onCancel}
+      onRequestClose={() => {
+        if (!busy) onCancel();
+      }}
       onShow={() => cancelRef.current?.focus()}
     >
       <View
@@ -47,7 +65,9 @@ export function TripDeleteAlert({
           accessibilityViewIsModal
           accessibilityLabel={title ?? copy.deleteTitle}
           accessibilityHint={hint ?? copy.deleteHint}
-          onAccessibilityEscape={onCancel}
+          onAccessibilityEscape={() => {
+            if (!busy) onCancel();
+          }}
           style={{
             width: "100%",
             maxWidth: theme.layout.confirmationAlertMaxWidth,
@@ -70,6 +90,11 @@ export function TripDeleteAlert({
               {title ?? copy.deleteTitle}
             </AppText>
             <AppText tone="muted">{hint ?? copy.deleteHint}</AppText>
+            {error ? (
+              <AppText variant="caption" tone="error" accessibilityRole="alert">
+                {error}
+              </AppText>
+            ) : null}
           </View>
           <View
             style={{
@@ -83,6 +108,8 @@ export function TripDeleteAlert({
               ref={cancelRef}
               accessibilityRole="button"
               onPress={onCancel}
+              disabled={busy}
+              accessibilityState={{ disabled: busy }}
               style={({ pressed }) => ({
                 flex: 1,
                 minHeight: theme.layout.touchTarget,
@@ -99,12 +126,14 @@ export function TripDeleteAlert({
               })}
             >
               <AppText variant="label" tone="primary">
-                {copy.deleteNo}
+                {cancelLabel ?? copy.deleteNo}
               </AppText>
             </Pressable>
             <Pressable
               accessibilityRole="button"
               onPress={onConfirm}
+              disabled={busy}
+              accessibilityState={{ disabled: busy, busy }}
               style={({ pressed }) => ({
                 flex: 1,
                 minHeight: theme.layout.touchTarget,
@@ -113,15 +142,30 @@ export function TripDeleteAlert({
                 justifyContent: "center",
                 borderRadius: theme.radius.md,
                 borderWidth: StyleSheet.hairlineWidth,
-                borderColor: theme.colors.error,
-                outlineColor: theme.colors.error,
+                borderColor: destructive
+                  ? theme.colors.error
+                  : theme.colors.softActionBorder,
+                outlineColor: destructive
+                  ? theme.colors.error
+                  : theme.colors.focus,
                 backgroundColor: theme.colors.glassInset,
                 opacity: pressed ? theme.motion.pressOpacity : 1,
               })}
             >
-              <AppText variant="label" tone="error">
-                {copy.deleteYes}
-              </AppText>
+              {busy ? (
+                <ActivityIndicator
+                  color={
+                    destructive ? theme.colors.error : theme.colors.primaryText
+                  }
+                />
+              ) : (
+                <AppText
+                  variant="label"
+                  tone={destructive ? "error" : "primary"}
+                >
+                  {confirmLabel ?? copy.deleteYes}
+                </AppText>
+              )}
             </Pressable>
           </View>
         </View>

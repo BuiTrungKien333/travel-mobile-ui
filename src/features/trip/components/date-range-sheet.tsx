@@ -22,6 +22,7 @@ type DateRangeSheetProps = {
   startDate: string;
   endDate: string;
   today: string;
+  allowPastDates?: boolean;
   onApply: (start: string, end: string) => void;
   onClose: () => void;
 };
@@ -35,6 +36,7 @@ function DateRangeSession({
   startDate,
   endDate,
   today,
+  allowPastDates = false,
   onApply,
   onClose,
 }: DateRangeSheetProps) {
@@ -100,7 +102,7 @@ function DateRangeSession({
   };
 
   const handleDatePress = (dateStr: string) => {
-    if (dateStr < today) return;
+    if (!allowPastDates && dateStr < today) return;
 
     if (!selectedStart || (selectedStart && selectedEnd)) {
       setSelectedStart(dateStr);
@@ -340,7 +342,7 @@ function DateRangeSession({
                   }
 
                   const { dateStr, dayNum } = cell;
-                  const isPast = dateStr < today;
+                  const isPast = !allowPastDates && dateStr < today;
                   const isStart = dateStr === selectedStart;
                   const isEnd = dateStr === selectedEnd;
                   const isInRange =

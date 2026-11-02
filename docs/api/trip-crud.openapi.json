@@ -1,9 +1,9 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "WeGo Trip CRUD — MVP contract",
-    "version": "1.0.0",
-    "description": "Design contract, not implemented endpoints. Android/web online MVP. No draft/AI, provider calls, image upload or itinerary mutation endpoints. Cross-field, transaction and migration rules: TRIP-CRUD-CONTRACT.md."
+    "title": "WeGo Trip CRUD - MVP contract",
+    "version": "1.1.0",
+    "description": "Implemented: create/list/detail/PATCH/date-impact preview/DELETE. Destinations catalog remains planned. Android/web online MVP; no draft/AI or provider calls. See TRIP-CRUD-CONTRACT.md for transaction and migration rules."
   },
   "servers": [
     {
@@ -143,7 +143,8 @@
               }
             }
           }
-        }
+        },
+        "x-implementation-status": "implemented"
       },
       "get": {
         "operationId": "listTrips",
@@ -249,7 +250,8 @@
               }
             }
           }
-        }
+        },
+        "x-implementation-status": "implemented"
       }
     },
     "/trips/{tripId}": {
@@ -321,7 +323,8 @@
               }
             }
           }
-        }
+        },
+        "x-implementation-status": "implemented"
       },
       "patch": {
         "operationId": "patchTrip",
@@ -406,7 +409,8 @@
               }
             }
           }
-        }
+        },
+        "x-implementation-status": "implemented"
       },
       "delete": {
         "operationId": "deleteTrip",
@@ -480,7 +484,8 @@
               }
             }
           }
-        }
+        },
+        "x-implementation-status": "implemented"
       }
     },
     "/trips/{tripId}/date-change-preview": {
@@ -577,7 +582,8 @@
               }
             }
           }
-        }
+        },
+        "x-implementation-status": "implemented"
       }
     },
     "/destinations": {
@@ -660,7 +666,8 @@
               }
             }
           }
-        }
+        },
+        "x-implementation-status": "planned"
       }
     }
   },

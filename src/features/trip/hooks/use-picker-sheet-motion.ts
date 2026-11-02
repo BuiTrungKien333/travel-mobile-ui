@@ -14,7 +14,10 @@ import { scheduleOnRN } from "react-native-worklets";
 import { useAppTheme } from "@/hooks/use-app-theme";
 
 /** Mount one session per opening; apply commits only after the exit animation finishes. */
-export function usePickerSheetMotion(onClose: () => void) {
+export function usePickerSheetMotion(
+  onClose: () => void,
+  dismissDisabled = false,
+) {
   const theme = useAppTheme();
   const { height } = useWindowDimensions();
   const reduceMotion = useReducedMotion();
@@ -46,6 +49,7 @@ export function usePickerSheetMotion(onClose: () => void) {
     onClose();
   }
   function close(afterClose?: () => void) {
+    if (dismissDisabled) return;
     if (closing.get()) return;
     closing.set(true);
     commit.current = afterClose;
@@ -67,6 +71,7 @@ export function usePickerSheetMotion(onClose: () => void) {
     opacity: Math.max(0, Math.min(1, 1 - translateY.get() / fadeDistance)),
   }));
   const dragGesture = Gesture.Pan()
+    .enabled(!dismissDisabled)
     .activeOffsetY(theme.spacing.sm)
     .failOffsetX([-theme.spacing.lg, theme.spacing.lg])
     .onUpdate((event) => {

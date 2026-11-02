@@ -1,8 +1,8 @@
 # Trip CRUD — Schema và hợp đồng tích hợp MVP
 
-Ngày: **02/11/2026**. Phiên bản hợp đồng: **1.0.0**.
+Ngày: **02/11/2026**, cập nhật **03/11/2026**. Phiên bản hợp đồng: **1.1.0**.
 
-**Trạng thái:** hợp đồng đích cho MVP. Đã triển khai bước đầu POST /trips, GET /trips và GET /trips/{id}; PATCH/delete/date-preview/destinations vẫn là đặc tả. Xem [hướng dẫn tích hợp và giới hạn](TRIP-API-INTEGRATION.md). Không coi toàn bộ7 operations là đã hoạt động.
+**Trạng thái:** đã triển khai create/list/detail/PATCH/date-preview/DELETE và nối UI sửa/xóa. GET destinations vẫn là đặc tả; không coi cả 7 operations đã hoạt động. Xem [Phase 2](PHASE-2-TRIP-MUTATIONS.md) và [hướng dẫn tích hợp](TRIP-API-INTEGRATION.md).
 
 Tài liệu máy đọc: [trip-crud.openapi.json](api/trip-crud.openapi.json). Roadmap: [FRONTEND-BACKEND-INTEGRATION-PLAN.md](FRONTEND-BACKEND-INTEGRATION-PLAN.md).
 
@@ -238,7 +238,7 @@ Output data:
 
 - Stateless, chỉ đọc, không lưu preview token/snapshot/job.
 - Giữ nguyên các ngày trùng date, dayId và cấu hình; ngày mới dùng default.
-- Ngày bị loại: itinerary item được gỡ, TripPlace còn lại trong pool; note/duration/pin/visited của TripPlace được giữ. Phải giải quyết source-of-truth note/duration trước migration lịch trình, không mất dữ liệu vì hai cột hiện hữu.
+- Ngày bị loại: itinerary item được gỡ khỏi lịch active bằng `removed_at` (V11), TripPlace còn lại trong pool; note/duration/visited của TripPlace được giữ. Các appointment cũ giữ nguyên note, start/end time và mọi dữ liệu khác để không mất dữ liệu legacy. Không ghi đè ghi chú của TripPlace hoặc tạo shadow item store. Source of truth của pool là TripPlace; lịch active là các item `removed_at IS NULL`. Phase Itinerary sau này phải dùng cùng quy tắc và xử lý migration/recovery dữ liệu appointment đã lưu. Pin chưa có cột backend nên không tự tạo hoặc suy diễn pin.
 - Memory/media/experiencedAt không đổi. Memory không phụ thuộc bắt buộc vào dayId sắp bị gỡ.
 - Chỉ requiresAcknowledgement khi movedToPoolCount >0. Bỏ ngày rỗng không cần confirm riêng.
 - PATCH thiếu acknowledgeDateImpact=true khi impact có điểm → TRIP_003/409, không ghi gì; client mở confirm với dữ liệu preview rồi PATCH cùng version.
