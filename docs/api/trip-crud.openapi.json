@@ -1,0 +1,1631 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "WeGo Trip CRUD — MVP contract",
+    "version": "1.0.0",
+    "description": "Design contract, not implemented endpoints. Android/web online MVP. No draft/AI, provider calls, image upload or itinerary mutation endpoints. Cross-field, transaction and migration rules: TRIP-CRUD-CONTRACT.md."
+  },
+  "servers": [
+    {
+      "url": "/api/v1",
+      "description": "Relative to configured backend origin"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Trips"
+    },
+    {
+      "name": "Destinations"
+    }
+  ],
+  "paths": {
+    "/trips": {
+      "post": {
+        "operationId": "createTrip",
+        "tags": [
+          "Trips"
+        ],
+        "summary": "Create a real PLANNING trip; no AI draft.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTripRequest"
+              },
+              "example": {
+                "clientRequestId": "53e01bb8-6dbf-4368-b4f7-39289ec53913",
+                "title": "Khám phá Đà Lạt",
+                "destination": {
+                  "name": "Đà Lạt",
+                  "provinceId": null
+                },
+                "startDate": "2026-11-20",
+                "endDate": "2026-11-22",
+                "timeZone": "Asia/Ho_Chi_Minh",
+                "budget": {
+                  "amount": 3000000,
+                  "currency": "VND"
+                },
+                "preferences": [
+                  "nature",
+                  "photography"
+                ],
+                "accommodation": null,
+                "notes": null,
+                "initialPlaceIds": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created with default itinerary, days and optional pool places.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TripResponse"
+                }
+              }
+            },
+            "headers": {
+              "Location": {
+                "description": "Relative URL of created Trip.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Same key/body replay: current Trip.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TripResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "COMMON_003/006/008 or TRIP_005: invalid input/reference.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "AUTH_001: authentication required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "AUTH_007: account locked or deleted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "TRIP_001: missing/deleted/not owned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "TRIP_002/003/004/006: stale version/date impact/key conflict/read-only state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "listTrips",
+        "tags": [
+          "Trips"
+        ],
+        "summary": "Owned non-deleted trips; mode filter before paging.",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/TripMode"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 120
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "createdAt,desc",
+                "createdAt,asc",
+                "updatedAt,desc",
+                "updatedAt,asc",
+                "startDate,desc",
+                "startDate,asc"
+              ],
+              "default": "createdAt,desc"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stable page with ID tie-breaker; null startDate last.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TripPageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "COMMON_003/006/008 or TRIP_005: invalid input/reference.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "AUTH_001: authentication required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "AUTH_007: account locked or deleted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/trips/{tripId}": {
+      "parameters": [
+        {
+          "name": "tripId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "get": {
+        "operationId": "getTrip",
+        "tags": [
+          "Trips"
+        ],
+        "summary": "Read Trip metadata and day descriptors.",
+        "responses": {
+          "200": {
+            "description": "Found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TripResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "COMMON_003/006/008 or TRIP_005: invalid input/reference.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "AUTH_001: authentication required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "AUTH_007: account locked or deleted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "TRIP_001: missing/deleted/not owned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "patchTrip",
+        "tags": [
+          "Trips"
+        ],
+        "summary": "Atomic metadata/date update with version check.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchTripRequest"
+              },
+              "example": {
+                "version": 3,
+                "title": "Đà Lạt cùng gia đình",
+                "budget": null,
+                "notes": "Mang áo khoác"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated; no-op retains version.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TripResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "COMMON_003/006/008 or TRIP_005: invalid input/reference.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "AUTH_001: authentication required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "AUTH_007: account locked or deleted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "TRIP_001: missing/deleted/not owned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "TRIP_002/003/004/006: stale version/date impact/key conflict/read-only state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteTrip",
+        "tags": [
+          "Trips"
+        ],
+        "summary": "Soft-delete Trip and Memories; no provider calls.",
+        "parameters": [
+          {
+            "name": "version",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted, or repeated owner delete on an already deleted Trip."
+          },
+          "400": {
+            "description": "COMMON_003/006/008 or TRIP_005: invalid input/reference.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "AUTH_001: authentication required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "AUTH_007: account locked or deleted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "TRIP_001: missing/deleted/not owned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "TRIP_002/003/004/006: stale version/date impact/key conflict/read-only state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/trips/{tripId}/date-change-preview": {
+      "parameters": [
+        {
+          "name": "tripId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "post": {
+        "operationId": "previewTripDateChange",
+        "tags": [
+          "Trips"
+        ],
+        "summary": "Read-only date impact; no persisted preview token.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DateChangeRequest"
+              },
+              "example": {
+                "version": 3,
+                "startDate": "2026-11-21",
+                "endDate": "2026-11-22"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Retain calendar intersection; removed items move to pool on commit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DateImpactResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "COMMON_003/006/008 or TRIP_005: invalid input/reference.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "AUTH_001: authentication required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "AUTH_007: account locked or deleted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "TRIP_001: missing/deleted/not owned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "TRIP_002/003/004/006: stale version/date impact/key conflict/read-only state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/destinations": {
+      "get": {
+        "operationId": "listDestinations",
+        "tags": [
+          "Destinations"
+        ],
+        "summary": "Internal Province catalog, not Google search.",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 120
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Selected id maps to destination.provinceId.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DestinationPageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "COMMON_003/006/008 or TRIP_005: invalid input/reference.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "AUTH_001: authentication required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "AUTH_007: account locked or deleted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Preference": {
+        "type": "string",
+        "enum": [
+          "nature",
+          "food",
+          "culture",
+          "relaxation",
+          "photography",
+          "adventure",
+          "shopping",
+          "beach"
+        ]
+      },
+      "TripStatus": {
+        "type": "string",
+        "enum": [
+          "PLANNING",
+          "ACTIVE",
+          "COMPLETED",
+          "CANCELLED"
+        ]
+      },
+      "TripMode": {
+        "type": "string",
+        "enum": [
+          "PLANNING",
+          "LIVE",
+          "RECAP",
+          "CANCELLED"
+        ]
+      },
+      "DestinationInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "provinceId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "DestinationRead": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "provinceId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        },
+        "required": [
+          "name",
+          "provinceId"
+        ]
+      },
+      "Budget": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "amount": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "maximum": 1000000000000
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "VND"
+            ]
+          }
+        },
+        "required": [
+          "amount",
+          "currency"
+        ],
+        "nullable": true
+      },
+      "Readiness": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "hasDates": {
+            "type": "boolean"
+          },
+          "hasPlaces": {
+            "type": "boolean"
+          },
+          "unscheduledCount": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "hasDates",
+          "hasPlaces",
+          "unscheduledCount"
+        ]
+      },
+      "TripSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "destination": {
+            "$ref": "#/components/schemas/DestinationRead"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "timeZone": {
+            "type": "string",
+            "enum": [
+              "Asia/Ho_Chi_Minh"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/TripStatus"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/TripMode"
+          },
+          "readiness": {
+            "$ref": "#/components/schemas/Readiness"
+          },
+          "dayCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 365
+          },
+          "stopCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "memoryCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "coverImageUrl": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "destination",
+          "startDate",
+          "endDate",
+          "timeZone",
+          "status",
+          "mode",
+          "readiness",
+          "dayCount",
+          "stopCount",
+          "memoryCount",
+          "coverImageUrl",
+          "version",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "TripDaySummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "dayNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 365
+          }
+        },
+        "required": [
+          "id",
+          "date",
+          "dayNumber"
+        ]
+      },
+      "TripDetail": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "destination": {
+            "$ref": "#/components/schemas/DestinationRead"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "timeZone": {
+            "type": "string",
+            "enum": [
+              "Asia/Ho_Chi_Minh"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/TripStatus"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/TripMode"
+          },
+          "readiness": {
+            "$ref": "#/components/schemas/Readiness"
+          },
+          "dayCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 365
+          },
+          "stopCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "memoryCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "coverImageUrl": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "budget": {
+            "$ref": "#/components/schemas/Budget"
+          },
+          "preferences": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Preference"
+            },
+            "maxItems": 8,
+            "uniqueItems": true
+          },
+          "accommodation": {
+            "type": "string",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TripDaySummary"
+            },
+            "maxItems": 365
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "destination",
+          "startDate",
+          "endDate",
+          "timeZone",
+          "status",
+          "mode",
+          "readiness",
+          "dayCount",
+          "stopCount",
+          "memoryCount",
+          "coverImageUrl",
+          "version",
+          "createdAt",
+          "updatedAt",
+          "budget",
+          "preferences",
+          "accommodation",
+          "notes",
+          "days"
+        ]
+      },
+      "ReadContext": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "serverTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "evaluatedDate": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "serverTime",
+          "evaluatedDate"
+        ]
+      },
+      "TripReadData": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "trip": {
+            "$ref": "#/components/schemas/TripDetail"
+          },
+          "context": {
+            "$ref": "#/components/schemas/ReadContext"
+          }
+        },
+        "required": [
+          "trip",
+          "context"
+        ]
+      },
+      "CreateTripRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "clientRequestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 120,
+            "description": "Trim; blank/omitted defaults to destination.name."
+          },
+          "destination": {
+            "$ref": "#/components/schemas/DestinationInput"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "timeZone": {
+            "type": "string",
+            "enum": [
+              "Asia/Ho_Chi_Minh"
+            ],
+            "default": "Asia/Ho_Chi_Minh"
+          },
+          "budget": {
+            "$ref": "#/components/schemas/Budget"
+          },
+          "preferences": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Preference"
+            },
+            "maxItems": 8,
+            "uniqueItems": true,
+            "default": []
+          },
+          "accommodation": {
+            "type": "string",
+            "maxLength": 200,
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 1000,
+            "nullable": true
+          },
+          "initialPlaceIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "maxItems": 100,
+            "uniqueItems": true,
+            "default": []
+          }
+        },
+        "required": [
+          "clientRequestId",
+          "destination",
+          "startDate",
+          "endDate"
+        ],
+        "description": "No draft/status field. 1–365 inclusive days. New startDate >= trip-local today. Successful replay has separate temporal validation semantics; see Markdown."
+      },
+      "PatchTripRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "destination": {
+            "$ref": "#/components/schemas/DestinationInput"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "budget": {
+            "$ref": "#/components/schemas/Budget"
+          },
+          "preferences": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Preference"
+            },
+            "maxItems": 8,
+            "uniqueItems": true
+          },
+          "accommodation": {
+            "type": "string",
+            "maxLength": 200,
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 1000,
+            "nullable": true
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "acknowledgeDateImpact": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "description": "Missing retains; explicit nullable fields clear. At least one mutable field; start/end sent together. Cross-field rules in Markdown."
+      },
+      "DateChangeRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "version": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "version",
+          "startDate",
+          "endDate"
+        ]
+      },
+      "DateImpact": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "baseVersion": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "dayCount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 365
+          },
+          "removedDates": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date"
+            },
+            "maxItems": 365
+          },
+          "addedDates": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date"
+            },
+            "maxItems": 365
+          },
+          "movedToPoolCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "requiresAcknowledgement": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "baseVersion",
+          "startDate",
+          "endDate",
+          "dayCount",
+          "removedDates",
+          "addedDates",
+          "movedToPoolCount",
+          "requiresAcknowledgement"
+        ]
+      },
+      "DestinationOption": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name"
+        ]
+      },
+      "TripPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TripSummary"
+            },
+            "maxItems": 100
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "totalPages": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "context": {
+            "$ref": "#/components/schemas/ReadContext"
+          }
+        },
+        "required": [
+          "content",
+          "page",
+          "size",
+          "totalElements",
+          "totalPages",
+          "context"
+        ]
+      },
+      "DestinationPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DestinationOption"
+            },
+            "maxItems": 100
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "totalPages": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "content",
+          "page",
+          "size",
+          "totalElements",
+          "totalPages"
+        ]
+      },
+      "TripResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/TripReadData"
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "example": {
+          "success": true,
+          "message": "success",
+          "data": {
+            "trip": {
+              "id": "d3bb8c88-afbd-4c47-9fae-8d482215fd6e",
+              "title": "Khám phá Đà Lạt",
+              "destination": {
+                "name": "Đà Lạt",
+                "provinceId": null
+              },
+              "startDate": "2026-11-20",
+              "endDate": "2026-11-22",
+              "timeZone": "Asia/Ho_Chi_Minh",
+              "status": "PLANNING",
+              "mode": "PLANNING",
+              "readiness": {
+                "hasDates": true,
+                "hasPlaces": false,
+                "unscheduledCount": 0
+              },
+              "dayCount": 3,
+              "stopCount": 0,
+              "memoryCount": 0,
+              "coverImageUrl": null,
+              "version": 0,
+              "createdAt": "2026-11-02T03:00:00Z",
+              "updatedAt": "2026-11-02T03:00:00Z",
+              "budget": {
+                "amount": 3000000,
+                "currency": "VND"
+              },
+              "preferences": [
+                "nature",
+                "photography"
+              ],
+              "accommodation": null,
+              "notes": null,
+              "days": [
+                {
+                  "id": "c88a43f1-2020-4500-9000-000000000001",
+                  "date": "2026-11-20",
+                  "dayNumber": 1
+                },
+                {
+                  "id": "c88a43f1-2020-4500-9000-000000000002",
+                  "date": "2026-11-21",
+                  "dayNumber": 2
+                },
+                {
+                  "id": "c88a43f1-2020-4500-9000-000000000003",
+                  "date": "2026-11-22",
+                  "dayNumber": 3
+                }
+              ]
+            },
+            "context": {
+              "serverTime": "2026-11-02T03:00:00Z",
+              "evaluatedDate": "2026-11-02"
+            }
+          }
+        }
+      },
+      "TripPageResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/TripPage"
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "example": {
+          "success": true,
+          "message": "success",
+          "data": {
+            "content": [
+              {
+                "id": "d3bb8c88-afbd-4c47-9fae-8d482215fd6e",
+                "title": "Khám phá Đà Lạt",
+                "destination": {
+                  "name": "Đà Lạt",
+                  "provinceId": null
+                },
+                "startDate": "2026-11-20",
+                "endDate": "2026-11-22",
+                "timeZone": "Asia/Ho_Chi_Minh",
+                "status": "PLANNING",
+                "mode": "PLANNING",
+                "readiness": {
+                  "hasDates": true,
+                  "hasPlaces": false,
+                  "unscheduledCount": 0
+                },
+                "dayCount": 3,
+                "stopCount": 0,
+                "memoryCount": 0,
+                "coverImageUrl": null,
+                "version": 0,
+                "createdAt": "2026-11-02T03:00:00Z",
+                "updatedAt": "2026-11-02T03:00:00Z"
+              }
+            ],
+            "page": 0,
+            "size": 20,
+            "totalElements": 1,
+            "totalPages": 1,
+            "context": {
+              "serverTime": "2026-11-02T03:00:00Z",
+              "evaluatedDate": "2026-11-02"
+            }
+          }
+        }
+      },
+      "DateImpactResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/DateImpact"
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "example": {
+          "success": true,
+          "message": "success",
+          "data": {
+            "baseVersion": 3,
+            "startDate": "2026-11-21",
+            "endDate": "2026-11-22",
+            "dayCount": 2,
+            "removedDates": [
+              "2026-11-20"
+            ],
+            "addedDates": [],
+            "movedToPoolCount": 2,
+            "requiresAcknowledgement": true
+          }
+        }
+      },
+      "DestinationPageResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/DestinationPage"
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "example": {
+          "success": true,
+          "message": "success",
+          "data": {
+            "content": [],
+            "page": 0,
+            "size": 20,
+            "totalElements": 0,
+            "totalPages": 0
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              false
+            ]
+          },
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "success",
+          "code",
+          "message",
+          "timestamp"
+        ],
+        "example": {
+          "success": false,
+          "code": "TRIP_002",
+          "message": "Lịch trình đã thay đổi. Vui lòng tải lại.",
+          "timestamp": "2026-11-02T03:00:00Z"
+        }
+      }
+    }
+  }
+}

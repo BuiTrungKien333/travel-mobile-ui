@@ -5,6 +5,7 @@ import { useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import { createPreviewStore } from "../store/trip-preview-store";
 import type { PreviewState } from "../types/preview-state";
+import { UI_PREVIEW_ENABLED } from "@/constants/development";
 
 const PreviewContext = createContext<ReturnType<
   typeof createPreviewStore
@@ -12,7 +13,12 @@ const PreviewContext = createContext<ReturnType<
 
 /** Session-scoped fixture store; Context supplies its identity, Zustand owns UI state. */
 export function TripPreviewProvider({ children }: { children: ReactNode }) {
-  const [store] = useState(createPreviewStore);
+  const [store] = useState(() => {
+    const instance = createPreviewStore();
+    if (!UI_PREVIEW_ENABLED)
+      instance.setState({ trips: [], memories: [], visited: {}, panel: null });
+    return instance;
+  });
   return (
     <PreviewContext.Provider value={store}>{children}</PreviewContext.Provider>
   );

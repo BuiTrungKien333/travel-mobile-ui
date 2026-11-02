@@ -48,4 +48,6 @@ ESLint đã được cấu hình qua `npm run lint`. Đợt rà soát Home ngày
 - [Thiết lập Google Sign-In](docs/google-auth.md)
 - [Quy định phát triển](AGENTS.md)
 
-Khi quay lại tích hợp auth, đổi `UI_PREVIEW_ENABLED` trong `src/constants/development.ts` thành `false`. Cờ hiện tại dùng `__DEV__`, vì vậy bản release vẫn yêu cầu xác thực. Các luồng Home vẫn đang dùng mock và cần được nối API riêng khi backend sẵn sàng.
+Development mặc định giữ UI preview không cần backend. Đặt `EXPO_PUBLIC_UI_PREVIEW=false` để dùng auth thật và tạo/list/chi tiết metadata chuyến đi; release luôn yêu cầu auth/API. Chọn `EXPO_PUBLIC_API_URL` theo thiết bị và khởi động lại Metro sau khi đổi env. Xem [hướng dẫn tích hợp Trip](docs/TRIP-API-INTEGRATION.md).
+
+Nhánh `minhduc` đã được đối chiếu và gộp có chọn lọc, giữ UI hiện tại. Các service Places/Itinerary/Media chưa nối vào UI; Maps native tắt mặc định và cần development build mới khi bật. Backend chưa merge trong đợt này. Xem [báo cáo merge mobile](docs/MERGE-MINHDUC-2026-11-02.md).

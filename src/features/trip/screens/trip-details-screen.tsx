@@ -1,4 +1,6 @@
 import { router } from "expo-router";
+import { UI_PREVIEW_ENABLED } from "@/constants/development";
+import { ConnectedTripDetailsScreen } from "./connected-trip-details-screen";
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import Animated, { useSharedValue } from "react-native-reanimated";
@@ -77,6 +79,26 @@ function backToTrips() {
 }
 
 export function TripDetailsScreen({
+  tripId,
+  selectedDate,
+  expandMap = false,
+}: {
+  tripId?: string;
+  selectedDate?: string;
+  expandMap?: boolean;
+}) {
+  return UI_PREVIEW_ENABLED ? (
+    <PreviewTripDetailsScreen
+      tripId={tripId}
+      selectedDate={selectedDate}
+      expandMap={expandMap}
+    />
+  ) : (
+    <ConnectedTripDetailsScreen tripId={tripId} selectedDate={selectedDate} />
+  );
+}
+
+function PreviewTripDetailsScreen({
   tripId,
   selectedDate,
   expandMap = false,

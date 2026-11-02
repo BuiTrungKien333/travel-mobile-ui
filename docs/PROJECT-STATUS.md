@@ -1,6 +1,33 @@
 # Tiến độ Travel Mobile UI
 
-Cập nhật: **27/10/2026**. Phạm vi: frontend Home, danh sách/tạo/chi tiết chuyến đi và tìm chọn địa điểm. Ngày trong fixture Home vẫn là **21/10/2026** để tái hiện các trạng thái.
+Cập nhật: **03/11/2026**. Phạm vi: frontend Home, danh sách/tạo/chi tiết chuyến đi, camera và chuẩn bị hợp đồng tích hợp. Ngày trong fixture Home vẫn là **21/10/2026** để tái hiện các trạng thái.
+
+## Hợp đồng Trip CRUD · 02/11/2026
+
+### Merge mobile `minhduc`
+
+- Gộp vào `feat/ui/memory`, ưu tiên UI và chuẩn hiện tại; giữ Home/camera/album/modal/gesture, không nhập các rewrite giao diện làm mất tính năng đã chốt.
+- Giữ Trip API canonical đã triển khai, loại contract Trip legacy xung đột, thống nhất query keys theo owner; tách Place API và sửa mapping ba loại ID.
+- Nhập service Places/Itinerary/Weather/Memory dưới dạng chưa nối UI; Maps SDK `1.27.2` tùy chọn, mặc định tắt. Một `app.config.js` giữ đủ OAuth/dev-client/scene/camera; không để config TypeScript ghi đè.
+- Kiểm tra lần merge: **177/177 tests**, TypeScript/no-unused, export web và Android/Hermes chế độ API đạt. Expo Doctor **20/21**, còn 9 package lệch patch có sẵn; không nâng ngoài phạm vi. Không lint, chưa QA thiết bị/native map hoặc e2e backend trong lần merge.
+- Backend **chưa merge** theo yêu cầu; giữ `fix/rag-ai-v2` tại `00b797d`, working tree sạch. Không tính các service vừa nhập là hoàn thành phase tích hợp. Xem [báo cáo và giới hạn](MERGE-MINHDUC-2026-11-02.md).
+
+### Đã triển khai vertical slice đầu tiên
+
+- Backend có POST /api/v1/trips, GET /api/v1/trips, GET /api/v1/trips/{id}; Flyway V10 thêm metadata/version/create key và trip_days. Tạo Trip + itinerary + ngày/pool atomic, chống duplicate concurrent, owner scope và pagination thật.
+- Frontend thêm DTO/Zod, Axios API functions, React Query theo owner, nhánh tạo/list/details thật với pending/error/retry. Giữ UI preview; bật tích hợp bằng EXPO_PUBLIC_UI_PREVIEW=false. Không sửa env cá nhân hay chạy migration lên DB local của người dùng.
+- Draft thuộc AI, ngoài MVP. Chuyến mới PLANNING, mode theo calendar server. Nhánh tích hợp không dùng sample stops/weather/route/media làm dữ liệu thật.
+- Home ở API mode tạm dùng list chuyến thật; details đọc metadata/ngày, còn timeline/map thực/PATCH/delete/Places/weather/media chờ phase sau. Preview bốn trạng thái không bị thay.
+- Hướng dẫn chạy, cấu hình địa chỉ theo thiết bị, lưu ý đăng nhập lại sau reload web và giới hạn: [TRIP-API-INTEGRATION.md](TRIP-API-INTEGRATION.md).
+- Kiểm tra: toàn bộ backend **337 tests đạt** (PostgreSQL Testcontainers, Flyway và auth thật), frontend **171 tests đạt**, TypeScript/no-unused đạt; export web và Android/Hermes ở chế độ API đạt. Không lint, chưa QA trực quan/thiết bị hoặc đo latency production.
+
+### Mốc đặc tả trước triển khai
+
+- Đã đối chiếu UI/form/store với entity/repository/migration backend, xuất [đặc tả Trip CRUD](TRIP-CRUD-CONTRACT.md) và [OpenAPI JSON](api/trip-crud.openapi.json): 7 operations, 24 schemas.
+- Người dùng xác nhận draft thuộc luồng AI sau này, ngoài MVP. Chuyến tạo mới dùng PLANNING; mode hiển thị tính theo ngày/timezone. Preview hiện tại chưa đổi.
+- Đặc tả có validation, owner scope, pagination, idempotency create, version cho cập nhật/xóa, preview tác động đổi ngày, soft-delete và kế hoạch migration; không viết lại auth hoặc planning.
+- Tại mốc đặc tả ban đầu chưa có Trip controller/service/migration; vertical slice nêu phía trên được triển khai tiếp sau đó. PATCH/delete/date preview/destinations vẫn chưa triển khai.
+- Kiểm tra contract và ví dụ bằng JSON Schema/internal references; không chạy app/backend tests hoặc lint trong thay đổi tài liệu này. Chưa phải kiểm thử tích hợp hay chứng nhận API hoạt động.
 
 ## Tìm và thêm địa điểm · 27/10/2026
 

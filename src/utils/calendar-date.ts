@@ -5,3 +5,15 @@ export function isCalendarDate(value: string): boolean {
     Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value
   );
 }
+
+export function todayCalendarDate(now = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  return ["year", "month", "day"]
+    .map((type) => parts.find((part) => part.type === type)?.value)
+    .join("-");
+}

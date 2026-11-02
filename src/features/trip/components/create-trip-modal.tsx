@@ -40,6 +40,19 @@ import {
   tripMessage,
 } from "../utils/create-trip-formatters";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
+import { router } from "expo-router";
+import { UI_PREVIEW_ENABLED } from "@/constants/development";
+import { ApiError } from "@/services/api/api-error";
+import { useCreateTripMutation } from "../api/trip-queries";
+import {
+  createTripRequestId,
+  tripLocalToday,
+  type CreateTripPayload,
+} from "../api/trip-contract";
+import {
+  tripApiErrorMessage,
+  useTripIntegrationCopy,
+} from "../i18n/trip-integration-copy";
 import { DateRangeSheet } from "./date-range-sheet";
 import { DestinationPickerSheet } from "./destination-picker-sheet";
 import { PlacePickerScreen } from "../screens/place-picker-screen";
@@ -64,11 +77,17 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
   const reduceMotion = useReducedMotion();
   const { copy, locale } = useTripCopy();
   const { copy: detailsCopy } = useTripDetailsCopy();
+  const { copy: integrationCopy } = useTripIntegrationCopy();
+  const createMutation = useCreateTripMutation();
+  const createAttempt = useRef<{ fingerprint: string; id: string } | null>(
+    null,
+  );
   const scrollRef = useRef<ScrollView>(null);
-  const { today, createDraft } = useTripPreview((state) => ({
+  const { today: previewToday, createDraft } = useTripPreview((state) => ({
     today: state.today,
     createDraft: state.createDraft,
   }));
+  const today = UI_PREVIEW_ENABLED ? previewToday : tripLocalToday();
   const { control, setValue, handleSubmit, setError, setFocus, formState } =
     useForm<CreateTripInput, unknown, CreateTripOutput>({
       resolver: zodResolver(createTripSchema(copy, today)),
@@ -112,6 +131,7 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
       : 0;
 
   const requestClose = () => {
+    if (isSubmitting) return;
     Keyboard.dismiss();
     if (isDirty) confirmDiscard(copy, onClose);
     else onClose();
@@ -156,8 +176,69 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
   const handleBudgetChange = (text: string) =>
     budgetField.onChange(text.replace(/\D/g, ""));
   const submit = handleSubmit(
-    (values) => {
+    async (values) => {
       Keyboard.dismiss();
+      if (!UI_PREVIEW_ENABLED) {
+        const payload: Omit<CreateTripPayload, "clientRequestId"> = {
+          title:
+            values.title ||
+            generateDefaultTitle(
+              values.destination,
+              values.startDate,
+              values.endDate,
+              copy,
+            ),
+          destination: { name: values.destination, provinceId: null },
+          startDate: values.startDate,
+          endDate: values.endDate,
+          timeZone: "Asia/Ho_Chi_Minh",
+          budget:
+            values.budget === undefined
+              ? null
+              : { amount: values.budget, currency: "VND" },
+          preferences: values.preferences,
+          initialPlaceIds: [],
+        };
+        if (values.initialStops.length) {
+          setError("root", { message: integrationCopy.placesPending });
+          return;
+        }
+        const fingerprint = JSON.stringify(payload);
+        if (createAttempt.current?.fingerprint !== fingerprint)
+          createAttempt.current = { fingerprint, id: createTripRequestId() };
+        try {
+          const read = await createMutation.mutateAsync({
+            ...payload,
+            clientRequestId: createAttempt.current.id,
+          });
+          onClose();
+          router.push({
+            pathname: "/trip/[tripId]",
+            params: { tripId: read.trip.id },
+          });
+        } catch (failure) {
+          if (failure instanceof ApiError && failure.fields) {
+            for (const key of [
+              "title",
+              "startDate",
+              "endDate",
+              "budget",
+              "preferences",
+            ] as const) {
+              if (failure.fields[key])
+                setError(key, { message: integrationCopy.invalid });
+            }
+            if (failure.fields["destination.name"])
+              setError("destination", { message: integrationCopy.invalid });
+            if (failure.fields["budget.amount"] || failure.fields["budget.currency"])
+              setError("budget", { message: integrationCopy.invalid });
+          }
+          setError("root", {
+            message: tripApiErrorMessage(failure, integrationCopy),
+          });
+        }
+        return;
+      }
       const success = createDraft({
         ...values,
         title:
@@ -627,6 +708,10 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
                 accessibilityRole="button"
                 accessibilityLabel={copy.addPlace}
                 onPress={() => {
+                  if (!UI_PREVIEW_ENABLED) {
+                    setNotice(integrationCopy.placesPending);
+                    return;
+                  }
                   if (!destination.trim()) {
                     setShowDestSheet(true);
                   } else {

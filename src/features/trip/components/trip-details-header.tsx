@@ -27,7 +27,7 @@ export function TripDetailsHeader({
   trip: Trip;
   mode: TripDetailsMode;
   onBack: () => void;
-  onMenu: () => void;
+  onMenu?: () => void;
   hideTripInfo?: boolean;
   titleOnly?: boolean;
   onEdit?: () => void;
@@ -146,9 +146,9 @@ export function TripDetailsHeader({
             onPress={onOpenMap}
           />
         </View>
-      ) : (
+      ) : onMenu ? (
         <DetailIconButton name="more" label={copy.menu} onPress={onMenu} />
-      )}
+      ) : null}
     </View>
   );
 }

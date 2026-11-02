@@ -13,8 +13,14 @@ import { useAppTheme } from "@/hooks/use-app-theme";
 import { spacing, typography } from "@/theme/tokens";
 import { TripCard } from "../components/trip-card";
 import { useTripCopy } from "../i18n/trip-copy";
+import { UI_PREVIEW_ENABLED } from "@/constants/development";
+import { ConnectedTripsScreen } from "./connected-trips-screen";
 
 export function TripsScreen() {
+  return UI_PREVIEW_ENABLED ? <PreviewTripsScreen /> : <ConnectedTripsScreen />;
+}
+
+function PreviewTripsScreen() {
   const theme = useAppTheme();
   const tabBarHeight = useBottomTabBarHeight();
   const { copy, locale } = useTripCopy();

@@ -72,6 +72,9 @@ const vi = {
   moveSouth: "Dời ghim xuống phía nam",
   moveEast: "Dời ghim sang phía đông",
   moveWest: "Dời ghim sang phía tây",
+  nativeMapRequired: "Bản đồ thật cần development build trên iOS hoặc Android.",
+  routeUnavailable: "Chưa lấy được lộ trình. Kiểm tra cấu hình Maps trên backend.",
+  liveMapLabel: "Bản đồ trực tiếp",
 };
 const en: typeof vi = {
   title: "Add places",
@@ -146,6 +149,9 @@ const en: typeof vi = {
   moveSouth: "Move pin south",
   moveEast: "Move pin east",
   moveWest: "Move pin west",
+  nativeMapRequired: "The native map needs a development build on iOS or Android.",
+  routeUnavailable: "Route unavailable. Check Maps configuration on the backend.",
+  liveMapLabel: "Live map",
 };
 export function usePlaceSearchCopy() {
   const { locale } = useI18n();

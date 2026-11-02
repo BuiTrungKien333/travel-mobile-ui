@@ -4,6 +4,10 @@ export type HomeScenario = "new" | "upcoming" | "ongoing" | "returning";
 export type LocalizedText = { vi: string; en: string };
 export type TripStop = {
   id: string;
+  placeId?: string;
+  tripPlaceId?: string;
+  itineraryItemId?: string;
+  providerPlaceId?: string;
   time: string;
   name: LocalizedText;
   kind: LocalizedText;
@@ -13,6 +17,8 @@ export type TripStop = {
   durationMinutes?: number;
   pinned?: boolean;
   note?: string;
+  visited?: boolean;
+  plannedOrder?: number | null;
   quickInfo?: {
     admission?: LocalizedText;
     closesAt?: string;
@@ -38,6 +44,9 @@ export type TripPreference =
   | "shopping"
   | "beach";
 export type Trip = {
+  serverMode?: "PLANNING" | "LIVE" | "RECAP" | "CANCELLED";
+  serverStopCount?: number;
+  serverDayCount?: number;
   id: string;
   destination: string;
   title?: string;

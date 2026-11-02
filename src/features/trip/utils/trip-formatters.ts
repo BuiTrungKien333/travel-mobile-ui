@@ -15,6 +15,15 @@ export function getTripDisplayStatus(
   trip: Trip,
   today: string,
 ): TripDisplayStatus {
+  if (trip.serverMode) {
+    const labels: Record<NonNullable<Trip["serverMode"]>, TripDisplayStatus> = {
+      PLANNING: "upcoming",
+      LIVE: "ongoing",
+      RECAP: "completed",
+      CANCELLED: "cancelled",
+    };
+    return labels[trip.serverMode];
+  }
   if (trip.status === "cancelled") return "cancelled";
   if (trip.status === "draft") return "draft";
   if (trip.status === "completed") return "completed";
@@ -51,6 +60,7 @@ export function getTripTitle(trip: Trip, locale: "vi" | "en" = "vi"): string {
 }
 
 export function getTotalTripStops(trip: Trip): number {
+  if (trip.serverStopCount !== undefined) return trip.serverStopCount;
   if (!trip.days || !Array.isArray(trip.days)) return 0;
   return trip.days.reduce(
     (acc, day) => acc + (day.stops?.length ?? 0),

@@ -2,13 +2,30 @@
 
 **Ngày lập:** 02/11/2026
 
-**Trạng thái:** Đề xuất để review — chưa phê duyệt triển khai.
+**Trạng thái:** Đã bắt đầu triển khai theo từng module; chưa hoàn tất tích hợp MVP. Mốc mới nhất: merge mobile `minhduc`, backend `integration/team-sync` tạm hoãn theo yêu cầu.
 
 **Frontend:** `E:\travel-mobile-ui`
 
 **Backend:** `E:\travel-system\backend`
 
 > Tài liệu xuất từ kế hoạch đã trao đổi trong chat. Việc xuất file không triển khai API, migration hay thay đổi code ứng dụng. Các endpoint ghi “mới” là hợp đồng đề xuất, không phải endpoint hiện đang tồn tại.
+
+**Bổ sung 02/11/2026:** người dùng xác nhận draft dành cho AI sau này, **ngoài MVP**. Chuyến được tạo qua UI hiện tại là chuyến thật `PLANNING`, không có bước publish. Quy tắc chi tiết và OpenAPI Trip CRUD được chốt tại [TRIP-CRUD-CONTRACT.md](TRIP-CRUD-CONTRACT.md); đặc tả này ưu tiên khi ví dụ roadmap chưa đủ cụ thể. Create/list/detail và migration đã triển khai như ghi bên dưới; các operation còn lại vẫn là kế hoạch.
+
+**Tiến độ sau bước đặc tả:** đã triển khai create/list/detail metadata và Flyway V10, nối frontend bằng flag API riêng. Xem [TRIP-API-INTEGRATION.md](TRIP-API-INTEGRATION.md). Bảng hiện trạng bên dưới giữ mốc khảo sát ban đầu; không hiểu là mọi module đã nối. PATCH/delete và các phase Places/Itinerary/Map/Media/Weather/Home tổng hợp/AI còn lại theo roadmap.
+
+### Mốc merge mobile · 02/11/2026
+
+| Module/phase | Kết quả lần gộp này | Chưa hoàn tất |
+| --- | --- | --- |
+| Phase 0 / 2 · Trip | Giữ canonical DTO, list phân trang, create request key, owner-scoped cache và nhánh API tạo/list/detail đã có | PATCH/delete/date preview, QA thiết bị |
+| Phase 3 / 4 · Places/Itinerary | Nhập service/hooks/schema và sửa mapping placeId/tripPlaceId/itineraryItemId; không nối UI vào API legacy | Hợp đồng backend thống nhất, origin/transport/pins/version, CRUD tích hợp thật |
+| Phase 5 · Maps/Routes | Thêm Maps SDK tùy chọn, giữ sơ đồ preview mặc định, kiểm tra payload/geometry | API Places/Routes đúng provider Google, quota/key, Android build và QA; web vẫn sơ đồ |
+| Phase 6 · Memory/Media | Nhập service, sửa multipart web/native và tránh lặp các upload đã được xác nhận khi retry cùng phiên | Idempotency/atomic create-upload, ảnh riêng tư, pagination UI, nối camera/album thật |
+| Phase 7 · Weather | Nhập client/schema; không thay fixture hiện tại bằng dữ liệu chưa nối | Mapping dashboard/checklist, forecast horizon và fallback thiếu dữ liệu |
+| Auth / UI | Giữ luồng auth, Home bốn trạng thái, camera, modal, safe area và Liquid Glass hiện có | Không nhập bản rewrite Profile/Home/Camera làm mất UI hoặc phụ thuộc API chưa thống nhất |
+
+**Backend chưa merge:** `E:\travel-system` giữ `fix/rag-ai-v2` tại `00b797d`. Không chạy migration hay sửa planning backend trong đợt này. Import mã nguồn mobile không đồng nghĩa API tương ứng đã hoạt động. Kết quả kiểm tra và quyết định giữ/bỏ: [MERGE-MINHDUC-2026-11-02.md](MERGE-MINHDUC-2026-11-02.md).
 
 ## 1. Mục tiêu, phạm vi và hiện trạng
 

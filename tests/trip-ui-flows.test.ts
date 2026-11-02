@@ -21,6 +21,8 @@ function uiHarness() {
   );
   const theme = { ...tokens, colors: new Proxy({}, { get: () => "#123456" }) };
   const load = tripModuleLoader({
+    "@/constants/development": { UI_PREVIEW_ENABLED: true },
+    "./connected-trips-screen": { ConnectedTripsScreen: "ConnectedTripsScreen" },
     react: {
       useState: (initial: any) => {
         const index = cursor++;

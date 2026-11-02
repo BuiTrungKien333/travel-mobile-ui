@@ -54,6 +54,7 @@ export function selectHome(
 }
 
 export function tripDuration(trip: Trip): number {
+  if (trip.serverDayCount !== undefined) return trip.serverDayCount;
   return trip.startDate && trip.endDate
     ? dayDistance(trip.startDate, trip.endDate) + 1
     : 0;
