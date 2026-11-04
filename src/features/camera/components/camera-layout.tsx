@@ -34,6 +34,8 @@ export type CameraLayoutProps = {
   journalLabel?: string;
   subtitle?: string;
   onSelectTrip?: () => void;
+  hideJournal?: boolean;
+  bottomNavigation?: ReactNode;
 };
 
 export function CameraLayout({
@@ -47,6 +49,8 @@ export function CameraLayout({
   journalLabel,
   subtitle,
   onSelectTrip,
+  hideJournal = false,
+  bottomNavigation,
   frame,
   frameControls,
   onCapture,
@@ -296,7 +300,7 @@ export function CameraLayout({
             {error || status}
           </AppText>
         ) : null}
-        <Pressable
+        {!hideJournal ? <Pressable
           accessibilityRole="button"
           accessibilityState={{ disabled: busy }}
           onPress={onJournal}
@@ -365,8 +369,9 @@ export function CameraLayout({
               />
             </View>
           </View>
-        </Pressable>
+        </Pressable> : null}
       </ScrollView>
+      {bottomNavigation}
       {!embedded ? (
         <View
           style={{

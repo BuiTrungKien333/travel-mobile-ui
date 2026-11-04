@@ -5,3 +5,4 @@ import type { AppTheme } from "@/theme";
 export function useAppTheme(): AppTheme {
   return useTheme() as AppTheme;
 }
+

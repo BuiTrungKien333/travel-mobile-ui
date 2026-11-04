@@ -1,6 +1,14 @@
 import { useI18n } from "@/hooks/use-i18n";
 
 const vi = {
+  uploading: "Đang upload ảnh…",
+  savingDevice: "Đang lưu ảnh vào thiết bị…",
+  uploaded: "Đã upload ảnh vào kỷ niệm",
+  uploadError: "Chưa upload được ảnh. Ảnh đã được lưu vào thiết bị. Chạm dấu tích khi muốn thử upload lại.",
+  tooLarge: "Ảnh vượt dung lượng máy chủ cho phép. Hãy chọn ảnh nhỏ hơn.",
+  invalidType: "Máy chủ hỗ trợ ảnh JPEG, PNG, GIF và WebP. Hãy chọn ảnh khác.",
+  imageTooLarge: "Kích thước ảnh vượt giới hạn máy chủ. Hãy chọn ảnh nhỏ hơn.",
+  futureDate: "Kỷ niệm chỉ lưu được vào ngày đã qua hoặc hôm nay. Hãy chọn lại ngày.",
   back: "Quay lại",
   capture: "Chụp khoảnh khắc",
   gallery: "Chọn ảnh trong máy",
@@ -26,7 +34,7 @@ const vi = {
   retry: "Thử lại",
   save: "Lưu khoảnh khắc",
   retake: "Chụp lại",
-  confirmHint: "Ảnh vừa chọn · Chạm dấu tích để lưu",
+  confirmHint: "Chạm dấu tích để thử lưu lại ảnh",
   saved: "Đã thêm vào kỷ niệm",
   build: "Cần cập nhật bản cài ứng dụng",
   buildHint: "Cài bản ứng dụng mới để chụp ảnh và chọn ảnh trong máy.",
@@ -36,6 +44,8 @@ const vi = {
     "Trình duyệt chỉ cho phép camera qua HTTPS hoặc localhost. Hãy mở địa chỉ HTTPS hoặc dùng ứng dụng trên điện thoại.",
   unsupported:
     "Môi trường này không hỗ trợ camera. Hãy dùng trình duyệt hệ thống hoặc chọn ảnh trong máy.",
+  embedded:
+    "Trình xem trước này đang chặn camera. Hãy mở cùng địa chỉ trong Chrome hoặc Edge để chụp và chọn ảnh. Bạn có thể bật chế độ màn hình điện thoại trong công cụ nhà phát triển của trình duyệt.",
   permissionError:
     "Chưa đọc được quyền camera. Hãy thử cấp quyền lại hoặc kiểm tra quyền Camera của ứng dụng trong Cài đặt.",
   denied:
@@ -52,6 +62,14 @@ const vi = {
   savedDownload: "Đã lưu trong ứng dụng và gửi ảnh đến trình tải xuống",
 };
 const en: typeof vi = {
+  uploading: "Uploading photo…",
+  savingDevice: "Saving photo to your device…",
+  uploaded: "Photo uploaded to memories",
+  uploadError: "Couldn't upload. Your photo is saved on your device. Tap the check when you want to retry uploading.",
+  tooLarge: "This photo exceeds the server's size limit. Choose a smaller image.",
+  invalidType: "The server accepts JPEG, PNG, GIF and WebP. Choose another image.",
+  imageTooLarge: "This photo exceeds the server's image dimensions. Choose a smaller image.",
+  futureDate: "Memories need a past or present date. Please choose another day.",
   back: "Back",
   capture: "Capture a moment",
   gallery: "Choose a photo",
@@ -78,7 +96,7 @@ const en: typeof vi = {
   retry: "Try again",
   save: "Save moment",
   retake: "Retake",
-  confirmHint: "Photo preview · Tap the check to save",
+  confirmHint: "Tap the check to retry saving this photo",
   saved: "Added to memories",
   build: "An updated app build is needed",
   buildHint:
@@ -89,6 +107,8 @@ const en: typeof vi = {
     "Camera access requires HTTPS or localhost. Open an HTTPS address or use the mobile app.",
   unsupported:
     "This environment does not support camera access. Use your system browser or choose a photo.",
+  embedded:
+    "This preview blocks camera access. Open the same address in Chrome or Edge to capture and choose photos. You can use your browser's developer tools to preview a phone screen.",
   permissionError:
     "Couldn't read camera access. Try again or check the app's Camera permission in Settings.",
   denied:

@@ -1,0 +1,6 @@
+simulation: memory-mobile
+routing: path
+mocks:
+  - name: Memory backend
+    routeKey: backend
+    path: postman/mocks/memory-backend/config.yaml

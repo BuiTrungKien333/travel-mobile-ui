@@ -11,6 +11,18 @@ export function getTripPhotos(memories: readonly Memory[], tripId: string) {
     );
 }
 
+export function getMemoryCaptureDays(trip: Trip, today: string): Trip["days"] {
+  if (trip.status === "cancelled") return [];
+  const days = trip.days.filter((day) => day.date <= today);
+  if (days.length) return days;
+  // Preparation photos belong to today, even when the itinerary starts later.
+  const stops = new Map([
+    ...trip.days.flatMap((day) => day.stops),
+    ...(trip.unscheduledStops ?? []),
+  ].map((stop) => [stop.id, stop]));
+  return [{ date: today, stops: [...stops.values()] }];
+}
+
 export function getMemoryCaptureTarget(
   trips: readonly Trip[],
   today: string,
@@ -23,10 +35,11 @@ export function getMemoryCaptureTarget(
       ? selection.trip
       : undefined;
   if (!trip || trip.status === "cancelled") return null;
+  const availableDays = getMemoryCaptureDays(trip, today);
   const day = params.day
-    ? trip.days.find((item) => item.date === params.day)
-    : (trip.days.find((item) => item.date === today) ?? trip.days.at(-1));
-  if (!day) return null;
+    ? availableDays.find((item) => item.date === params.day)
+    : (availableDays.find((item) => item.date === today) ?? availableDays.at(-1));
+  if (!day || day.date > today) return null;
   const stop =
     params.stopId !== undefined
       ? day.stops.find((item) => item.id === params.stopId)

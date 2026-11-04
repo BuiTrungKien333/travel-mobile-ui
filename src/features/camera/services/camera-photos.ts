@@ -4,7 +4,7 @@ import { requireOptionalNativeModule } from "expo";
 import { Platform } from "react-native";
 
 export async function prepareCameraPhoto(
-  photo: { uri: string; width: number; height: number },
+  photo: { uri: string; width: number; height: number; mimeType?: string; format?: "jpg" | "png" },
   zoom = 1,
 ) {
   // A missing optional editor in an older build must not prevent taking a photo.
@@ -12,7 +12,7 @@ export async function prepareCameraPhoto(
     Platform.OS !== "web" &&
     !requireOptionalNativeModule("ExpoImageManipulator")
   )
-    return photo;
+    return { ...photo, mimeType: photo.mimeType ?? (photo.format === "png" ? "image/png" : photo.format === "jpg" ? "image/jpeg" : undefined) };
   const { ImageManipulator, SaveFormat } = await import(
     "expo-image-manipulator"
   );
@@ -24,10 +24,11 @@ export async function prepareCameraPhoto(
       context.resize({ width: layout.cameraMaxPhotoSize });
     const rendered = await context.renderAsync();
     try {
-      return await rendered.saveAsync({
+      const result = await rendered.saveAsync({
         format: SaveFormat.JPEG,
         compress: layout.cameraPhotoQuality,
       });
+      return { ...result, mimeType: "image/jpeg" };
     } finally {
       rendered.release();
     }

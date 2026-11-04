@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { z } from "zod";
 import { FlatList, Modal, Pressable, View } from "react-native";
 import { useReducedMotion } from "react-native-reanimated";
 import { AppButton } from "@/components/ui/app-button";
@@ -9,6 +10,11 @@ import { getTripTitle } from "@/features/trip/utils/trip-formatters";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useMemoriesCopy } from "../i18n/memories-copy";
 import { MemoryEmpty, MemoryIconButton, MemoryPage } from "./memory-primitives";
+import { useMemoryTrips } from "../hooks/use-memories";
+import { MemoryLoadState } from "./memory-load-state";
+import { getMemoryCaptureDays } from "../utils/memory-albums";
+import { useCreateServerTrip } from "@/features/trip/hooks/use-create-server-trip";
+import { currentCalendarDate } from "@/utils/calendar-date";
 
 export function MemoryCapturePicker({
   onClose,
@@ -20,11 +26,16 @@ export function MemoryCapturePicker({
   const theme = useAppTheme();
   const reducedMotion = useReducedMotion();
   const { copy, locale } = useMemoriesCopy();
-  const trips = useTripPreview((state) => state.trips);
+  const library = useMemoryTrips();
+  const { trips } = library;
   const openPanel = useTripPreview((state) => state.openPanel);
+  const linkTrip = useTripPreview((state) => state.linkTrip);
+  const sync = useCreateServerTrip();
+  const [syncError, setSyncError] = useState(false);
   const [tripId, setTripId] = useState<string | null>(null);
+  const today = currentCalendarDate();
   const trip = trips.find((item) => item.id === tripId);
-  const options = trip?.days.flatMap((day) => [
+  const options = trip && getMemoryCaptureDays(trip, today).flatMap((day) => [
     {
       id: `${day.date}:general`,
       day: day.date,
@@ -64,6 +75,9 @@ export function MemoryCapturePicker({
             />
           }
         >
+          <MemoryLoadState loading={library.isPending} error={library.isError} onRetry={() => void library.refetch()} />
+          {syncError ? <AppText accessibilityRole="alert" tone="error" style={{ padding: theme.spacing.lg }}>{copy.tripSyncError}</AppText> : null}
+          {sync.isPending ? <AppText accessibilityLiveRegion="polite" style={{ padding: theme.spacing.lg }}>{copy.syncingTrip}</AppText> : null}
           {trip ? (
             <FlatList
               data={options}
@@ -105,7 +119,7 @@ export function MemoryCapturePicker({
           ) : (
             <FlatList
               data={trips.filter(
-                (item) => item.status !== "cancelled" && item.days.length > 0,
+                (item) => item.status !== "cancelled",
               )}
               keyExtractor={(item) => item.id}
               contentContainerStyle={{
@@ -116,7 +130,7 @@ export function MemoryCapturePicker({
                 alignSelf: "center",
               }}
               ListEmptyComponent={
-                <MemoryEmpty title={copy.emptyTrips} hint={copy.emptyTripsHint}>
+                !library.isPending && !library.isError ? <MemoryEmpty title={copy.emptyTrips} hint={copy.emptyTripsHint}>
                   <AppButton
                     onPress={() => {
                       onClose();
@@ -125,12 +139,26 @@ export function MemoryCapturePicker({
                   >
                     {copy.createTrip}
                   </AppButton>
-                </MemoryEmpty>
+                </MemoryEmpty> : null
               }
               renderItem={({ item }) => (
                 <Pressable
                   accessibilityRole="button"
-                  onPress={() => setTripId(item.id)}
+                  accessibilityState={{ disabled: sync.isPending }}
+                  disabled={sync.isPending}
+                  onPress={() => {
+                    setSyncError(false);
+                    if (z.guid().safeParse(item.id).success) {
+                      setTripId(item.id);
+                      return;
+                    }
+                    void sync.mutateAsync({ localId: item.id, trip: item })
+                      .then(async (id) => {
+                        await linkTrip(item.id, id);
+                        setTripId(id);
+                      })
+                      .catch(() => setSyncError(true));
+                  }}
                   style={({ pressed }) => ({
                     flexDirection: "row",
                     alignItems: "center",

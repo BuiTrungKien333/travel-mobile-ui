@@ -5,13 +5,15 @@ import { lazy, Suspense, useContext, useState } from "react";
 import { ActivityIndicator, Platform, View } from "react-native";
 import { AppText } from "@/components/ui/app-text";
 import { CameraLayout } from "@/features/camera/components/camera-layout";
+import { QuickCaptureNavigation } from "@/features/camera/components/quick-capture-navigation";
 import { useCameraCopy } from "@/features/camera/i18n/camera-copy";
-import { useTripPreview } from "@/features/home/providers/trip-preview-provider";
 import { getTripTitle } from "@/features/trip/utils/trip-formatters";
 import { useAppTheme } from "@/hooks/use-app-theme";
+import { useScreenInsets } from "@/hooks/use-screen-insets";
 import { MemoryCapturePicker } from "../components/memory-capture-picker";
 import { useMemoriesCopy } from "../i18n/memories-copy";
 import { getMemoryCaptureTarget } from "../utils/memory-albums";
+import { useMemories } from "../hooks/use-memories";
 
 const NativeMemoryCamera = lazy(async () => {
   const { NativeTripCamera } = await import(
@@ -30,35 +32,44 @@ export function MemoriesCameraScreen(params: {
   const { copy, locale } = useMemoriesCopy();
   const { copy: cameraCopy } = useCameraCopy();
   const bottomInset = useContext(BottomTabBarHeightContext);
-  const trips = useTripPreview((state) => state.trips);
-  const today = useTripPreview((state) => state.today);
-  const memories = useTripPreview((state) => state.memories);
+  const insets = useScreenInsets();
+  const [navigationHeight, setNavigationHeight] = useState(
+    theme.layout.tabBarCameraRise +
+    theme.spacing.xs +
+    theme.layout.tabBarHeight +
+    Math.max(theme.spacing.lg, insets.bottom + theme.spacing.xs),
+  );
+  const { trips, memories } = useMemories();
+  const today = new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
   const [choosing, setChoosing] = useState(false);
-  const target = params.quick
-    ? null
-    : getMemoryCaptureTarget(trips, today, params);
+  const target =
+    params.quick && !params.tripId
+      ? null
+      : getMemoryCaptureTarget(trips, today, params);
   const history = () => router.push("/memories/history");
   const props = {
-    title: params.quick
-      ? cameraCopy.quick
-      : target
-        ? getTripTitle(target.trip, locale)
-        : copy.chooseTrip,
-    subtitle: params.quick
-      ? cameraCopy.quickHint
-      : target
-        ? `${target.stop?.name[locale] ?? copy.noPlace} · ${target.day.date}`
-        : copy.cameraHint,
+    title: target ? getTripTitle(target.trip, locale) : copy.chooseTrip,
+    subtitle: target
+      ? `${target.stop?.name[locale] ?? copy.noPlace} · ${target.day.date}`
+      : copy.cameraHint,
     count: params.quick
       ? memories.filter(
           (item) =>
-            item.local &&
             (!item.tripId || !trips.some((trip) => trip.id === item.tripId)),
         ).length
       : memories.filter((item) => !!item.photo).length,
-    embeddedBottomInset: bottomInset ?? undefined,
+    embeddedBottomInset: params.quick
+      ? navigationHeight
+      : bottomInset ?? undefined,
+    hideJournal: params.quick,
+    bottomNavigation: params.quick ? (
+      <QuickCaptureNavigation
+        onHeightChange={setNavigationHeight}
+        animationEnabled={!choosing}
+      />
+    ) : undefined,
     journalLabel: params.quick ? cameraCopy.later : copy.history,
-    onSelectTrip: params.quick ? undefined : () => setChoosing(true),
+    onSelectTrip: () => setChoosing(true),
     onBack: () =>
       router.canGoBack() ? router.back() : router.navigate("/tabs"),
     onHome: () => router.navigate("/tabs"),
@@ -87,7 +98,8 @@ export function MemoriesCameraScreen(params: {
         >
           <NativeMemoryCamera
             {...props}
-            quick={params.quick}
+            quick={params.quick && !target}
+            requestOnOpen={params.quick}
             suspended={choosing}
             tripId={target?.trip.id}
             date={target?.day.date ?? today}

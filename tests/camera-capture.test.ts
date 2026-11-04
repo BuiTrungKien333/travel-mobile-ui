@@ -82,6 +82,10 @@ test("old development builds show a camera module notice before importing native
     "src/theme/tokens.ts",
   );
   const moduleLoad = tripModuleLoader({
+    "@/features/memories/hooks/use-memories": {
+      useMemories: () => ({ trips: store.getState().trips, memories: store.getState().memories, isPending: false, isError: false }),
+    },
+    "@/features/memories/components/memory-load-state": { MemoryLoadState: "MemoryLoadState" },
     expo: { requireOptionalNativeModule: () => null },
     "expo-router": {
       router: {
@@ -148,14 +152,20 @@ test("old development builds show a camera module notice before importing native
   assert.equal(navigation[1], "/tabs");
 });
 
-test("the camera releases its view when its tab is unfocused, a picker is open, or the app is backgrounded", () => {
+test("camera releases inactive previews and opens the gallery directly from the press without duplicate pickers", async () => {
   const store = loadHomePreview().createPreviewStore();
   const tokens = load<typeof import("../src/theme/tokens.ts")>(
     "src/theme/tokens.ts",
   );
   let focused = true;
+  let pickerCalls = 0;
   const appState = { currentState: "active" };
   const nativeLoad = tripModuleLoader({
+    "@/features/memories/hooks/use-memories": {
+      useMemoryTrips: () => ({ trips: store.getState().trips }),
+      useMemoryActions: () => ({ upload: { isPending: false } }),
+    },
+    "@/features/auth/hooks/use-auth": { useProfile: () => ({ data: { id: "00000000-0000-0000-0000-000000000001" } }) },
     react: {
       useState: (initial: unknown) => [
         typeof initial === "function" ? initial() : initial,
@@ -168,6 +178,12 @@ test("the camera releases its view when its tab is unfocused, a picker is open, 
     "expo-camera": {
       CameraView: "CameraView",
       useCameraPermissions: () => [{ granted: true }, () => {}, () => {}],
+    },
+    "expo-image-picker": {
+      launchImageLibraryAsync: async () => {
+        pickerCalls++;
+        return { canceled: true, assets: null };
+      },
     },
     "../hooks/use-camera-access": {
       useCameraAccess: () => ({
@@ -217,8 +233,8 @@ test("the camera releases its view when its tab is unfocused, a picker is open, 
     if (!isValidElement<{ children?: unknown }>(node)) return false;
     return node.type === "CameraView" || containsCamera(node.props.children);
   }
-  function cameraVisible(suspended = false) {
-    const tree = NativeTripCamera({
+  function renderCamera(suspended = false) {
+    return NativeTripCamera({
       title: "Memories",
       count: 0,
       date: "2026-10-21",
@@ -228,7 +244,9 @@ test("the camera releases its view when its tab is unfocused, a picker is open, 
       onDetails: () => {},
       onJournal: () => {},
     });
-    return containsCamera(tree.props.frame);
+  }
+  function cameraVisible(suspended = false) {
+    return containsCamera(renderCamera(suspended).props.frame);
   }
   assert.equal(cameraVisible(), true);
   focused = false;
@@ -237,4 +255,13 @@ test("the camera releases its view when its tab is unfocused, a picker is open, 
   assert.equal(cameraVisible(true), false);
   appState.currentState = "background";
   assert.equal(cameraVisible(), false);
+  appState.currentState = "active";
+  const tree = renderCamera();
+  tree.props.onLibrary();
+  assert.equal(pickerCalls, 1);
+  tree.props.onLibrary();
+  assert.equal(pickerCalls, 1);
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  tree.props.onLibrary();
+  assert.equal(pickerCalls, 2);
 });

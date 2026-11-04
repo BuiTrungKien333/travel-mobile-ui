@@ -1,7 +1,5 @@
-import { useLocalSearchParams } from "expo-router";
-import { MemoriesCameraScreen } from "@/features/memories/screens/memories-camera-screen";
-import { memoryCaptureRouteSchema } from "@/features/memories/schemas/memory-route-schema";
+import { MemoriesHistoryScreen } from "@/features/memories/screens/memories-history-screen";
+
 export default function MemoriesRoute() {
-  const params = memoryCaptureRouteSchema.safeParse(useLocalSearchParams());
-  return <MemoriesCameraScreen {...(params.success ? params.data : {})} />;
+  return <MemoriesHistoryScreen embedded />;
 }

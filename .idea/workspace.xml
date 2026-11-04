@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="NONE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="29d508c3-d611-4722-9705-aeb71792abdb" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.env.example" beforeDir="false" afterPath="$PROJECT_DIR$/.env.example" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/(workspace)/memories/quick-capture.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/(workspace)/memories/quick-capture.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/(workspace)/tabs/memories.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/(workspace)/tabs/memories.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/common/floating-bottom-navigation.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/common/floating-bottom-navigation.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/constants/development.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/constants/development.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/camera/components/camera-layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/camera/components/camera-layout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/camera/components/native-trip-camera.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/camera/components/native-trip-camera.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/camera/hooks/use-camera-access.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/camera/hooks/use-camera-access.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/camera/i18n/camera-copy.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/camera/i18n/camera-copy.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/camera/screens/trip-camera-screen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/camera/screens/trip-camera-screen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/camera/services/camera-photos.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/camera/services/camera-photos.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/camera/utils/camera-environment.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/camera/utils/camera-environment.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/camera/utils/camera-environment.web.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/camera/utils/camera-environment.web.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/home/components/journal-album.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/home/components/journal-album.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/home/screens/home-screen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/home/screens/home-screen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/home/store/trip-preview-store.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/home/store/trip-preview-store.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/home/types/home-types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/home/types/home-types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/home/types/preview-state.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/home/types/preview-state.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/memories/components/memory-capture-picker.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/memories/components/memory-capture-picker.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/memories/i18n/memories-copy.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/memories/i18n/memories-copy.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/memories/schemas/local-memory-schema.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/memories/schemas/local-memory-schema.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/memories/screens/memories-camera-screen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/memories/screens/memories-camera-screen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/memories/screens/memories-history-screen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/memories/screens/memories-history-screen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/memories/screens/memory-album-screen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/memories/screens/memory-album-screen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/memories/screens/memory-detail-screen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/memories/screens/memory-detail-screen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/memories/screens/saved-later-screen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/memories/screens/saved-later-screen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/memories/utils/memory-albums.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/memories/utils/memory-albums.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/trip/components/create-trip-modal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/trip/components/create-trip-modal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/trip/i18n/trip-copy.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/trip/i18n/trip-copy.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/hooks/use-app-theme.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/hooks/use-app-theme.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/services/api/client.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/services/api/client.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/theme/tokens.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/theme/tokens.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/utils/calendar-date.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils/calendar-date.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/camera-access.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tests/camera-access.test.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/camera-capture.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tests/camera-capture.test.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/helpers/load-trip-module.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tests/helpers/load-trip-module.ts" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 2,
+  &quot;fromUser&quot;: false
+}</component>
+  <component name="ProjectId" id="3K3SglysBcVrNJm0GacsjbmHkpV" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
+    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
+    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;feat/ui/memory-v2&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/WWW_JAVA/travel-mobile-ui&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;emulator&quot;
+  }
+}</component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="29d508c3-d611-4722-9705-aeb71792abdb" name="Changes" comment="" />
+      <created>1790784872941</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1790784872941</updated>
+    </task>
+    <servers />
+  </component>
+</project>

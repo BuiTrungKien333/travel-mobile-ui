@@ -6,29 +6,31 @@ import { getCameraEnvironmentIssue } from "../utils/camera-environment";
 export function useCameraAccess() {
   const [permission, setPermission] = useState<PermissionResponse | null>(null);
   const [issue, setIssue] = useState<
-    "insecure" | "unsupported" | "permissionError" | "denied" | null
+    ReturnType<typeof getCameraEnvironmentIssue> | "permissionError" | "denied"
   >(null);
   const [requesting, setRequesting] = useState(false);
   const mounted = useRef(false);
-  const refresh = useCallback(
-    () =>
-      Camera.getCameraPermissionsAsync().then(
-        (result) => {
-          if (mounted.current) {
-            setPermission(result);
-            setIssue(
-              getCameraEnvironmentIssue() ??
-                (result.status === "denied" ? "denied" : null),
-            );
-          }
-        },
-        () => {
-          if (mounted.current)
-            setIssue(getCameraEnvironmentIssue() ?? "permissionError");
-        },
-      ),
-    [],
-  );
+  const permissionVersion = useRef(0);
+  const requestInFlight = useRef(false);
+  const refresh = useCallback(() => {
+    if (requestInFlight.current) return Promise.resolve();
+    const version = ++permissionVersion.current;
+    return Camera.getCameraPermissionsAsync().then(
+      (result) => {
+        if (mounted.current && version === permissionVersion.current) {
+          setPermission(result);
+          setIssue(
+            getCameraEnvironmentIssue() ??
+              (result.status === "denied" ? "denied" : null),
+          );
+        }
+      },
+      () => {
+        if (mounted.current && version === permissionVersion.current)
+          setIssue(getCameraEnvironmentIssue() ?? "permissionError");
+      },
+    );
+  }, []);
   useEffect(() => {
     mounted.current = true;
     void refresh();
@@ -42,11 +44,14 @@ export function useCameraAccess() {
   }, [refresh]);
 
   async function request() {
+    if (requestInFlight.current) return;
     const environmentIssue = getCameraEnvironmentIssue();
     if (environmentIssue) {
       setIssue(environmentIssue);
       return;
     }
+    requestInFlight.current = true;
+    ++permissionVersion.current;
     setRequesting(true);
     try {
       // Invoke directly from the press event; browsers require a user gesture for access.
@@ -58,6 +63,7 @@ export function useCameraAccess() {
     } catch {
       if (mounted.current) setIssue("permissionError");
     } finally {
+      requestInFlight.current = false;
       if (mounted.current) setRequesting(false);
     }
   }

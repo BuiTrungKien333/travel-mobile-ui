@@ -15,7 +15,6 @@ import { AppIcon } from "@/components/ui/app-icon";
 import { AppInput } from "@/components/ui/app-input";
 import { AppText } from "@/components/ui/app-text";
 import { usePhotoViewerCopy } from "@/features/home/i18n/photo-viewer-copy";
-import { useTripPreview } from "@/features/home/providers/trip-preview-provider";
 import { shareJournalPhoto } from "@/features/home/services/journal-photo-actions";
 import { PhotoActionError } from "@/features/home/services/photo-action-error";
 import type { Memory, Trip } from "@/features/home/types/home-types";
@@ -30,9 +29,12 @@ import {
 } from "../components/memory-primitives";
 import { useMemoriesCopy } from "../i18n/memories-copy";
 import { getTripPhotos } from "../utils/memory-albums";
+import { useMemories, useMemoryActions } from "../hooks/use-memories";
+import { MemoryLoadState } from "../components/memory-load-state";
+import { ApiError } from "@/services/api/api-error";
+import { MEMORY_NOTE_MAX_LENGTH } from "../constants/memory-limits";
 
-const NOTE_MAX_LENGTH = 500;
-const noteSchema = z.object({ text: z.string().trim().max(NOTE_MAX_LENGTH) });
+const noteSchema = z.object({ text: z.string().trim().max(MEMORY_NOTE_MAX_LENGTH) });
 
 export function MemoryDetailScreen({
   tripId,
@@ -42,16 +44,15 @@ export function MemoryDetailScreen({
   memoryId?: string;
 }) {
   const { copy } = useMemoriesCopy();
-  const trip = useTripPreview((state) =>
-    state.trips.find((item) => item.id === tripId),
-  );
-  const memories = useTripPreview((state) => state.memories);
+  const library = useMemories();
+  const trip = library.trips.find((item) => item.id === tripId);
+  const { memories } = library;
   const photos = trip ? getTripPhotos(memories, trip.id) : [];
   const memory = photos.find((item) => item.id === memoryId);
   if (!trip || !memory)
     return (
       <MemoryPage title={copy.title}>
-        <MemoryEmpty title={copy.unavailable} hint={copy.unavailableHint} />
+        {library.isPending || library.isError ? <MemoryLoadState loading={library.isPending} error={library.isError} onRetry={() => void library.refetch()} /> : <MemoryEmpty title={copy.unavailable} hint={copy.unavailableHint} />}
       </MemoryPage>
     );
   return (
@@ -71,8 +72,9 @@ function MemoryDetail({
   const theme = useAppTheme();
   const { copy, locale } = useMemoriesCopy();
   const { copy: photoCopy } = usePhotoViewerCopy();
-  const updateNote = useTripPreview((state) => state.updateMemoryNote);
+  const { update } = useMemoryActions();
   const [editing, setEditing] = useState(false);
+  const [editingMemory, setEditingMemory] = useState(memory);
   const [fullPhoto, setFullPhoto] = useState(false);
   const [uri, setUri] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
@@ -105,7 +107,7 @@ function MemoryDetail({
     });
   const capture = () =>
     router.dismissTo({
-      pathname: "/tabs/memories",
+      pathname: "/memories/quick-capture",
       params: {
         tripId: trip.id,
         day: memory.date ?? trip.days.at(-1)?.date,
@@ -246,7 +248,7 @@ function MemoryDetail({
                       onChangeText={onChange}
                       onBlur={onBlur}
                       multiline
-                      maxLength={NOTE_MAX_LENGTH}
+                      maxLength={MEMORY_NOTE_MAX_LENGTH}
                       error={error ? copy.noteTooLong : undefined}
                     />
                   )}
@@ -267,11 +269,11 @@ function MemoryDetail({
                     loading={isSubmitting}
                     onPress={handleSubmit(async ({ text }) => {
                       try {
-                        await updateNote(memory.id, text);
+                        await update.mutateAsync({ memory: editingMemory, text });
                         setEditing(false);
                         setNotice({ text: copy.saved });
-                      } catch {
-                        setNotice({ text: copy.storageError, error: true });
+                      } catch (error) {
+                        setNotice({ text: error instanceof ApiError && error.code === "MEMORY_003" ? copy.noteConflict : copy.loadError, error: true });
                       }
                     })}
                   >
@@ -285,6 +287,8 @@ function MemoryDetail({
                 accessibilityLabel={copy.edit}
                 onPress={() => {
                   setNotice(null);
+                  reset({ text: memory.text });
+                  setEditingMemory(memory);
                   setEditing(true);
                 }}
                 style={({ pressed }) => ({

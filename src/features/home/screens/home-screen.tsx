@@ -19,16 +19,19 @@ import { useHomeCopy } from "../i18n/home-copy";
 import { useTripPreview } from "../providers/trip-preview-provider";
 import { isPastTrip, selectHome } from "../utils/select-home";
 import { OngoingHomeScreen } from "./ongoing-home-screen";
+import { useMemories } from "@/features/memories/hooks/use-memories";
+import { MemoryLoadState } from "@/features/memories/components/memory-load-state";
 
 export function HomeScreen() {
   const theme = useAppTheme();
   const { copy } = useHomeCopy();
-  const { trips, today, memories, openPanel } = useTripPreview((state) => ({
+  const { trips, today, openPanel } = useTripPreview((state) => ({
     trips: state.trips,
     today: state.today,
-    memories: state.memories,
     openPanel: state.openPanel,
   }));
+  const library = useMemories();
+  const { memories } = library;
   const selection = selectHome(trips, today);
   if (selection.kind === "ongoing") {
     return (
@@ -121,6 +124,7 @@ export function HomeScreen() {
           />
         ) : null}
         {selection.kind === "returning" || selection.kind === "upcoming" ? (
+          library.isPending || library.isError ? <MemoryLoadState loading={library.isPending} error={library.isError} onRetry={() => void library.refetch()} /> :
           <JournalAlbum
             variant="recent"
             memories={recentMemories}

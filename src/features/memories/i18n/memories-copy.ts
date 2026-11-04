@@ -1,6 +1,14 @@
 import { useI18n } from "@/hooks/use-i18n";
 
 const vi = {
+  loading: "Đang tải kỷ niệm…",
+  loadError: "Chưa tải được dữ liệu từ máy chủ. Hãy kiểm tra kết nối và thử lại.",
+  upload: "Upload ảnh",
+  uploadError: "Chưa upload được ảnh. Bản ảnh vẫn được giữ trong ứng dụng; bạn có thể thử lại.",
+  assignedUploadError: "Ảnh đã được thêm vào chuyến đi nhưng chưa upload được. Mở album chuyến đi và chạm Upload ảnh khi bạn muốn thử lại.",
+  syncingTrip: "Đang lưu chuyến đi…",
+  tripSyncError: "Chưa lưu được chuyến đi lên máy chủ. Hãy kiểm tra kết nối và ngày đi rồi chạm lại để thử.",
+  noteConflict: "Lời nhắn đã thay đổi trên thiết bị khác. Hãy hủy chỉnh sửa và mở lại để xem bản mới.",
   later: "Xem sau",
   laterHint: "Chụp trước, sắp xếp sau. Ảnh ở đây chưa thuộc chuyến đi nào.",
   laterEmpty: "Chưa có ảnh để xem sau",
@@ -15,7 +23,7 @@ const vi = {
   savedPrivate: "Đã giữ trong ứng dụng · Chưa lưu vào thư viện thiết bị",
   title: "Kỷ niệm",
   history: "Lịch sử",
-  historyHint: "Mỗi chuyến đi, một câu chuyện để nhớ.",
+  historyHint: "Chọn chuyến đi để xem ảnh theo từng địa điểm.",
   chooseTrip: "Chọn chuyến đi",
   choosePlace: "Chọn địa điểm",
   chooseHint: "Ảnh sẽ được lưu vào chuyến đi và ngày bạn chọn.",
@@ -51,9 +59,17 @@ const vi = {
   viewPhoto: "Xem ảnh",
   fullPhoto: "Xem trọn ảnh",
   cancel: "Hủy",
-  noteTooLong: "Lời nhắn tối đa 500 ký tự.",
+  noteTooLong: "Lời nhắn tối đa 2000 ký tự.",
 };
 const en: typeof vi = {
+  loading: "Loading memories…",
+  loadError: "Couldn't load data from the server. Check your connection and try again.",
+  upload: "Upload photo",
+  uploadError: "Couldn't upload. Your photo is still kept in the app; you can retry.",
+  assignedUploadError: "Your photo is in the trip album but couldn't be uploaded. Open the album and tap Upload photo when you want to retry.",
+  syncingTrip: "Saving trip…",
+  tripSyncError: "Couldn't save this trip to the server. Check your connection and trip dates, then tap it to retry.",
+  noteConflict: "This note changed on another device. Cancel editing and reopen it to see the latest version.",
   later: "Saved for later",
   laterHint:
     "Capture now, organize later. These photos don't belong to a trip yet.",
@@ -70,7 +86,7 @@ const en: typeof vi = {
     "Kept in the app · Not saved to your device's photo library yet",
   title: "Memories",
   history: "History",
-  historyHint: "Every trip has a story worth keeping.",
+  historyHint: "Choose a trip to explore its photos by place.",
   chooseTrip: "Choose a trip",
   choosePlace: "Choose a place",
   chooseHint: "Photos are saved to the trip and day you select.",
@@ -105,7 +121,7 @@ const en: typeof vi = {
   viewPhoto: "View photo",
   fullPhoto: "View full photo",
   cancel: "Cancel",
-  noteTooLong: "Keep your note within 500 characters.",
+  noteTooLong: "Keep your note within 2000 characters.",
 };
 export function useMemoriesCopy() {
   const { locale } = useI18n();

@@ -11,7 +11,7 @@ import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useOngoingCopy } from "../i18n/ongoing-copy";
-import { useTripPreview } from "../providers/trip-preview-provider";
+import { useMemoryActions } from "@/features/memories/hooks/use-memories";
 import type { Memory } from "../types/home-types";
 import type { PhotoSelection } from "../utils/photo-viewer-geometry";
 import { homeStyles, TextAction } from "./home-primitives";
@@ -51,7 +51,7 @@ export function JournalAlbum({
     (id: string) => photoReaders.current.get(id)?.() ?? null,
     [],
   );
-  const removeMemory = useTripPreview((state) => state.removeMemory);
+  const { remove } = useMemoryActions();
   return (
     <View style={{ gap: theme.spacing.sm }}>
       <View style={[homeStyles.row, { gap: theme.spacing.sm }]}>
@@ -135,7 +135,10 @@ export function JournalAlbum({
             setSelection(null);
             setActivePhotoId(null);
           }}
-          onDelete={removeMemory}
+          onDelete={async (id) => {
+            const memory = memories.find((item) => item.id === id);
+            if (memory) await remove.mutateAsync(memory);
+          }}
         />
       ) : null}
     </View>

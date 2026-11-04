@@ -6,10 +6,11 @@ import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
 import { ScreenSafeArea } from "@/components/common/screen-safe-area";
 import { useAppTheme } from "@/hooks/use-app-theme";
-import { useTripPreview } from "@/features/home/providers/trip-preview-provider";
 import { getTripTitle } from "@/features/trip/utils/trip-formatters";
 import { CameraLayout } from "../components/camera-layout";
 import { useCameraCopy } from "../i18n/camera-copy";
+import { useMemories } from "@/features/memories/hooks/use-memories";
+import { MemoryLoadState } from "@/features/memories/components/memory-load-state";
 
 function back() {
   if (router.canGoBack()) router.back();
@@ -28,19 +29,15 @@ export function TripCameraScreen({
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useCameraCopy();
-  const trip = useTripPreview((state) =>
-    state.trips.find((entry) => entry.id === tripId),
-  );
-  const today = useTripPreview((state) => state.today);
-  const count = useTripPreview(
-    (state) =>
-      state.memories.filter((entry) => entry.tripId === tripId && !!entry.photo)
-        .length,
-  );
-  const openPanel = useTripPreview((state) => state.openPanel);
+  const library = useMemories();
+  const trip = library.trips.find((entry) => entry.id === tripId);
+  const today = new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+  const count = library.memories.filter((entry) => entry.tripId === tripId && !!entry.photo).length;
   const date = day ?? today;
+  if (library.isPending || library.isError) return <ScreenSafeArea style={{ flex: 1 }}><MemoryLoadState loading={library.isPending} error={library.isError} onRetry={() => void library.refetch()} /></ScreenSafeArea>;
   if (
     !trip ||
+    date > today ||
     trip.status === "cancelled" ||
     !trip.days.some((entry) => entry.date === date)
   )
@@ -68,7 +65,7 @@ export function TripCameraScreen({
         pathname: "/trip/[tripId]",
         params: { tripId: trip.id, day: date },
       }),
-    onJournal: () => openPanel({ kind: "journal", tripId: trip.id }),
+    onJournal: () => router.push({ pathname: "/memories/[tripId]", params: { tripId: trip.id } }),
   };
   const available =
     Platform.OS === "web" ||

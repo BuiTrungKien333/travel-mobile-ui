@@ -35,12 +35,16 @@ export type PreviewState = {
     tripId?: string;
     date?: string;
     stopId?: string;
+    remoteTrip?: Trip;
+    local?: Partial<LocalMemory["local"]>;
   }) => Promise<LocalMemory>;
+  persistLocalPhoto: (memory: LocalMemory) => Promise<void>;
   markLocalPhotoSaved: (id: string) => Promise<void>;
   exportLocalPhoto: (id: string) => Promise<void>;
   assignLocalPhoto: (
     id: string,
     values: { tripId: string; day: string; stopId: string },
+    remoteTrip?: Trip,
   ) => Promise<void>;
   today: string;
   panel: PreviewPanel | JourneyPanel | null;
@@ -48,6 +52,7 @@ export type PreviewState = {
   closePanel: () => void;
   changeScenario: (scenario: HomeScenario) => void;
   createDraft: (values: {
+    id?: string;
     destination: string;
     startDate: string;
     endDate: string;
@@ -56,6 +61,7 @@ export type PreviewState = {
     budget?: number;
     preferences?: TripPreference[];
   }) => boolean;
+  linkTrip: (tripId: string, serverId: string) => Promise<void>;
   mutateTrip: (tripId: string, mutation: TripMutation) => boolean;
   deleteTrip: (tripId: string) => void;
   visited: Record<string, string[]>;

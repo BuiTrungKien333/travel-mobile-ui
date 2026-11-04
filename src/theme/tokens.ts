@@ -23,7 +23,7 @@ export const radius = {
 
 export const layout = {
   memoryTripCoverAspectRatio: 4 / 5,
-  memoryTripColumns: 2,
+  memoryTripColumns: 3,
   memoryPhotoColumns: 3,
   tripMapPreviewHeight: 240,
   tripMapMinimumHeight: 144,

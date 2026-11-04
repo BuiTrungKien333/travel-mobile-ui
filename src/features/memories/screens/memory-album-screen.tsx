@@ -3,7 +3,6 @@ import { useState } from "react";
 import { FlatList, Pressable, ScrollView, View } from "react-native";
 import { AppButton } from "@/components/ui/app-button";
 import { AppText } from "@/components/ui/app-text";
-import { useTripPreview } from "@/features/home/providers/trip-preview-provider";
 import { getTripTitle } from "@/features/trip/utils/trip-formatters";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import {
@@ -14,19 +13,23 @@ import {
 } from "../components/memory-primitives";
 import { useMemoriesCopy } from "../i18n/memories-copy";
 import { getTripPhotos } from "../utils/memory-albums";
+import { useMemories, useMemoryActions } from "../hooks/use-memories";
+import { MemoryLoadState } from "../components/memory-load-state";
 
 export function MemoryAlbumScreen({ tripId }: { tripId?: string }) {
   const theme = useAppTheme();
   const { copy, locale } = useMemoriesCopy();
-  const trip = useTripPreview((state) =>
-    state.trips.find((item) => item.id === tripId),
-  );
-  const memories = useTripPreview((state) => state.memories);
+  const library = useMemories();
+  const { upload } = useMemoryActions();
+  const trip = library.trips.find((item) => item.id === tripId);
+  const { memories } = library;
+  const today = new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+  const captureDay = trip?.days.filter((day) => day.date <= today).at(-1);
   const [place, setPlace] = useState<string | null>(null);
   if (!trip)
     return (
       <MemoryPage title={copy.title}>
-        <MemoryEmpty title={copy.unavailable} hint={copy.unavailableHint} />
+        {library.isPending || library.isError ? <MemoryLoadState loading={library.isPending} error={library.isError} onRetry={() => void library.refetch()} /> : <MemoryEmpty title={copy.unavailable} hint={copy.unavailableHint} />}
       </MemoryPage>
     );
   const photos = getTripPhotos(memories, trip.id);
@@ -41,15 +44,15 @@ export function MemoryAlbumScreen({ tripId }: { tripId?: string }) {
     : photos;
   const capture = () =>
     router.dismissTo({
-      pathname: "/tabs/memories",
-      params: { tripId: trip.id, day: trip.days.at(-1)?.date, stopId: "" },
+      pathname: "/memories/quick-capture",
+      params: { tripId: trip.id, day: captureDay?.date, stopId: "" },
     });
   return (
     <MemoryPage
       title={getTripTitle(trip, locale)}
       subtitle={`${photos.length} ${copy.photos} · ${trip.destination}`}
       action={
-        trip.status !== "cancelled" && trip.days.length ? (
+        trip.status !== "cancelled" && captureDay ? (
           <MemoryIconButton
             icon="camera"
             label={copy.camera}
@@ -58,8 +61,12 @@ export function MemoryAlbumScreen({ tripId }: { tripId?: string }) {
         ) : undefined
       }
     >
+      <MemoryLoadState loading={library.isPending} error={library.isError} onRetry={() => void library.refetch()} />
+      {upload.isError ? <AppText accessibilityRole="alert" tone="error">{copy.uploadError}</AppText> : null}
       <FlatList
         data={filtered}
+        refreshing={library.isRefetching}
+        onRefresh={() => void library.refetch()}
         numColumns={theme.layout.memoryPhotoColumns}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
@@ -116,11 +123,11 @@ export function MemoryAlbumScreen({ tripId }: { tripId?: string }) {
           </ScrollView>
         }
         ListEmptyComponent={
-          <MemoryEmpty title={copy.emptyAlbum} hint={copy.emptyAlbumHint}>
-            {trip.status !== "cancelled" && trip.days.length ? (
+          !library.isPending && !library.isError ? <MemoryEmpty title={copy.emptyAlbum} hint={copy.emptyAlbumHint}>
+            {trip.status !== "cancelled" && captureDay ? (
               <AppButton onPress={capture}>{copy.camera}</AppButton>
             ) : null}
-          </MemoryEmpty>
+          </MemoryEmpty> : null
         }
         renderItem={({ item }) => (
           <View
@@ -158,6 +165,7 @@ export function MemoryAlbumScreen({ tripId }: { tripId?: string }) {
             >
               {item.place?.[locale] ?? copy.noPlace}
             </AppText>
+            {item.local && !item.local.uploaded ? <AppButton size="small" loading={upload.isPending && upload.variables?.memory.id === item.id} disabled={upload.isPending} onPress={() => upload.mutate({ memory: item })}>{copy.upload}</AppButton> : null}
           </View>
         )}
       />

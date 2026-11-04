@@ -16,14 +16,17 @@ import {
   MemoryPicture,
 } from "../components/memory-primitives";
 import { useMemoriesCopy } from "../i18n/memories-copy";
+import { useMemories, useMemoryActions } from "../hooks/use-memories";
+import { MemoryLoadState } from "../components/memory-load-state";
 
 export function SavedLaterScreen() {
   const theme = useAppTheme();
   const { copy } = useMemoriesCopy();
   const { copy: cameraCopy } = useCameraCopy();
   const { copy: photoCopy } = usePhotoViewerCopy();
-  const memories = useTripPreview((state) => state.memories);
-  const trips = useTripPreview((state) => state.trips);
+  const library = useMemories();
+  const { memories, trips } = library;
+  const { upload } = useMemoryActions();
   const status = useTripPreview((state) => state.localPhotoStatus);
   const load = useTripPreview((state) => state.loadLocalPhotos);
   const assign = useTripPreview((state) => state.assignLocalPhoto);
@@ -33,7 +36,6 @@ export function SavedLaterScreen() {
   const [error, setError] = useState("");
   const photos = memories.filter(
     (memory) =>
-      memory.local &&
       (!memory.tripId || !trips.some((trip) => trip.id === memory.tripId)),
   );
   return (
@@ -48,6 +50,7 @@ export function SavedLaterScreen() {
         />
       }
     >
+      <MemoryLoadState loading={library.isPending} error={library.isError} onRetry={() => void library.refetch()} />
       {status === "idle" || status === "loading" ? (
         <ActivityIndicator color={theme.colors.primaryText} />
       ) : status === "error" ? (
@@ -102,7 +105,7 @@ export function SavedLaterScreen() {
               <AppText variant="caption" tone="muted">
                 {item.date} · {item.time}
               </AppText>
-              {!item.local?.deviceSaved ? (
+              {item.local && !item.local.deviceSaved ? (
                 <>
                   <AppText variant="caption" tone="muted">
                     {copy.savedPrivate}
@@ -129,7 +132,7 @@ export function SavedLaterScreen() {
                   </AppButton>
                 </>
               ) : null}
-              <AppButton
+              {item.local ? <AppButton
                 disabled={busy}
                 onPress={() => {
                   setError("");
@@ -137,7 +140,7 @@ export function SavedLaterScreen() {
                 }}
               >
                 {copy.assign}
-              </AppButton>
+              </AppButton> : null}
             </View>
           )}
         />
@@ -150,8 +153,18 @@ export function SavedLaterScreen() {
             setChoosing(null);
             setBusy(true);
             setError("");
-            void assign(id, selection)
-              .catch(() => setError(copy.assignmentError))
+            const trip = trips.find((item) => item.id === selection.tripId);
+            const memory = memories.find((item) => item.id === id);
+            if (!trip || !memory) { setBusy(false); return; }
+            let assigned = false;
+            void assign(id, selection, trip)
+              .then(() => {
+                assigned = true;
+                return upload.mutateAsync({ memory: { ...memory, tripId: trip.id, date: selection.day,
+                destination: trip.destination,
+                local: memory.local ? { ...memory.local, placeId: selection.stopId || undefined } : undefined } });
+              })
+              .catch(() => setError(assigned ? copy.assignedUploadError : copy.assignmentError))
               .finally(() => setBusy(false));
           }}
         />

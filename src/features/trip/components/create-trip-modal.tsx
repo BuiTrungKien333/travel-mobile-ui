@@ -40,6 +40,9 @@ import {
   tripMessage,
 } from "../utils/create-trip-formatters";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
+import { useCreateServerTrip } from "../hooks/use-create-server-trip";
+import { createRequestId } from "@/utils/create-request-id";
+import { currentCalendarDate } from "@/utils/calendar-date";
 import { DateRangeSheet } from "./date-range-sheet";
 import { DestinationPickerSheet } from "./destination-picker-sheet";
 import { PlacePickerScreen } from "../screens/place-picker-screen";
@@ -64,11 +67,11 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
   const reduceMotion = useReducedMotion();
   const { copy, locale } = useTripCopy();
   const { copy: detailsCopy } = useTripDetailsCopy();
+  const create = useCreateServerTrip();
+  const [localId] = useState(createRequestId);
   const scrollRef = useRef<ScrollView>(null);
-  const { today, createDraft } = useTripPreview((state) => ({
-    today: state.today,
-    createDraft: state.createDraft,
-  }));
+  const today = currentCalendarDate();
+  const createDraft = useTripPreview((state) => state.createDraft);
   const { control, setValue, handleSubmit, setError, setFocus, formState } =
     useForm<CreateTripInput, unknown, CreateTripOutput>({
       resolver: zodResolver(createTripSchema(copy, today)),
@@ -112,6 +115,7 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
       : 0;
 
   const requestClose = () => {
+    if (isSubmitting) return;
     Keyboard.dismiss();
     if (isDirty) confirmDiscard(copy, onClose);
     else onClose();
@@ -156,9 +160,9 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
   const handleBudgetChange = (text: string) =>
     budgetField.onChange(text.replace(/\D/g, ""));
   const submit = handleSubmit(
-    (values) => {
+    async (values) => {
       Keyboard.dismiss();
-      const success = createDraft({
+      const draft = {
         ...values,
         title:
           values.title ||
@@ -168,9 +172,18 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
             values.endDate,
             copy,
           ),
-      });
+      };
+      try {
+        const id = await create.mutateAsync({ localId, trip: {
+          ...draft, id: localId, status: "draft", days: [],
+          budget: draft.budget === undefined ? undefined : { amount: draft.budget, currency: "VND" },
+        } });
+        const success = createDraft({ ...draft, id });
       // The store switches directly from this form to the created trip's plan.
       if (!success) setError("root", { message: copy.capacity });
+      } catch {
+        setError("root", { message: copy.createError });
+      }
     },
     (fieldErrors) => {
       Keyboard.dismiss();
