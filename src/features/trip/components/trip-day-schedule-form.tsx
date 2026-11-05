@@ -20,13 +20,18 @@ export function TripDayScheduleForm({
   trip,
   day,
   onCommit,
+  saving = false,
+  itineraryUpdatedAt,
 }: {
   trip: Trip;
   day: TripDay;
   onCommit: (mutation: TripMutation) => boolean;
+  saving?: boolean;
+  itineraryUpdatedAt?: string | null;
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
+  const [base] = useState({ version: trip.serverVersion, itineraryUpdatedAt });
   const [shortcut, setShortcut] = useState<"home" | "stay" | null>(null);
   const [searching, setSearching] = useState(false);
   const [locationNotice, setLocationNotice] = useState(false);
@@ -44,7 +49,7 @@ export function TripDayScheduleForm({
     resolver: zodResolver(schema),
     defaultValues: {
       startLocation: day.startLocation || trip.accommodation || "",
-      startTime: day.startTime ?? "08:30",
+      startTime: day.startTime ?? "",
       returnToStart: day.returnToStart ?? false,
       durations: day.stops.map((stop) => ({
         stopId: stop.id,
@@ -465,6 +470,7 @@ export function TripDayScheduleForm({
       <AppButton
         size="small"
         variant="gradient"
+        loading={saving}
         style={{ borderRadius: theme.radius.sm, marginTop: theme.spacing.sm }}
         onPress={handleSubmit(
           ({ durations, ...values }) => {
@@ -473,6 +479,8 @@ export function TripDayScheduleForm({
               !onCommit({
                 kind: "day",
                 date: day.date,
+                baseVersion: base.version,
+                expectedItineraryUpdatedAt: base.itineraryUpdatedAt,
                 values,
                 durations: durations.map((entry) => ({
                   stopId: entry.stopId,

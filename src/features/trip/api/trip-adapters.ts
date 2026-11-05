@@ -50,6 +50,7 @@ export function toTrip(
   const placeById = new Map(placeStops.map((stop) => [stop.id, stop]));
   const scheduledIds = new Set<string>();
   const days = tripDays(value.startDate, value.endDate).map((day) => {
+    const settings = "days" in value ? value.days.find((entry) => entry.date === day.date) : undefined;
     const scheduled = itinerary?.days.find((entry) => entry.date === day.date);
     const stops = (scheduled?.stops ?? []).flatMap((entry) => {
       const base = placeById.get(entry.placeId);
@@ -63,7 +64,16 @@ export function toTrip(
         plannedOrder: entry.sequence,
       }];
     });
-    return { ...day, stops };
+    return {
+      ...day, stops,
+      ...(settings ? {
+        startLocation: settings.startLocation ?? undefined,
+        startTime: settings.startTime ?? undefined,
+        returnToStart: settings.returnToStart,
+        transport: settings.transport === "MOTORCYCLE" ? "motorcycle" as const
+          : settings.transport === "WALK" ? "walk" as const : "car" as const,
+      } : {}),
+    };
   });
   return {
     id: value.id,

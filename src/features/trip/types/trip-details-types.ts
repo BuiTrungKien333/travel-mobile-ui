@@ -17,6 +17,8 @@ export type TripMutation =
   | {
       kind: "day";
       date: string;
+      baseVersion?: number;
+      expectedItineraryUpdatedAt?: string | null;
       durations?: { stopId: string; durationMinutes: number }[];
       values: Pick<
         TripDay,

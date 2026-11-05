@@ -6,7 +6,9 @@
 
 Các snapshot và kết quả preview bên dưới là lịch sử; đọc mã nguồn hiện tại và tài liệu contract API khi triển khai.
 
-Cách triển khai hiện hành: làm từng phần theo kế hoạch; hoàn tất mỗi phần thì dừng để người dùng xem và push lên GitHub. Chỉ chuyển sang phần tiếp theo khi người dùng yêu cầu tiếp tục. Phần 1 đã hợp nhất cấu hình Expo vào `app.config.ts`; xem [DEVICE-SETUP.md](DEVICE-SETUP.md). Còn đồng bộ dependency theo kết quả Expo Doctor và kiểm thử native trước khi hoàn tất P0-01.
+Cách triển khai hiện hành: làm từng phần theo kế hoạch; hoàn tất mỗi phần thì dừng để người dùng xem và push lên GitHub. Chỉ chuyển sang phần tiếp theo khi người dùng yêu cầu tiếp tục. Phần 1 đã hợp nhất cấu hình Expo vào `app.config.ts`; xem [DEVICE-SETUP.md](DEVICE-SETUP.md). Lúc bắt đầu phần 2, package cài đặt đã khớp SDK; kiểm thử thiết bị vẫn cần xác nhận riêng trước khi hoàn tất P0-01.
+
+**Phần 2 — Lưu thiết lập ngày:** backend thêm `PUT /api/v1/trips/{tripId}/days/{date}` trong `TripController` → `TripCrudService` → `TripCrudRepository`, sử dụng cột V14. Lưu cấu hình ngày và thời lượng trong một transaction, kiểm tra owner/trạng thái/version; đổi cấu hình cũng làm cũ timestamp của proposal tối ưu. Mobile dùng `save-trip-day.ts`, hook/API mới và form giữ phiên bản lúc mở; chỉ đóng sheet khi lưu thành công. Contract/checklist: [api-contract-integration.md](api-contract-integration.md#day-settings). Chưa lưu ghim hoặc dùng cấu hình này làm đầu vào optimizer/route; đó là phần tiếp theo. Không chuyển sang production hoặc refactor toàn bộ test preview.
 
 Snapshot: **19/10/2026**. Repository mobile: **`E:/travel-mobile-ui`**. Mốc Git quan sát khi bắt đầu bàn giao: **`4b19a3e` — `complete code ui home page`**, working tree sạch trước khi thêm tài liệu này. Đây là thông tin lịch sử, không phải yêu cầu checkout/reset về commit đó.
 

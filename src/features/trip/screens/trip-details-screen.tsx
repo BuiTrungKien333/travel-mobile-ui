@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import Animated, { useSharedValue } from "react-native-reanimated";
 import { ScreenSafeArea } from "@/components/common/screen-safe-area";
@@ -50,6 +50,7 @@ import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 import { ApiError } from "@/services/api/api-error";
 import { toSaveItineraryRequest, toTrip, toTripStop } from "../api/trip-adapters";
 import { tripApi } from "../api/trip-api";
+import { toUpdateTripDayRequest } from "../api/save-trip-day";
 import { tripQueryKeys } from "../api/trip-query-keys";
 import { confirmDateImpact } from "../utils/confirm-date-impact";
 import { applyTripMutation } from "../utils/trip-mutations";
@@ -67,6 +68,7 @@ import {
   useTripQuery,
   useUpdateTripMutation,
   useUpdateTripPlaceMutation,
+  useUpdateTripDayMutation,
 } from "../api/trip-hooks";
 import type {
   TripMutation,
@@ -174,6 +176,8 @@ function TripDetailsContent({
   const { copy } = useTripDetailsCopy();
   const placesQuery = useTripPlacesQuery(trip.id);
   const updateTrip = useUpdateTripMutation(trip.id);
+  const updateTripDay = useUpdateTripDayMutation(trip.id);
+  const itineraryQuery = useTripItineraryQuery(trip.id);
   const addPlaceMutation = useAddTripPlaceMutation(trip.id);
   const updatePlaceMutation = useUpdateTripPlaceMutation(trip.id);
   const removePlaceMutation = useDeleteTripPlaceMutation(trip.id);
@@ -182,6 +186,8 @@ function TripDetailsContent({
   const optimizeItineraryMutation = useOptimizeItineraryMutation(trip.id);
   const applyItineraryOptimizationMutation = useApplyItineraryOptimizationMutation(trip.id);
   const [commitError, setCommitError] = useState<string | null>(null);
+  const commitInFlight = useRef(false);
+  const [committing, setCommitting] = useState(false);
   const today = todayCalendarDate();
   const panelOpen = useTripPreview((state) => state.panel !== null);
   const memoriesQuery = useMemoriesQuery(trip.id);
@@ -336,6 +342,9 @@ function TripDetailsContent({
     : rows;
 
   function commit(mutation: TripMutation) {
+    if (commitInFlight.current) return false;
+    commitInFlight.current = true;
+    setCommitting(true);
     setCommitError(null);
     const perform = async () => {
       if (mutation.kind === "info") {
@@ -417,21 +426,22 @@ function TripDetailsContent({
           });
         }
       } else if (mutation.kind === "day") {
-        const candidate = applyTripMutation(trip, mutation);
-        if (!candidate) throw new Error("INVALID_TRIP_MUTATION");
-        if (mutation.durations?.length) await persistSchedule(candidate);
+        await updateTripDay.mutateAsync({ date: mutation.date, request: toUpdateTripDayRequest(trip, mutation) });
       } else {
         throw new Error("INVALID_TRIP_MUTATION");
       }
     };
     void perform().then((saved) => { if (saved !== false) setSheet(null); }).catch((error: unknown) => {
       if (error instanceof ApiError && error.status === 409) void queryClient.invalidateQueries({ queryKey: tripQueryKeys.all });
-      setCommitError(error instanceof ApiError && error.status === 409 ? copy.versionConflict
+      setCommitError(error instanceof ApiError && error.status === 409 ? (mutation.kind === "day" ? copy.daySettingsConflict : copy.versionConflict)
         : error instanceof Error && error.message === "PLACE_COORDINATES_REQUIRED"
         ? "Địa điểm cần có tọa độ để lưu lên máy chủ."
         : error instanceof Error && error.message === "ITINERARY_SAVE_FAILED"
           ? copy.itinerarySaveError
           : "Không lưu được thay đổi. Hãy thử lại.");
+    }).finally(() => {
+      commitInFlight.current = false;
+      setCommitting(false);
     });
     return true;
   }
@@ -845,7 +855,7 @@ function TripDetailsContent({
               />
             </View>
           </View>
-          {commitError ? <AppText accessibilityRole="alert" tone="error" style={{ paddingHorizontal: theme.spacing.lg }}>{commitError}</AppText> : null}
+          {commitError && !sheet ? <AppText accessibilityRole="alert" tone="error" style={{ paddingHorizontal: theme.spacing.lg }}>{commitError}</AppText> : null}
           <TripDetailsActions
             trip={trip}
             mode={mode}
@@ -875,8 +885,11 @@ function TripDetailsContent({
           today={today}
           canEdit={canEdit}
           sheet={sheet}
-          onSheetChange={setSheet}
+          onSheetChange={(next) => { if (!committing) { setCommitError(null); setSheet(next); } }}
           onCommit={commit}
+          saving={committing}
+          saveError={commitError}
+          itineraryUpdatedAt={itineraryQuery.data?.updatedAt}
           onEditHistory={() => setEditHistory(true)}
           onJournal={openJournal}
           onDelete={() => {

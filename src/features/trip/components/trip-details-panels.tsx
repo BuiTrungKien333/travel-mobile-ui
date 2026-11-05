@@ -35,6 +35,9 @@ type Props = {
   sheet: TripDetailsSheetState | null;
   onSheetChange: (sheet: TripDetailsSheetState | null) => void;
   onCommit: (mutation: TripMutation) => boolean;
+  saving?: boolean;
+  saveError?: string | null;
+  itineraryUpdatedAt?: string | null;
   onEditHistory: () => void;
   onJournal: () => void;
   onDelete: () => void;
@@ -63,11 +66,14 @@ export function TripDetailsPanels({
   optimizationError,
   onRetryOptimization,
   onApplyOptimization,
+  saving = false,
+  saveError,
+  itineraryUpdatedAt,
 }: Props) {
   const [hostReady, setHostReady] = useState(false);
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
-  const closeSheet = () => setSheet(null);
+  const closeSheet = () => { if (!saving) setSheet(null); };
   const weatherPoint = day?.stops.find((stop) => stop.location)?.location
     ?? trip.unscheduledStops?.find((stop) => stop.location)?.location;
   const weatherQuery = useWeatherForecastQuery(
@@ -110,6 +116,8 @@ export function TripDetailsPanels({
           title={sheetTitle}
           onClose={closeSheet}
         >
+          {saveError ? <AppText accessibilityRole="alert" tone="error" variant="caption">{saveError}</AppText> : null}
+          {saving ? <AppText accessibilityLiveRegion="polite" variant="caption" tone="muted">{copy.savingChanges}</AppText> : null}
           {sheet.kind === "menu" ? (
             <>
               <AppButton
@@ -187,7 +195,10 @@ export function TripDetailsPanels({
                 <AppText variant="caption" tone="muted">
                   {copy.daySettingsBackendHint}
                 </AppText>
-                <TripDayScheduleForm trip={trip} day={day} onCommit={commit} />
+                <View pointerEvents={saving ? "none" : "auto"}>
+                  <TripDayScheduleForm key={day.date} trip={trip} day={day} onCommit={commit}
+                    saving={saving} itineraryUpdatedAt={itineraryUpdatedAt} />
+                </View>
               </>
             ) : (
               <>
@@ -209,6 +220,7 @@ export function TripDetailsPanels({
               {tripTransportModes.map((transport) => (
                 <AppButton
                   key={transport}
+                  disabled={saving}
                   variant={
                     transport === (day.transport ?? "car") ? "soft" : "outline"
                   }

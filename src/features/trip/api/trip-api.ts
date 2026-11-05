@@ -4,6 +4,7 @@ import {
   tripEnvelopeSchema,
   createTripRequestSchema,
   updateTripRequestSchema,
+  updateTripDayRequestSchema,
   tripDateChangeSchema,
   tripDateImpactEnvelopeSchema,
   tripPlaceEnvelopeSchema,
@@ -17,6 +18,7 @@ import {
   type TripDateChange,
   type UpdateTripPlaceRequest,
   type UpdateTripRequest,
+  type UpdateTripDayRequest,
 } from "./trip-types";
 
 const base = "/api/v1/trips";
@@ -52,6 +54,10 @@ export const tripApi = {
   async previewDates(tripId: string, request: TripDateChange) {
     const response = await apiClient.post<unknown>(`${base}/${tripId}/date-change-preview`, tripDateChangeSchema.parse(request));
     return parse(tripDateImpactEnvelopeSchema, response.data);
+  },
+  async updateDay(tripId: string, date: string, request: UpdateTripDayRequest): Promise<TripResponse> {
+    const response = await apiClient.put<unknown>(`${base}/${tripId}/days/${date}`, updateTripDayRequestSchema.parse(request));
+    return parse(tripEnvelopeSchema, response.data).trip;
   },
   async remove(tripId: string, version: number): Promise<void> {
     await apiClient.delete(`${base}/${tripId}`, { params: { version } });

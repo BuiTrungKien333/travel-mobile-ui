@@ -26,12 +26,18 @@ export const tripSummarySchema = z.object({
   updatedAt: instant,
 });
 export type TripSummary = z.infer<typeof tripSummarySchema>;
+const tripDaySchema = z.object({
+  id: z.guid(), date: localDate, dayNumber: z.number().int().positive(),
+  startLocation: z.string().nullable(),
+  startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).nullable(),
+  returnToStart: z.boolean(), transport: z.enum(["CAR", "MOTORCYCLE", "WALK"]),
+});
 export const tripResponseSchema = tripSummarySchema.extend({
   preferences: preferencesSchema,
   budget: budgetSchema.nullable(),
   accommodation: z.string().nullable(),
   notes: z.string().nullable(),
-  days: z.array(z.object({ id: z.guid(), date: localDate, dayNumber: z.number().int().positive() })),
+  days: z.array(tripDaySchema),
 });
 export type TripResponse = z.infer<typeof tripResponseSchema>;
 
@@ -85,6 +91,21 @@ export const updateTripRequestSchema = createTripRequestSchema.omit({ clientRequ
   acknowledgeDateImpact: z.boolean().optional(),
 });
 export type UpdateTripRequest = z.infer<typeof updateTripRequestSchema>;
+export const updateTripDayRequestSchema = z.object({
+  version: versionSchema,
+  startLocation: z.string().trim().min(1).max(200).nullable(),
+  startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).nullable(),
+  returnToStart: z.boolean(),
+  transport: z.enum(["CAR", "MOTORCYCLE", "WALK"]),
+  expectedItineraryUpdatedAt: instant.optional(),
+  durations: z.array(z.object({ stopId: z.guid(), durationMinutes: z.number().int().min(5).max(480) })).max(100),
+}).superRefine((value, ctx) => {
+  if (value.returnToStart && !value.startLocation)
+    ctx.addIssue({ code: "custom", path: ["startLocation"], message: "A return point is required" });
+  if (value.durations.length && !value.expectedItineraryUpdatedAt)
+    ctx.addIssue({ code: "custom", path: ["expectedItineraryUpdatedAt"], message: "An itinerary version is required" });
+});
+export type UpdateTripDayRequest = z.infer<typeof updateTripDayRequestSchema>;
 export const tripDateChangeSchema = z.object({ version: versionSchema, startDate: localDate, endDate: localDate });
 export type TripDateChange = z.infer<typeof tripDateChangeSchema>;
 export const tripDateImpactSchema = z.object({

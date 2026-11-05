@@ -2,6 +2,16 @@
 
 > Định hướng ngày 05/11/2026: đồ án môn học của sinh viên năm cuối, ưu tiên app chạy ổn, logic đúng, luồng rõ ràng và UI/UX mượt, đẹp. Xem [Kế hoạch hoàn thiện đồ án](MOBILE-MVP-IMPLEMENTATION-PLAN.md); production là giai đoạn sau. Các mốc preview tháng 10 bên dưới là lịch sử, không mô tả đầy đủ trạng thái API hiện tại.
 
+## Phần 2 · Lưu thiết lập ngày · 05/11/2026
+
+- Backend bổ sung `PUT /api/v1/trips/{tripId}/days/{date}`; detail/create/update trả đủ thiết lập trong `days`. Dùng cột của migration V14, không thêm migration.
+- Lưu điểm xuất phát dạng tên/địa chỉ, giờ đi, phương tiện, quay về và thời lượng điểm ghé trong một giao dịch. Giữ nguyên giờ đến, thứ tự, ghi chú và ngày khác; đổi khoảng ngày giữ thiết lập của ngày còn lại.
+- Mobile đọc lại thiết lập, lưu cả ngày rỗng và đổi riêng phương tiện; đang lưu có phản hồi, chặn bấm lặp/đóng sheet, lỗi hiện trong sheet và giữ nội dung. Khi xung đột cần đóng/mở lại editor để lấy bản mới.
+- TypeScript và ESLint các file sửa đạt; 29 test mobile về API/lịch trình đạt, gồm 7 test mới và kiểm tra response thật từ PostgreSQL. Backend: 28 test CRUD/mutation PostgreSQL, 1 test xuất contract và 4 test controller tối ưu đều đạt.
+- Toàn bộ test mobile hiện có 227 test: 207 đạt, 19 lỗi ở các test preview/contract cũ, 1 skip khi chưa cung cấp fixture backend; test fixture đã chạy riêng và đạt. Lint toàn dự án còn 51 lỗi, 3 cảnh báo cũ; không coi bộ test tổng thể đã xanh.
+- Package đang cài khớp bản Expo SDK đề xuất ở lượt kiểm tra này; không đổi dependency. Chưa xác nhận thao tác trên thiết bị. Restart backend trước khi thử mobile; checklist tại [API contract](api-contract-integration.md#day-settings).
+- Phần tiếp theo của P0-02: lưu ghim, nối origin/phương tiện/giờ/quay về vào route và optimizer. Dừng để review/push trước khi làm tiếp.
+
 ## Phần 1 · Hợp nhất cấu hình Expo · 05/11/2026
 
 - Dùng một `app.config.ts`, ghép Maps, Google, dev-client và scene support; giữ cấu hình camera/media từ `app.json`.

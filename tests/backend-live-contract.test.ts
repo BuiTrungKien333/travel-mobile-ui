@@ -11,7 +11,7 @@ test("mobile schemas accept actual backend responses from PostgreSQL integration
   const client = {
     get: async (url: string) => ({ data: responses[url === "/api/v1/trips" ? "tripList" : url === "/api/v1/destinations" ? "destinations"
       : url === "/api/v1/media/limits" ? "limits" : url.endsWith("/detail") ? "memoryDetail" : url.includes("/journal/memories") ? "memoryList" : "tripDetail"] }),
-    put: async () => ({ data: responses.profileUpdate }),
+    put: async (url: string) => ({ data: url.includes("/days/") ? responses.tripDayUpdate : responses.profileUpdate }),
   };
   const load = tripModuleLoader({ "@/services/api/client": { apiClient: client } });
   const types = load<typeof import("../src/features/trip/api/trip-types.ts")>("src/features/trip/api/trip-types.ts");
@@ -21,6 +21,16 @@ test("mobile schemas accept actual backend responses from PostgreSQL integration
   assert.equal((await tripApi.get(detail.id)).title, "Mobile contract");
   const { toTrip } = load<typeof import("../src/features/trip/api/trip-adapters.ts")>("src/features/trip/api/trip-adapters.ts");
   assert.equal(toTrip(detail).serverVersion, detail.version);
+  const dayDate = detail.days[0].date;
+  const updatedDay = await tripApi.updateDay(detail.id, dayDate, {
+    version: detail.version, startLocation: "Mobile hotel", startTime: "07:45", returnToStart: true,
+    transport: "MOTORCYCLE", durations: [],
+  });
+  const mappedDay = toTrip(updatedDay).days[0];
+  assert.equal(mappedDay.startLocation, "Mobile hotel");
+  assert.equal(mappedDay.startTime, "07:45");
+  assert.equal(mappedDay.returnToStart, true);
+  assert.equal(mappedDay.transport, "motorcycle");
   const { memoryApi, serverMemorySchema } = load<typeof import("../src/features/memories/api/memory-api.ts")>("src/features/memories/api/memory-api.ts");
   const created = serverMemorySchema.parse((responses.memoryCreate as { data: unknown }).data);
   assert.equal((await memoryApi.detail(created.id)).tripId, detail.id);
