@@ -1,3 +1,2 @@
-// Auth uses the real backend in development too. Trip and Home content remains
-// preview data until those features are connected to their APIs.
+// Memory and media endpoints require a real authenticated session.
 export const UI_PREVIEW_ENABLED = false;

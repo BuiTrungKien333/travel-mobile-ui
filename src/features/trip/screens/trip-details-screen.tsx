@@ -1,4 +1,5 @@
 import { router } from "expo-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import Animated, { useSharedValue } from "react-native-reanimated";
@@ -48,6 +49,9 @@ import { useTripTimelineDrag } from "../hooks/use-trip-timeline-drag";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 import { ApiError } from "@/services/api/api-error";
 import { toSaveItineraryRequest, toTrip, toTripStop } from "../api/trip-adapters";
+import { tripApi } from "../api/trip-api";
+import { tripQueryKeys } from "../api/trip-query-keys";
+import { confirmDateImpact } from "../utils/confirm-date-impact";
 import { applyTripMutation } from "../utils/trip-mutations";
 import {
   useApplyItineraryOptimizationMutation,
@@ -149,7 +153,6 @@ export function TripDetailsScreen({
     <TripDetailsContent
       key={trip.id}
       trip={trip}
-      itineraryId={itineraryQuery.data?.id ?? null}
       selectedDate={selectedDate}
       expandMap={expandMap}
     />
@@ -158,16 +161,15 @@ export function TripDetailsScreen({
 
 function TripDetailsContent({
   trip,
-  itineraryId,
   selectedDate,
   expandMap,
 }: {
   trip: Trip;
-  itineraryId: string | null;
   selectedDate?: string;
   expandMap: boolean;
 }) {
   const theme = useAppTheme();
+  const queryClient = useQueryClient();
   const insets = useScreenInsets();
   const { copy } = useTripDetailsCopy();
   const placesQuery = useTripPlacesQuery(trip.id);
@@ -337,36 +339,28 @@ function TripDetailsContent({
     setCommitError(null);
     const perform = async () => {
       if (mutation.kind === "info") {
-        const candidate = applyTripMutation(trip, mutation);
-        if (!candidate) throw new Error("INVALID_TRIP_MUTATION");
+        if (trip.serverVersion === undefined) throw new ApiError("INVALID_RESPONSE");
+        const dates = mutation.dateRange;
+        const impact = dates ? await tripApi.previewDates(trip.id, { ...dates, version: trip.serverVersion }) : undefined;
+        if (impact?.requiresAcknowledgement && !await confirmDateImpact(copy, impact.movedToPoolCount)) return false;
         await updateTrip.mutateAsync({
-          name: mutation.values.title,
-          destination: mutation.values.destination ?? trip.destination,
-          ...(mutation.dateRange ? mutation.dateRange : { startDate: trip.startDate, endDate: trip.endDate }),
+          version: trip.serverVersion,
+          title: mutation.values.title,
+          ...(mutation.values.destination && mutation.values.destination !== trip.destination
+            ? { destination: { name: mutation.values.destination } } : {}),
+          ...dates,
+          ...(impact?.requiresAcknowledgement ? { acknowledgeDateImpact: true } : {}),
           preferences: mutation.values.preferences,
-          ...(mutation.values.budget ? { budget: mutation.values.budget.amount } : {}),
-          ...(mutation.values.notes ? { description: mutation.values.notes } : { description: "" }),
+          budget: mutation.values.budget ?? null,
+          accommodation: mutation.values.accommodation ?? null,
+          notes: mutation.values.notes ?? null,
         });
-        if (mutation.dateRange) {
-          await persistPlaceDetails(
-            candidate.unscheduledStops?.filter((stop) =>
-              trip.days.some((item) => item.stops.some((scheduled) => scheduled.id === stop.id)),
-            ) ?? [],
-          );
-        }
-        if (mutation.dateRange && (itineraryId || trip.days.some((item) => item.stops.length > 0)))
-          await persistSchedule(candidate);
       } else if (mutation.kind === "dates") {
-        const candidate = applyTripMutation(trip, mutation);
-        if (!candidate) throw new Error("INVALID_TRIP_MUTATION");
-        await updateTrip.mutateAsync({ startDate: mutation.startDate, endDate: mutation.endDate });
-        await persistPlaceDetails(
-          candidate.unscheduledStops?.filter((stop) =>
-            trip.days.some((item) => item.stops.some((scheduled) => scheduled.id === stop.id)),
-          ) ?? [],
-        );
-        if (itineraryId || trip.days.some((item) => item.stops.length > 0))
-          await persistSchedule(candidate);
+        if (trip.serverVersion === undefined) throw new ApiError("INVALID_RESPONSE");
+        const dates = { startDate: mutation.startDate, endDate: mutation.endDate, version: trip.serverVersion };
+        const impact = await tripApi.previewDates(trip.id, dates);
+        if (impact.requiresAcknowledgement && !await confirmDateImpact(copy, impact.movedToPoolCount)) return false;
+        await updateTrip.mutateAsync({ ...dates, acknowledgeDateImpact: impact.requiresAcknowledgement });
       } else if (mutation.kind === "add") {
         const addedStops: TripStop[] = [];
         for (const [index, stop] of mutation.stops.entries()) {
@@ -430,8 +424,10 @@ function TripDetailsContent({
         throw new Error("INVALID_TRIP_MUTATION");
       }
     };
-    void perform().then(() => setSheet(null)).catch((error: unknown) => {
-      setCommitError(error instanceof Error && error.message === "PLACE_COORDINATES_REQUIRED"
+    void perform().then((saved) => { if (saved !== false) setSheet(null); }).catch((error: unknown) => {
+      if (error instanceof ApiError && error.status === 409) void queryClient.invalidateQueries({ queryKey: tripQueryKeys.all });
+      setCommitError(error instanceof ApiError && error.status === 409 ? copy.versionConflict
+        : error instanceof Error && error.message === "PLACE_COORDINATES_REQUIRED"
         ? "Địa điểm cần có tọa độ để lưu lên máy chủ."
         : error instanceof Error && error.message === "ITINERARY_SAVE_FAILED"
           ? copy.itinerarySaveError
@@ -884,7 +880,8 @@ function TripDetailsContent({
           onEditHistory={() => setEditHistory(true)}
           onJournal={openJournal}
           onDelete={() => {
-            void deleteTripMutation.mutateAsync(trip.id).then(backToTrips).catch(() => setCommitError("Không xóa được chuyến đi."));
+            if (trip.serverVersion === undefined) return;
+            void deleteTripMutation.mutateAsync({ tripId: trip.id, version: trip.serverVersion }).then(backToTrips).catch(() => setCommitError("Không xóa được chuyến đi."));
           }}
           optimization={optimizeItineraryMutation.data}
           optimizing={optimizeItineraryMutation.isPending}

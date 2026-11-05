@@ -3,25 +3,35 @@ import { z } from "zod";
 const instant = z.iso.datetime({ offset: true });
 const localDate = z.iso.date();
 
-export const tripResponseSchema = z.object({
+const destinationSchema = z.object({ name: z.string().trim().min(1).max(120), provinceId: z.guid().nullable().optional() });
+const budgetSchema = z.object({ amount: z.number().int().min(0).max(1000000000000), currency: z.literal("VND") });
+const preferencesSchema = z.array(z.enum(["nature", "food", "culture", "relaxation", "photography", "adventure", "shopping", "beach"])).max(8);
+const versionSchema = z.number().int().nonnegative();
+export const tripSummarySchema = z.object({
   id: z.guid(),
-  userId: z.guid(),
-  name: z.string(),
-  destination: z.string(),
+  title: z.string(),
+  destination: destinationSchema,
   startDate: localDate.nullable(),
   endDate: localDate.nullable(),
-  transportation: z.string().nullable(),
-  preferences: z.array(z.string()),
-  budget: z.number().nullable(),
-  constraints: z.string().nullable(),
-  description: z.string().nullable(),
-  coverImage: z.string().nullable(),
+  timeZone: z.string(),
   status: z.enum(["PLANNING", "READY", "ACTIVE", "COMPLETED", "CANCELLED"]),
+  mode: z.enum(["PLANNING", "LIVE", "RECAP", "CANCELLED"]),
+  readiness: z.object({ hasDates: z.boolean(), hasPlaces: z.boolean(), unscheduledCount: z.number().int().nonnegative() }),
+  dayCount: z.number().int().nonnegative(),
+  stopCount: z.number().int().nonnegative(),
+  memoryCount: z.number().int().nonnegative(),
+  coverImageUrl: z.string().nullable(),
+  version: versionSchema,
   createdAt: instant,
   updatedAt: instant,
-  placeCount: z.number().int().nonnegative(),
-  visitedCount: z.number().int().nonnegative(),
-  memoryCount: z.number().int().nonnegative(),
+});
+export type TripSummary = z.infer<typeof tripSummarySchema>;
+export const tripResponseSchema = tripSummarySchema.extend({
+  preferences: preferencesSchema,
+  budget: budgetSchema.nullable(),
+  accommodation: z.string().nullable(),
+  notes: z.string().nullable(),
+  days: z.array(z.object({ id: z.guid(), date: localDate, dayNumber: z.number().int().positive() })),
 });
 export type TripResponse = z.infer<typeof tripResponseSchema>;
 
@@ -52,22 +62,36 @@ export const tripPlaceResponseSchema = z.object({
 export type TripPlaceResponse = z.infer<typeof tripPlaceResponseSchema>;
 
 export const createTripRequestSchema = z.object({
-  name: z.string().trim().min(1).max(100),
-  destination: z.string().trim().min(1).max(255),
+  clientRequestId: z.guid(),
+  title: z.string().trim().max(120),
+  destination: destinationSchema,
   startDate: localDate,
   endDate: localDate,
-  transportation: z.string().max(50).optional(),
-  preferences: z.array(z.string().trim().min(1).max(100)).max(30).optional(),
-  budget: z.number().nonnegative().optional(),
-  description: z.string().max(10000).optional(),
-  coverImage: z.string().max(2048).optional(),
+  timeZone: z.literal("Asia/Ho_Chi_Minh").optional(),
+  preferences: preferencesSchema.optional(),
+  budget: budgetSchema.optional(),
+  accommodation: z.string().max(200).optional(),
+  notes: z.string().max(1000).optional(),
+  initialPlaceIds: z.array(z.guid()).max(100).optional(),
 });
 export type CreateTripRequest = z.infer<typeof createTripRequestSchema>;
 
-export const updateTripRequestSchema = createTripRequestSchema.partial().extend({
-  status: z.enum(["PLANNING", "READY", "ACTIVE", "COMPLETED", "CANCELLED"]).optional(),
+export const updateTripRequestSchema = createTripRequestSchema.omit({ clientRequestId: true, timeZone: true, initialPlaceIds: true }).partial().extend({
+  version: versionSchema,
+  title: z.string().trim().min(1).max(120).optional(),
+  budget: budgetSchema.nullable().optional(),
+  accommodation: z.string().max(200).nullable().optional(),
+  notes: z.string().max(1000).nullable().optional(),
+  acknowledgeDateImpact: z.boolean().optional(),
 });
 export type UpdateTripRequest = z.infer<typeof updateTripRequestSchema>;
+export const tripDateChangeSchema = z.object({ version: versionSchema, startDate: localDate, endDate: localDate });
+export type TripDateChange = z.infer<typeof tripDateChangeSchema>;
+export const tripDateImpactSchema = z.object({
+  baseVersion: versionSchema, startDate: localDate, endDate: localDate, dayCount: z.number().int().positive(),
+  removedDates: z.array(localDate), addedDates: z.array(localDate), movedToPoolCount: z.number().int().nonnegative(),
+  requiresAcknowledgement: z.boolean(),
+});
 
 export const addTripPlaceRequestSchema = z.object({
   placeId: z.guid().optional(),
@@ -93,7 +117,12 @@ export const updateTripPlaceRequestSchema = z.object({
 });
 export type UpdateTripPlaceRequest = z.infer<typeof updateTripPlaceRequestSchema>;
 
-export const tripEnvelopeSchema = z.object({ success: z.literal(true), data: tripResponseSchema });
-export const tripsEnvelopeSchema = z.object({ success: z.literal(true), data: z.array(tripResponseSchema) });
+const contextSchema = z.object({ serverTime: instant, evaluatedDate: localDate });
+export const tripEnvelopeSchema = z.object({ success: z.literal(true), data: z.object({ trip: tripResponseSchema, context: contextSchema }) });
+export const tripsEnvelopeSchema = z.object({ success: z.literal(true), data: z.object({
+  content: z.array(tripSummarySchema), page: z.number().int().nonnegative(), size: z.number().int().positive(),
+  totalPages: z.number().int().nonnegative(), totalElements: z.number().int().nonnegative(), context: contextSchema,
+}) });
+export const tripDateImpactEnvelopeSchema = z.object({ success: z.literal(true), data: tripDateImpactSchema });
 export const tripPlacesEnvelopeSchema = z.object({ success: z.literal(true), data: z.array(tripPlaceResponseSchema) });
 export const tripPlaceEnvelopeSchema = z.object({ success: z.literal(true), data: tripPlaceResponseSchema });

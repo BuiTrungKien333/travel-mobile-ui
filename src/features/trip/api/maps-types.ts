@@ -12,6 +12,15 @@ export type PlaceSearchResult = z.infer<typeof placeSearchResultSchema>;
 export const placeSearchEnvelopeSchema = z.object({ success: z.literal(true), data: z.array(placeSearchResultSchema) });
 
 const condition = z.enum(["CLEAR_SKY", "PARTLY_CLOUDY", "CLOUDY", "FOGGY", "LIGHT_RAIN", "RAINY", "HEAVY_RAIN", "THUNDERSTORM", "UNKNOWN"]);
+export const currentWeatherSchema = z.object({
+  latitude: z.number(), longitude: z.number(), time: z.iso.datetime({ local: true }),
+  temperature: z.number(), apparentTemperature: z.number(), humidity: z.number(), rainMm: z.number(),
+  windSpeedKmH: z.number(), isDay: z.boolean(), weatherCode: z.number(), condition, riskLevel: z.string(), summary: z.string(),
+});
+export const currentWeatherEnvelopeSchema = z.object({ success: z.literal(true), data: currentWeatherSchema });
+export const routeEnvelopeSchema = z.object({ success: z.literal(true), data: z.object({
+  distanceMeters: z.number().nonnegative(), durationSeconds: z.number().nonnegative(), encodedPolyline: z.string(), provider: z.string(),
+}) });
 const hourlyWeatherSchema = z.object({
   time: z.iso.datetime({ local: true }), temperature: z.number(), precipitationProbability: z.number(),
   rainMm: z.number(), weatherCode: z.number(), condition, riskLevel: z.string(),

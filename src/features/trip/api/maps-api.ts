@@ -1,6 +1,6 @@
 import { ApiError } from "@/services/api/api-error";
 import { apiClient } from "@/services/api/client";
-import { placeSearchEnvelopeSchema, weatherEnvelopeSchema, type PlaceSearchResult, type WeatherForecastResponse } from "./maps-types";
+import { placeSearchEnvelopeSchema, weatherEnvelopeSchema, currentWeatherEnvelopeSchema, routeEnvelopeSchema, type PlaceSearchResult, type WeatherForecastResponse } from "./maps-types";
 
 function parse<T>(schema: { safeParse(value: unknown): { success: boolean; data?: { data: T } } }, value: unknown): T {
   const parsed = schema.safeParse(value);
@@ -8,6 +8,10 @@ function parse<T>(schema: { safeParse(value: unknown): { success: boolean; data?
   return parsed.data.data;
 }
 export const mapsApi = {
+  async currentWeather(latitude: number, longitude: number, signal?: AbortSignal) {
+    const response = await apiClient.get<unknown>("/api/v1/public/weather/current", { params: { latitude, longitude }, signal });
+    return parse(currentWeatherEnvelopeSchema, response.data);
+  },
   async searchPlaces(query: string, latitude?: number, longitude?: number, signal?: AbortSignal): Promise<PlaceSearchResult[]> {
     const response = await apiClient.get<unknown>("/api/v1/places/search", {
       params: { query, ...(latitude !== undefined && longitude !== undefined ? { latitude, longitude } : {}) }, signal,
@@ -21,7 +25,7 @@ export const mapsApi = {
     return parse(weatherEnvelopeSchema, response.data);
   },
   async route(request: { origin: { latitude: number; longitude: number }; destination: { latitude: number; longitude: number }; intermediates?: { latitude: number; longitude: number }[]; travelMode?: "DRIVE" | "WALK" | "BICYCLE" | "TWO_WHEELER" }, signal?: AbortSignal) {
-    const response = await apiClient.post<{ success: true; data: { distanceMeters: number; durationSeconds: number; encodedPolyline: string; provider: string } }>("/api/v1/routes", request, { signal });
-    return response.data.data;
+    const response = await apiClient.post<unknown>("/api/v1/routes", request, { signal });
+    return parse(routeEnvelopeSchema, response.data);
   },
 };

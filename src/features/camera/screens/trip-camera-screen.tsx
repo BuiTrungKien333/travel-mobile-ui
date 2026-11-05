@@ -6,14 +6,12 @@ import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
 import { ScreenSafeArea } from "@/components/common/screen-safe-area";
 import { useAppTheme } from "@/hooks/use-app-theme";
-import { useTripQuery, useTripPlacesQuery } from "@/features/trip/api/trip-hooks";
-import { useTripItineraryQuery } from "@/features/trip/api/itinerary-hooks";
-import { toTrip } from "@/features/trip/api/trip-adapters";
-import { useMemoriesQuery } from "@/features/home/api/memory-hooks";
 import { todayCalendarDate } from "@/utils/calendar-date";
 import { getTripTitle } from "@/features/trip/utils/trip-formatters";
 import { CameraLayout } from "../components/camera-layout";
 import { useCameraCopy } from "../i18n/camera-copy";
+import { useMemories } from "@/features/memories/hooks/use-memories";
+import { MemoryLoadState } from "@/features/memories/components/memory-load-state";
 
 function back() {
   if (router.canGoBack()) router.back();
@@ -32,20 +30,15 @@ export function TripCameraScreen({
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useCameraCopy();
-  const tripQuery = useTripQuery(tripId);
-  const placesQuery = useTripPlacesQuery(tripId);
-  const itineraryQuery = useTripItineraryQuery(tripId);
-  const memoriesQuery = useMemoriesQuery(tripId);
-  const trip = tripQuery.data
-    ? toTrip(tripQuery.data, placesQuery.data ?? [], itineraryQuery.data)
-    : undefined;
-  const count = memoriesQuery.data?.content.reduce((total, memory) => total + memory.mediaCount, 0) ?? 0;
+  const library = useMemories();
+  const trip = library.trips.find((entry) => entry.id === tripId);
   const today = todayCalendarDate();
+  const count = library.memories.filter((entry) => entry.tripId === tripId && !!entry.photo).length;
   const date = day ?? today;
-  if (tripQuery.isPending || placesQuery.isPending || itineraryQuery.isPending)
-    return <ScreenSafeArea style={{ flex: 1, justifyContent: "center", backgroundColor: theme.colors.photoViewerBackdrop }}><AppText style={{ color: theme.colors.photoViewerText, textAlign: "center" }}>{copy.ready}</AppText></ScreenSafeArea>;
+  if (library.isPending || library.isError) return <ScreenSafeArea style={{ flex: 1 }}><MemoryLoadState loading={library.isPending} error={library.isError} onRetry={() => void library.refetch()} /></ScreenSafeArea>;
   if (
     !trip ||
+    date > today ||
     trip.status === "cancelled" ||
     !trip.days.some((entry) => entry.date === date)
   )
@@ -73,13 +66,11 @@ export function TripCameraScreen({
         pathname: "/trip/[tripId]",
         params: { tripId: trip.id, day: date },
       }),
-    onJournal: () => router.push("/tabs/memories"),
+    onJournal: () => router.push({ pathname: "/memories/[tripId]", params: { tripId: trip.id } }),
   };
   const available =
     Platform.OS === "web" ||
-    ["ExpoCamera", "ExpoImageManipulator", "ExponentImagePicker"].every(
-      (name) => !!requireOptionalNativeModule(name),
-    );
+    !!requireOptionalNativeModule("ExpoCamera");
   if (!available)
     return (
       <CameraLayout

@@ -1,8 +1,12 @@
 import { create, isAxiosError, type InternalAxiosRequestConfig } from "axios";
+import Constants from "expo-constants";
+import { isDevice } from "expo-device";
+import { Platform } from "react-native";
 
 import { publicAuthEndpoints } from "@/features/auth/api/auth-endpoints";
 import { useLocaleStore } from "@/store/use-locale-store";
 import { ApiError, normalizeApiError } from "./api-error";
+import { resolveApiUrl } from "./api-url";
 
 type AuthTransport = {
   getAccessToken: () => string | null;
@@ -15,17 +19,10 @@ let authTransport: AuthTransport | undefined;
 
 export function configureAuthTransport(transport: AuthTransport) { authTransport = transport; }
 
-export function resolveApiUrl(value: string | undefined): string | undefined {
-  if (!value?.trim()) return undefined;
-  try {
-    const url = new URL(value.trim());
-    if (url.protocol !== "https:" && (url.protocol !== "http:" || !__DEV__)) return undefined;
-    if (url.username || url.password || url.search || url.hash || url.pathname !== "/") return undefined;
-    return url.origin;
-  } catch { return undefined; }
-}
-
-const baseURL = resolveApiUrl(process.env.EXPO_PUBLIC_API_URL);
+const baseURL = resolveApiUrl(process.env.EXPO_PUBLIC_API_URL, {
+  development: __DEV__, platform: Platform.OS, isDevice,
+  metroHost: Constants.expoConfig?.hostUri,
+});
 export const apiClient = create({ baseURL, timeout: 15000 });
 
 apiClient.interceptors.request.use((config: AuthConfig) => {

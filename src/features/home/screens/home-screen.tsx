@@ -7,7 +7,7 @@ import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { todayCalendarDate } from "@/utils/calendar-date";
 import { useTripsQuery } from "@/features/trip/api/trip-hooks";
-import { useMemoriesQuery } from "../api/memory-hooks";
+import { useMemories } from "@/features/memories/hooks/use-memories";
 import { HomePage, SectionHeading, SurfaceCard } from "../components/home-primitives";
 import { useHomeCopy } from "../i18n/home-copy";
 import { useOngoingCopy } from "../i18n/ongoing-copy";
@@ -25,7 +25,7 @@ export function HomeScreen() {
   const { copy, locale } = useHomeCopy();
   const { copy: ongoingCopy } = useOngoingCopy();
   const tripsQuery = useTripsQuery();
-  const memoriesQuery = useMemoriesQuery();
+  const memoriesQuery = useMemories();
   const today = todayCalendarDate();
   const trips = tripsQuery.data ?? [];
   const currentTrip = trips
@@ -36,9 +36,11 @@ export function HomeScreen() {
     .sort((a, b) => (a.startDate ?? "").localeCompare(b.startDate ?? ""))[0];
   const journey = currentTrip ?? nextTrip;
   const completedTrips = trips.filter((trip) => trip.status === "COMPLETED" || (!!trip.endDate && trip.endDate < today));
-  const visitedCount = trips.reduce((sum, trip) => sum + trip.visitedCount, 0);
-  const totalPlaces = trips.reduce((sum, trip) => sum + trip.placeCount, 0);
-  const recentMemories = (memoriesQuery.data?.content ?? []).filter((memory) => memory.coverImageUrl || memory.media.length > 0).slice(0, 4);
+  const memoriesCount = trips.reduce((sum, trip) => sum + trip.memoryCount, 0);
+  const totalPlaces = trips.reduce((sum, trip) => sum + trip.stopCount, 0);
+  const recentMemories = memoriesQuery.memories.filter((memory) => memory.photo)
+    .sort((a, b) => (b.date ?? "").localeCompare(a.date ?? "") || (b.time ?? "").localeCompare(a.time ?? ""))
+    .slice(0, 4);
 
   return (
     <HomePage>
@@ -64,7 +66,7 @@ export function HomeScreen() {
         <SurfaceCard tinted>
           <View style={{ alignItems: "center", gap: theme.spacing.sm }}>
             <AppIcon name={journey ? "map" : "pin"} size={theme.layout.iconLarge} color={theme.colors.primary} />
-            <AppText accessibilityRole="header" variant="label">{journey ? journey.destination : copy.returningTitle}</AppText>
+            <AppText accessibilityRole="header" variant="label">{journey ? journey.destination.name : copy.returningTitle}</AppText>
             <AppText tone="muted">{journey ? tripDateRange(journey.startDate, journey.endDate, locale === "vi" ? "vi-VN" : "en-GB") : copy.newHint}</AppText>
           </View>
           {journey ? (
@@ -79,7 +81,7 @@ export function HomeScreen() {
           <SectionHeading title={copy.footprint} />
           <View style={{ flexDirection: "row", justifyContent: "space-around", gap: theme.spacing.md }}>
             <HomeStat value={completedTrips.length} label={copy.statsTrips} />
-            <HomeStat value={visitedCount} label={copy.statsVisited} />
+            <HomeStat value={memoriesCount} label={copy.statsMemories} />
             <HomeStat value={totalPlaces} label={copy.statsPlaces} />
           </View>
           <Pressable accessibilityRole="button" onPress={() => router.navigate("/tabs/memories")} style={{ minHeight: theme.layout.touchTarget, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
@@ -93,8 +95,10 @@ export function HomeScreen() {
         {memoriesQuery.isError ? null : recentMemories.length ? (
           <View style={{ flexDirection: "row", gap: theme.spacing.sm }}>
             {recentMemories.map((memory) => {
-              const photo = memory.coverImageUrl ?? memory.media[0]?.url;
-              return photo ? <Pressable key={memory.id} accessibilityRole="button" accessibilityLabel={memory.note ?? copy.memories} onPress={() => router.navigate("/tabs/memories")} style={{ flex: 1 }}><Image source={{ uri: photo }} contentFit="cover" style={{ width: "100%", aspectRatio: 1, borderRadius: theme.radius.md }} /></Pressable> : null;
+              const photo = memory.photo;
+              return photo ? <Pressable key={memory.id} accessibilityRole="button" accessibilityLabel={memory.text || copy.memories} onPress={() => memory.tripId
+                ? router.push({ pathname: "/memories/photo/[memoryId]", params: { memoryId: memory.id, tripId: memory.tripId } })
+                : router.push("/memories/saved-later")} style={{ flex: 1 }}><Image source={photo} contentFit="cover" style={{ width: "100%", aspectRatio: 1, borderRadius: theme.radius.md }} /></Pressable> : null;
             })}
           </View>
         ) : !memoriesQuery.isPending ? (

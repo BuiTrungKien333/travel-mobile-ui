@@ -15,6 +15,8 @@ import { ScreenSafeArea } from "@/components/common/screen-safe-area";
 import { LanguageSwitcher } from "@/components/common/language-switcher";
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
+import { AppButton } from "@/components/ui/app-button";
+import { ProfileEditor } from "../components/profile-editor";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useI18n } from "@/hooks/use-i18n";
 import { useLogout, useProfile } from "../hooks/use-auth";
@@ -27,6 +29,7 @@ export function ProfileScreen() {
   const profile = useProfile();
   const logout = useLogout();
   const [logoutError, setLogoutError] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
 
   const handleLogout = async () => {
     if (logout.isPending) return;
@@ -251,6 +254,9 @@ export function ProfileScreen() {
                     value={profile.data.email}
                   />
                 </View>
+                {editing ? <ProfileEditor user={profile.data} onDone={() => setEditing(false)} /> : (
+                  <AppButton variant="outline" onPress={() => setEditing(true)}>{t("auth.profile.edit")}</AppButton>
+                )}
               </View>
 
               <View style={{ gap: theme.spacing.md }}>

@@ -1,12 +1,13 @@
-import { CameraView, useCameraPermissions, type CameraType } from "expo-camera";
+import { CameraView, type CameraType } from "expo-camera";
 import { Image } from "expo-image";
+import { launchImageLibraryAsync } from "expo-image-picker";
 import Animated, {
   ReduceMotion,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
-import { useFocusEffect } from "expo-router";
+import { useIsFocused } from "expo-router/react-navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -19,21 +20,38 @@ import {
 import { AppButton } from "@/components/ui/app-button";
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
-import { useCreateMemoryWithMediaMutation } from "@/features/home/api/memory-hooks";
+import { useTripPreview } from "@/features/home/providers/trip-preview-provider";
 import { prepareCameraPhoto } from "../services/camera-photos";
 import { useCameraCopy } from "../i18n/camera-copy";
 import { CameraLayout, type CameraLayoutProps } from "./camera-layout";
 import { CameraIconButton } from "./camera-icon-button";
+import { useCameraAccess } from "../hooks/use-camera-access";
+import { PhotoActionError } from "@/features/home/services/photo-action-error";
+import { usePhotoViewerCopy } from "@/features/home/i18n/photo-viewer-copy";
+import { useMemoryActions, useMemoryTrips } from "@/features/memories/hooks/use-memories";
+import { useProfile } from "@/features/auth/hooks/use-auth";
+import { ApiError } from "@/services/api/api-error";
+
+const CAMERA_READY_TIMEOUT_MS = 15000;
 
 export function NativeTripCamera(
-  props: CameraLayoutProps & { tripId: string; date: string; stopId?: string },
+  props: CameraLayoutProps & {
+    tripId?: string;
+    date: string;
+    stopId?: string;
+    suspended?: boolean;
+    quick?: boolean;
+    requestOnOpen?: boolean;
+  },
 ) {
   const theme = useAppTheme();
   const { copy } = useCameraCopy();
-  const [permission, requestPermission, getPermission] = useCameraPermissions();
+  const { copy: photoCopy } = usePhotoViewerCopy();
+  const { permission, issue, requesting, request } = useCameraAccess();
   const camera = useRef<CameraView>(null);
   const mounted = useRef(true);
   const operation = useRef(false);
+  const requestedOnOpen = useRef(false);
   const [busy, setBusy] = useState(false);
   const [facing, setFacing] = useState<CameraType>("back");
   const [flashOn, setFlashOn] = useState(false);
@@ -55,42 +73,63 @@ export function NativeTripCamera(
   const [mountError, setMountError] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
-  const [pending, setPending] = useState<{ uri: string } | null>(null);
-  const [foreground, setForeground] = useState(
-    AppState.currentState === "active",
+  const [pending, setPending] = useState<{ uri: string; id?: string; width?: number; height?: number; mimeType?: string } | null>(
+    null,
   );
-  const [focused, setFocused] = useState(true);
-  const createMemory = useCreateMemoryWithMediaMutation();
-  const active = foreground && focused;
+  const [foreground, setForeground] = useState(
+    AppState.currentState !== "background" &&
+      AppState.currentState !== "inactive",
+  );
+  const focused = useIsFocused();
+  const panelOpen = useTripPreview((state) => state.panel !== null);
+  const savePhoto = useTripPreview((state) => state.saveLocalPhoto);
+  const exportPhoto = useTripPreview((state) => state.exportLocalPhoto);
+  const memories = useTripPreview((state) => state.memories);
+  const { trips } = useMemoryTrips();
+  const profile = useProfile();
+  const { upload } = useMemoryActions();
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const active = foreground && focused && !panelOpen && !props.suspended;
+  useEffect(() => {
+    if (
+      props.requestOnOpen &&
+      Platform.OS !== "web" &&
+      active &&
+      !requestedOnOpen.current &&
+      permission?.status === "undetermined" &&
+      !issue &&
+      !requesting
+    ) {
+      requestedOnOpen.current = true;
+      void request();
+    }
+  }, [props.requestOnOpen, active, permission?.status, issue, requesting, request]);
   useEffect(() => {
     mounted.current = true;
     const subscription = AppState.addEventListener("change", (value) => {
       setForeground(value === "active");
-      if (value === "active")
-        void getPermission().catch(() => {
-          if (mounted.current) setError(copy.error);
-        });
     });
     return () => {
       mounted.current = false;
       subscription.remove();
     };
-  }, [getPermission, copy.error]);
+  }, []);
   useEffect(() => {
     if (!pending) operation.current = false;
   }, [pending]);
-  useFocusEffect(
-    useCallback(() => {
-      setFocused(true);
-      return () => {
-        setFocused(false);
-        setReady(false);
-      };
-    }, []),
-  );
+  const handleCameraRef = useCallback((instance: CameraView | null) => {
+    camera.current = instance;
+    if (!instance) setReady(false);
+  }, []);
   useEffect(() => {
-    if (!active) setReady(false);
-  }, [active]);
+    if (!active || !permission?.granted || pending || ready || mountError)
+      return;
+    const timer = setTimeout(
+      () => setMountError(true),
+      CAMERA_READY_TIMEOUT_MS,
+    );
+    return () => clearTimeout(timer);
+  }, [active, permission?.granted, pending, ready, mountError]);
   useEffect(() => {
     if (!saved) return;
     const timer = setTimeout(
@@ -105,33 +144,62 @@ export function NativeTripCamera(
     setBusy(true);
     setError("");
     setSaved(false);
+    setUploadProgress(null);
     try {
       await task();
-    } catch {
-      if (mounted.current) setError(copy.photoError);
+    } catch (error) {
+      if (mounted.current)
+        setError(
+          error instanceof PhotoActionError
+            ? photoCopy[error.code]
+            : error instanceof ApiError
+              ? error.code === "UPLOAD_002" ? copy.tooLarge
+                : error.code === "UPLOAD_003" ? copy.invalidType
+                  : error.code === "UPLOAD_008" ? copy.imageTooLarge
+                    : error.code === "MEMORY_FUTURE_DATE" ? copy.futureDate
+                    : copy.uploadError
+              : copy.photoError,
+        );
     } finally {
       operation.current = false;
       if (mounted.current) setBusy(false);
     }
   }
+  async function persistPhoto(photo: { uri: string; id?: string; width?: number; height?: number; mimeType?: string }) {
+    const existing = photo.id
+      ? memories.find((item) => item.id === photo.id)
+      : undefined;
+    const memory =
+      existing ??
+      (await savePhoto({
+        uri: photo.uri,
+        tripId: props.quick ? undefined : props.tripId,
+        date: props.date,
+        stopId: props.stopId,
+        remoteTrip: props.quick ? undefined : trips.find((trip) => trip.id === props.tripId),
+        local: { userId: profile.data?.id, width: photo.width, height: photo.height, mimeType: photo.mimeType,
+          placeId: !props.quick && props.stopId ? props.stopId : undefined },
+      }));
+    if (!memory.photo || typeof memory.photo !== "string")
+      throw new Error("Photo unavailable");
+    if (mounted.current) setPending({ uri: memory.photo, id: memory.id });
+    await exportPhoto(memory.id);
+    if (!props.quick && memory.tripId) {
+      await upload.mutateAsync({
+        memory: { ...memory, local: memory.local ? { ...memory.local, deviceSaved: true } : undefined },
+        onProgress: (value) => { if (mounted.current) setUploadProgress(value); },
+      });
+    }
+    if (mounted.current) {
+      setPending(null);
+      setReady(false);
+      setSaved(true);
+      setError("");
+    }
+  }
   function capture() {
     if (pending) {
-      if (operation.current) return;
-      void run(async () => {
-        await createMemory.mutateAsync({
-          request: {
-            tripId: props.tripId,
-            ...(props.stopId ? { placeId: props.stopId } : {}),
-            experiencedAt: new Date().toISOString(),
-          },
-          photos: [{ uri: pending.uri, fileName: `wego-${Date.now()}.jpg`, mimeType: "image/jpeg" }],
-        });
-        if (!mounted.current) return;
-        setPending(null);
-        setReady(false);
-        setSaved(true);
-        setError("");
-      });
+      void run(() => persistPhoto(pending));
       return;
     }
     if (!ready || !active || !camera.current) return;
@@ -146,12 +214,13 @@ export function NativeTripCamera(
       if (mounted.current) {
         setPending(result);
         setReady(false);
+        await persistPhoto(result);
       }
     });
   }
   function pick() {
     void run(async () => {
-      const { launchImageLibraryAsync } = await import("expo-image-picker");
+      // Mobile browsers require the picker to open directly from the press event.
       const result = await launchImageLibraryAsync({
         mediaTypes: ["images"],
         allowsEditing: false,
@@ -164,6 +233,7 @@ export function NativeTripCamera(
       if (mounted.current) {
         setPending(photo);
         setReady(false);
+        await persistPhoto(photo);
       }
     });
   }
@@ -201,7 +271,7 @@ export function NativeTripCamera(
         <AppButton
           variant="gradient"
           size="small"
-          disabled={busy}
+          disabled={busy || requesting}
           onPress={action.onPress}
           style={{
             alignSelf: "center",
@@ -223,20 +293,27 @@ export function NativeTripCamera(
       contentFit="cover"
       style={StyleSheet.absoluteFill}
     />
-  ) : !permission ? (
+  ) : issue === "insecure" || issue === "unsupported" || issue === "embedded" ? (
+    notice(copy.error, copy[issue])
+  ) : !permission && !issue ? (
     <ActivityIndicator style={{ flex: 1 }} color={theme.colors.primary} />
-  ) : !permission.granted ? (
-    notice(copy.permission, copy.permissionHint, {
-      label: permission.canAskAgain ? copy.allow : copy.settings,
+  ) : !permission?.granted ? (
+    notice(copy.permission, issue ? copy[issue] : copy.permissionHint, {
+      label:
+        Platform.OS === "web" || permission?.canAskAgain !== false
+          ? copy.allow
+          : copy.settings,
       onPress: () => {
-        void run(async () => {
-          if (permission.canAskAgain) await requestPermission();
-          else await Linking.openSettings();
-        });
+        if (Platform.OS === "web" || permission?.canAskAgain !== false)
+          void request();
+        else
+          void Linking.openSettings().catch(() =>
+            setError(copy.permissionError),
+          );
       },
     })
   ) : mountError ? (
-    notice(copy.error, copy.permissionHint, {
+    notice(copy.error, copy.startError, {
       label: copy.retry,
       onPress: () => {
         setMountError(false);
@@ -249,7 +326,7 @@ export function NativeTripCamera(
       {active ? (
         <Animated.View style={[StyleSheet.absoluteFill, previewMotion]}>
           <CameraView
-            ref={camera}
+            ref={handleCameraRef}
             key={`${facing}:${attempt}`}
             facing={facing}
             mode="picture"
@@ -292,6 +369,7 @@ export function NativeTripCamera(
   return (
     <CameraLayout
       {...props}
+      onSelectTrip={pending ? undefined : props.onSelectTrip}
       frame={frame}
       busy={busy}
       pending={!!pending}
@@ -308,7 +386,25 @@ export function NativeTripCamera(
         setMountError(false);
       }}
       error={error}
-      status={pending ? copy.confirmHint : saved ? copy.saved : undefined}
+      status={
+        busy
+          ? upload.isPending
+            ? `${copy.uploading}${uploadProgress === null ? "" : ` ${Math.round(uploadProgress * 100)}%`}`
+            : copy.savingDevice
+          : pending
+          ? pending.id
+            ? copy.savedPrivate
+            : copy.confirmHint
+          : saved
+            ? !props.quick && props.tripId
+              ? copy.uploaded
+              : Platform.OS === "web"
+              ? copy.savedDownload
+              : props.quick || !props.tripId
+                ? copy.savedInbox
+                : copy.savedDevice
+            : undefined
+      }
       frameControls={
         !pending ? (
           <View

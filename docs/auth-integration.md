@@ -93,3 +93,6 @@ Action token ngẫu nhiên 32 byte, Base64 URL-safe 43 ký tự, DB chỉ lưu S
 3. Logout thường chỉ thu hồi refresh token của phiên đó; access token còn hiệu lực tối đa 30 phút. Reset mật khẩu đã thu hồi toàn bộ qua version. Google Sign-In dùng cùng cơ chế phiên; xem [google-auth.md](./google-auth.md).
 4. Refresh rotation có thể yêu cầu đăng nhập lại nếu server rotate nhưng mạng đứt trước khi nhận response; không tự retry mutation auth.
 5. Dọn token hết hạn định kỳ khi dữ liệu tăng. Không thêm Redis/Kafka cho MVP.
+# Đồng bộ API hiện tại
+
+Contract Trip/Memory, cập nhật hồ sơ và cách kiểm tra response backend thật được ghi trong [api-contract-integration.md](api-contract-integration.md).

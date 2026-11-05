@@ -5,7 +5,7 @@ import { AppText } from "@/components/ui/app-text";
 import type { Trip, TripDay } from "@/features/home/types/home-types";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
-import { usePlaceRouteQuery, useWeatherForecastQuery } from "../api/maps-hooks";
+import { usePlaceRouteQuery, useWeatherForecastQuery, useCurrentWeatherQuery } from "../api/maps-hooks";
 import type { TripDetailsSheetState } from "../types/trip-details-types";
 
 /** Summary includes scheduled visits only; origin legs aren't invented. */
@@ -36,11 +36,12 @@ export function TripDayTools({
   const routeQuery = usePlaceRouteQuery(routePoints, routePoints.length === day?.stops.length);
   const weatherLocation = day?.stops.find((stop) => stop.location)?.location;
   const weatherQuery = useWeatherForecastQuery(weatherLocation?.latitude, weatherLocation?.longitude, day?.date, showWeather);
+  const current = useCurrentWeatherQuery(weatherLocation?.latitude, weatherLocation?.longitude, showWeather && day?.date === today);
   const summary = weatherQuery.data?.dailySummaries.find((item) => item.date === day?.date);
-  const weatherCondition = summary?.dominantCondition;
-  const forecast: { condition: "sun" | "rain" | "cloud"; temperature: number } | undefined = summary ? { condition: weatherCondition === "CLEAR_SKY" ? "sun" : weatherCondition === "LIGHT_RAIN" || weatherCondition === "RAINY" || weatherCondition === "HEAVY_RAIN" || weatherCondition === "THUNDERSTORM" ? "rain" : "cloud", temperature: Math.round((summary.minTemperature + summary.maxTemperature) / 2) } : undefined;
-  const currentWeather = false;
-  const ongoingWeatherSnapshot = forecast ?? { condition: "cloud" as const, temperature: 0 };
+  const currentWeather = day?.date === today ? current.data : undefined;
+  const weatherCondition = currentWeather?.condition ?? summary?.dominantCondition;
+  const temperature = currentWeather?.temperature ?? (summary ? (summary.minTemperature + summary.maxTemperature) / 2 : undefined);
+  const forecast: { condition: "sun" | "rain" | "cloud"; temperature: number } | undefined = temperature !== undefined ? { condition: weatherCondition === "CLEAR_SKY" ? "sun" : weatherCondition === "LIGHT_RAIN" || weatherCondition === "RAINY" || weatherCondition === "HEAVY_RAIN" || weatherCondition === "THUNDERSTORM" ? "rain" : "cloud", temperature: Math.round(temperature) } : undefined;
   const travel = routeQuery.data ? { complete: true, km: routeQuery.data.distanceMeters / 1000, minutes: Math.round(routeQuery.data.durationSeconds / 60) } : null;
   const reorderLink =
     canEdit && day && day.stops.length > 1 ? (
@@ -155,9 +156,7 @@ export function TripDayTools({
               size={theme.layout.iconMedium}
             />
             <AppText variant="caption" tone="primary">
-              {currentWeather
-                ? `${ongoingWeatherSnapshot.temperature}°`
-                : forecast
+              {forecast
                   ? `${forecast.temperature}°`
                   : copy.weather}
             </AppText>

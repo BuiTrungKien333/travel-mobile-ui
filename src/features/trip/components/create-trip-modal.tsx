@@ -46,6 +46,7 @@ import { DestinationPickerSheet } from "./destination-picker-sheet";
 import { PlacePickerScreen } from "../screens/place-picker-screen";
 import { useCreateTripMutation } from "../api/trip-hooks";
 import { tripApi } from "../api/trip-api";
+import { createRequestId } from "@/utils/create-request-id";
 
 type CreateTripModalProps = {
   visible: boolean;
@@ -71,6 +72,7 @@ function CreateTripForm({ onClose, onCreated }: Omit<CreateTripModalProps, "visi
   const { copy, locale } = useTripCopy();
   const { copy: detailsCopy } = useTripDetailsCopy();
   const scrollRef = useRef<ScrollView>(null);
+  const createRequest = useRef<{ payload: string; id: string } | null>(null);
   const today = todayCalendarDate();
   const createTripMutation = useCreateTripMutation();
   const { control, setValue, handleSubmit, setError, setFocus, formState } =
@@ -87,9 +89,9 @@ function CreateTripForm({ onClose, onCreated }: Omit<CreateTripModalProps, "visi
       },
       mode: "onTouched",
     });
-  const titleField = useController({ name: "title", control }).field;
+  const { field: { onChange: changeTitle, onBlur: blurTitle, ref: titleInputRef } } = useController({ name: "title", control });
   const titleEdited = useRef(false);
-  const budgetField = useController({ name: "budget", control }).field;
+  const { field: { onChange: changeBudget, onBlur: blurBudget, ref: budgetInputRef } } = useController({ name: "budget", control });
   const {
     destination = "",
     startDate = "",
@@ -116,6 +118,7 @@ function CreateTripForm({ onClose, onCreated }: Omit<CreateTripModalProps, "visi
       : 0;
 
   const requestClose = () => {
+    if (isSubmitting) return;
     Keyboard.dismiss();
     if (isDirty) confirmDiscard(copy, onClose);
     else onClose();
@@ -158,19 +161,23 @@ function CreateTripForm({ onClose, onCreated }: Omit<CreateTripModalProps, "visi
       { shouldDirty: true },
     );
   const handleBudgetChange = (text: string) =>
-    budgetField.onChange(text.replace(/\D/g, ""));
-  const submit = handleSubmit(
+    changeBudget(text.replace(/\D/g, ""));
+  const submit = () => handleSubmit(
     async (values) => {
       Keyboard.dismiss();
       try {
-        const created = await createTripMutation.mutateAsync({
-          name: values.title || generateDefaultTitle(values.destination, values.startDate, values.endDate, copy),
-          destination: values.destination,
+        const request = {
+          title: values.title || generateDefaultTitle(values.destination, values.startDate, values.endDate, copy),
+          destination: { name: values.destination },
           startDate: values.startDate,
           endDate: values.endDate,
-          ...(values.budget !== undefined ? { budget: values.budget } : {}),
+          ...(values.budget !== undefined ? { budget: { amount: values.budget, currency: "VND" as const } } : {}),
           ...(values.preferences.length ? { preferences: values.preferences } : {}),
-        });
+        };
+        const payload = JSON.stringify(request);
+        const clientRequestId = createRequest.current?.payload === payload ? createRequest.current.id : createRequestId();
+        createRequest.current = { payload, id: clientRequestId };
+        const created = await createTripMutation.mutateAsync({ ...request, clientRequestId });
         let placesSaved = true;
         for (const [index, stop] of values.initialStops.entries()) {
           if (!stop.location) {
@@ -220,7 +227,7 @@ function CreateTripForm({ onClose, onCreated }: Omit<CreateTripModalProps, "visi
       )
         scrollRef.current?.scrollTo({ y: 0, animated: !reduceMotion });
     },
-  );
+  )();
 
   return (
     <>
@@ -559,15 +566,15 @@ function CreateTripForm({ onClose, onCreated }: Omit<CreateTripModalProps, "visi
                 value={tripTitle}
                 onChangeText={(text) => {
                   titleEdited.current = true;
-                  titleField.onChange(text);
+                  changeTitle(text);
                 }}
-                ref={titleField.ref}
+                ref={titleInputRef}
                 accessibilityLabel={copy.tripTitle}
                 maxLength={tripFormLimits.title}
                 onFocus={() => setIsTitleFocused(true)}
                 onBlur={() => {
                   setIsTitleFocused(false);
-                  titleField.onBlur();
+                  blurTitle();
                 }}
                 placeholder={copy.titlePlaceholder}
                 placeholderTextColor={theme.colors.textSecondary}
@@ -589,7 +596,7 @@ function CreateTripForm({ onClose, onCreated }: Omit<CreateTripModalProps, "visi
                   accessibilityLabel={copy.clearTitle}
                   onPress={() => {
                     titleEdited.current = true;
-                    titleField.onChange("");
+                    changeTitle("");
                   }}
                   hitSlop={8}
                   style={({ pressed }) => [
@@ -926,13 +933,13 @@ function CreateTripForm({ onClose, onCreated }: Omit<CreateTripModalProps, "visi
                     <TextInput
                       value={budget}
                       onChangeText={handleBudgetChange}
-                      ref={budgetField.ref}
+                      ref={budgetInputRef}
                       accessibilityLabel={copy.budget}
                       maxLength={20}
                       onFocus={() => setIsBudgetFocused(true)}
                       onBlur={() => {
                         setIsBudgetFocused(false);
-                        budgetField.onBlur();
+                        blurBudget();
                       }}
                       keyboardType="numeric"
                       placeholder={copy.budgetPlaceholder}

@@ -32,6 +32,15 @@ export function useWeatherForecastQuery(latitude?: number, longitude?: number, d
   });
 }
 
+export function useCurrentWeatherQuery(latitude?: number, longitude?: number, enabled = true) {
+  return useQuery({
+    queryKey: ["weather", "current", latitude, longitude],
+    queryFn: ({ signal }) => mapsApi.currentWeather(latitude!, longitude!, signal),
+    enabled: enabled && latitude !== undefined && longitude !== undefined,
+    staleTime: 5 * 60_000, retry: 1,
+  });
+}
+
 export function usePlaceRouteQuery(points: { latitude: number; longitude: number }[], enabled = true) {
   const pointsKey = points.map(({ latitude, longitude }) => `${latitude},${longitude}`).join(";");
   return useQuery({

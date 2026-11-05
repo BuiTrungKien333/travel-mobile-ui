@@ -1,6 +1,9 @@
 import { useI18n } from "@/hooks/use-i18n";
 
 const vi = {
+  dateImpactTitle: "Đổi ngày chuyến đi?",
+  dateImpactHint: "{count} địa điểm ở các ngày bị bỏ sẽ chuyển về Chưa xếp lịch. Kỷ niệm vẫn giữ ngày chụp.",
+  versionConflict: "Chuyến đi vừa thay đổi ở nơi khác. Dữ liệu đã được tải lại; hãy kiểm tra trước khi lưu.",
   shortWeekdays: ["CN", "T2", "T3", "T4", "T5", "T6", "T7"],
   expandMap: "Mở rộng bản đồ",
   reopenMap: "Mở lại bản đồ",
@@ -256,6 +259,9 @@ const vi = {
     "Các địa điểm được lưu vào Chưa xếp lịch để bạn tự chọn ngày và giờ.",
 };
 const en: typeof vi = {
+  dateImpactTitle: "Change trip dates?",
+  dateImpactHint: "{count} places on removed days will move to Not scheduled. Memories keep their capture dates.",
+  versionConflict: "This trip changed elsewhere. It has been reloaded; review it before saving again.",
   shortWeekdays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
   expandMap: "Expand map",
   reopenMap: "Show map again",

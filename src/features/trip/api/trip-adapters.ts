@@ -1,6 +1,6 @@
 import type { Trip, TripDay, TripPreference, TripStop } from "@/features/home/types/home-types";
 import type { ItineraryResponse, SaveItineraryRequest } from "./itinerary-types";
-import type { TripPlaceResponse, TripResponse } from "./trip-types";
+import type { TripPlaceResponse, TripResponse, TripSummary } from "./trip-types";
 
 const preferenceValues = new Set<TripPreference>([
   "nature", "food", "culture", "relaxation", "photography", "adventure", "shopping", "beach",
@@ -39,7 +39,7 @@ export function toTripStop(value: TripPlaceResponse): TripStop {
 }
 
 export function toTrip(
-  value: TripResponse,
+  value: TripResponse | TripSummary,
   places: TripPlaceResponse[] = [],
   itinerary?: ItineraryResponse,
 ): Trip {
@@ -67,12 +67,13 @@ export function toTrip(
   });
   return {
     id: value.id,
-    destination: value.destination,
-    title: value.name,
-    budget: value.budget === null ? undefined : { amount: value.budget, currency: "VND" },
-    preferences: value.preferences.filter((item): item is TripPreference => preferenceValues.has(item as TripPreference)),
-    accommodation: undefined,
-    notes: value.description ?? undefined,
+    serverVersion: value.version,
+    destination: value.destination.name,
+    title: value.title,
+    budget: "budget" in value ? value.budget ?? undefined : undefined,
+    preferences: "preferences" in value ? value.preferences.filter((item): item is TripPreference => preferenceValues.has(item as TripPreference)) : [],
+    accommodation: "accommodation" in value ? value.accommodation ?? undefined : undefined,
+    notes: "notes" in value ? value.notes ?? undefined : undefined,
     unscheduledStops: places
       .slice()
       .sort((a, b) => (a.plannedOrder ?? Number.MAX_SAFE_INTEGER) - (b.plannedOrder ?? Number.MAX_SAFE_INTEGER))
@@ -82,7 +83,7 @@ export function toTrip(
     endDate: value.endDate ?? undefined,
     status,
     days,
-    coverImage: value.coverImage ?? undefined,
+    coverImage: value.coverImageUrl ?? undefined,
   };
 }
 

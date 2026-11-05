@@ -1,6 +1,9 @@
 import { useI18n } from "@/hooks/use-i18n";
 
 const vi = {
+  destinationsError: "Chưa tải được danh sách điểm đến.",
+  retry: "Thử lại",
+  createError: "Chưa lưu được chuyến đi. Hãy kiểm tra kết nối và thử lại.",
   back: "Quay lại",
   close: "Đóng",
   done: "Xong",
@@ -98,6 +101,9 @@ const vi = {
 };
 
 const en: typeof vi = {
+  destinationsError: "Couldn't load destinations.",
+  retry: "Retry",
+  createError: "Couldn't save your trip. Check your connection and try again.",
   back: "Back",
   close: "Close",
   done: "Done",
