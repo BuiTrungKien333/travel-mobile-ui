@@ -1,5 +1,16 @@
 # Tiến độ Travel Mobile UI
 
+> Định hướng ngày 05/11/2026: đồ án môn học của sinh viên năm cuối, ưu tiên app chạy ổn, logic đúng, luồng rõ ràng và UI/UX mượt, đẹp. Xem [Kế hoạch hoàn thiện đồ án](MOBILE-MVP-IMPLEMENTATION-PLAN.md); production là giai đoạn sau. Các mốc preview tháng 10 bên dưới là lịch sử, không mô tả đầy đủ trạng thái API hiện tại.
+
+## Phần 1 · Hợp nhất cấu hình Expo · 05/11/2026
+
+- Dùng một `app.config.ts`, ghép Maps, Google, dev-client và scene support; giữ cấu hình camera/media từ `app.json`.
+- Test cấu hình kiểm tra đường nạp thực tế của Expo thay vì gọi file `.js` không được sử dụng.
+- Kiểm tra phần này: 5/5 test cấu hình đạt; TypeScript source, kiểm tra strict riêng config/test và ESLint hai file đã sửa đạt. Lint toàn dự án vẫn có 51 lỗi, 3 cảnh báo đã tồn tại trong source.
+- Hướng dẫn build và checklist thiết bị: [DEVICE-SETUP.md](DEVICE-SETUP.md).
+- Expo Doctor: 20/21; còn 9 package lệch phiên bản SDK đề xuất. Chưa xác nhận build/QA trên thiết bị; đây là bước hoàn thành phần code cấu hình của P0-01.
+- Dừng sau phần này để người dùng review/push; đồng bộ dependency và thử native sẽ làm ở phần tiếp theo khi tiếp tục.
+
 Cập nhật: **27/10/2026**. Phạm vi: frontend Home, danh sách/tạo/chi tiết chuyến đi và tìm chọn địa điểm. Ngày trong fixture Home vẫn là **21/10/2026** để tái hiện các trạng thái.
 
 ## Tìm và thêm địa điểm · 27/10/2026

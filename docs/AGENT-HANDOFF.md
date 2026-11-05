@@ -1,5 +1,13 @@
 # Bàn giao ngữ cảnh cho agent tiếp theo
 
+## Định hướng hiện hành của người dùng · 05/11/2026
+
+Đây là dự án môn Phát triển ứng dụng di động của sinh viên năm cuối. Ưu tiên app chạy tốt trên thiết bị, dữ liệu/logic đúng, luồng thao tác rõ ràng, dễ sử dụng, UI/UX mượt và đẹp. Hoàn thiện từng luồng từ API đến giao diện; giữ WeGo/Ocean Teal/Roboto và các quyết định thiết kế đã chốt. Các việc vận hành production như CI/CD nâng cao, quota quy mô lớn, backup/monitoring, phát hành store thực hiện sau khi hoàn thiện đồ án nếu còn thời gian. Vẫn giữ validation, quyền sở hữu dữ liệu và bảo vệ dữ liệu đã lưu. Kế hoạch hiện hành: [MOBILE-MVP-IMPLEMENTATION-PLAN.md](MOBILE-MVP-IMPLEMENTATION-PLAN.md).
+
+Các snapshot và kết quả preview bên dưới là lịch sử; đọc mã nguồn hiện tại và tài liệu contract API khi triển khai.
+
+Cách triển khai hiện hành: làm từng phần theo kế hoạch; hoàn tất mỗi phần thì dừng để người dùng xem và push lên GitHub. Chỉ chuyển sang phần tiếp theo khi người dùng yêu cầu tiếp tục. Phần 1 đã hợp nhất cấu hình Expo vào `app.config.ts`; xem [DEVICE-SETUP.md](DEVICE-SETUP.md). Còn đồng bộ dependency theo kết quả Expo Doctor và kiểm thử native trước khi hoàn tất P0-01.
+
 Snapshot: **19/10/2026**. Repository mobile: **`E:/travel-mobile-ui`**. Mốc Git quan sát khi bắt đầu bàn giao: **`4b19a3e` — `complete code ui home page`**, working tree sạch trước khi thêm tài liệu này. Đây là thông tin lịch sử, không phải yêu cầu checkout/reset về commit đó.
 
 ## 1. Bắt đầu từ đâu
