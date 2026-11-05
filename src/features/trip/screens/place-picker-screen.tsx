@@ -1,10 +1,12 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import {
   FlatList,
+  Alert,
+  BackHandler,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -21,6 +23,8 @@ import { GlassBackdrop } from "@/components/common/glass-backdrop";
 import { ScreenSafeArea } from "@/components/common/screen-safe-area";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useScreenInsets } from "@/hooks/use-screen-insets";
+import { ApiError } from "@/services/api/api-error";
+import { createRequestId } from "@/utils/create-request-id";
 import type { Trip, TripStop } from "@/features/home/types/home-types";
 import { usePlaceSearchCopy } from "../i18n/place-search-copy";
 import { tripMessage } from "../utils/create-trip-formatters";
@@ -33,6 +37,7 @@ import { DetailIconButton } from "../components/trip-details-header";
 import { PlaceSearchMap } from "../components/place-search-map";
 import { PlaceDetailsContent } from "../components/place-details-content";
 import { useDebouncedValue, usePlaceSearchQuery } from "../api/maps-hooks";
+import { samePlace } from "../api/place-selection";
 import {
   PlaceSearchResultRow,
   PlaceTargetSelector,
@@ -90,8 +95,9 @@ export function PlacePickerScreen({
   const [coordinate, setCoordinate] = useState<PlaceCoordinate | null>(
     region ? { latitude: region.latitude, longitude: region.longitude } : null,
   );
-  const [saveError, setSaveError] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
   const { control, handleSubmit, reset } = useForm<{ name: string }>({
     defaultValues: { name: "" },
     resolver: zodResolver(
@@ -110,9 +116,8 @@ export function PlacePickerScreen({
         ...(trip.unscheduledStops ?? []),
       ]
     : [];
-  const chosen = selected.filter(
-    (stop) => !existing.some((entry) => entry.id === stop.id),
-  );
+  // Selections belong to this session, including places saved before a partial failure.
+  const chosen = selected;
   const remotePlaces: TripStop[] = (remoteSearch.data ?? []).flatMap((place) => {
     if (place.latitude === null || place.longitude === null) return [];
     const id = place.providerPlaceId ? `google:${place.providerPlaceId}` : `google:${place.name}:${place.latitude}:${place.longitude}`;
@@ -121,28 +126,46 @@ export function PlacePickerScreen({
       ...(place.providerPlaceId ? { providerPlaceId: place.providerPlaceId } : {}),
       time: "",
       name: { vi: place.name, en: place.name },
-      kind: { vi: place.category ?? "Äá»‹a Ä‘iá»ƒm", en: place.category ?? "Place" },
+      kind: { vi: place.category ?? "Địa điểm", en: place.category ?? "Place" },
       ...(place.address ? { address: { vi: place.address, en: place.address } } : {}),
       location: { latitude: place.latitude, longitude: place.longitude },
     }];
   });
-  const results = deferredQuery.trim().length >= 2
-    ? searchPlaces((selectedOnly ? chosen : remotePlaces).filter((stop) => !existing.some((entry) => entry.id === stop.id || (!!stop.providerPlaceId && entry.providerPlaceId === stop.providerPlaceId))), "")
-    : selectedOnly
-      ? chosen.filter((stop) => !existing.some((entry) => entry.id === stop.id))
-      : [];
+  const searchCurrent = deferredQuery.trim() === query.trim();
+  const results = selectedOnly ? searchPlaces(chosen, query)
+    : searchCurrent && deferredQuery.trim().length >= 2
+      ? remotePlaces.filter((stop) => !existing.some((entry) => samePlace(stop, entry))) : [];
   const targetIndex = trip?.days.findIndex((day) => day.date === date) ?? -1;
-  const canApply = chosen.length > 0 || (!trip && initialSelected.length > 0);
+  const invalidTarget = !!trip && date !== null && targetIndex < 0;
+  const cancelled = trip?.status === "cancelled";
+  const canApply = !invalidTarget && !cancelled && (chosen.length > 0 || (!trip && initialSelected.length > 0));
   const inPreview = focus !== undefined;
+  const requestClose = useCallback(() => {
+    if (savingRef.current) return;
+    if (inPreview) { setFocus(undefined); return; }
+    if (trip && selected.length) {
+      Alert.alert(copy.leaveTitle, copy.leaveHint, [
+        { text: copy.keepSelecting, style: "cancel" },
+        { text: copy.leave, onPress: onClose },
+      ]);
+    } else onClose();
+  }, [inPreview, trip, selected.length, copy, onClose]);
+  useEffect(() => {
+    if (!trip) return;
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => { requestClose(); return true; });
+    return () => subscription.remove();
+  }, [trip, requestClose]);
   function toggle(place: TripStop) {
-    setSaveError(false);
+    if (savingRef.current) return;
+    setSaveError(null);
     setSelected((stops) =>
-      stops.some((stop) => stop.id === place.id)
-        ? stops.filter((stop) => stop.id !== place.id)
+      stops.some((stop) => samePlace(stop, place))
+        ? stops.filter((stop) => !samePlace(stop, place))
         : [...stops, place],
     );
   }
   function openPreview(place: TripStop | null) {
+    if (savingRef.current) return;
     Keyboard.dismiss();
     if (place && !place.location) {
       toggle(place);
@@ -161,7 +184,7 @@ export function PlacePickerScreen({
   const chooseCustom = handleSubmit(({ name }) => {
     if (!coordinate) return;
     const stop: TripStop = {
-      id: `custom-${selected.length + 1}`,
+      id: `custom-${createRequestId()}`,
       time: "",
       name: { vi: name, en: name },
       kind: { vi: "Địa điểm riêng", en: "Private place" },
@@ -171,13 +194,14 @@ export function PlacePickerScreen({
       },
       location: coordinate,
     };
-    setSelected((stops) => [...stops, stop]);
-    setSaveError(false);
+    setSelected((stops) => stops.some((entry) => samePlace(entry, stop)) ? stops : [...stops, stop]);
+    setSaveError(null);
     setSelectedOnly(false);
     setQuery("");
     setFocus(undefined);
   });
   function confirmPlace() {
+    if (savingRef.current) return;
     if (focus?.locationType === "address") {
       void handleSubmit(({ name }) => {
         const stop = { ...focus, name: { vi: name, en: name } };
@@ -185,7 +209,7 @@ export function PlacePickerScreen({
           ...stops.filter((entry) => entry.id !== stop.id),
           stop,
         ]);
-        setSaveError(false);
+        setSaveError(null);
         setQuery("");
         setFocus(undefined);
         Keyboard.dismiss();
@@ -196,19 +220,24 @@ export function PlacePickerScreen({
       void chooseCustom();
       return;
     }
-    if (!selected.some((stop) => stop.id === focus.id))
+    if (!selected.some((stop) => samePlace(stop, focus)))
       setSelected((stops) => [...stops, focus]);
     setFocus(undefined);
   }
   async function apply() {
-    if (!canApply) return;
+    if (!canApply || savingRef.current) return;
+    savingRef.current = true;
     Keyboard.dismiss();
     setSaving(true);
     try {
-      setSaveError((await onApply(chosen, date)) === false);
-    } catch {
-      setSaveError(true);
+      setSaveError((await onApply(chosen, date)) === false ? copy.saveError : null);
+    } catch (error) {
+      setSaveError(error instanceof ApiError && error.code === "TARGET_DATE_MISSING" ? copy.dateMissing
+        : error instanceof ApiError && error.code === "TRIP_CANCELLED" ? copy.cancelled
+          : error instanceof ApiError && error.code === "PLACE_ALREADY_SCHEDULED" ? copy.scheduledElsewhere
+            : error instanceof ApiError && error.status === 409 ? copy.scheduleConflict : copy.partialSave);
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   }
@@ -239,6 +268,7 @@ export function PlacePickerScreen({
         style={[styles.fill, { backgroundColor: theme.colors.background }]}
       >
         <KeyboardAvoidingView
+          pointerEvents={saving ? "none" : "auto"}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={[
             styles.fill,
@@ -264,7 +294,7 @@ export function PlacePickerScreen({
               <DetailIconButton
                 name="back"
                 label={inPreview ? copy.returnResults : copy.back}
-                onPress={() => (inPreview ? setFocus(undefined) : onClose())}
+                onPress={requestClose}
               />
               <View style={styles.fill}>
                 <AppText
@@ -285,7 +315,7 @@ export function PlacePickerScreen({
               place={focus}
               places={previewPlaces}
               region={previewRegion}
-              onBack={() => setFocus(undefined)}
+              onBack={requestClose}
               nameInput={
                 focus.locationType === "address" ? nameInput : undefined
               }
@@ -297,8 +327,9 @@ export function PlacePickerScreen({
                 days={trip?.days ?? []}
                 date={date}
                 onChange={(value) => {
+                  if (savingRef.current) return;
                   setDate(value);
-                  setSaveError(false);
+                  setSaveError(null);
                 }}
               />
               <View
@@ -312,7 +343,8 @@ export function PlacePickerScreen({
                   hideLabel
                   placeholder={copy.search}
                   value={query}
-                  onChangeText={setQuery}
+                  editable={!saving}
+                  onChangeText={(value) => { if (!savingRef.current) setQuery(value); }}
                   autoCorrect={false}
                   returnKeyType="search"
                   onSubmitEditing={() => {
@@ -486,11 +518,12 @@ export function PlacePickerScreen({
                   </View>
                 }
                 renderItem={({ item }) => {
-                  const checked = chosen.some((stop) => stop.id === item.id);
+                  const checked = chosen.some((stop) => samePlace(stop, item));
                   return (
                     <PlaceSearchResultRow
                       place={item}
                       checked={checked}
+                      alreadyAdded={existing.some((stop) => samePlace(stop, item))}
                       onPreview={() => openPreview(item)}
                       onToggle={() => {
                         if (item.locationType === "address" && !checked)
@@ -541,9 +574,12 @@ export function PlacePickerScreen({
             <GlassBackdrop borderRadius={theme.radius.none} />
             {saveError ? (
               <AppText accessibilityRole="alert" tone="error" variant="caption">
-                {copy.saveError}
+                {saveError}
               </AppText>
             ) : null}
+            {(invalidTarget || cancelled) && !saveError ? <AppText accessibilityRole="alert" tone="error" variant="caption">
+              {cancelled ? copy.cancelled : copy.dateMissing}
+            </AppText> : null}
             {!inPreview ? (
               <View style={[styles.row, { justifyContent: "space-between" }]}>
                 <AppText variant="label" tone="primary">

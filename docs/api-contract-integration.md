@@ -34,6 +34,31 @@ Checklist trên điện thoại:
 
 Kiểm tra tự động: `node --experimental-strip-types --test tests/create-trip-recovery.test.ts tests/create-trip.test.ts` (19 test). Test mới chạy handler form → mutation hook → feature API/schema, thay HTTP và platform rendering bằng double; chưa thay thế QA điện thoại hoặc backend đang chạy.
 
+## Existing trip place selection
+
+Phần 6 của P0-03 cải thiện `/trip/add-places`, dùng API hiện có, không cần migration hoặc rebuild native:
+
+1. Validate tên/tọa độ và metadata lựa chọn trước khi gọi API. Đọc `GET /api/v1/trips/{id}` và `GET /api/v1/trips/{id}/places`; ngày đích phải còn tồn tại và chuyến chưa hủy.
+2. Đối chiếu provider ID, hoặc tên đã trim/tọa độ nếu một bên không có provider ID. Chỉ `POST /api/v1/trips/{id}/places` cho điểm còn thiếu. Điểm ban đầu được lưu ở pool; lỗi giữa chừng không xóa các điểm đã lưu.
+3. Nếu chọn Chờ xếp lịch, hoàn tất mà không PUT itinerary. Nếu chọn ngày, đọc lại trip và `GET /api/v1/trips/{id}/itinerary`; giữ nguyên mọi lượt ghé hiện có rồi nối các điểm chưa xếp. Gửi `PUT /api/v1/trips/{id}/itinerary` với `expectedUpdatedAt` hiện tại khi có timestamp. Điểm mới chưa có giờ, không ghim, giữ ghi chú/thời lượng đã lưu (mặc định 45 phút khi thiếu).
+4. Retry luôn đọc lại pool/lịch: POST đã commit nhưng mất response không thêm trùng; PUT đã commit nhưng mất response được nhận biết vì điểm đã ở ngày đích, không ghi lại lịch. Điểm đã nằm trong ngày khác báo `PLACE_ALREADY_SCHEDULED` trên client, không tự di chuyển.
+5. Nếu lịch đổi sau lần GET, backend trả 409; UI giữ lựa chọn, giải thích và cho thử lại trên lịch mới. Copy các trường itinerary trực tiếp, không dựng lại từ pool snapshot thiếu điểm mới; giữ pin, giờ, thứ tự và ghi chú của các lượt ghé khác.
+6. Cache được làm mới cả khi chỉ lưu một phần. Picker vẫn được mount khi refetch lỗi nhưng có data; các điểm đã lưu trong phiên vẫn nằm trong danh sách đang chọn và có nhãn “Đã lưu trong chuyến đi”. Chỉ quay lại chi tiết sau khi lưu và cache refresh hoàn tất.
+
+Đây vẫn là luồng nhiều request. Chưa có transaction chung cho thêm điểm và xếp lịch, hàng đợi bền vững sau tắt app hoặc chống trùng khi nhiều thiết bị POST cùng lúc. Lựa chọn chưa lưu chỉ giữ trong phiên picker; rời màn có xác nhận, điểm đã ghi server vẫn còn. Các test mới dùng HTTP/platform double; chưa xác nhận trên thiết bị hoặc backend đang chạy.
+
+Checklist trên điện thoại:
+
+1. Từ chi tiết một chuyến, chọn thêm điểm. Tìm → mở chi tiết → Back: giữ từ khóa/lựa chọn; chọn nhiều điểm rồi chuyển giữa các ngày và Chờ xếp lịch.
+2. Điểm đã có ở bất kỳ ngày/pool không xuất hiện như điểm mới trong search. Tạo điểm riêng phải có tên; bỏ chọn một điểm rồi thêm điểm riêng khác không làm trùng ID hoặc mất điểm còn lại.
+3. Thêm vào Chờ xếp lịch: tải lại vẫn có ở pool, các ngày không đổi. Thêm vào ngày: chỉ nối điểm mới, giữ giờ/ghim/ghi chú/thứ tự cũ, tải lại thấy đúng ngày.
+4. Ngắt mạng giữa lúc thêm: giữ lựa chọn, có lỗi và nút thử lại. Bật mạng, thử lại; không trùng điểm đã lưu. Trong “Xem các điểm đã chọn”, điểm đã lưu có nhãn riêng.
+5. Nếu lưu pool thành công nhưng lưu itinerary lỗi, xem điểm vẫn có trong pool; retry xếp đủ vào ngày đích. Mất POST/PUT response được kiểm tra tự động bằng HTTP double.
+6. Xóa/đổi ngày ở phiên khác: picker báo ngày không còn hợp lệ, có thể chọn ngày khác hoặc pool. Nếu itinerary đổi lúc đang lưu, lỗi 409 không giả báo thành công và không ghi đè thay đổi mới.
+7. Bấm lưu nhanh nhiều lần và Back lúc đang lưu: một phiên lưu, không rời màn giữa request. Khi chưa lưu, Back từ preview về kết quả; Back từ danh sách có lựa chọn hỏi xác nhận trước khi rời.
+
+Kiểm tra: `node --experimental-strip-types --test tests/add-trip-places.test.ts tests/place-picker-flow.test.ts tests/create-trip-recovery.test.ts tests/create-trip.test.ts` (39 test). Phần kế tiếp là rà luồng đổi giờ, di chuyển ngày, reorder, lưu/hủy trong P0-03.
+
 ## Day settings
 
 `PUT /api/v1/trips/{tripId}/days/{date}` saves a day's settings and any changed visit durations in one database transaction. The date is ISO `YYYY-MM-DD` and must be an existing day inside the trip. Restart the updated backend before running this mobile version. The columns already exist in migration V14; this change adds no migration or native dependency.

@@ -2,6 +2,15 @@
 
 > Định hướng ngày 05/11/2026: đồ án môn học của sinh viên năm cuối, ưu tiên app chạy ổn, logic đúng, luồng rõ ràng và UI/UX mượt, đẹp. Xem [Kế hoạch hoàn thiện đồ án](MOBILE-MVP-IMPLEMENTATION-PLAN.md); production là giai đoạn sau. Các mốc preview tháng 10 bên dưới là lịch sử, không mô tả đầy đủ trạng thái API hiện tại.
 
+## Phần 6 · Thêm điểm vào chuyến và xếp ngày · 05/11/2026
+
+- Route `/trip/add-places` dùng `useAddTripPlaces` → `add-trip-places.ts`: đọc trip/pool, kiểm tra ngày/trạng thái, chỉ thêm điểm chưa có. Nếu xếp ngày, đọc itinerary mới, giữ nguyên các lượt ghé rồi nối điểm còn thiếu bằng token `expectedUpdatedAt`. Không dùng snapshot cũ của màn hình để thay toàn bộ lịch.
+- Retry sau lỗi POST/PUT hoặc mất response đối chiếu lại dữ liệu server; điểm đã nằm trong ngày đích không bị thêm lần nữa. Điểm đã được xếp ngày khác không tự bị di chuyển. Nếu thêm được điểm nhưng lưu lịch lỗi, điểm vẫn ở pool và lựa chọn vẫn còn để thử lại.
+- Picker giữ từ khóa/lựa chọn qua preview và background refetch, kể cả lỗi refetch có dữ liệu cache. Các điểm đã lưu có nhãn riêng trong danh sách đang chọn; kết quả search cũ trong lúc debounce không được chọn. ID điểm riêng dùng request ID thay vì số lượng danh sách, tránh trùng ID sau bỏ chọn/thêm lại; sửa fallback “Địa điểm” bị lỗi chữ.
+- Chặn bấm lưu lặp, chỉnh lựa chọn và Back lúc lưu; route chỉ quay lại sau khi mutation/cache refresh kết thúc. Back từ chi tiết về kết quả; rời picker có lựa chọn cần xác nhận. Ngày đã bị xóa có thông báo và có thể đổi sang ngày khác/pool.
+- 20 test mới (12 API, 8 picker/route) đạt; cùng test tạo chuyến là **39 test trọng tâm**. TypeScript và ESLint file sửa đạt. Full suite **271 test, 252 đạt, 19 lỗi cũ**, tên lỗi giống phần 5; lint toàn repo vẫn 51 lỗi/3 cảnh báo cũ. Test dùng platform/HTTP double, chưa QA điện thoại hoặc phiên backend chạy thật.
+- Không sửa backend/DB/dependency. Identity và request mapping dùng chung cho tạo chuyến và thêm vào chuyến. Checklist: [phần 6](api-contract-integration.md#existing-trip-place-selection). Dừng review/push; phần kế tiếp là sửa lịch, lưu/hủy theo P0-03.
+
 ## Phần 5 · Tạo chuyến và thử lại địa điểm còn thiếu · 05/11/2026
 
 - P0-03 bắt đầu ở luồng tạo chuyến. Tách gọi API sang `create-trip-with-places.ts` và mutation hook; kiểm tra dữ liệu địa điểm trước khi tạo, giữ `clientRequestId` khi thử lại cùng thông tin.
