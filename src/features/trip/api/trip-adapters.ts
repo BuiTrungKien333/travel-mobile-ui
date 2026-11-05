@@ -69,6 +69,7 @@ export function toTrip(
       ...day, stops,
       ...(settings ? {
         startLocation: settings.startLocation ?? undefined,
+        startCoordinate: settings.startCoordinate ?? undefined,
         startTime: settings.startTime ?? undefined,
         returnToStart: settings.returnToStart,
         transport: settings.transport === "MOTORCYCLE" ? "motorcycle" as const

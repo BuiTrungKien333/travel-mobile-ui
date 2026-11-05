@@ -4,7 +4,8 @@ import MapView, { Marker, Polyline, PROVIDER_GOOGLE, type Region } from "react-n
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
-import type { TripStop } from "@/features/home/types/home-types";
+import type { TripStop, TravelMode } from "@/features/home/types/home-types";
+import { routePoints } from "../utils/day-route";
 import { usePlaceRouteQuery } from "../api/maps-hooks";
 import { usePlaceSearchCopy } from "../i18n/place-search-copy";
 import type { PlaceCoordinate, PlaceMapRegion } from "../utils/place-search";
@@ -26,17 +27,21 @@ function decodePolyline(encoded: string) {
 
 export function PlaceSearchMap({
   places, region, focused, custom, onMove, fitContainer = false, controlsTop, extraControl, showRoute = false,
+  origin, originLabel, returnToStart = false, travelMode = "car",
 }: {
   places: TripStop[]; region: PlaceMapRegion; focused?: TripStop; custom: boolean;
   onMove?: (coordinate: PlaceCoordinate) => void; fitContainer?: boolean;
   controlsTop?: number; extraControl?: ReactNode;
   showRoute?: boolean;
+  origin?: PlaceCoordinate; originLabel?: string; returnToStart?: boolean; travelMode?: TravelMode;
 }) {
   const theme = useAppTheme();
   const { copy, locale } = usePlaceSearchCopy();
-  const coordinates = places.flatMap((place) => place.location ? [place.location] : []);
-  const route = usePlaceRouteQuery(coordinates, showRoute && !custom);
-  const routeCoordinates = route.data?.encodedPolyline ? decodePolyline(route.data.encodedPolyline) : [];
+  const coordinates = routePoints(places, origin, returnToStart);
+  const canRoute = showRoute && !custom && coordinates !== null && coordinates.length >= 2;
+  const route = usePlaceRouteQuery(coordinates ?? [], canRoute, travelMode);
+  const routeData = canRoute ? route.data : undefined;
+  const routeCoordinates = routeData?.encodedPolyline ? decodePolyline(routeData.encodedPolyline) : [];
   const center = focused?.location ?? { latitude: region.latitude, longitude: region.longitude };
   const span = focused?.location ? 0.02 : Math.max(region.span, 0.02);
   const initialRegion: Region = { ...center, latitudeDelta: span * 1.5, longitudeDelta: span * 1.5 };
@@ -59,6 +64,7 @@ export function PlaceSearchMap({
           showsUserLocation={false}
           toolbarEnabled={false}
         >
+          {origin ? <Marker identifier="day-origin" coordinate={origin} title={originLabel} pinColor={theme.colors.primary} /> : null}
           {places.flatMap((place, index) => place.location ? [
             <Marker key={place.id} identifier={place.id} coordinate={place.location}
               title={place.name[locale]} description={place.address?.[locale]}
@@ -81,7 +87,7 @@ export function PlaceSearchMap({
       {extraControl ? <View style={{ position: "absolute", left: theme.spacing.sm, top: controlsTop ?? theme.spacing.sm }}>{extraControl}</View> : null}
       <View pointerEvents="none" style={{ position: "absolute", top: theme.spacing.sm, left: theme.spacing.sm, maxWidth: "55%", padding: theme.spacing.xs, backgroundColor: theme.colors.glassFallback, borderRadius: theme.radius.sm }}>
         <AppText variant="caption" tone="muted">
-          {route.isError ? copy.routeUnavailable : route.data ? `${(route.data.distanceMeters / 1000).toFixed(1)} km · ${Math.max(1, Math.round(route.data.durationSeconds / 60))} min` : copy.liveMapLabel} · Geoapify · © OpenStreetMap contributors
+          {canRoute && route.isError ? copy.routeUnavailable : routeData ? `${(routeData.distanceMeters / 1000).toFixed(1)} km · ${Math.max(1, Math.round(routeData.durationSeconds / 60))} min` : copy.liveMapLabel} · Geoapify · © OpenStreetMap contributors
         </AppText>
       </View>
     </View>

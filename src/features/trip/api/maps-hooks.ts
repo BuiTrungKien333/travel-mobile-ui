@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { mapsApi } from "./maps-api";
+import type { TravelMode } from "@/features/home/types/home-types";
+import { toRouteTravelMode } from "../utils/day-route";
 
 export function useDebouncedValue<T>(value: T, delay = 400): T {
   const [debounced, setDebounced] = useState(value);
@@ -41,15 +43,15 @@ export function useCurrentWeatherQuery(latitude?: number, longitude?: number, en
   });
 }
 
-export function usePlaceRouteQuery(points: { latitude: number; longitude: number }[], enabled = true) {
+export function usePlaceRouteQuery(points: { latitude: number; longitude: number }[], enabled = true, mode: TravelMode = "car") {
   const pointsKey = points.map(({ latitude, longitude }) => `${latitude},${longitude}`).join(";");
   return useQuery({
-    queryKey: ["places", "route", pointsKey],
+    queryKey: ["places", "route", pointsKey, mode],
     queryFn: ({ signal }) => mapsApi.route({
       origin: points[0],
       destination: points[points.length - 1],
       ...(points.length > 2 ? { intermediates: points.slice(1, -1) } : {}),
-      travelMode: "DRIVE",
+      travelMode: toRouteTravelMode(mode),
     }, signal),
     enabled: enabled && points.length >= 2 && points.length <= 25,
     staleTime: 10 * 60_000,

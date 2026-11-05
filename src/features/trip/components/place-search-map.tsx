@@ -2,7 +2,8 @@ import type { ReactNode } from "react";
 import { View } from "react-native";
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
-import type { TripStop } from "@/features/home/types/home-types";
+import type { TripStop, TravelMode } from "@/features/home/types/home-types";
+import { routePoints } from "../utils/day-route";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { usePlaceRouteQuery } from "../api/maps-hooks";
 import { usePlaceSearchCopy } from "../i18n/place-search-copy";
@@ -16,6 +17,9 @@ export function PlaceSearchMap({
   controlsTop,
   extraControl,
   showRoute = false,
+  origin,
+  returnToStart = false,
+  travelMode = "car",
 }: {
   places: TripStop[];
   region: PlaceMapRegion;
@@ -26,16 +30,19 @@ export function PlaceSearchMap({
   controlsTop?: number;
   extraControl?: ReactNode;
   showRoute?: boolean;
+  origin?: PlaceCoordinate; originLabel?: string; returnToStart?: boolean; travelMode?: TravelMode;
 }) {
   const theme = useAppTheme();
   const { copy } = usePlaceSearchCopy();
-  const coordinates = places.flatMap((place) => place.location ? [place.location] : []);
-  const route = usePlaceRouteQuery(coordinates, showRoute && !custom);
-  const routeLabel = route.isError
+  const coordinates = routePoints(places, origin, returnToStart);
+  const canRoute = showRoute && !custom && coordinates !== null && coordinates.length >= 2;
+  const route = usePlaceRouteQuery(coordinates ?? [], canRoute, travelMode);
+  const routeData = canRoute ? route.data : undefined;
+  const routeLabel = canRoute && route.isError
     ? copy.routeUnavailable
-    : route.data
-      ? (route.data.distanceMeters / 1000).toFixed(1) + " km · " +
-        Math.max(1, Math.round(route.data.durationSeconds / 60)) + " min"
+    : routeData
+      ? (routeData.distanceMeters / 1000).toFixed(1) + " km · " +
+        Math.max(1, Math.round(routeData.durationSeconds / 60)) + " min"
       : copy.liveMapLabel;
 
   return (

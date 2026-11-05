@@ -13,7 +13,7 @@ const trip: TripResponse = {
   status: "PLANNING", mode: "PLANNING", timeZone: "Asia/Ho_Chi_Minh", version: 0, createdAt: stamp, updatedAt: stamp,
   readiness: { hasDates: true, hasPlaces: true, unscheduledCount: 0 }, dayCount: 1, stopCount: 2, memoryCount: 0,
   coverImageUrl: null, preferences: [], budget: null, accommodation: null, notes: null,
-  days: [{ id, date, dayNumber: 1, startLocation: null, startTime: null, returnToStart: false, transport: "CAR" }],
+  days: [{ id, date, dayNumber: 1, startLocation: null, startCoordinate: null, startTime: null, returnToStart: false, transport: "CAR" }],
 };
 const places: TripPlaceResponse[] = [id, secondId].map((placeId) => ({
   id: placeId, tripId: id, placeId, priority: 0, estimatedDuration: 30, notes: null, plannedOrder: 0,

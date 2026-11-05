@@ -26,9 +26,11 @@ export const tripSummarySchema = z.object({
   updatedAt: instant,
 });
 export type TripSummary = z.infer<typeof tripSummarySchema>;
+export const tripCoordinateSchema = z.object({ latitude: z.number().min(-90).max(90), longitude: z.number().min(-180).max(180) });
 const tripDaySchema = z.object({
   id: z.guid(), date: localDate, dayNumber: z.number().int().positive(),
   startLocation: z.string().nullable(),
+  startCoordinate: tripCoordinateSchema.nullable(),
   startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).nullable(),
   returnToStart: z.boolean(), transport: z.enum(["CAR", "MOTORCYCLE", "WALK"]),
 });
@@ -94,6 +96,7 @@ export type UpdateTripRequest = z.infer<typeof updateTripRequestSchema>;
 export const updateTripDayRequestSchema = z.object({
   version: versionSchema,
   startLocation: z.string().trim().min(1).max(200).nullable(),
+  startCoordinate: tripCoordinateSchema.nullable().optional(),
   startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).nullable(),
   returnToStart: z.boolean(),
   transport: z.enum(["CAR", "MOTORCYCLE", "WALK"]),
@@ -102,6 +105,8 @@ export const updateTripDayRequestSchema = z.object({
 }).superRefine((value, ctx) => {
   if (value.returnToStart && !value.startLocation)
     ctx.addIssue({ code: "custom", path: ["startLocation"], message: "A return point is required" });
+  if (value.startCoordinate && !value.startLocation)
+    ctx.addIssue({ code: "custom", path: ["startLocation"], message: "A starting point name is required" });
   if (value.durations.length && !value.expectedItineraryUpdatedAt)
     ctx.addIssue({ code: "custom", path: ["expectedItineraryUpdatedAt"], message: "An itinerary version is required" });
 });

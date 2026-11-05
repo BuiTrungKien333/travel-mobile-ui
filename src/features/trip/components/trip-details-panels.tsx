@@ -204,7 +204,7 @@ export function TripDetailsPanels({
             ) : (
               <>
                 <AppText>
-                  {day.startLocation || trip.accommodation || copy.chooseStart}
+                  {day.startLocation || copy.chooseStart}
                 </AppText>
                 <AppText>
                   {day.startTime || copy.noTime} ·{" "}
@@ -276,6 +276,7 @@ export function TripDetailsPanels({
           onClose={closeSheet}
           onApply={onApplyOptimization}
           pinnedKeys={trip.days.flatMap((entry) => entry.stops.filter((stop) => stop.pinned).map((stop) => `${entry.date}:${stop.id}`))}
+          daySettings={trip.days}
         />
       ) : null}
       {hostReady && sheet?.kind === "dates" ? (

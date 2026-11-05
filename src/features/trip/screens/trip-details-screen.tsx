@@ -219,7 +219,7 @@ function TripDetailsContent({
   const day =
     trip.days.find((item) => item.date === selectedDate) ?? defaultDay;
   const isLiveToday = mode === "live" && day?.date === today;
-  const startInfo = getTripStartInfo(trip, day, mode === "live");
+  const startInfo = getTripStartInfo(day, mode === "live");
   const timedStops = scheduledStops(day);
   const hasStartNode = !!startInfo && (timedStops.length > 0 || canEdit);
   const canOptimize = trip.days.reduce((total, item) => total + item.stops.length, 0) > 1 && !backlog;
@@ -250,7 +250,8 @@ function TripDetailsContent({
   );
   const dayMemories = memoriesQuery.data?.content ?? [];
   const optimizationError = optimizeItineraryMutation.isError
-    ? (optimizeItineraryMutation.error instanceof ApiError && optimizeItineraryMutation.error.code === "TRIP_014"
+    ? (optimizeItineraryMutation.error instanceof ApiError && optimizeItineraryMutation.error.code === "TRIP_015" ? copy.originSelectRequired
+      : optimizeItineraryMutation.error instanceof ApiError && optimizeItineraryMutation.error.code === "TRIP_014"
       ? copy.pinOptimizationConflict : copy.optimizationError)
     : optimizationApplyError ?? undefined;
 
@@ -543,6 +544,8 @@ function TripDetailsContent({
         number={item.number}
         last={item.number === timedStops.length}
         fromStart={item.number === 1 && hasStartNode}
+        origin={item.number === 1 ? day?.startCoordinate : undefined}
+        departureTime={item.number === 1 ? day?.startTime : undefined}
         highlighted={
           highlight?.date === day?.date && highlight?.id === item.stop.id
         }
@@ -627,7 +630,7 @@ function TripDetailsContent({
     </View>
   );
 
-  const planningMapRegion = getPlaceMapRegion(timedStops);
+  const planningMapRegion = getPlaceMapRegion(timedStops, day?.startCoordinate);
   const planningHeader = showMap ? (
     <TripPlanningMap
       header={header}
@@ -649,7 +652,9 @@ function TripDetailsContent({
       resizeLock={mapResizeLock}
       collapsedByScroll={planningScroll.hidden}
       expandRequest={mapExpandRequest}
-      mapContent={planningMapRegion ? <PlaceSearchMap places={timedStops} region={planningMapRegion} custom={false} fitContainer showRoute /> : undefined}
+      mapContent={planningMapRegion ? <PlaceSearchMap places={timedStops} region={planningMapRegion} custom={false} fitContainer
+        showRoute={!day?.startLocation || !!day.startCoordinate} origin={day?.startCoordinate} originLabel={day?.startLocation}
+        returnToStart={day?.returnToStart} travelMode={day?.transport} /> : undefined}
     />
   ) : (
     <View style={{ paddingHorizontal: theme.spacing.lg }}>{header}</View>
@@ -768,7 +773,7 @@ function TripDetailsContent({
                       : progress.nextStop?.id
                   }
                   startLabel={
-                    day?.startLocation || trip.accommodation || copy.chooseStart
+                    day?.startLocation || copy.chooseStart
                   }
                   onStart={() => jump(0)}
                   onSelect={selectStop}

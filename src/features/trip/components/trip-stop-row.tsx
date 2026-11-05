@@ -4,6 +4,7 @@ import { AppText } from "@/components/ui/app-text";
 import type { TripStop, TravelMode } from "@/features/home/types/home-types";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { usePlaceRouteQuery } from "../api/maps-hooks";
+import { sameCoordinate } from "../utils/day-route";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 import { clockPattern } from "../schemas/trip-details-schema";
 import { visitTimeRange } from "../utils/trip-details-layout";
@@ -22,6 +23,8 @@ function minuteOfDay(time: string) {
 export function TripStopRow({
   stop,
   previous,
+  origin,
+  departureTime,
   visited,
   next,
   mode,
@@ -36,6 +39,8 @@ export function TripStopRow({
 }: {
   stop: TripStop;
   previous?: TripStop;
+  origin?: TripStop["location"];
+  departureTime?: string;
   visited: boolean;
   next: boolean;
   mode: TravelMode;
@@ -50,11 +55,14 @@ export function TripStopRow({
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
+  const previousPoint = previous?.location ?? origin;
+  const samePoint = sameCoordinate(previousPoint, stop.location);
   const legQuery = usePlaceRouteQuery(
-    previous?.location && stop.location ? [previous.location, stop.location] : [],
-    !!previous?.location && !!stop.location,
+    previousPoint && stop.location ? [previousPoint, stop.location] : [],
+    !!previousPoint && !!stop.location && !samePoint,
+    mode,
   );
-  const leg = legQuery.data
+  const leg = samePoint ? { km: 0, minutes: 0 } : legQuery.data
     ? { km: legQuery.data.distanceMeters / 1000, minutes: Math.round(legQuery.data.durationSeconds / 60) }
     : null;
   const range = visitTimeRange(stop);
@@ -68,11 +76,11 @@ export function TripStopRow({
     .filter(Boolean)
     .join(" · ");
   const arrival = minuteOfDay(stop.time);
-  const before = previous ? minuteOfDay(previous.time) : null;
+  const before = previous ? minuteOfDay(previous.time) : departureTime ? minuteOfDay(departureTime) : null;
   const conflict =
     arrival !== null &&
     before !== null &&
-    arrival < before + (previous?.durationMinutes ?? 45) + (leg?.minutes ?? 0);
+    arrival < before + (previous ? previous.durationMinutes ?? 45 : 0) + (leg?.minutes ?? 0);
   const markerWidth = onVisited
     ? theme.layout.compactTouchTarget
     : theme.layout.sampleStopNumberSize;

@@ -25,11 +25,13 @@ test("mobile schemas accept actual backend responses from PostgreSQL integration
   const dayDate = detail.days[0].date;
   const updatedDay = await tripApi.updateDay(detail.id, dayDate, {
     version: detail.version, startLocation: "Mobile hotel", startTime: "07:45", returnToStart: true,
+    startCoordinate: { latitude: 11.94, longitude: 108.44 },
     transport: "MOTORCYCLE", durations: [],
   });
   const mappedDay = toTrip(updatedDay).days[0];
   assert.equal(mappedDay.startLocation, "Mobile hotel");
   assert.equal(mappedDay.startTime, "07:45");
+  assert.deepEqual(JSON.parse(JSON.stringify(mappedDay.startCoordinate)), { latitude: 11.94, longitude: 108.44 });
   assert.equal(mappedDay.returnToStart, true);
   assert.equal(mappedDay.transport, "motorcycle");
   const { itineraryApi } = load<typeof import("../src/features/trip/api/itinerary-api.ts")>("src/features/trip/api/itinerary-api.ts");

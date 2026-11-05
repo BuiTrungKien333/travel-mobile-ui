@@ -459,6 +459,7 @@ test("daily editor validates custom visit durations and return-to-start together
   const schema = tripDayScheduleSchema(copy);
   const input = {
     startLocation: "Khách sạn",
+    startCoordinate: { latitude: 11.94, longitude: 108.44 },
     startTime: "08:30",
     returnToStart: true,
     durations: [{ stopId: "lake", minutes: "75" }],
@@ -555,6 +556,7 @@ test("starting-point editor validates return trips and preserves transport when 
   );
   const values = schema.parse({
     startLocation: "  Home address  ",
+    startCoordinate: { latitude: 11.94, longitude: 108.44 },
     startTime: "07:45",
     returnToStart: true,
     transport: "car",

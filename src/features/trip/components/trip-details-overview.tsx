@@ -6,11 +6,11 @@ import type { Trip, TripDay } from "@/features/home/types/home-types";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 import { usePlaceRouteQuery, useWeatherForecastQuery, useCurrentWeatherQuery } from "../api/maps-hooks";
+import { dayRoutePoints } from "../utils/day-route";
 import type { TripDetailsSheetState } from "../types/trip-details-types";
 
 /** Summary includes scheduled visits only; origin legs aren't invented. */
 export function TripDayTools({
-  trip,
   day,
   today,
   onSheetChange: setSheet,
@@ -32,8 +32,8 @@ export function TripDayTools({
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
-  const routePoints = (day?.stops ?? []).flatMap((stop) => stop.location ? [stop.location] : []);
-  const routeQuery = usePlaceRouteQuery(routePoints, routePoints.length === day?.stops.length);
+  const routePoints = dayRoutePoints(day);
+  const routeQuery = usePlaceRouteQuery(routePoints ?? [], routePoints !== null, day?.transport);
   const weatherLocation = day?.stops.find((stop) => stop.location)?.location;
   const weatherQuery = useWeatherForecastQuery(weatherLocation?.latitude, weatherLocation?.longitude, day?.date, showWeather);
   const current = useCurrentWeatherQuery(weatherLocation?.latitude, weatherLocation?.longitude, showWeather && day?.date === today);
@@ -42,7 +42,8 @@ export function TripDayTools({
   const weatherCondition = currentWeather?.condition ?? summary?.dominantCondition;
   const temperature = currentWeather?.temperature ?? (summary ? (summary.minTemperature + summary.maxTemperature) / 2 : undefined);
   const forecast: { condition: "sun" | "rain" | "cloud"; temperature: number } | undefined = temperature !== undefined ? { condition: weatherCondition === "CLEAR_SKY" ? "sun" : weatherCondition === "LIGHT_RAIN" || weatherCondition === "RAINY" || weatherCondition === "HEAVY_RAIN" || weatherCondition === "THUNDERSTORM" ? "rain" : "cloud", temperature: Math.round(temperature) } : undefined;
-  const travel = routeQuery.data ? { complete: true, km: routeQuery.data.distanceMeters / 1000, minutes: Math.round(routeQuery.data.durationSeconds / 60) } : null;
+  const travel = routePoints && routePoints.length === 1 && (day?.stops.length ?? 0) > 0 ? { complete: true, km: 0, minutes: 0 }
+    : routeQuery.data ? { complete: true, km: routeQuery.data.distanceMeters / 1000, minutes: Math.round(routeQuery.data.durationSeconds / 60) } : null;
   const reorderLink =
     canEdit && day && day.stops.length > 1 ? (
       <Pressable
@@ -94,10 +95,9 @@ export function TripDayTools({
           </View>
           <AppText variant="caption" tone="muted">
             {travel?.complete &&
-            !trip.accommodation &&
-            (day?.stops.length ?? 0) > 1
+            (day?.stops.length ?? 0) > 0
               ? `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(travel.km)} km · ${travel.minutes} ${copy.minutes} · ${copy.estimate}`
-              : copy.unknownRoute}
+              : day?.startLocation && !day.startCoordinate ? copy.originSelectRequired : copy.unknownRoute}
           </AppText>
         </View>
         {showOptimize && day ? (

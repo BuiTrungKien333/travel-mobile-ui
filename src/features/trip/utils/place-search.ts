@@ -38,10 +38,11 @@ export function searchPlaces(places: TripStop[], query: string): TripStop[] {
 }
 
 export type PlaceCoordinate = NonNullable<TripStop["location"]>;
-export function getPlaceMapRegion(places: TripStop[]) {
+export function getPlaceMapRegion(places: TripStop[], origin?: PlaceCoordinate) {
   const points = places.flatMap((place) =>
     place.location ? [place.location] : [],
   );
+  if (origin) points.push(origin);
   if (!points.length) return null;
   const latitudes = points.map((point) => point.latitude);
   const longitudes = points.map((point) => point.longitude);

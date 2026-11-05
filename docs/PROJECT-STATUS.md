@@ -2,6 +2,15 @@
 
 > Định hướng ngày 05/11/2026: đồ án môn học của sinh viên năm cuối, ưu tiên app chạy ổn, logic đúng, luồng rõ ràng và UI/UX mượt, đẹp. Xem [Kế hoạch hoàn thiện đồ án](MOBILE-MVP-IMPLEMENTATION-PLAN.md); production là giai đoạn sau. Các mốc preview tháng 10 bên dưới là lịch sử, không mô tả đầy đủ trạng thái API hiện tại.
 
+## Phần 4 · Route và tối ưu dùng thiết lập ngày · 05/11/2026
+
+- V18 thêm tọa độ điểm xuất phát theo ngày; form tìm địa điểm qua API, chọn kết quả hoặc điểm có tọa độ trong ngày rồi lưu. Sửa chữ sẽ bỏ tọa độ cũ; nơi lưu trú là shortcut tìm kiếm, không tự được coi là vị trí xuất phát.
+- Polyline, tổng quãng đường và chặng giữa các điểm dùng phương tiện đã chọn; cache phân biệt phương tiện. Có chặng từ điểm xuất phát và chặng quay về. Thiếu tọa độ không được bỏ qua địa điểm để vẽ một lộ trình khác; route bị tắt không vẽ lại polyline cũ từ cache.
+- Optimizer đọc origin/giờ đi/phương tiện/quay về đã lưu, giữ ghim khi đi từ một điểm xuất phát riêng. Haversine vẫn là mô hình tối ưu quãng đường và ước tính thời gian; UI giải thích tính ước tính của đề xuất.
+- Backend: 24 test unit và 29 test PostgreSQL đạt. Mobile: 41 test trọng tâm đạt, gồm response thật, route/cache theo phương tiện và không vẽ đường cũ. Chưa QA phần này trên điện thoại; restart backend để chạy V18, reload mobile và thử [checklist phần 4](api-contract-integration.md#day-routing-and-optimization).
+- TypeScript và ESLint các file sửa đạt. Bộ test mobile đầy đủ có 239 test: 220 đạt, 19 lỗi cũ, không skip khi dùng fixture thật; danh sách lỗi không đổi so với phần 3. Lint toàn dự án còn 51 lỗi, 3 cảnh báo cũ.
+- Không thêm dependency hoặc đổi cấu hình native. Phần tiếp theo theo kế hoạch là P0-03: hoàn thiện luồng tạo/thêm/sửa chuyến, lưu/hủy, phản hồi thao tác và các test của luồng API thật. Dừng để review/push trước khi tiếp tục.
+
 ## Phần 3 · Ghim điểm và giờ ghé · 05/11/2026
 
 - Migration V17 thêm `itinerary_items.pinned`, mặc định false; lượt ghim bắt buộc có giờ đến. Ghim thuộc lượt ghé trong một ngày, không thuộc Place dùng chung.

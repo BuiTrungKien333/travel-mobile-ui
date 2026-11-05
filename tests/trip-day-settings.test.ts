@@ -13,9 +13,9 @@ const trip: TripResponse = {
   readiness: { hasDates: true, hasPlaces: false, unscheduledCount: 0 }, dayCount: 2, stopCount: 0, memoryCount: 0,
   coverImageUrl: null, preferences: [], budget: null, accommodation: null, notes: null,
   days: [
-    { id, date, dayNumber: 1, startLocation: "Khách sạn", startTime: "07:45", returnToStart: true, transport: "MOTORCYCLE" },
+    { id, date, dayNumber: 1, startLocation: "Khách sạn", startCoordinate: null, startTime: "07:45", returnToStart: true, transport: "MOTORCYCLE" },
     { id: "40000000-0000-0000-0000-000000000002", date: "2026-11-21", dayNumber: 2,
-      startLocation: null, startTime: null, returnToStart: false, transport: "CAR" },
+      startLocation: null, startCoordinate: null, startTime: null, returnToStart: false, transport: "CAR" },
   ],
 };
 
@@ -44,7 +44,7 @@ test("changing only transport preserves the other saved day settings", () => {
   const { toTrip, toUpdateTripDayRequest } = modules();
   const request = toUpdateTripDayRequest(toTrip(trip), { kind: "day", date, values: { transport: "walk" } });
   assert.deepEqual(JSON.parse(JSON.stringify(request)), {
-    version: 3, startLocation: "Khách sạn", startTime: "07:45", returnToStart: true, transport: "WALK", durations: [],
+    version: 3, startLocation: "Khách sạn", startCoordinate: null, startTime: "07:45", returnToStart: true, transport: "WALK", durations: [],
   });
 });
 

@@ -8,6 +8,8 @@ export function toUpdateTripDayRequest(trip: Trip, mutation: Extract<TripMutatio
   const version = mutation.baseVersion ?? trip.serverVersion;
   if (!day || version === undefined) throw new ApiError("INVALID_RESPONSE");
   const values = { ...day, ...mutation.values };
+  const coordinate = "startCoordinate" in mutation.values ? mutation.values.startCoordinate
+    : values.startLocation?.trim() !== day.startLocation?.trim() ? undefined : day.startCoordinate;
   const durations = (mutation.durations ?? []).filter((entry) => {
     const stop = day.stops.find((stop) => stop.id === entry.stopId);
     if (!stop) throw new ApiError("INVALID_RESPONSE");
@@ -16,6 +18,7 @@ export function toUpdateTripDayRequest(trip: Trip, mutation: Extract<TripMutatio
   return updateTripDayRequestSchema.parse({
     version,
     startLocation: values.startLocation?.trim() || null,
+    startCoordinate: coordinate ?? null,
     startTime: values.startTime || null,
     returnToStart: values.returnToStart ?? false,
     transport: { car: "CAR", motorcycle: "MOTORCYCLE", walk: "WALK" }[values.transport ?? "car"],

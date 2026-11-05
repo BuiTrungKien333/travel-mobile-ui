@@ -5,6 +5,7 @@ import { useAppTheme } from "@/hooks/use-app-theme";
 import type { ItineraryOptimizationProposal } from "../api/itinerary-types";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 import { TripDetailsSheet } from "./trip-details-sheet";
+import type { TripDay } from "@/features/home/types/home-types";
 
 export function TripOptimizationSheet({
   proposal,
@@ -15,6 +16,7 @@ export function TripOptimizationSheet({
   onApply,
   onClose,
   pinnedKeys = [],
+  daySettings = [],
 }: {
   proposal?: ItineraryOptimizationProposal;
   loading: boolean;
@@ -24,6 +26,7 @@ export function TripOptimizationSheet({
   onApply: () => void;
   onClose: () => void;
   pinnedKeys?: string[];
+  daySettings?: TripDay[];
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
@@ -55,6 +58,7 @@ export function TripOptimizationSheet({
         <View style={{ gap: theme.spacing.lg, paddingBottom: theme.spacing.md }}>
           <View style={[styles.summary, { backgroundColor: theme.colors.surfaceTint, borderColor: theme.colors.softActionBorder, borderRadius: theme.radius.md, padding: theme.spacing.md, gap: theme.spacing.xs }]}>
             <AppText variant="label">{copy.optimizedSummary}</AppText>
+            <AppText variant="caption" tone="muted">{copy.optimizerEstimate}</AppText>
             <AppText>{copy.optimizedDistance}: {formatNumber(proposal.totalTripDistanceKm, locale)} km</AppText>
             <AppText>{copy.optimizedTravelTime}: {formatNumber(proposal.totalTripTransitMinutes, locale)} {copy.minutes}</AppText>
             {proposal.globalIssues?.length ? <AppText tone="error">{copy.optimizationIssues}: {proposal.globalIssues.length}</AppText> : null}
@@ -62,6 +66,13 @@ export function TripOptimizationSheet({
           {proposal.dailySchedules.map((day, dayIndex) => (
             <View key={day.dayDate} style={{ gap: theme.spacing.sm }}>
               <AppText variant="label">{copy.day} {dayIndex + 1} · {formatDate(day.dayDate, locale)}</AppText>
+              {daySettings.filter((entry) => entry.date === day.dayDate).map((settings) => (
+                <View key={settings.date} style={{ gap: theme.spacing.xxs }}>
+                  <AppText variant="caption" tone="muted">{copy[settings.transport ?? "car"]}{settings.startTime ? ` · ${settings.startTime}` : ""}</AppText>
+                  {settings.startLocation ? <AppText variant="caption" tone="muted">{copy.startLocation}: {settings.startLocation}</AppText> : null}
+                  {settings.returnToStart ? <AppText variant="caption" tone="primary">{copy.returnLabel}: {settings.startLocation}</AppText> : null}
+                </View>
+              ))}
               {day.scheduleItems.map((stop, index) => (
                 <View key={`${day.dayDate}:${stop.placeId}`} style={[styles.stop, { borderBottomColor: theme.colors.border, gap: theme.spacing.sm, paddingVertical: theme.spacing.sm }]}>
                   <AppText variant="caption" tone="primary">{index + 1}</AppText>

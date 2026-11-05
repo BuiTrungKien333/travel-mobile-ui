@@ -22,7 +22,7 @@ export type TripMutation =
       durations?: { stopId: string; durationMinutes: number }[];
       values: Pick<
         TripDay,
-        "startLocation" | "startTime" | "returnToStart" | "transport"
+        "startLocation" | "startCoordinate" | "startTime" | "returnToStart" | "transport"
       >;
     }
   | { kind: "add"; date: string | null; stops: TripStop[] }
