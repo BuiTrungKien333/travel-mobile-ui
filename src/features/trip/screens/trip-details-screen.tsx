@@ -250,7 +250,8 @@ function TripDetailsContent({
   );
   const dayMemories = memoriesQuery.data?.content ?? [];
   const optimizationError = optimizeItineraryMutation.isError
-    ? copy.optimizationError
+    ? (optimizeItineraryMutation.error instanceof ApiError && optimizeItineraryMutation.error.code === "TRIP_014"
+      ? copy.pinOptimizationConflict : copy.optimizationError)
     : optimizationApplyError ?? undefined;
 
   function openOptimization() {
@@ -273,7 +274,8 @@ function TripDetailsContent({
       setSheet(null);
     }).catch((error: unknown) => {
       setOptimizationApplyError(
-        error instanceof ApiError && (error.status === 409 || error.code === "TRIP_008")
+        error instanceof ApiError && error.code === "TRIP_014" ? copy.pinOptimizationConflict
+        : error instanceof ApiError && (error.status === 409 || error.code === "TRIP_008")
           ? copy.optimizationConflict
           : copy.optimizationApplyError,
       );
@@ -283,7 +285,8 @@ function TripDetailsContent({
   async function persistSchedule(candidate: Trip) {
     try {
       await saveItineraryMutation.mutateAsync(toSaveItineraryRequest(candidate));
-    } catch {
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
       throw new Error("ITINERARY_SAVE_FAILED");
     }
   }

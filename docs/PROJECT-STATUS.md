@@ -2,6 +2,16 @@
 
 > Định hướng ngày 05/11/2026: đồ án môn học của sinh viên năm cuối, ưu tiên app chạy ổn, logic đúng, luồng rõ ràng và UI/UX mượt, đẹp. Xem [Kế hoạch hoàn thiện đồ án](MOBILE-MVP-IMPLEMENTATION-PLAN.md); production là giai đoạn sau. Các mốc preview tháng 10 bên dưới là lịch sử, không mô tả đầy đủ trạng thái API hiện tại.
 
+## Phần 3 · Ghim điểm và giờ ghé · 05/11/2026
+
+- Migration V17 thêm `itinerary_items.pinned`, mặc định false; lượt ghim bắt buộc có giờ đến. Ghim thuộc lượt ghé trong một ngày, không thuộc Place dùng chung.
+- Mobile bật switch ghim trên thẻ lượt ghé và trong form; lưu/tải lại đầy đủ, chặn ghim khi chưa chọn ngày/giờ. Form giữ snapshot khi mở, chặn lưu lặp và đóng sheet lúc lưu; lỗi vẫn hiện trong sheet. Preview tối ưu có nhãn điểm ghim.
+- Held–Karp nhận vị trí ghim và chỉ xét các đường đi giữ vị trí đó. Timeline giữ giờ hẹn, đợi nếu đến sớm, trả `409/TRIP_014` nếu kết quả đến muộn. Apply kiểm tra lại vị trí/giờ và giữ cờ ghim/ghi chú.
+- Lưu lịch gửi `expectedUpdatedAt`; backend trả timestamp đã đọc lại từ PostgreSQL để tránh xung đột nhầm do nano/microsecond. Đổi ngày chuyến cũng làm cũ token của lịch đã mở.
+- 21 test unit thuật toán/timeline/service và 26 test PostgreSQL đạt. Mobile: 34 test trọng tâm đạt, gồm contract bằng response thật. Chưa QA phần này trên điện thoại; checklist tại [API contract](api-contract-integration.md#pinned-visits).
+- TypeScript và ESLint các file sửa đạt. Bộ test mobile đầy đủ có 232 test: 213 đạt, 19 lỗi, không skip khi dùng fixture thật; đối chiếu log cho thấy danh sách lỗi không đổi so với phần 2. Lint toàn dự án còn 51 lỗi, 3 cảnh báo cũ.
+- Phần kế tiếp: tọa độ điểm xuất phát và dùng phương tiện/giờ đi/quay về trong route/optimizer. Dừng để người dùng review/push trước khi tiếp tục.
+
 ## Phần 2 · Lưu thiết lập ngày · 05/11/2026
 
 - Backend bổ sung `PUT /api/v1/trips/{tripId}/days/{date}`; detail/create/update trả đủ thiết lập trong `days`. Dùng cột của migration V14, không thêm migration.

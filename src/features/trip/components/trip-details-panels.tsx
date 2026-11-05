@@ -115,6 +115,7 @@ export function TripDetailsPanels({
           onShow={() => setHostReady(true)}
           title={sheetTitle}
           onClose={closeSheet}
+          dismissible={!saving}
         >
           {saveError ? <AppText accessibilityRole="alert" tone="error" variant="caption">{saveError}</AppText> : null}
           {saving ? <AppText accessibilityLiveRegion="polite" variant="caption" tone="muted">{copy.savingChanges}</AppText> : null}
@@ -274,6 +275,7 @@ export function TripDetailsPanels({
           onRetry={onRetryOptimization}
           onClose={closeSheet}
           onApply={onApplyOptimization}
+          pinnedKeys={trip.days.flatMap((entry) => entry.stops.filter((stop) => stop.pinned).map((stop) => `${entry.date}:${stop.id}`))}
         />
       ) : null}
       {hostReady && sheet?.kind === "dates" ? (

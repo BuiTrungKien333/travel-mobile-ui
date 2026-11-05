@@ -13,6 +13,7 @@ Cập nhật định hướng: **05/11/2026**, theo yêu cầu của người d�
 - **Phần 1 — Hợp nhất cấu hình Expo:** đã sửa code, dùng duy nhất `app.config.ts` cho Maps, Google, dev-client và scene support; giữ quyền camera/media trong `app.json`. Có test kiểm tra config Expo thực sự nạp và [hướng dẫn chạy thiết bị](DEVICE-SETUP.md).
 - Khi kết thúc phần 1, Expo Doctor báo 9 package lệch bản SDK đề xuất. Lúc bắt đầu phần 2, kiểm tra lại package đang cài với `expo/bundledNativeModules.json` không còn lệch phiên bản; không thay dependency trong phần 2.
 - **Phần 2 — Lưu thiết lập ngày (P0-02):** mobile gọi API lưu điểm xuất phát, giờ đi, phương tiện, quay về và thời lượng điểm ghé trong một giao dịch; tải lại dữ liệu từ server, chặn lưu lặp và giữ form khi lỗi. Xem contract và checklist trong [api-contract-integration.md](api-contract-integration.md#day-settings).
+- **Phần 3 — Ghim điểm và giờ ghé (P0-02):** lưu `pinned` cho từng lượt ghé, bật ghim/bỏ ghim trong mobile, giữ vị trí khi reorder và ràng buộc vị trí trong Held–Karp. Timeline giữ giờ ghim; báo lỗi nếu kết quả không đến kịp. Backend kiểm tra lại ghim trước khi áp dụng đề xuất. Cần restart backend để chạy migration V17; xem [contract/checklist ghim](api-contract-integration.md#pinned-visits).
 - P0-01 còn việc dựng/cài app và thử trên thiết bị với key/OAuth phù hợp; kiểm tra config chưa thay thế kiểm thử thiết bị.
 - Theo yêu cầu người dùng: xong mỗi phần thì dừng để review và push GitHub, sau đó mới triển khai phần tiếp theo.
 
@@ -60,7 +61,7 @@ Các con số là bằng chứng kỹ thuật cần xử lý, không phải thư
 
 ### P0-02. Lịch trình phải lưu đầy đủ và đúng logic
 
-**Vấn đề lúc rà soát:** nhánh thay đổi ngày trong [trip-details-screen.tsx](../src/features/trip/screens/trip-details-screen.tsx) chỉ save khi có thay đổi thời lượng. Phần 2 đã lưu/đọc `startLocation`, `startTime`, `returnToStart`, `transport` qua các cột có sẵn trong `trip_days`, cùng thời lượng điểm ghé. `pinned` và việc dùng tọa độ origin/phương tiện/giờ đi/quay về trong tối ưu vẫn là phần tiếp theo; chưa coi P0-02 đã hoàn tất.
+**Vấn đề lúc rà soát:** nhánh thay đổi ngày trong [trip-details-screen.tsx](../src/features/trip/screens/trip-details-screen.tsx) chỉ save khi có thay đổi thời lượng. Phần 2 đã lưu/đọc `startLocation`, `startTime`, `returnToStart`, `transport` qua các cột có sẵn trong `trip_days`, cùng thời lượng điểm ghé. Phần 3 đã lưu ghim và bảo vệ vị trí/giờ ghim khi tối ưu. Việc dùng tọa độ origin/phương tiện/giờ đi/quay về trong route và tối ưu vẫn là phần tiếp theo; chưa coi P0-02 đã hoàn tất.
 
 - Chốt contract và lưu/đọc đủ nơi xuất phát, giờ đi, phương tiện, quay về điểm đầu và ghim.
 - Kiểm tra ngày của lịch nằm trong chuyến, giờ/thời lượng hợp lệ, chuyến hủy được xử lý nhất quán.
@@ -187,4 +188,4 @@ Mỗi đợt hoàn thiện cả logic, trạng thái lỗi và giao diện của
 - [Luồng camera](../src/features/camera/components/native-trip-camera.tsx), [ghép dữ liệu kỷ niệm](../src/features/memories/utils/server-memories.ts).
 - Hướng dẫn UI/UX đã tham khảo: [ui-ux-pro-max](../.agents/skills/ui-ux-pro-max/SKILL.md). Các quyết định thiết kế của người dùng và WeGo được ưu tiên.
 
-Phần 1 và phần 2 đã có thay đổi code như mục tiến độ ở đầu tài liệu; các checklist chưa đánh dấu vẫn cần kiểm chứng trước khi nghiệm thu.
+Phần 1–3 đã có thay đổi code như mục tiến độ ở đầu tài liệu; các checklist chưa đánh dấu vẫn cần kiểm chứng trước khi nghiệm thu.

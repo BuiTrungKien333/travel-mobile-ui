@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ScreenSafeArea } from "@/components/common/screen-safe-area";
@@ -31,6 +31,8 @@ import { useDeleteTripPlaceMutation, useTripPlacesQuery, useTripQuery, useUpdate
 import { useSaveItineraryMutation, useTripItineraryQuery } from "../api/itinerary-hooks";
 import { toSaveItineraryRequest, toTrip } from "../api/trip-adapters";
 import { applyTripMutation } from "../utils/trip-mutations";
+import { ApiError } from "@/services/api/api-error";
+import { clockPattern } from "../schemas/trip-details-schema";
 
 function goBack() {
   if (router.canGoBack()) router.back();
@@ -104,17 +106,30 @@ function StopDetailsContent({
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [removeError, setRemoveError] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [editTrip, setEditTrip] = useState(trip);
+  const [saving, setSaving] = useState(false);
+  const [mutationError, setMutationError] = useState<string | null>(null);
+  const inFlight = useRef(false);
   const editable = getTripDetailsMode(trip, today) !== "cancelled";
   const canVisit = editable;
   const place = stop;
   const mapPlaces = place.location ? [place] : [];
   const region = getPlaceMapRegion(mapPlaces);
-  function commit(mutation: TripMutation) {
-    if (!editable) return false;
+  function finishMutation() { inFlight.current = false; setSaving(false); }
+  function failedMutation(error: unknown) {
+    setRemoveError(true);
+    setMutationError(error instanceof ApiError && error.status === 409 ? copy.daySettingsConflict : copy.itinerarySaveError);
+  }
+  function commit(mutation: TripMutation, source = trip) {
+    if (!editable || inFlight.current || (mutation.kind !== "remove" && mutation.kind !== "stop")) return false;
+    inFlight.current = true;
+    setSaving(true);
+    setMutationError(null);
+    setRemoveError(false);
     if (mutation.kind === "remove") {
       const remove = async () => {
         if (date !== null) {
-          const candidate = applyTripMutation(trip, mutation);
+          const candidate = applyTripMutation(source, mutation);
           if (!candidate) throw new Error("INVALID_TRIP_MUTATION");
           await updatePlace.mutateAsync({
             placeId: stop.id,
@@ -132,13 +147,13 @@ function StopDetailsContent({
         setEditing(false);
         setRemoveError(false);
         goBack();
-      }).catch(() => setRemoveError(true));
+      }).catch(failedMutation).finally(finishMutation);
       return true;
     }
     if (mutation.kind !== "stop") return false;
     const save = async () => {
       if (date !== null || mutation.targetDate !== null) {
-        const candidate = applyTripMutation(trip, mutation);
+        const candidate = applyTripMutation(source, mutation);
         if (!candidate) throw new Error("INVALID_TRIP_MUTATION");
         if (date !== null && mutation.targetDate === null) {
           await updatePlace.mutateAsync({
@@ -163,7 +178,7 @@ function StopDetailsContent({
     void save().then(() => {
       setEditing(false);
       setRemoveError(false);
-    }).catch(() => setRemoveError(true));
+    }).catch(failedMutation).finally(finishMutation);
     return true;
   }
   return (
@@ -243,10 +258,14 @@ function StopDetailsContent({
               trip={trip}
               stop={stop}
               date={date}
-              onEdit={editable ? () => setEditing(true) : undefined}
-              onRemove={editable ? () => setConfirmRemove(true) : undefined}
-              onPin={undefined}
+              onEdit={editable && !saving ? () => { setEditTrip(trip); setMutationError(null); setEditing(true); } : undefined}
+              onRemove={editable && !saving ? () => setConfirmRemove(true) : undefined}
+              onPin={editable && !saving && date && clockPattern.test(stop.time) ? (pinned) => {
+                commit({ kind: "stop", date, stopId: stop.id, targetDate: date,
+                  values: { time: stop.time, durationMinutes: stop.durationMinutes, note: stop.note, pinned } });
+              } : undefined}
             />
+            {!date || !clockPattern.test(stop.time) ? <AppText variant="caption" tone="muted">{copy.pinTimeRequired}</AppText> : null}
             <PlaceIntroduction place={place} />
           </PlaceDetailsContent>
           <View
@@ -288,7 +307,7 @@ function StopDetailsContent({
               <AppButton
                 variant="outline"
                 size="small"
-                disabled={!canVisit}
+                disabled={!canVisit || saving || updatePlace.isPending}
                 accessibilityHint={
                   canVisit
                     ? visited
@@ -330,9 +349,10 @@ function StopDetailsContent({
                 {copy.visited}
               </AppButton>
             </View>
+            {saving ? <AppText accessibilityLiveRegion="polite" variant="caption" tone="muted">{copy.savingChanges}</AppText> : null}
             {removeError ? (
               <AppText accessibilityRole="alert" tone="error">
-                {copy.stopUpdateError}
+                {mutationError ?? copy.stopUpdateError}
               </AppText>
             ) : null}
           </View>
@@ -341,17 +361,22 @@ function StopDetailsContent({
       {editing ? (
         <TripDetailsSheet
           title={copy.editVisit}
-          onClose={() => setEditing(false)}
+          onClose={() => { if (!saving) setEditing(false); }}
+          dismissible={!saving}
           topSpacing={theme.spacing.xxl}
           contentKey={stop.id}
           contentGap={theme.spacing.sm}
         >
+          {mutationError ? <AppText accessibilityRole="alert" tone="error">{mutationError}</AppText> : null}
+          <View pointerEvents={saving ? "none" : "auto"}>
           <StopDetailsForm
-            trip={trip}
+            trip={editTrip}
             stop={stop}
             date={date}
-            onCommit={commit}
+            onCommit={(mutation) => commit(mutation, editTrip)}
+            saving={saving}
           />
+          </View>
         </TripDetailsSheet>
       ) : null}
       {confirmRemove ? (
@@ -359,10 +384,12 @@ function StopDetailsContent({
           title={copy.stopRemoveTitle}
           hint={date ? copy.stopRemoveDayHint : copy.stopRemovePoolHint}
           onCancel={() => {
+            if (saving) return;
             setConfirmRemove(false);
             setRemoveError(false);
           }}
           onConfirm={() => {
+            if (inFlight.current) return;
             if (!commit({ kind: "remove", date, stopId: stop.id })) {
               setConfirmRemove(false);
               setRemoveError(true);

@@ -43,6 +43,7 @@ export type TripPreference =
 export type Trip = {
   id: string;
   serverVersion?: number;
+  serverItineraryUpdatedAt?: string | null;
   destination: string;
   title?: string;
   budget?: { amount: number; currency: "VND" };

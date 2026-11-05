@@ -134,6 +134,8 @@ const vi = {
   pinned: "Đã ghim",
   pin: "Ghim điểm và giờ này",
   pinnedHint: "Giữ nguyên vị trí và mốc giờ khi sắp xếp.",
+  pinTimeRequired: "Chọn ngày và giờ đến trước khi ghim điểm này.",
+  pinOptimizationConflict: "Không thể giữ giờ điểm ghim với lịch này. Hãy chỉnh giờ hoặc bỏ ghim rồi thử tối ưu lại.",
   stopDetails: "Chi tiết địa điểm",
   arrival: "Giờ đến",
   stopArrivalHint:
@@ -399,6 +401,8 @@ const en: typeof vi = {
   pinned: "Pinned",
   pin: "Pin this place and time",
   pinnedHint: "Keep its position and time when reordering.",
+  pinTimeRequired: "Choose a day and arrival time before pinning this visit.",
+  pinOptimizationConflict: "This route cannot keep the pinned appointment time. Adjust the time or unpin the visit, then optimize again.",
   stopDetails: "Place details",
   arrival: "Arrival time",
   stopArrivalHint:

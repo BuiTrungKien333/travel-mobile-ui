@@ -14,6 +14,7 @@ export function TripOptimizationSheet({
   onRetry,
   onApply,
   onClose,
+  pinnedKeys = [],
 }: {
   proposal?: ItineraryOptimizationProposal;
   loading: boolean;
@@ -22,6 +23,7 @@ export function TripOptimizationSheet({
   onRetry: () => void;
   onApply: () => void;
   onClose: () => void;
+  pinnedKeys?: string[];
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
@@ -29,6 +31,7 @@ export function TripOptimizationSheet({
     <TripDetailsSheet
       title={copy.optimizeTitle}
       onClose={onClose}
+      dismissible={!applying}
       heightRatio={theme.layout.tripOptimizationSheetHeightRatio}
       footer={
         <AppButton
@@ -64,6 +67,7 @@ export function TripOptimizationSheet({
                   <AppText variant="caption" tone="primary">{index + 1}</AppText>
                   <View style={{ flex: 1, gap: theme.spacing.xxs }}>
                     <AppText>{stop.placeName}</AppText>
+                    {pinnedKeys.includes(`${day.dayDate}:${stop.placeId}`) ? <AppText variant="caption" tone="primary">{copy.pinned}</AppText> : null}
                     <AppText variant="caption" tone="muted">{formatTime(stop.arrivalTime)} · {stop.durationMinutes} {copy.minutes}</AppText>
                   </View>
                 </View>

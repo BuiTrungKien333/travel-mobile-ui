@@ -62,6 +62,7 @@ export function toTrip(
         durationMinutes: entry.durationMinutes,
         note: entry.note ?? undefined,
         plannedOrder: entry.sequence,
+        pinned: entry.pinned,
       }];
     });
     return {
@@ -78,6 +79,7 @@ export function toTrip(
   return {
     id: value.id,
     serverVersion: value.version,
+    serverItineraryUpdatedAt: itinerary?.updatedAt,
     destination: value.destination.name,
     title: value.title,
     budget: "budget" in value ? value.budget ?? undefined : undefined,
@@ -99,6 +101,7 @@ export function toTrip(
 
 export function toSaveItineraryRequest(trip: Trip): SaveItineraryRequest {
   return {
+    ...(trip.serverItineraryUpdatedAt ? { expectedUpdatedAt: trip.serverItineraryUpdatedAt } : {}),
     days: trip.days.filter((day) => day.stops.length > 0).map((day) => ({
       date: day.date,
       stops: day.stops.map((stop, sequence) => ({
@@ -109,6 +112,7 @@ export function toSaveItineraryRequest(trip: Trip): SaveItineraryRequest {
           : null,
         durationMinutes: stop.durationMinutes ?? 45,
         note: stop.note?.trim() || null,
+        pinned: stop.pinned ?? false,
       })),
     })),
   };

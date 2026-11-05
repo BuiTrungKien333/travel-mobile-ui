@@ -73,6 +73,9 @@ export function stopDetailsSchema(copy: TripDetailsCopy) {
     pinned: z.boolean(),
     note: z.string().trim().max(500, copy.invalidText),
     targetDate: z.string().nullable(),
+  }).superRefine((value, context) => {
+    if (value.pinned && (!value.targetDate || !clockPattern.test(value.time)))
+      context.addIssue({ code: "custom", path: ["time"], message: copy.pinTimeRequired });
   });
 }
 export function daySettingsSchema(copy: TripDetailsCopy) {

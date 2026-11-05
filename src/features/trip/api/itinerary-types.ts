@@ -15,6 +15,7 @@ export const itineraryStopSchema = z.object({
   arrivalTime: localDateTime.nullable(),
   durationMinutes: z.number().int().positive(),
   sequence: z.number().int().nonnegative(),
+  pinned: z.boolean(),
   note: z.string().nullable(),
   distanceFromPreviousKm: z.number().nullable(),
   travelMinutesFromPrevious: z.number().int().nullable(),
@@ -45,8 +46,10 @@ export const saveItineraryRequestSchema = z.object({
       arrivalTime: localDateTime.nullable(),
       durationMinutes: z.number().int().min(1).max(1440),
       note: z.string().max(2000).nullable(),
-    })).max(100),
+      pinned: z.boolean().optional(),
+    }).refine((stop) => !stop.pinned || stop.arrivalTime !== null, { path: ["arrivalTime"], message: "Pinned visits require an arrival time" })).max(100),
   })).max(90),
+  expectedUpdatedAt: instant.optional(),
 });
 export type SaveItineraryRequest = z.infer<typeof saveItineraryRequestSchema>;
 

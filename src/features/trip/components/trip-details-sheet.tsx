@@ -35,6 +35,7 @@ export function TripDetailsSheet({
   scrollEnabled = true,
   variant = "default",
   contentGap,
+  dismissible = true,
 }: {
   title: string;
   children: ReactNode;
@@ -47,6 +48,7 @@ export function TripDetailsSheet({
   scrollEnabled?: boolean;
   variant?: "default" | "weather";
   contentGap?: number;
+  dismissible?: boolean;
 }) {
   const theme = useAppTheme();
   const insets = useScreenInsets();
@@ -54,8 +56,9 @@ export function TripDetailsSheet({
   const weather = variant === "weather";
   const safeTop = insets.top + (topSpacing ?? theme.spacing.lg);
   const { copy } = useTripDetailsCopy();
-  const { sheetMotion, backdropMotion, dragGesture, close, reduceMotion } =
+  const { sheetMotion, backdropMotion, dragGesture, close: dismiss, reduceMotion } =
     usePickerSheetMotion(onClose);
+  const close = () => { if (dismissible) dismiss(); };
   const handle = (
     <View
       aria-hidden
@@ -150,6 +153,7 @@ export function TripDetailsSheet({
             <GestureDetector gesture={dragGesture}>
               <View
                 collapsable={false}
+                pointerEvents={dismissible ? "auto" : "none"}
                 style={{ paddingHorizontal: theme.spacing.lg }}
               >
                 {weather ? (

@@ -10,7 +10,8 @@ test("mobile schemas accept actual backend responses from PostgreSQL integration
   const responses: Record<string, unknown> = JSON.parse(readFileSync(fixturePath, "utf8"));
   const client = {
     get: async (url: string) => ({ data: responses[url === "/api/v1/trips" ? "tripList" : url === "/api/v1/destinations" ? "destinations"
-      : url === "/api/v1/media/limits" ? "limits" : url.endsWith("/detail") ? "memoryDetail" : url.includes("/journal/memories") ? "memoryList" : "tripDetail"] }),
+      : url === "/api/v1/media/limits" ? "limits" : url.endsWith("/itinerary") ? "itinerary" : url.endsWith("/places") ? "tripPlaces"
+      : url.endsWith("/detail") ? "memoryDetail" : url.includes("/journal/memories") ? "memoryList" : "tripDetail"] }),
     put: async (url: string) => ({ data: url.includes("/days/") ? responses.tripDayUpdate : responses.profileUpdate }),
   };
   const load = tripModuleLoader({ "@/services/api/client": { apiClient: client } });
@@ -31,6 +32,13 @@ test("mobile schemas accept actual backend responses from PostgreSQL integration
   assert.equal(mappedDay.startTime, "07:45");
   assert.equal(mappedDay.returnToStart, true);
   assert.equal(mappedDay.transport, "motorcycle");
+  const { itineraryApi } = load<typeof import("../src/features/trip/api/itinerary-api.ts")>("src/features/trip/api/itinerary-api.ts");
+  const { toSaveItineraryRequest } = load<typeof import("../src/features/trip/api/trip-adapters.ts")>("src/features/trip/api/trip-adapters.ts");
+  const realItinerary = await itineraryApi.get(detail.id);
+  const mappedTrip = toTrip(updatedDay, await tripApi.listPlaces(detail.id), realItinerary);
+  assert.equal(mappedTrip.days[0].stops[0].pinned, true);
+  assert.equal(toSaveItineraryRequest(mappedTrip).expectedUpdatedAt, realItinerary.updatedAt);
+  assert.equal(toSaveItineraryRequest(mappedTrip).days[0].stops[0].pinned, true);
   const { memoryApi, serverMemorySchema } = load<typeof import("../src/features/memories/api/memory-api.ts")>("src/features/memories/api/memory-api.ts");
   const created = serverMemorySchema.parse((responses.memoryCreate as { data: unknown }).data);
   assert.equal((await memoryApi.detail(created.id)).tripId, detail.id);
