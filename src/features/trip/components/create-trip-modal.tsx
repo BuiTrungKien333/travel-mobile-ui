@@ -44,8 +44,8 @@ import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 import { DateRangeSheet } from "./date-range-sheet";
 import { DestinationPickerSheet } from "./destination-picker-sheet";
 import { PlacePickerScreen } from "../screens/place-picker-screen";
-import { useCreateTripMutation } from "../api/trip-hooks";
-import { tripApi } from "../api/trip-api";
+import { useCreateTripWithPlaces } from "../hooks/use-create-trip-with-places";
+import type { CreateTripProgress, CreateTripSession } from "../api/create-trip-with-places";
 import { createRequestId } from "@/utils/create-request-id";
 
 type CreateTripModalProps = {
@@ -72,10 +72,12 @@ function CreateTripForm({ onClose, onCreated }: Omit<CreateTripModalProps, "visi
   const { copy, locale } = useTripCopy();
   const { copy: detailsCopy } = useTripDetailsCopy();
   const scrollRef = useRef<ScrollView>(null);
-  const createRequest = useRef<{ payload: string; id: string } | null>(null);
+  const createRequest = useRef<{ payload: string; session: CreateTripSession } | null>(null);
+  const submitInFlight = useRef(false);
+  const [progress, setProgress] = useState<CreateTripProgress | null>(null);
   const today = todayCalendarDate();
-  const createTripMutation = useCreateTripMutation();
-  const { control, setValue, handleSubmit, setError, setFocus, formState } =
+  const createTripMutation = useCreateTripWithPlaces(setProgress);
+  const { control, setValue, handleSubmit, setError, clearErrors, setFocus, formState } =
     useForm<CreateTripInput, unknown, CreateTripOutput>({
       resolver: zodResolver(createTripSchema(copy, today)),
       defaultValues: {
@@ -104,6 +106,7 @@ function CreateTripForm({ onClose, onCreated }: Omit<CreateTripModalProps, "visi
     .value;
   const budget = formatBudget(budgetDigits, locale);
   const { errors, isSubmitting, isDirty } = formState;
+  const saving = isSubmitting || createTripMutation.isPending;
   const error = errors.root?.message;
   const [notice, setNotice] = useState("");
   const [isAccordionOpen, setIsAccordionOpen] = useState(false);
@@ -118,9 +121,14 @@ function CreateTripForm({ onClose, onCreated }: Omit<CreateTripModalProps, "visi
       : 0;
 
   const requestClose = () => {
-    if (isSubmitting) return;
+    if (submitInFlight.current || saving) return;
     Keyboard.dismiss();
-    if (isDirty) confirmDiscard(copy, onClose);
+    if (progress) {
+      Alert.alert(copy.createdTitle, copy.leaveCreatedHint, [
+        { text: copy.keepEditing, style: "cancel" },
+        { text: copy.openCreatedTrip, onPress: () => onCreated(progress.tripId) },
+      ]);
+    } else if (isDirty) confirmDiscard(copy, onClose);
     else onClose();
   };
   const handleSelectDestination = (newDest: string) => {
@@ -162,53 +170,32 @@ function CreateTripForm({ onClose, onCreated }: Omit<CreateTripModalProps, "visi
     );
   const handleBudgetChange = (text: string) =>
     changeBudget(text.replace(/\D/g, ""));
-  const submit = () => handleSubmit(
+  async function persist(session: CreateTripSession) {
+    clearErrors("root");
+    try {
+      const tripId = await createTripMutation.mutateAsync(session);
+      onCreated(tripId);
+    } catch {
+      setError("root", { message: session.tripId ? copy.placesSaveError : copy.createError });
+    }
+  }
+  const submitForm = () => handleSubmit(
     async (values) => {
       Keyboard.dismiss();
-      try {
-        const request = {
-          title: values.title || generateDefaultTitle(values.destination, values.startDate, values.endDate, copy),
-          destination: { name: values.destination },
-          startDate: values.startDate,
-          endDate: values.endDate,
-          ...(values.budget !== undefined ? { budget: { amount: values.budget, currency: "VND" as const } } : {}),
-          ...(values.preferences.length ? { preferences: values.preferences } : {}),
-        };
-        const payload = JSON.stringify(request);
-        const clientRequestId = createRequest.current?.payload === payload ? createRequest.current.id : createRequestId();
-        createRequest.current = { payload, id: clientRequestId };
-        const created = await createTripMutation.mutateAsync({ ...request, clientRequestId });
-        let placesSaved = true;
-        for (const [index, stop] of values.initialStops.entries()) {
-          if (!stop.location) {
-            placesSaved = false;
-            continue;
-          }
-          try {
-            await tripApi.addPlace(created.id, {
-              ...(stop.providerPlaceId ? { providerPlaceId: stop.providerPlaceId } : {}),
-              name: stop.name.vi,
-              latitude: stop.location.latitude,
-              longitude: stop.location.longitude,
-              ...(stop.address?.vi ? { address: stop.address.vi } : {}),
-              category: stop.kind.vi,
-              ...(stop.durationMinutes ? { estimatedDuration: stop.durationMinutes } : {}),
-              plannedOrder: index,
-            });
-          } catch {
-            placesSaved = false;
-          }
-        }
-        if (!placesSaved) {
-          Alert.alert(
-            "Chuyến đi đã được tạo",
-            "Một số địa điểm chưa đồng bộ được. Bạn có thể thêm lại trong chi tiết chuyến đi.",
-          );
-        }
-        onCreated(created.id);
-      } catch {
-        setError("root", { message: "Không thể tạo chuyến đi. Hãy kiểm tra kết nối và thử lại." });
-      }
+      const request = {
+        title: values.title || generateDefaultTitle(values.destination, values.startDate, values.endDate, copy),
+        destination: { name: values.destination },
+        startDate: values.startDate,
+        endDate: values.endDate,
+        ...(values.budget !== undefined ? { budget: { amount: values.budget, currency: "VND" as const } } : {}),
+        ...(values.preferences.length ? { preferences: values.preferences } : {}),
+      };
+      const payload = JSON.stringify(request);
+      const clientRequestId = createRequest.current?.payload === payload
+        ? createRequest.current.session.request.clientRequestId : createRequestId();
+      const session: CreateTripSession = { request: { ...request, clientRequestId }, stops: values.initialStops };
+      createRequest.current = { payload, session };
+      await persist(session);
     },
     (fieldErrors) => {
       Keyboard.dismiss();
@@ -228,6 +215,17 @@ function CreateTripForm({ onClose, onCreated }: Omit<CreateTripModalProps, "visi
         scrollRef.current?.scrollTo({ y: 0, animated: !reduceMotion });
     },
   )();
+  async function submit() {
+    // Guard before async form validation; two rapid taps can arrive before React renders loading.
+    if (submitInFlight.current) return;
+    submitInFlight.current = true;
+    try {
+      if (createRequest.current?.session.tripId) await persist(createRequest.current.session);
+      else await submitForm();
+    } finally {
+      submitInFlight.current = false;
+    }
+  }
 
   return (
     <>
@@ -273,6 +271,8 @@ function CreateTripForm({ onClose, onCreated }: Omit<CreateTripModalProps, "visi
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={copy.back}
+            accessibilityState={{ disabled: saving }}
+            disabled={saving}
             onPress={requestClose}
             hitSlop={12}
             style={({ pressed }) => [
@@ -299,7 +299,7 @@ function CreateTripForm({ onClose, onCreated }: Omit<CreateTripModalProps, "visi
                 },
               ]}
             >
-              {copy.createTrip}
+              {progress ? copy.createdTitle : copy.createTrip}
             </AppText>
           </View>
         </View>
@@ -319,6 +319,20 @@ function CreateTripForm({ onClose, onCreated }: Omit<CreateTripModalProps, "visi
             },
           ]}
         >
+          {progress ? (
+            <View style={{ gap: theme.spacing.md }}>
+              <AppText variant="heading">{tripTitle || destination}</AppText>
+              <AppText accessibilityLiveRegion="polite">
+                {tripMessage(copy.placesProgress, { saved: progress.savedCount, total: progress.totalCount })}
+              </AppText>
+              <AppText tone="muted">{copy.partialCreateHint}</AppText>
+              {progress.remainingStops.length ? <AppText variant="label">{copy.remainingPlaces}</AppText> : null}
+              {progress.remainingStops.map((stop) => <AppText key={stop.id}>{stop.name[locale]}</AppText>)}
+              {error ? <AppText accessibilityRole="alert" tone="error">{error}</AppText> : null}
+            </View>
+          ) : (
+          <View pointerEvents={saving ? "none" : "auto"} accessibilityElementsHidden={saving}
+            importantForAccessibility={saving ? "no-hide-descendants" : "auto"} style={{ gap: theme.spacing.md }}>
           {/* Card 1: Điểm đến chính */}
           <Pressable
             accessibilityRole="button"
@@ -1072,6 +1086,8 @@ function CreateTripForm({ onClose, onCreated }: Omit<CreateTripModalProps, "visi
               </AppText>
             </View>
           ) : null}
+          </View>
+          )}
         </ScrollView>
 
         {/* Sticky Bottom Action Bar */}
@@ -1087,14 +1103,16 @@ function CreateTripForm({ onClose, onCreated }: Omit<CreateTripModalProps, "visi
         >
           <AppButton
             variant="raised"
-            loading={isSubmitting || createTripMutation.isPending}
+            loading={saving}
             onPress={submit}
             style={styles.createButton}
           >
-            {copy.createTrip}
+            {progress ? copy.retryPlaces : copy.createTrip}
           </AppButton>
+          {progress ? <AppButton variant="outline" disabled={saving} onPress={requestClose}
+            style={{ marginTop: theme.spacing.sm }}>{copy.openCreatedTrip}</AppButton> : null}
           <AppText variant="caption" tone="muted" style={styles.bottomHintText}>
-            {copy.createHint}
+            {progress ? copy.partialCreateHint : copy.createHint}
           </AppText>
         </View>
 

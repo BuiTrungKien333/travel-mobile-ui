@@ -11,6 +11,29 @@ The backend controller's imported DTO is authoritative. `TripController` uses `c
 - Delete: `DELETE /api/v1/trips/{id}?version=...`. A version conflict reloads data and requires the user to review it before trying again.
 - Destination suggestions come from `GET /api/v1/destinations?q=...`; custom destination names remain supported.
 
+## Trip creation recovery
+
+Phần 5 của P0-03 sử dụng API hiện có, không đổi contract backend:
+
+1. Validate toàn bộ địa điểm được chọn trước khi tạo dữ liệu; gửi `POST /api/v1/trips` với `clientRequestId` ổn định khi thử lại cùng thông tin chuyến.
+2. Giữ `tripId` ngay khi nhận response tạo chuyến. Đọc `GET /api/v1/trips/{id}/places`, sau đó gửi `POST /api/v1/trips/{id}/places` tuần tự cho các điểm còn thiếu, gồm tên/tọa độ/provider ID, địa chỉ, loại, thời lượng, ghi chú và thứ tự. Không gửi itinerary; các điểm nằm trong Chưa xếp lịch.
+3. Nếu bước thêm điểm lỗi, giữ phiên tạo và danh sách lựa chọn. UI hiện số điểm đã xác nhận lưu, các điểm đang chờ và nút thử lại. Không tạo chuyến mới khi đã biết `tripId`.
+4. Mỗi lần thử lại đều đọc danh sách server trước khi ghi tiếp. Điểm trùng được nhận diện bằng provider ID nếu hai bên đều có; nếu không, dùng tên đã trim và tọa độ bằng nhau. Điều này xử lý cả điểm riêng đã lưu nhưng mất response. Nếu đọc danh sách lỗi thì dừng, không gửi POST phỏng đoán.
+5. Chỉ tự mở chi tiết khi thêm xong. Người dùng cũng có thể chọn mở chuyến để thêm sau; cần xác nhận rằng các lựa chọn chưa lưu sẽ phải thêm lại. Cache chuyến được invalidate kể cả khi chỉ lưu được một phần.
+
+Phiên phục hồi thuộc form đang mở, chưa có hàng đợi bền vững sau khi tắt app. Dữ liệu đã ghi trên server vẫn còn. Đây là quy trình nhiều request, không phải transaction tạo cả chuyến và địa điểm. Không cam kết chống trùng cho hai thiết bị thêm đồng thời. Luồng thêm điểm vào chuyến đã có sẽ được xử lý ở phần tiếp theo của P0-03.
+
+Checklist trên điện thoại:
+
+1. Tạo chuyến không chọn điểm: mở đúng chi tiết chuyến vừa tạo. Bỏ trống điểm đến/ngày để kiểm tra lỗi ở trường tương ứng.
+2. Chọn vài điểm, quay lại form: lựa chọn vẫn còn; tạo thành công thì mọi điểm nằm ở Chưa xếp lịch, tải lại vẫn thấy và đúng thứ tự.
+3. Ngắt mạng khi đang tạo: form không đóng và còn nội dung. Bật lại mạng, thử lại cùng thông tin; danh sách chỉ có một chuyến.
+4. Ngắt mạng khi đang thêm điểm sau create: thấy màn phục hồi, số điểm đã lưu và danh sách còn thiếu. Bật mạng, thử lại; mở cùng chuyến, không trùng các điểm đã lưu.
+5. Trong màn phục hồi, bấm Back hoặc “Mở chuyến đi, thêm sau”: xác nhận trước khi rời; hủy xác nhận vẫn ở màn hiện tại. Đồng ý thì mở chuyến đã tạo, các điểm đã lưu vẫn có.
+6. Bấm tạo liên tiếp và Back trong lúc đang lưu: không tạo hai chuyến, không đóng giữa thao tác. Thử mất response cho điểm có provider ID và điểm riêng bằng HTTP double trong test.
+
+Kiểm tra tự động: `node --experimental-strip-types --test tests/create-trip-recovery.test.ts tests/create-trip.test.ts` (19 test). Test mới chạy handler form → mutation hook → feature API/schema, thay HTTP và platform rendering bằng double; chưa thay thế QA điện thoại hoặc backend đang chạy.
+
 ## Day settings
 
 `PUT /api/v1/trips/{tripId}/days/{date}` saves a day's settings and any changed visit durations in one database transaction. The date is ISO `YYYY-MM-DD` and must be an existing day inside the trip. Restart the updated backend before running this mobile version. The columns already exist in migration V14; this change adds no migration or native dependency.

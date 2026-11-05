@@ -2,6 +2,14 @@
 
 > Định hướng ngày 05/11/2026: đồ án môn học của sinh viên năm cuối, ưu tiên app chạy ổn, logic đúng, luồng rõ ràng và UI/UX mượt, đẹp. Xem [Kế hoạch hoàn thiện đồ án](MOBILE-MVP-IMPLEMENTATION-PLAN.md); production là giai đoạn sau. Các mốc preview tháng 10 bên dưới là lịch sử, không mô tả đầy đủ trạng thái API hiện tại.
 
+## Phần 5 · Tạo chuyến và thử lại địa điểm còn thiếu · 05/11/2026
+
+- P0-03 bắt đầu ở luồng tạo chuyến. Tách gọi API sang `create-trip-with-places.ts` và mutation hook; kiểm tra dữ liệu địa điểm trước khi tạo, giữ `clientRequestId` khi thử lại cùng thông tin.
+- Nếu chuyến đã tạo nhưng thêm điểm lỗi, form chuyển sang màn phục hồi với tiến độ và tên các điểm còn thiếu; không tự đóng. Retry đọc `GET /trips/{id}/places` trước rồi chỉ thêm điểm chưa có. Đối chiếu provider ID hoặc tên/tọa độ cho điểm riêng, kể cả POST đã lưu nhưng mất response. Các điểm ban đầu ở Chưa xếp lịch.
+- Chặn submit liên tiếp từ trước validation; nút Back và đóng form không làm mất phiên đang lưu. Có lựa chọn mở chuyến để thêm sau, kèm xác nhận rõ phần chưa lưu. Cache Home/Trips/chi tiết được làm mới cả khi chỉ lưu được một phần.
+- 12 test mới cho API và form/hook đạt; cùng 7 test tạo chuyến hiện có là 19 test trọng tâm đạt. TypeScript và ESLint file sửa đạt. Full suite: **251 test, 232 đạt, 19 lỗi cũ**, tên các lỗi giống phần 4; lint toàn repo vẫn 51 lỗi/3 cảnh báo cũ. Test mới thay platform/HTTP bằng double, không phải kiểm thử thiết bị hay phiên backend đang chạy.
+- Chưa đổi backend, schema DB hoặc dependency. Xem [checklist phần 5](api-contract-integration.md#trip-creation-recovery). Dừng để review/push; tiếp theo là luồng tìm/chọn/thêm điểm vào chuyến đã có, sau đó sửa lịch/lưu/hủy theo P0-03.
+
 ## Phần 4 · Route và tối ưu dùng thiết lập ngày · 05/11/2026
 
 - V18 thêm tọa độ điểm xuất phát theo ngày; form tìm địa điểm qua API, chọn kết quả hoặc điểm có tọa độ trong ngày rồi lưu. Sửa chữ sẽ bỏ tọa độ cũ; nơi lưu trú là shortcut tìm kiếm, không tự được coi là vị trí xuất phát.
