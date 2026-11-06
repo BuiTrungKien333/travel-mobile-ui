@@ -20,6 +20,7 @@ export class SessionManager {
   private accessToken: string | null = null;
   private refreshToken: string | null = null;
   private version = 0;
+  private userId: string | null = null;
   private refreshPromise?: Promise<AuthData>;
   private restorePromise?: Promise<void>;
   private storageQueue: Promise<void> = Promise.resolve();
@@ -31,6 +32,7 @@ export class SessionManager {
   }
   getAccessToken = () => this.accessToken;
   getVersion = () => this.version;
+  getUserId = () => this.userId;
   getRestoreError = () => this.restoreError;
 
   private storage(operation: () => Promise<void>) {
@@ -48,6 +50,7 @@ export class SessionManager {
     }
     if (version !== this.version) throw new ApiError("CANCELLED");
     this.accessToken = data.accessToken;
+    this.userId = data.user.id;
     this.refreshToken = data.refreshToken;
     this.restoreError = null;
     this.dependencies.onUser(data.user);
@@ -162,6 +165,7 @@ export class SessionManager {
   expire = async () => {
     ++this.version;
     this.accessToken = null;
+    this.userId = null;
     this.refreshToken = null;
     this.refreshPromise = undefined;
     this.dependencies.onClear();

@@ -74,15 +74,21 @@ export const memoryApi = {
     return parseApiData(serverMemorySchema, response.data);
   },
   async removePhoto(mediaId: string) {
-    await apiClient.delete(memoryEndpoints.media, { params: { id: z.guid().parse(mediaId) } });
+    try { await apiClient.delete(memoryEndpoints.media, { params: { id: z.guid().parse(mediaId) } }); }
+    catch (error) { if (!(error instanceof ApiError && error.code === "MEDIA_001" && error.status === 404)) throw error; }
+  },
+  async removeEmptyMemory(memoryId: string) {
+    try { await apiClient.delete(memoryEndpoints.memories, { params: { id: z.guid().parse(memoryId) } }); }
+    catch (error) { if (!(error instanceof ApiError && error.code === "MEMORY_001" && error.status === 404)) throw error; }
   },
   async limits(signal?: AbortSignal) {
     const response = await apiClient.get<unknown>(memoryEndpoints.limits, { signal });
     return parseApiData(uploadLimitsSchema, response.data);
   },
-  async upload(memoryId: string, tripId: string, body: FormData, onProgress?: (progress: number) => void) {
+  async upload(memoryId: string, tripId: string, body: FormData, onProgress?: (progress: number) => void, clientRequestId?: string) {
     const response = await apiClient.post<unknown>(memoryEndpoints.upload, body, {
-      params: { memoryId: z.guid().parse(memoryId), tripId: z.guid().parse(tripId) }, timeout: 120000,
+      params: { memoryId: z.guid().parse(memoryId), tripId: z.guid().parse(tripId),
+        ...(clientRequestId ? { clientRequestId: z.guid().parse(clientRequestId) } : {}) }, timeout: 120000,
       // Axios' JSON default must be cleared; the platform supplies the multipart boundary.
       headers: { "Content-Type": undefined },
       onUploadProgress: ({ loaded, total }) => { if (total) onProgress?.(Math.min(1, loaded / total)); },

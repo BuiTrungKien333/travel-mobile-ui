@@ -1,5 +1,15 @@
 # API contract integration
 
+## P0-04: capture ownership, retries and notes (06/11/2026)
+
+- Local metadata belongs to the accepted auth user ID. Unowned legacy records are retained but quarantined; never claim them for whichever account signs in first. Session generation also changes on same-user logout/login; stale actions cannot write a new session's store or cache.
+- Native storage copies the source into app documents before saving metadata/uploading. Readers settle each native/web metadata record separately, report skipped records and retain corrupt originals. No persistent background upload queue was added.
+- Create retains the existing stable memory `clientRequestId`. Single-file `POST /api/v1/media/upload?tripId=...&memoryId=...&clientRequestId=<UUID>` now optionally accepts a separate upload key (mobile reuses its capture UUID). Both parent IDs are required with this key. Migration **V19** adds a per-memory unique key and SHA-256 content fingerprint. Concurrent identical replays return the same `mediaId`; different bytes/MIME with the same key return **UPLOAD_006 / 409**. Requests without a key keep their existing behavior. Memory ownership/trip linkage are checked before replay.
+- Checkpoints persist `serverId`, `serverVersion`, `mediaId`, `uploaded`, `deletePending`. Notes PATCH with the version from the viewed snapshot, never silently fetch/rebase to overwrite another edit. A stale local editor after upload must reopen against the cloud version. Failed local checkpoint after successful cloud note update is reported separately.
+- Delete marks matching private backups pending before HTTP and keeps them on failure. Retrying media DELETE accepts only **MEDIA_001 / 404** as already deleted. Empty captures use existing journal DELETE; only **MEMORY_001 / 404** counts as already gone. Ambiguous create is reconciled with its original request ID before deletion. Private copies are removed after confirmation; existing phone-library copies remain.
+- A successful authoritative cloud list suppresses uploaded backups of deleted cloud photos; unavailable cloud data preserves private viewing. Offline album shells derived from owned local photos are read-only and cannot be used as capture/assignment targets.
+- Actual PostgreSQL integration verifies concurrent keyed upload, one media row/one Cloudinary call, payload conflict, and denied foreign ownership. See [P0-04 acceptance](P0-04-ACCEPTANCE.md) for device scenarios and remaining QA.
+
 The backend controller's imported DTO is authoritative. `TripController` uses `com.travel.trip.dto.*`; the older `dto.request.CreateTripRequest` and `dto.response.TripResponse` are not its HTTP contract.
 
 ## Trips

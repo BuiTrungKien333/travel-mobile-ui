@@ -1,6 +1,7 @@
 import { useI18n } from "@/hooks/use-i18n";
 
 const vi = {
+  galleryDenied: "Chưa có quyền chọn ảnh. Bạn vẫn có thể chụp bằng camera; hãy mở Cài đặt để cấp lại quyền thư viện.",
   libraryCopyError: "Ảnh đã giữ trong ứng dụng, nhưng chưa chép được vào thư viện điện thoại. Bạn vẫn có thể xem và đồng bộ ảnh.",
   savedPrivateInbox: "Đã giữ ảnh trong ứng dụng và Xem sau",
   savedAwaitingUpload: "Đã giữ ảnh trong ứng dụng. Chạm dấu tích để thử đồng bộ lại.",
@@ -69,6 +70,7 @@ const vi = {
   savedDownload: "Đã lưu trong ứng dụng và gửi ảnh đến trình tải xuống",
 };
 const en: typeof vi = {
+  galleryDenied: "Photo access was denied. You can still use the camera; open Settings to allow library access.",
   libraryCopyError: "The photo is kept in the app, but couldn't be copied to your phone library. You can still view and sync it.",
   savedPrivateInbox: "Photo kept in the app and Saved for later",
   savedAwaitingUpload: "Photo kept in the app. Tap the check to retry syncing.",

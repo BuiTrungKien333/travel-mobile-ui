@@ -14,6 +14,8 @@ import { tripFormLimits } from "../../trip/constants/trip-form";
 import { applyTripMutation } from "@/features/trip/utils/trip-mutations";
 import { localMemorySchema } from "@/features/memories/schemas/local-memory-schema";
 import { getMemoryCaptureDays } from "@/features/memories/utils/memory-albums";
+import { ApiError } from "@/services/api/api-error";
+import { withMemoryOperation } from "@/features/memories/services/memory-operation";
 
 const PREVIEW_ENTRY_LIMIT = 20;
 
@@ -31,33 +33,48 @@ function scenarioSnapshot(scenario: HomeScenario) {
   };
 }
 
-export function createPreviewStore() {
+export function createPreviewStore(ownerId?: string, isActive: () => boolean = () => true) {
+  const assertActive = () => { if (!isActive()) throw new ApiError("CANCELLED"); };
+  const owns = (memory: Memory) => ownerId ? memory.local?.userId === ownerId : !memory.local?.userId;
+  const owned = (memory: unknown) => {
+    assertActive();
+    const parsed = localMemorySchema.parse(memory);
+    if (!owns(parsed)) throw new ApiError("CANCELLED");
+    return parsed;
+  };
   let nextId = 0;
   let loadingPhotos: Promise<void> | undefined;
   const exportedPhotos = new Set<string>();
   const exportsInProgress = new Map<string, Promise<void>>();
   return createStore<PreviewState>((set, get) => ({
     ...scenarioSnapshot("returning"),
+    ...(ownerId ? { trips: [], memories: [], visited: {} } : {}),
     today: MOCK_TODAY,
     localPhotoStatus: "idle",
+    localPhotoIssues: 0,
+    unownedLocalPhotos: 0,
+    getLocalPhotos: () => { assertActive(); return get().memories.filter((memory) => memory.local && owns(memory)); },
     loadLocalPhotos: () => {
+      assertActive();
       if (loadingPhotos) return loadingPhotos;
       set({ localPhotoStatus: "loading" });
       loadingPhotos = import(
         "@/features/memories/services/local-memory-storage"
       )
-        .then((storage) => storage.readLocalMemories())
-        .then((memories) =>
+        .then((storage) => storage.readLocalMemories((count) => { if (isActive()) set({ localPhotoIssues: count }); }))
+        .then((memories) => {
+          assertActive();
           set((state) => ({
             localPhotoStatus: "ready",
+            unownedLocalPhotos: ownerId ? memories.filter((memory) => !memory.local?.userId).length : 0,
             memories: [
               ...memories.filter(
-                (photo) => !state.memories.some((item) => item.id === photo.id),
+                (photo) => owns(photo) && !state.memories.some((item) => item.id === photo.id),
               ),
               ...state.memories,
             ],
-          })),
-        )
+          }));
+        })
         .catch(() => {
           loadingPhotos = undefined;
           set({ localPhotoStatus: "error" });
@@ -65,9 +82,12 @@ export function createPreviewStore() {
       return loadingPhotos;
     },
     saveLocalPhoto: async ({ uri, tripId, date, stopId, remoteTrip, local }) => {
+      assertActive();
+      if (ownerId && local?.userId && local.userId !== ownerId) throw new ApiError("CANCELLED");
       if (!/^(file:|content:|blob:|data:image\/)/i.test(uri))
         throw new Error("Invalid local photo");
       await get().loadLocalPhotos();
+      assertActive();
       if (get().localPhotoStatus !== "ready")
         throw new Error("Local photo storage unavailable");
       const trip = remoteTrip ?? (tripId
@@ -78,7 +98,7 @@ export function createPreviewStore() {
       const day = trip ? getMemoryCaptureDays(trip, currentCalendarDate()).find((item) => item.date === date) : undefined;
       if (
         tripId &&
-        (!trip || trip.id !== tripId || trip.status === "cancelled" ||
+        (!trip || trip.localOnly || trip.id !== tripId || trip.status === "cancelled" ||
           !day ||
           (stopId && !day.stops.some((stop) => stop.id === stopId)))
       )
@@ -87,6 +107,7 @@ export function createPreviewStore() {
       const { createLocalMemory } = await import(
         "@/features/memories/services/local-memory-storage"
       );
+      assertActive();
       const memory = await createLocalMemory(uri, {
         id: `local-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`,
         destination: trip?.destination ?? "",
@@ -101,22 +122,27 @@ export function createPreviewStore() {
         }).format(now),
         tripId: trip?.id,
         place: day?.stops.find((item) => item.id === stopId)?.name,
-        local: { ...local, capturedAt: now.toISOString(), deviceSaved: false },
+        local: { ...local, userId: ownerId ?? local?.userId, capturedAt: now.toISOString(), deviceSaved: false },
       });
+      assertActive();
       set((state) => ({ memories: [memory, ...state.memories] }));
       return memory;
     },
     persistLocalPhoto: async (memory) => {
-      const parsed = localMemorySchema.parse(memory);
+      const parsed = owned(memory);
+      const current = get().memories.find((item) => item.id === parsed.id);
+      if (current?.local?.deviceSaved) parsed.local.deviceSaved = true;
       const { writeLocalMemory } = await import("@/features/memories/services/local-memory-storage");
+      assertActive();
       await writeLocalMemory(parsed);
+      assertActive();
       set((state) => ({ memories: state.memories.map((item) => item.id === parsed.id ? parsed : item) }));
     },
     exportLocalPhoto: (id) => {
       const existing = exportsInProgress.get(id);
       if (existing) return existing;
-      const operation = (async () => {
-        const memory = localMemorySchema.parse(
+      const operation = withMemoryOperation(ownerId ?? "preview", id, async () => {
+        const memory = owned(
           get().memories.find((item) => item.id === id),
         );
         if (memory.local.deviceSaved) return;
@@ -124,19 +150,21 @@ export function createPreviewStore() {
           const { saveJournalPhoto } = await import(
             "../services/journal-photo-actions"
           );
+          assertActive();
           await saveJournalPhoto(memory.photo);
+          assertActive();
           exportedPhotos.add(id);
         }
         await get().markLocalPhotoSaved(id);
         exportedPhotos.delete(id);
-      })().finally(() => {
+      }).finally(() => {
         exportsInProgress.delete(id);
       });
       exportsInProgress.set(id, operation);
       return operation;
     },
     markLocalPhotoSaved: async (id) => {
-      const memory = localMemorySchema.parse(
+      const memory = owned(
         get().memories.find((item) => item.id === id),
       );
       const updated = {
@@ -146,23 +174,27 @@ export function createPreviewStore() {
       const { writeLocalMemory } = await import(
         "@/features/memories/services/local-memory-storage"
       );
+      assertActive();
       await writeLocalMemory(updated);
+      assertActive();
       set((state) => ({
         memories: state.memories.map((item) =>
           item.id === id ? updated : item,
         ),
       }));
     },
-    assignLocalPhoto: async (id, values, remoteTrip) => {
-      const memory = localMemorySchema.parse(
+    assignLocalPhoto: (id, values, remoteTrip) => withMemoryOperation(ownerId ?? "preview", id, async () => {
+      const memory = owned(
         get().memories.find((item) => item.id === id),
       );
+      if (memory.local.clientRequestId || memory.local.serverId) throw new ApiError("MEMORY_004", 409);
+      if (memory.local.deletePending) throw new ApiError("MEMORY_DELETE_PENDING", 409);
       const trip = remoteTrip ?? get().trips.find(
         (item) => item.id === values.tripId && item.status !== "cancelled",
       );
       const day = trip ? getMemoryCaptureDays(trip, currentCalendarDate()).find((item) => item.date === values.day) : undefined;
       if (
-        !trip || trip.id !== values.tripId || trip.status === "cancelled" ||
+        !trip || trip.localOnly || trip.id !== values.tripId || trip.status === "cancelled" ||
         !day ||
         (values.stopId && !day.stops.some((item) => item.id === values.stopId))
       )
@@ -178,13 +210,15 @@ export function createPreviewStore() {
       const { writeLocalMemory } = await import(
         "@/features/memories/services/local-memory-storage"
       );
+      assertActive();
       await writeLocalMemory(updated);
+      assertActive();
       set((state) => ({
         memories: state.memories.map((item) =>
           item.id === id ? updated : item,
         ),
       }));
-    },
+    }),
     panel: null,
     openPanel: (panel) => set({ panel }),
     closePanel: () => set({ panel: null }),
@@ -339,10 +373,14 @@ export function createPreviewStore() {
     updateMemoryNote: async (id, text) => {
       const memory = get().memories.find((item) => item.id === id);
       if (memory?.local) {
+        owned(memory);
+        if (memory.local.clientRequestId && !memory.local.serverId) throw new ApiError("MEMORY_004", 409);
         const { writeLocalMemory } = await import(
           "@/features/memories/services/local-memory-storage"
         );
+        assertActive();
         await writeLocalMemory(localMemorySchema.parse({ ...memory, text }));
+        assertActive();
       }
       set((state) => ({
         memories: state.memories.map((memory) =>
@@ -379,10 +417,13 @@ export function createPreviewStore() {
     removeMemory: async (id) => {
       const memory = get().memories.find((item) => item.id === id);
       if (memory?.local) {
+        owned(memory);
         const { deleteLocalMemory } = await import(
           "@/features/memories/services/local-memory-storage"
         );
+        assertActive();
         await deleteLocalMemory(localMemorySchema.parse(memory));
+        assertActive();
       }
       set((state) => ({
         memories: state.memories.filter((memory) => memory.id !== id),

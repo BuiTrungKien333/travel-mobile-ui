@@ -92,6 +92,8 @@ Mọi thao tác quan trọng có trạng thái đang xử lý, thành công ho�
 
 ### P0-04. Ảnh, ghi chú và tài khoản nhất quán
 
+**06/11/2026 — Đã triển khai toàn bộ phần code P0-04 theo yêu cầu làm trong một lượt.** Store ảnh gắn tài khoản và phiên đăng nhập; giữ ảnh riêng, checkpoint upload/xóa, ghi chú có version; upload backend có khóa chống trùng bằng `clientRequestId` và migration V19. Metadata lỗi được bỏ qua riêng từng record, không xóa bản gốc. Xem [P0-04-ACCEPTANCE.md](P0-04-ACCEPTANCE.md) để kiểm tra trên điện thoại; **chưa đánh dấu nghiệm thu thiết bị hoàn tất**. Dừng để người dùng review/push trước khi chuyển sang P1.
+
 - Kiểm tra/gắn chủ sở hữu cho ảnh local; đăng xuất/đăng nhập tài khoản khác không lẫn album hoặc thao tác đang chờ.
 - Giữ bản sao ảnh trước khi upload; lỗi mạng hoặc mất response không làm tạo ảnh trùng.
 - Chốt hành vi khi từ chối quyền camera/gallery; giải thích thao tác nào vẫn sử dụng được.

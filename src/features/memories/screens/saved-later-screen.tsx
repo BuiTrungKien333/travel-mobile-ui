@@ -8,6 +8,7 @@ import { useCameraCopy } from "@/features/camera/i18n/camera-copy";
 import { useTripPreview } from "@/features/home/providers/trip-preview-provider";
 import { usePhotoViewerCopy } from "@/features/home/i18n/photo-viewer-copy";
 import { PhotoActionError } from "@/features/home/services/photo-action-error";
+import { ApiError } from "@/services/api/api-error";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { MemoryCapturePicker } from "../components/memory-capture-picker";
 import {
@@ -27,7 +28,7 @@ export function SavedLaterScreen() {
   const { copy: photoCopy } = usePhotoViewerCopy();
   const library = useMemories();
   const { memories, trips } = library;
-  const { upload } = useMemoryActions();
+  const { upload, remove } = useMemoryActions();
   const status = useTripPreview((state) => state.localPhotoStatus);
   const load = useTripPreview((state) => state.loadLocalPhotos);
   const assign = useTripPreview((state) => state.assignLocalPhoto);
@@ -86,6 +87,7 @@ export function SavedLaterScreen() {
               {assignedTripId ? <AppButton variant="outline" disabled={busy} onPress={() => router.push({
                 pathname: "/memories/[tripId]", params: { tripId: assignedTripId },
               })}>{copy.openAssignedAlbum}</AppButton> : null}
+              {remove.isError ? <AppText accessibilityRole="alert" tone="error">{copy.deleteError}</AppText> : null}
             </View>
           }
           renderItem={({ item }) => (
@@ -140,7 +142,7 @@ export function SavedLaterScreen() {
                 </>
               ) : null}
               {item.local ? <AppButton
-                disabled={busy}
+                disabled={busy || !!item.pendingDeletion}
                 onPress={() => {
                   setError("");
                   setChoosing(item.id);
@@ -148,6 +150,14 @@ export function SavedLaterScreen() {
               >
                 {copy.assign}
               </AppButton> : null}
+              {item.pendingDeletion ? <AppText variant="caption" tone="muted">{copy.pendingDelete}</AppText> : null}
+              <AppButton variant="outline" loading={remove.isPending} disabled={busy || remove.isPending} onPress={() => {
+                if (item.pendingDeletion) { remove.mutate(item); return; }
+                Alert.alert(copy.deleteTitle, copy.deleteHint, [
+                  { text: copy.cancel, style: "cancel" },
+                  { text: copy.deletePhoto, style: "destructive", onPress: () => remove.mutate(item) },
+                ]);
+              }}>{item.pendingDeletion ? copy.retryDelete : copy.deletePhoto}</AppButton>
             </View>
           )}
         />
@@ -180,7 +190,8 @@ export function SavedLaterScreen() {
                 destination: trip.destination,
                 local: memory.local ? { ...memory.local, placeId: selection.stopId || undefined } : undefined } });
               })
-              .catch(() => setError(assigned ? copy.assignedUploadError : copy.assignmentError))
+              .catch((error: unknown) => setError(error instanceof ApiError && error.code === "MEMORY_004"
+                ? copy.uploadFrozen : assigned ? copy.assignedUploadError : copy.assignmentError))
               .finally(() => { busyRef.current = false; setBusy(false); });
           }}
         />

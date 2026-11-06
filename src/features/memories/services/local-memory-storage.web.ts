@@ -53,25 +53,29 @@ async function withDatabase<T>(
   }
 }
 
-export async function readLocalMemories(): Promise<LocalMemory[]> {
+export async function readLocalMemories(onSkipped?: (count: number) => void): Promise<LocalMemory[]> {
   return withDatabase(async (db, key) => {
     const records = await new Promise<EncryptedRecord[]>((resolve, reject) => {
       const request = db.transaction("photos").objectStore("photos").getAll();
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
-    return Promise.all(
+    const results = await Promise.allSettled(
       records.map(async (record) => {
         const data = await crypto.subtle.decrypt(
           { name: "AES-GCM", iv: record.iv },
           key,
           record.data,
         );
-        return localMemorySchema.parse(
+        const memory = localMemorySchema.parse(
           JSON.parse(new TextDecoder().decode(data)),
         );
+        if (memory.id !== record.id) throw new Error("Local memory index mismatch");
+        return memory;
       }),
     );
+    onSkipped?.(results.filter((result) => result.status === "rejected").length);
+    return results.flatMap((result) => result.status === "fulfilled" ? [result.value] : []);
   });
 }
 

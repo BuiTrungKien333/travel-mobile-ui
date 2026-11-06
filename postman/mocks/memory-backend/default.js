@@ -12,7 +12,8 @@ const trip = {
   startDate: "2026-01-01", endDate: "2026-01-02", status: "COMPLETED", mode: "RECAP", coverImageUrl: null,
   timeZone: "Asia/Ho_Chi_Minh", preferences: [], budget: null, accommodation: null, notes: null,
   readiness: { hasDates: true, hasPlaces: true, unscheduledCount: 1 }, dayCount: 2, stopCount: 1, memoryCount: 0, version: 0,
-  days: [1, 2].map((day) => ({ id: `70000000-0000-0000-0000-00000000000${day}`, date: `2026-01-0${day}`, dayNumber: day })),
+  days: [1, 2].map((day) => ({ id: `70000000-0000-0000-0000-00000000000${day}`, date: `2026-01-0${day}`, dayNumber: day,
+    startLocation: null, startCoordinate: null, startTime: null, returnToStart: false, transport: "CAR" })),
   createdAt: "2026-01-01T00:00:00Z", updatedAt: "2026-01-01T00:00:00Z",
 };
 const context = { serverTime: "2026-01-01T00:00:00Z", evaluatedDate: "2026-01-01" };

@@ -35,7 +35,7 @@ export const authSession = new SessionManager({
   },
   requestRefresh: authApi.refresh,
   requestLogout: authApi.logout,
-  onStatus: (status) => useAuthStore.setState({ status }),
+  onStatus: (status) => useAuthStore.setState({ status, sessionVersion: authSession.getVersion() }),
   onUser: (user) => {
     queryClient.setQueryData(authQueryKeys.profile, user, { updatedAt: 0 });
   },

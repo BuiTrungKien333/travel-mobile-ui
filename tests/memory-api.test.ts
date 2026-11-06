@@ -148,7 +148,8 @@ test("mobile memory HTTP flow matches the backend contract and safely retries pa
       media: [1, 2].map((number) => ({ id: `30000000-0000-0000-0000-00000000000${number}`,
         url: `https://example.com/${number}.png`, displayOrder: 3 - number, mimeType: "image/png", width: 1, height: 1 })),
     };
-    const photos = mergeMemories([remote], [draft()], [], "90000000-0000-0000-0000-000000000001");
+    assert.equal(mergeMemories([remote], [draft()], [], "90000000-0000-0000-0000-000000000001").length, 0);
+    const photos = mergeMemories([remote], [], [], userId);
     assert.equal(photos.length, 2);
     assert.ok(photos[0].id.endsWith("2"));
     assert.ok(photos.every((photo) => photo.text === remote.note));

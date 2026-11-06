@@ -1,5 +1,15 @@
 # Bàn giao ngữ cảnh cho agent tiếp theo
 
+## Mốc hiện hành · Phần 8 — P0-04 · 06/11/2026
+
+Người dùng đã yêu cầu và cho phép triển khai **toàn bộ P0-04 trong một lượt**. Code đã hoàn tất; nghiệm thu điện thoại còn chờ theo [P0-04-ACCEPTANCE.md](P0-04-ACCEPTANCE.md). Các câu “P0-04 chưa triển khai/phần tiếp theo” trong snapshot cũ bên dưới là lịch sử.
+
+Ảnh local có `userId`; provider tạo store theo user + session generation. SessionManager cung cấp accepted user ID; callback auth cập nhật generation trong auth store. Không tự gắn chủ cho ảnh cũ thiếu user ID. Đọc native/SecureStore và web/IndexedDB theo từng record; giữ record lỗi để tránh mất dữ liệu. Upload giữ request ID trước HTTP, server ID/version sau create, media ID/version sau upload. Hook đọc metadata mới nhất từ store khi mutate; note giữ version lúc mở editor. Shared operation gate bao gồm upload/note/delete/export/assign, không cho gán lại sau create chưa rõ kết quả. Xóa có `deletePending` bền vững và nút retry; API xem MEDIA_001 404 là đã xóa. Merge không làm sống lại backup đã upload khi server list xác nhận ảnh không còn; local album shell chỉ đọc khi chưa tải được danh sách chuyến.
+
+Backend thêm **V19__idempotent_capture_uploads.sql**: unique `(memory_id, client_request_id)` và SHA-256 payload. `POST /media/upload` nhận optional UUID `clientRequestId`, dùng memory row lock để serialize, replay cùng nội dung trả cùng media ID; đổi nội dung trả UPLOAD_006/409. API cũ không gửi key vẫn tương thích. Restart backend để chạy migration rồi reload mobile. Không sửa .env/dependency, không cài/build native. Các thay đổi itinerary/poolUpdates từ P0-03 đã tồn tại trong backend working tree trước lượt này và được giữ nguyên. Không tự commit/push. Sau review/QA, phần kế tiếp trong kế hoạch là P1-01 theo yêu cầu tiếp theo của người dùng.
+
+Kiểm chứng phần 8: backend 21/21 (6 integration PostgreSQL thật + 15 unit); mobile full 299/292 đạt/7 lỗi harness cũ, không skip/cancel; sau bổ sung ưu tiên bản ảnh riêng khi cloud có cache, 19 test memory/HTTP đạt. TypeScript và lint file sửa đạt. Cụm PostgreSQL test `target/p004-test-db` đã dừng/xóa, log/report còn trong target. Chi tiết và tên nhóm lỗi cũ xem checklist P0-04; chưa QA thiết bị.
+
 ## Định hướng hiện hành của người dùng · 05/11/2026
 
 Đây là dự án môn Phát triển ứng dụng di động của sinh viên năm cuối. Ưu tiên app chạy tốt trên thiết bị, dữ liệu/logic đúng, luồng thao tác rõ ràng, dễ sử dụng, UI/UX mượt và đẹp. Hoàn thiện từng luồng từ API đến giao diện; giữ WeGo/Ocean Teal/Roboto và các quyết định thiết kế đã chốt. Các việc vận hành production như CI/CD nâng cao, quota quy mô lớn, backup/monitoring, phát hành store thực hiện sau khi hoàn thiện đồ án nếu còn thời gian. Vẫn giữ validation, quyền sở hữu dữ liệu và bảo vệ dữ liệu đã lưu. Kế hoạch hiện hành: [MOBILE-MVP-IMPLEMENTATION-PLAN.md](MOBILE-MVP-IMPLEMENTATION-PLAN.md).

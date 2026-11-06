@@ -36,7 +36,7 @@ function fixture() {
     "@/components/ui/app-text": { AppText: "AppText" }, "@/components/ui/app-button": { AppButton: "AppButton" },
     "@/features/home/providers/trip-preview-provider": { useTripPreview: (select: (value: typeof state) => unknown) => select(state) },
     "../hooks/use-memories": { useMemories: () => ({ memories: [memory], trips: [trip], isPending: false, isError: false }),
-      useMemoryActions: () => ({ upload: { mutateAsync: async ({ memory: photo }: { memory: Memory }) => {
+      useMemoryActions: () => ({ remove: { isError: false, isPending: false, mutate() {} }, upload: { mutateAsync: async ({ memory: photo }: { memory: Memory }) => {
         uploads++; assert.equal(photo.tripId, trip.id); assert.equal(photo.photo, memory.photo); throw new Error("offline");
       } } }) },
     "../components/memory-capture-picker": { MemoryCapturePicker: "MemoryCapturePicker" },
@@ -49,7 +49,7 @@ function fixture() {
     const list = nodes(render(), "FlatList")[0];
     const row = (list.props.renderItem as (input: { item: Memory }) => Node)({ item: memory });
     const buttons = nodes(row, "AppButton");
-    (buttons.at(-1)?.props.onPress as () => void)();
+    (buttons.find((button) => button.props.children === "Add to a trip")?.props.onPress as () => void)();
     return nodes(render(), "MemoryCapturePicker")[0].props as { onSelect: (selection: { tripId: string; day: string; stopId: string }) => void };
   }
   return { memory, render, choose, routes, get assigns() { return assigns; }, get uploads() { return uploads; }, get alerts() { return alerts; } };

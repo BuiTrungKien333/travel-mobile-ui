@@ -6,7 +6,7 @@ import {
 const DIRECTORY = "tripzy-memories";
 const key = (id: string) => `tripzy.memory.${id}`;
 
-export async function readLocalMemories(): Promise<LocalMemory[]> {
+export async function readLocalMemories(onSkipped?: (count: number) => void): Promise<LocalMemory[]> {
   const { Directory, File, Paths } = await import("expo-file-system");
   const { getItemAsync } = await import("expo-secure-store");
   const directory = new Directory(Paths.document, DIRECTORY);
@@ -17,15 +17,17 @@ export async function readLocalMemories(): Promise<LocalMemory[]> {
       (entry) =>
         entry instanceof File && /^local-[\w-]+\.jpg$/.test(entry.name),
     );
-  const records = await Promise.all(
+  const records = await Promise.allSettled(
     files.map(async (file) => {
       const value = await getItemAsync(key(file.name.slice(0, -4)));
-      return value
-        ? localMemorySchema.parse({ ...JSON.parse(value), photo: file.uri })
-        : null;
+      if (!value) return null;
+      const memory = localMemorySchema.parse({ ...JSON.parse(value), photo: file.uri });
+      if (memory.id !== file.name.slice(0, -4)) throw new Error("Local memory index mismatch");
+      return memory;
     }),
   );
-  return records.filter((record) => record !== null);
+  onSkipped?.(records.filter((record) => record.status === "rejected").length);
+  return records.flatMap((record) => record.status === "fulfilled" && record.value ? [record.value] : []);
 }
 
 export async function writeLocalMemory(memory: LocalMemory) {

@@ -1,9 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { usePreventRemove } from "expo-router/react-navigation";
 import { Controller, useForm } from "react-hook-form";
 import {
   KeyboardAvoidingView,
+  Alert,
   Platform,
   Pressable,
   ScrollView,
@@ -43,6 +45,8 @@ export function MemoryDetailScreen({
   tripId?: string;
   memoryId?: string;
 }) {
+  const [deleted, setDeleted] = useState(false);
+  useEffect(() => { if (deleted && tripId) router.dismissTo({ pathname: "/memories/[tripId]", params: { tripId } }); }, [deleted, tripId]);
   const { copy } = useMemoriesCopy();
   const library = useMemories();
   const trip = library.trips.find((item) => item.id === tripId);
@@ -56,7 +60,7 @@ export function MemoryDetailScreen({
       </MemoryPage>
     );
   return (
-    <MemoryDetail key={memory.id} trip={trip} memory={memory} photos={photos} />
+    <MemoryDetail key={memory.id} trip={trip} memory={memory} photos={photos} onRemoved={() => setDeleted(true)} />
   );
 }
 
@@ -64,15 +68,17 @@ function MemoryDetail({
   trip,
   memory,
   photos,
+  onRemoved,
 }: {
   trip: Trip;
   memory: Memory;
   photos: Memory[];
+  onRemoved: () => void;
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useMemoriesCopy();
   const { copy: photoCopy } = usePhotoViewerCopy();
-  const { update } = useMemoryActions();
+  const { update, remove } = useMemoryActions();
   const [editing, setEditing] = useState(false);
   const [editingMemory, setEditingMemory] = useState(memory);
   const [fullPhoto, setFullPhoto] = useState(false);
@@ -91,6 +97,8 @@ function MemoryDetail({
     resolver: zodResolver(noteSchema),
     defaultValues: { text: memory.text },
   });
+  const writing = isSubmitting || update.isPending || remove.isPending;
+  usePreventRemove(writing, () => undefined);
   const index = photos.findIndex((item) => item.id === memory.id);
   const date =
     memory.date && isCalendarDate(memory.date)
@@ -256,6 +264,7 @@ function MemoryDetail({
                 <View style={{ flexDirection: "row", gap: theme.spacing.sm }}>
                   <AppButton
                     variant="soft"
+                    disabled={writing}
                     style={{ flex: 1 }}
                     onPress={() => {
                       reset({ text: memory.text });
@@ -273,7 +282,11 @@ function MemoryDetail({
                         setEditing(false);
                         setNotice({ text: copy.saved });
                       } catch (error) {
-                        setNotice({ text: error instanceof ApiError && error.code === "MEMORY_003" ? copy.noteConflict : copy.loadError, error: true });
+                        setNotice({ text: error instanceof ApiError && error.code === "MEMORY_003" ? copy.noteConflict
+                          : error instanceof ApiError && error.code === "MEMORY_VERSION_REQUIRED" ? copy.noteVersionRequired
+                            : error instanceof ApiError && error.code === "MEMORY_LOCAL_SYNC" ? copy.noteLocalSync
+                              : error instanceof ApiError && error.code === "MEMORY_BUSY" ? copy.operationBusy
+                                : error instanceof ApiError && error.code === "MEMORY_004" ? copy.uploadFrozen : copy.loadError, error: true });
                       }
                     })}
                   >
@@ -285,6 +298,7 @@ function MemoryDetail({
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={copy.edit}
+                disabled={writing || !!memory.pendingDeletion}
                 onPress={() => {
                   setNotice(null);
                   reset({ text: memory.text });
@@ -311,6 +325,17 @@ function MemoryDetail({
                 <AppIcon name="edit" color={theme.colors.primaryText} />
               </Pressable>
             )}
+            {memory.pendingDeletion ? <AppText accessibilityRole="alert" tone="muted">{copy.pendingDelete}</AppText> : null}
+            <AppButton variant="outline" loading={remove.isPending} disabled={writing || editing} onPress={() => {
+              Alert.alert(copy.deleteTitle, copy.deleteHint, [
+                { text: copy.cancel, style: "cancel" },
+                { text: copy.deletePhoto, style: "destructive", onPress: () => {
+                  void remove.mutateAsync(memory).then(onRemoved).catch((error: unknown) => {
+                    setNotice({ text: error instanceof ApiError && error.code === "MEMORY_BUSY" ? copy.operationBusy : copy.deleteError, error: true });
+                  });
+                } },
+              ]);
+            }}>{memory.pendingDeletion ? copy.retryDelete : copy.deletePhoto}</AppButton>
             {notice ? (
               <AppText
                 accessibilityLiveRegion="polite"
@@ -346,7 +371,7 @@ function MemoryDetail({
               <MemoryIconButton
                 icon="camera"
                 label={copy.camera}
-                disabled={trip.status === "cancelled" || editing || sharing}
+                disabled={trip.localOnly || trip.status === "cancelled" || editing || sharing}
                 onPress={capture}
               />
               <MemoryIconButton

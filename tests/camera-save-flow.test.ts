@@ -15,6 +15,8 @@ function cameraFixture(quick = false) {
   let refCursor = 0;
   let deviceFails = false;
   let uploadFails = false;
+  let pickerDenied = false;
+  const alerts: string[] = [];
   const events: string[] = [];
   const records: LocalMemory[] = [];
   const tokens = tripModuleLoader()<typeof import("../src/theme/tokens.ts")>("src/theme/tokens.ts");
@@ -55,9 +57,9 @@ function cameraFixture(quick = false) {
     },
     "expo-camera": { CameraView: "CameraView" },
     "expo-image": { Image: "Image" },
-    "expo-image-picker": { launchImageLibraryAsync: async () => ({ canceled: true }) },
+    "expo-image-picker": { launchImageLibraryAsync: async () => { if (pickerDenied) throw { code: "ERR_USER_REJECTED_PERMISSIONS" }; return { canceled: true }; } },
     "expo-router/react-navigation": { useIsFocused: () => true, useNavigation: () => ({ dispatch() {} }), usePreventRemove() {} },
-    "react-native": { View: "View", ActivityIndicator: "Spinner", Platform: { OS: "android" }, AppState: { currentState: "active" }, StyleSheet: { absoluteFill: {} } },
+    "react-native": { View: "View", ActivityIndicator: "Spinner", Platform: { OS: "android" }, AppState: { currentState: "active" }, StyleSheet: { absoluteFill: {} }, Alert: { alert: (_title: string, hint: string) => alerts.push(hint) } },
     "react-native-reanimated": { __esModule: true, default: { View: "AnimatedView" }, useSharedValue: () => ({ get: () => 1, set: () => {} }), useAnimatedStyle: () => ({}), ReduceMotion: { System: "system" } },
     "@/hooks/use-app-theme": { useAppTheme: () => ({ ...tokens, colors: {} }) },
     "@/hooks/use-i18n": { useI18n: () => ({ locale: "vi" }) },
@@ -94,8 +96,18 @@ function cameraFixture(quick = false) {
   assert.ok(camera);
   camera.props.ref({ takePictureAsync: async () => ({ uri: "file:///cache/camera.jpg" }) });
   camera.props.onCameraReady();
-  return { render, events, records, setDeviceFailure: (value: boolean) => { deviceFails = value; }, setUploadFailure: (value: boolean) => { uploadFails = value; } };
+  return { render, events, records, alerts, denyPicker: () => { pickerDenied = true; }, setDeviceFailure: (value: boolean) => { deviceFails = value; }, setUploadFailure: (value: boolean) => { uploadFails = value; } };
 }
+
+test("denied photo picker explains Settings and camera fallback without creating a photo", async () => {
+  const f = cameraFixture(); f.denyPicker();
+  f.render().props.onLibrary(); await flush();
+  assert.equal(f.alerts.length, 1);
+  assert.match(f.alerts[0], /camera/);
+  assert.equal(f.records.length, 0);
+  f.render().props.onCapture(); await flush();
+  assert.equal(f.records.length, 1);
+});
 
 test("a trip capture saves to the device before its single upload attempt", async () => {
   const f = cameraFixture();

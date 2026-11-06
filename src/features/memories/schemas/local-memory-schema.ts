@@ -17,6 +17,7 @@ export const localMemorySchema = z.object({
     capturedAt: z.iso.datetime(), deviceSaved: z.boolean(),
     userId: z.guid().optional(), clientRequestId: z.guid().optional(),
     serverId: z.guid().optional(), uploaded: z.boolean().optional(), placeId: z.guid().optional(),
+    serverVersion: z.number().int().nonnegative().optional(), mediaId: z.guid().optional(), deletePending: z.boolean().optional(),
     width: z.number().int().positive().optional(), height: z.number().int().positive().optional(),
     mimeType: z.string().max(100).optional(),
   }),

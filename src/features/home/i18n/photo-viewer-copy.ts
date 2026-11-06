@@ -13,7 +13,7 @@ const vi = {
   remove: "Xóa ảnh",
   cancel: "Hủy",
   deleteTitle: "Xóa ảnh khỏi nhật ký?",
-  deleteHint: "Ảnh sẽ được gỡ khỏi nhật ký trong phiên xem thử này.",
+  deleteHint: "Ảnh sẽ được xóa khỏi nhật ký và tài khoản. Bản đã lưu trong thư viện điện thoại vẫn được giữ lại.",
   imageHint:
     "Chạm để ẩn hoặc hiện công cụ. Vuốt ngang để chuyển ảnh. Chạm hai lần hoặc dùng hai ngón tay để phóng to. Kéo xuống để đóng.",
   zoomIn: "Phóng to",
@@ -47,7 +47,7 @@ const en: typeof vi = {
   cancel: "Cancel",
   deleteTitle: "Delete this journal photo?",
   deleteHint:
-    "This photo will be removed from the journal in this preview session.",
+    "This photo will be deleted from your journal and account. Copies saved to your phone library will remain.",
   imageHint:
     "Tap to toggle controls. Swipe sideways to change photos. Double tap or pinch to zoom. Drag down to close.",
   zoomIn: "Zoom in",

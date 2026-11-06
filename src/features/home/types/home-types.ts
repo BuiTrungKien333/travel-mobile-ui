@@ -42,6 +42,7 @@ export type TripPreference =
   | "shopping"
   | "beach";
 export type Trip = {
+  localOnly?: boolean;
   id: string;
   serverVersion?: number;
   serverItineraryUpdatedAt?: string | null;
@@ -64,7 +65,8 @@ export type HomeSelection =
   | { kind: "returning" }
   | { kind: "new" };
 export type Memory = {
-  local?: { capturedAt: string; deviceSaved: boolean; userId?: string; clientRequestId?: string; serverId?: string; uploaded?: boolean; placeId?: string; width?: number; height?: number; mimeType?: string };
+  local?: { capturedAt: string; deviceSaved: boolean; userId?: string; clientRequestId?: string; serverId?: string; uploaded?: boolean; placeId?: string; serverVersion?: number; mediaId?: string; deletePending?: boolean; width?: number; height?: number; mimeType?: string };
+  pendingDeletion?: boolean;
   remote?: { memoryId: string; mediaId: string; version: number };
   id: string;
   destination: string;

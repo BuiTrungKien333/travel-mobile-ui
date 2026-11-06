@@ -20,7 +20,7 @@ export function MemoryAlbumScreen({ tripId }: { tripId?: string }) {
   const theme = useAppTheme();
   const { copy, locale } = useMemoriesCopy();
   const library = useMemories();
-  const { upload } = useMemoryActions();
+  const { upload, remove } = useMemoryActions();
   const trip = library.trips.find((item) => item.id === tripId);
   const { memories } = library;
   const today = new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
@@ -52,7 +52,7 @@ export function MemoryAlbumScreen({ tripId }: { tripId?: string }) {
       title={getTripTitle(trip, locale)}
       subtitle={`${photos.length} ${copy.photos} · ${trip.destination}`}
       action={
-        trip.status !== "cancelled" && captureDay ? (
+        !trip.localOnly && trip.status !== "cancelled" && captureDay ? (
           <MemoryIconButton
             icon="camera"
             label={copy.camera}
@@ -62,7 +62,9 @@ export function MemoryAlbumScreen({ tripId }: { tripId?: string }) {
       }
     >
       <MemoryLoadState loading={library.isPending} error={library.isError} onRetry={() => void library.refetch()} />
+      {trip.localOnly ? <AppText variant="caption" tone="muted">{copy.localAlbumOnly}</AppText> : null}
       {upload.isError ? <AppText accessibilityRole="alert" tone="error">{copy.uploadError}</AppText> : null}
+      {remove.isError ? <AppText accessibilityRole="alert" tone="error">{copy.deleteError}</AppText> : null}
       <FlatList
         data={filtered}
         refreshing={library.isRefetching}
@@ -124,7 +126,7 @@ export function MemoryAlbumScreen({ tripId }: { tripId?: string }) {
         }
         ListEmptyComponent={
           !library.isPending && !library.isError ? <MemoryEmpty title={copy.emptyAlbum} hint={copy.emptyAlbumHint}>
-            {trip.status !== "cancelled" && captureDay ? (
+            {!trip.localOnly && trip.status !== "cancelled" && captureDay ? (
               <AppButton onPress={capture}>{copy.camera}</AppButton>
             ) : null}
           </MemoryEmpty> : null
@@ -165,7 +167,10 @@ export function MemoryAlbumScreen({ tripId }: { tripId?: string }) {
             >
               {item.place?.[locale] ?? copy.noPlace}
             </AppText>
-            {item.local && !item.local.uploaded ? <AppButton size="small" loading={upload.isPending && upload.variables?.memory.id === item.id} disabled={upload.isPending} onPress={() => upload.mutate({ memory: item })}>{copy.upload}</AppButton> : null}
+            {item.pendingDeletion ? <>
+              <AppText variant="caption" tone="muted">{copy.pendingDelete}</AppText>
+              <AppButton size="small" loading={remove.isPending} disabled={remove.isPending} onPress={() => remove.mutate(item)}>{copy.retryDelete}</AppButton>
+            </> : item.local && !item.local.uploaded ? <AppButton size="small" loading={upload.isPending && upload.variables?.memory.id === item.id} disabled={upload.isPending} onPress={() => upload.mutate({ memory: item })}>{copy.upload}</AppButton> : null}
           </View>
         )}
       />

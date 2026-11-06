@@ -29,6 +29,9 @@ export type PreviewState = {
   trips: Trip[];
   memories: Memory[];
   localPhotoStatus: "idle" | "loading" | "ready" | "error";
+  localPhotoIssues: number;
+  unownedLocalPhotos: number;
+  getLocalPhotos: () => Memory[];
   loadLocalPhotos: () => Promise<void>;
   saveLocalPhoto: (values: {
     uri: string;

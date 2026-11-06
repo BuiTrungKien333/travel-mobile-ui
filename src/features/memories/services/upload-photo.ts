@@ -3,6 +3,7 @@ import { ApiError } from "@/services/api/api-error";
 import { memoryApi, type ServerMemory, type UploadLimits } from "../api/memory-api";
 import type { LocalMemory } from "../schemas/local-memory-schema";
 import { createRequestId } from "@/utils/create-request-id";
+import { withMemoryOperation } from "./memory-operation";
 const IMAGE_MIME_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 
 export async function photoFormData(memory: LocalMemory, limits: UploadLimits): Promise<FormData> {
@@ -42,11 +43,13 @@ export function uploadLocalMemory(
   persist: (memory: LocalMemory) => Promise<void>,
   assertSession: () => void,
   onProgress?: (progress: number) => void,
+  sessionVersion?: number,
 ) {
-  const key = `${userId}:${memory.id}`;
+  const key = `${userId}:${sessionVersion ?? "direct"}:${memory.id}`;
   const existing = uploads.get(key);
   if (existing) return existing;
-  const operation = performUpload(memory, userId, persist, assertSession, onProgress).finally(() => uploads.delete(key));
+  const operation = withMemoryOperation(userId, memory.id, () => performUpload(memory, userId, persist, assertSession, onProgress))
+    .finally(() => uploads.delete(key));
   uploads.set(key, operation);
   return operation;
 }
@@ -59,7 +62,8 @@ async function performUpload(
   onProgress?: (progress: number) => void,
 ) {
   assertSession();
-  if (memory.local.userId && memory.local.userId !== userId) throw new ApiError("CANCELLED");
+  if (memory.local.userId !== userId) throw new ApiError("CANCELLED");
+  if (memory.local.deletePending) throw new ApiError("MEMORY_DELETE_PENDING", 409);
   if (!memory.tripId) throw new ApiError("TRIP_001");
   const experiencedAt = new Date(`${memory.date}T${memory.time}:00`);
   if (!Number.isFinite(experiencedAt.getTime()) || experiencedAt.getTime() > Date.now()) throw new ApiError("MEMORY_FUTURE_DATE");
@@ -75,7 +79,7 @@ async function performUpload(
       placeId: draft.local.placeId, note: draft.text, experiencedAt: experiencedAt.toISOString(),
     });
     assertSession();
-    draft = { ...draft, local: { ...draft.local, serverId: created.id } };
+    draft = { ...draft, local: { ...draft.local, serverId: created.id, serverVersion: created.version } };
     await persist(draft);
   }
   const serverId = draft.local.serverId;
@@ -84,10 +88,14 @@ async function performUpload(
   // A previous upload can succeed even when its response is lost. Read before retrying.
   const current = await memoryApi.detail(serverId);
   assertSession();
-  if (!draft.local.uploaded && current.media.length === 0) await memoryApi.upload(serverId, memory.tripId, body, onProgress);
+  if (draft.local.uploaded && current.media.length === 0) throw new ApiError("MEMORY_REMOTE_MISSING", 404);
+  if (!draft.local.uploaded && current.media.length === 0) await memoryApi.upload(serverId, memory.tripId, body, onProgress, draft.local.clientRequestId);
   assertSession();
-  await persist({ ...draft, local: { ...draft.local, uploaded: true } });
   const result = await memoryApi.detail(serverId);
+  assertSession();
+  if (!result.media.length) throw new ApiError("INVALID_RESPONSE");
+  await persist({ ...draft, text: result.note ?? "", local: { ...draft.local, uploaded: true,
+    mediaId: result.media[0].id, serverVersion: result.version } });
   assertSession();
   return result;
 }

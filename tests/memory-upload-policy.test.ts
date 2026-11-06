@@ -19,6 +19,7 @@ function MemoryUploadFixture() {
   const options: UploadOptions[] = [];
   const userId = "10000000-0000-0000-0000-000000000001";
   const state = {
+    getLocalPhotos: () => [],
     memories: [], persistLocalPhoto: async () => {},
     exportLocalPhoto: async () => {
       calls.push("device");
@@ -33,7 +34,7 @@ function MemoryUploadFixture() {
       useMutation: (value: UploadOptions) => { options.push(value); return {}; },
     },
     "@/features/auth/hooks/use-auth": { useProfile: () => ({ data: { id: userId } }) },
-    "@/features/auth/services/auth-session": { authSession: { getVersion: () => version } },
+    "@/features/auth/services/auth-session": { authSession: { getVersion: () => version, getUserId: () => userId } },
     "@/features/home/providers/trip-preview-provider": { useTripPreview: (select: (value: typeof state) => unknown) => select(state) },
     "../api/memory-api": { memoryQueryKeys: { list: () => ["memories"] } },
     "../api/memory-trips-api": {},

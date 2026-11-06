@@ -244,8 +244,17 @@ export function NativeTripCamera(
         allowsMultipleSelection: false,
         quality: theme.layout.cameraPhotoQuality,
         exif: false,
+      }).catch((error: unknown) => {
+        if (error && typeof error === "object" && "code" in error && /permission/i.test(String(error.code))) {
+          if (mounted.current) Alert.alert(copy.gallery, copy.galleryDenied, [
+            { text: copy.retry, style: "cancel" },
+            { text: copy.settings, onPress: () => { void Linking.openSettings().catch(() => setError(copy.galleryDenied)); } },
+          ]);
+          return null;
+        }
+        throw error;
       });
-      if (result.canceled || !result.assets[0] || !mounted.current) return;
+      if (!result || result.canceled || !result.assets[0] || !mounted.current) return;
       const photo = await prepareCameraPhoto(result.assets[0]);
       if (mounted.current) {
         setPending(photo);

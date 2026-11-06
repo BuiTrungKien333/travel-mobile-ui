@@ -8,9 +8,11 @@ import { tripQueryKeys } from "@/features/trip/api/trip-query-keys";
 import { memoryQueryKeys as homeMemoryQueryKeys } from "@/features/home/api/memory-query-keys";
 import { memoryApi, memoryQueryKeys, type ServerMemory } from "../api/memory-api";
 import { loadMemoryTrips } from "../api/memory-trips-api";
-import { localMemorySchema } from "../schemas/local-memory-schema";
+import { localMemorySchema, type LocalMemory } from "../schemas/local-memory-schema";
 import { uploadLocalMemory } from "../services/upload-photo";
 import { mergeMemories } from "../utils/server-memories";
+import { withMemoryOperation } from "../services/memory-operation";
+import { localAlbumTrips } from "../utils/local-albums";
 
 export function useMemoryTrips() {
   const profile = useProfile();
@@ -35,9 +37,10 @@ export function useMemories() {
     queryKey: memoryQueryKeys.list(profile.data?.id ?? ""),
     queryFn: ({ signal }) => memoryApi.list(signal), enabled: !!profile.data,
   });
-  const memories = mergeMemories(query.data ?? [], local, tripsQuery.trips, profile.data?.id);
+  const trips = [...tripsQuery.trips, ...(!tripsQuery.isSuccess ? localAlbumTrips(local, tripsQuery.trips, profile.data?.id) : [])];
+  const memories = mergeMemories(query.data ?? [], local, trips, profile.data?.id, query.isSuccess);
   const isError = query.isError || tripsQuery.isError;
-  return { ...query, memories, trips: tripsQuery.trips,
+  return { ...query, memories, trips,
     isPending: !isError && (query.isPending || tripsQuery.isPending),
     isError,
     refetch: async () => { await Promise.all([profile.refetch(), query.refetch(), tripsQuery.refetch()]); },
@@ -50,68 +53,142 @@ export function useMemoryActions() {
   const persist = useTripPreview((state) => state.persistLocalPhoto);
   const removeLocal = useTripPreview((state) => state.removeMemory);
   const updateLocal = useTripPreview((state) => state.updateMemoryNote);
-  const localMemories = useTripPreview((state) => state.memories);
-  const queryKey = memoryQueryKeys.list(profile.data?.id ?? "");
-  function accept(memory: ServerMemory) {
-    client.setQueryData<ServerMemory[]>(queryKey, (old = []) => [memory, ...old.filter((item) => item.id !== memory.id)]);
+  const readLocal = useTripPreview((state) => state.getLocalPhotos);
+  const userId = profile.data?.id ?? "";
+  const generation = authSession.getVersion();
+  const queryKey = memoryQueryKeys.list(userId);
+  const active = () => !!userId && authSession.getVersion() === generation && authSession.getUserId() === userId;
+  function assertSession() {
+    if (!profile.data) throw new ApiError("AUTH_001", 401);
+    if (!active()) throw new ApiError("CANCELLED");
+  }
+  function assertOwned(memory: Memory) {
+    assertSession();
+    if (memory.local && memory.local.userId !== userId) throw new ApiError("CANCELLED");
+    if (memory.pendingDeletion || memory.local?.deletePending) throw new ApiError("MEMORY_DELETE_PENDING", 409);
+  }
+  const backups = (serverId: string) => readLocal().filter((item) => item.local?.userId === userId && item.local.serverId === serverId);
+  const operationId = (memory: Memory) => memory.remote
+    ? backups(memory.remote.memoryId)[0]?.id ?? `server:${memory.remote.memoryId}` : memory.id;
+  async function checkpoint(memory: LocalMemory) { assertSession(); await persist(memory); assertSession(); }
+  function invalidate() {
+    if (!active()) return;
     void client.invalidateQueries({ queryKey });
     void client.invalidateQueries({ queryKey: homeMemoryQueryKeys.all });
     void client.invalidateQueries({ queryKey: tripQueryKeys.all });
   }
+  function accept(memory: ServerMemory) {
+    assertSession();
+    if (memory.userId !== userId) throw new ApiError("CANCELLED");
+    client.setQueryData<ServerMemory[]>(queryKey, (old = []) => [memory, ...old.filter((item) => item.id !== memory.id)]);
+    invalidate();
+  }
+  function forgetMedia(serverId: string, mediaId?: string) {
+    assertSession();
+    client.setQueryData<ServerMemory[]>(queryKey, (old = []) => mediaId
+      ? old.map((item) => item.id === serverId ? { ...item, media: item.media.filter((photo) => photo.id !== mediaId) } : item)
+      : old.filter((item) => item.id !== serverId));
+  }
   const upload = useMutation({
-    mutationKey: ["memory-upload"],
-    retry: false,
-    networkMode: "always",
+    mutationKey: ["memory-upload"], retry: false, networkMode: "always",
     mutationFn: async ({ memory, onProgress }: { memory: Memory; onProgress?: (progress: number) => void }) => {
-      if (!profile.data) throw new ApiError("AUTH_001", 401);
-      const version = authSession.getVersion();
-      const assertSession = () => {
-        if (version !== authSession.getVersion()) throw new ApiError("CANCELLED");
-      };
-      const photo = localMemorySchema.parse(memory);
-      if (photo.local.userId && photo.local.userId !== profile.data.id)
-        throw new ApiError("CANCELLED");
-      assertSession();
+      assertOwned(memory);
+      const photo = localMemorySchema.parse(readLocal().find((item) => item.id === memory.id) ?? memory);
+      assertOwned(photo);
       if (!onlineManager.isOnline()) throw new ApiError("NETWORK");
-      return uploadLocalMemory(photo, profile.data.id, persist, assertSession, onProgress);
+      return uploadLocalMemory(photo, userId, checkpoint, assertSession, onProgress, generation);
     },
     onSuccess: accept,
-    onError: () => { void client.invalidateQueries({ queryKey }); },
+    onError: invalidate,
   });
   const update = useMutation({
+    retry: false, networkMode: "always",
     mutationFn: async ({ memory, text }: { memory: Memory; text: string }) => {
-      if (memory.remote) {
-        const result = await memoryApi.updateNote(memory.remote.memoryId, memory.remote.version, text);
+      assertOwned(memory);
+      return withMemoryOperation(userId, operationId(memory), async () => {
+        assertSession();
+        if (memory.local) {
+          const latest = readLocal().find((item) => item.id === memory.id);
+          if (!latest) throw new ApiError("MEMORY_001", 404);
+          if (latest.local?.serverId !== memory.local.serverId || latest.local?.clientRequestId !== memory.local.clientRequestId
+            || latest.local?.serverVersion !== memory.local.serverVersion) throw new ApiError("MEMORY_VERSION_REQUIRED", 409);
+          if (latest.text !== memory.text) throw new ApiError("MEMORY_003", 409);
+        }
+        const serverId = memory.remote?.memoryId ?? memory.local?.serverId;
+        if (!serverId) {
+          if (memory.local?.clientRequestId) throw new ApiError("MEMORY_004", 409);
+          await updateLocal(memory.id, text); assertSession(); return;
+        }
+        const version = memory.remote?.version ?? memory.local?.serverVersion;
+        if (version === undefined) throw new ApiError("MEMORY_VERSION_REQUIRED", 409);
+        const result = await memoryApi.updateNote(serverId, version, text);
+        assertSession();
         accept(result);
-      } else if (memory.local?.serverId) {
-        const current = await memoryApi.detail(memory.local.serverId);
-        const result = await memoryApi.updateNote(current.id, current.version, text);
-        await updateLocal(memory.id, text);
-        accept(result);
-      } else {
-        // An ambiguous create must be replayed unchanged before its note can be edited.
-        if (memory.local?.clientRequestId) throw new ApiError("MEMORY_004", 409);
-        await updateLocal(memory.id, text);
-      }
+        try {
+          for (const backup of backups(serverId)) {
+            await checkpoint(localMemorySchema.parse({ ...backup, text: result.note ?? "",
+              local: { ...backup.local, serverVersion: result.version } }));
+          }
+        } catch (error) {
+          assertSession();
+          if (error instanceof ApiError && error.code === "CANCELLED") throw error;
+          throw new ApiError("MEMORY_LOCAL_SYNC");
+        }
+      });
     },
-    onError: () => { void client.invalidateQueries({ queryKey }); },
+    onError: invalidate,
   });
   const remove = useMutation({
+    retry: false, networkMode: "always",
     mutationFn: async (memory: Memory) => {
-      if (memory.remote) {
-        await memoryApi.removePhoto(memory.remote.mediaId);
-        const backups = localMemories.filter((item) => item.local?.serverId === memory.remote?.memoryId && item.local?.uploaded);
-        for (const backup of backups) await removeLocal(backup.id);
-        client.setQueryData<ServerMemory[]>(queryKey, (old = []) => old.map((item) => ({
-          ...item, media: item.media.filter((photo) => photo.id !== memory.remote?.mediaId),
-        })));
-        void client.invalidateQueries({ queryKey });
-      } else await removeLocal(memory.id);
+      assertSession();
+      if (memory.local && memory.local.userId !== userId) throw new ApiError("CANCELLED");
+      return withMemoryOperation(userId, operationId(memory), async () => {
+        assertSession();
+        if (memory.remote) {
+          const copies = backups(memory.remote.memoryId).filter((item) => !item.local?.mediaId || item.local.mediaId === memory.remote?.mediaId);
+          for (const copy of copies) await checkpoint(localMemorySchema.parse({ ...copy, local: { ...copy.local, deletePending: true } }));
+          await memoryApi.removePhoto(memory.remote.mediaId); assertSession();
+          forgetMedia(memory.remote.memoryId, memory.remote.mediaId);
+          for (const copy of copies) { await removeLocal(copy.id); assertSession(); }
+          return;
+        }
+        let draft = localMemorySchema.parse(readLocal().find((item) => item.id === memory.id) ?? memory);
+        draft = { ...draft, local: { ...draft.local, deletePending: true } };
+        await checkpoint(draft);
+        if (!draft.local.serverId && draft.local.clientRequestId) {
+          if (!draft.tripId) throw new ApiError("TRIP_001");
+          try {
+            const created = await memoryApi.create({ clientRequestId: draft.local.clientRequestId,
+              tripId: draft.tripId, placeId: draft.local.placeId, note: draft.text,
+              experiencedAt: new Date(`${draft.date}T${draft.time}:00`).toISOString() });
+            assertSession();
+            draft = { ...draft, local: { ...draft.local, serverId: created.id, serverVersion: created.version } };
+            await checkpoint(draft);
+          } catch (error) {
+            assertSession();
+            if (!(error instanceof ApiError && error.code === "MEMORY_001" && error.status === 404)) throw error;
+          }
+        }
+        if (draft.local.serverId) {
+          try {
+            const current = await memoryApi.detail(draft.local.serverId); assertSession();
+            if (!current.media.length) { await memoryApi.removeEmptyMemory(current.id); forgetMedia(current.id); }
+            else {
+              const mediaId = draft.local.mediaId ?? (current.media.length === 1 ? current.media[0].id : undefined);
+              if (!mediaId) throw new ApiError("MEMORY_MEDIA_REQUIRED", 409);
+              await memoryApi.removePhoto(mediaId);
+              forgetMedia(current.id, mediaId);
+            }
+          } catch (error) {
+            assertSession();
+            if (!(error instanceof ApiError && error.code === "MEMORY_001" && error.status === 404)) throw error;
+          }
+        }
+        assertSession(); await removeLocal(memory.id); assertSession();
+      });
     },
-    onSettled: () => {
-      void client.invalidateQueries({ queryKey: homeMemoryQueryKeys.all });
-      void client.invalidateQueries({ queryKey: tripQueryKeys.all });
-    },
+    onSettled: invalidate,
   });
   return { upload, update, remove };
 }

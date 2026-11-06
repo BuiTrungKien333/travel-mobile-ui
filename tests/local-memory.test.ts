@@ -60,6 +60,32 @@ function fixture() {
   };
 }
 
+test("owned photos survive reopening without exposing another account or claiming legacy photos", async () => {
+  const f = fixture();
+  const a = "10000000-0000-0000-0000-000000000001";
+  const b = "10000000-0000-0000-0000-000000000002";
+  let active = true;
+  const first = f.createPreviewStore(a, () => active);
+  const photo = await first.getState().saveLocalPhoto({ uri: "file:///cache/a.jpg" });
+  await first.getState().updateMemoryNote(photo.id, "Saved note");
+  const legacy = await f.createPreviewStore().getState().saveLocalPhoto({ uri: "file:///cache/legacy.jpg" });
+  const other = f.createPreviewStore(b);
+  await other.getState().loadLocalPhotos();
+  assert.equal(other.getState().getLocalPhotos().length, 0);
+  assert.equal(other.getState().unownedLocalPhotos, 1);
+  await assert.rejects(other.getState().persistLocalPhoto(photo), { code: "CANCELLED" });
+  active = false;
+  await assert.rejects(first.getState().removeMemory(photo.id), { code: "CANCELLED" });
+  const reopened = f.createPreviewStore(a);
+  await reopened.getState().loadLocalPhotos();
+  assert.equal(reopened.getState().getLocalPhotos()[0].text, "Saved note");
+  assert.equal(f.records.get(legacy.id)?.local.userId, undefined);
+  await reopened.getState().removeMemory(photo.id);
+  const afterDelete = f.createPreviewStore(a);
+  await afterDelete.getState().loadLocalPhotos();
+  assert.equal(afterDelete.getState().getLocalPhotos().length, 0);
+});
+
 test("quick capture needs no trip and survives hydration and scenario changes before being organized", async () => {
   const f = fixture();
   const store = f.createPreviewStore();

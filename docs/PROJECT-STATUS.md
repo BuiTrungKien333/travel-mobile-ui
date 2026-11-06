@@ -1,5 +1,13 @@
 # Tiến độ Travel Mobile UI
 
+## Phần 8 · Code cho toàn bộ P0-04 · 06/11/2026
+
+- Ảnh mới được gắn đúng tài khoản; đổi tài khoản hoặc đăng nhập lại tạo store mới và vô hiệu hóa thao tác của phiên cũ. Ảnh cũ không có chủ sở hữu vẫn giữ trên máy, không tự nhận vào tài khoản đang đăng nhập.
+- Giữ bản riêng trước upload; checkpoint lưu request ID, memory ID, media ID và version. Backend V19 chống trùng ngay cả khi hai request upload chạy đồng thời. Retry thủ công, không thêm hàng đợi chạy nền.
+- Sửa ghi chú dùng version đã xem; chặn editor cũ sau khi ảnh vừa đồng bộ. Xóa lưu trạng thái chờ, chỉ bỏ bản riêng sau khi server xác nhận; có nút thử lại. Các thao tác cùng ảnh có khóa chung để tránh ghi đè checkpoint.
+- Một metadata hỏng không làm trống album; hiển thị cảnh báo. Có album chỉ đọc từ ảnh riêng khi chưa tải được chuyến trên server. Từ chối gallery vẫn dùng camera được; từ chối chép vào thư viện không chặn upload.
+- Checklist và kiểm chứng: [P0-04-ACCEPTANCE.md](P0-04-ACCEPTANCE.md). Chưa QA điện thoại. Cần restart backend để Flyway áp dụng V19; không thêm dependency/native module, không cần build native riêng cho thay đổi này. Dừng review/push trước P1.
+
 > Định hướng ngày 05/11/2026: đồ án môn học của sinh viên năm cuối, ưu tiên app chạy ổn, logic đúng, luồng rõ ràng và UI/UX mượt, đẹp. Xem [Kế hoạch hoàn thiện đồ án](MOBILE-MVP-IMPLEMENTATION-PLAN.md); production là giai đoạn sau. Các mốc preview tháng 10 bên dưới là lịch sử, không mô tả đầy đủ trạng thái API hiện tại.
 
 ## Phần 7 · Code cho toàn bộ P0-03 · 06/11/2026
