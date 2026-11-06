@@ -44,6 +44,7 @@ test("mobile memory HTTP flow matches the backend contract and safely retries pa
   configureAuthTransport({ getAccessToken: () => "contract-test", getVersion: () => 1, refresh: async () => {}, expire: async () => {} });
   const { memoryApi } = load<typeof import("../src/features/memories/api/memory-api.ts")>("src/features/memories/api/memory-api.ts");
   const { loadMemoryTrips } = load<typeof import("../src/features/memories/api/memory-trips-api.ts")>("src/features/memories/api/memory-trips-api.ts");
+  const { createServerTrip } = load<typeof import("../src/features/trip/api/create-trip.ts")>("src/features/trip/api/create-trip.ts");
   const { uploadLocalMemory, photoFormData } = load<typeof import("../src/features/memories/services/upload-photo.ts")>("src/features/memories/services/upload-photo.ts");
   const { mergeMemories } = load<typeof import("../src/features/memories/utils/server-memories.ts")>("src/features/memories/utils/server-memories.ts");
   async function control(mode = "ok", reset = false) {
@@ -58,9 +59,20 @@ test("mobile memory HTTP flow matches the backend contract and safely retries pa
     date: "2026-01-01", time: "10:00", local: { userId, capturedAt: "2026-01-01T03:00:00.000Z", deviceSaved: false, width: 1, height: 1, placeId },
   });
 
+  await t.test("trip creation uses the current backend fields and reads the returned trip ID", async () => {
+    const id = await createServerTrip({
+      title: "Đà Lạt", destination: "Đà Lạt", startDate: "2026-01-01", endDate: "2026-01-02",
+      budget: { amount: 1000000, currency: "VND" }, preferences: ["nature"],
+    });
+    assert.equal(id, tripId);
+  });
+
   await t.test("trip selection uses real Place IDs, and HTTP multipart upload reloads the saved memory", async () => {
     await control("ok", true);
     const trips = await loadMemoryTrips();
+    assert.equal(trips[0].title, "A real trip");
+    assert.equal(trips[0].destination, "Đà Lạt");
+    assert.equal(trips[0].status, "completed");
     assert.equal(trips[0].days.length, 2);
     assert.equal(trips[0].days[0].stops[0].id, placeId);
     let stored = draft();

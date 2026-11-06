@@ -4,6 +4,7 @@ export type HomeScenario = "new" | "upcoming" | "ongoing" | "returning";
 export type LocalizedText = { vi: string; en: string };
 export type TripStop = {
   id: string;
+  providerPlaceId?: string;
   time: string;
   name: LocalizedText;
   kind: LocalizedText;
@@ -13,6 +14,8 @@ export type TripStop = {
   durationMinutes?: number;
   pinned?: boolean;
   note?: string;
+  visited?: boolean;
+  plannedOrder?: number | null;
   quickInfo?: {
     admission?: LocalizedText;
     closesAt?: string;
@@ -24,6 +27,7 @@ export type TripDay = {
   date: string;
   stops: TripStop[];
   startLocation?: string;
+  startCoordinate?: { latitude: number; longitude: number };
   startTime?: string;
   returnToStart?: boolean;
   transport?: TravelMode;
@@ -39,6 +43,8 @@ export type TripPreference =
   | "beach";
 export type Trip = {
   id: string;
+  serverVersion?: number;
+  serverItineraryUpdatedAt?: string | null;
   destination: string;
   title?: string;
   budget?: { amount: number; currency: "VND" };

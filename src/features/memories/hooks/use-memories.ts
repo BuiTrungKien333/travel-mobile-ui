@@ -4,6 +4,8 @@ import { authSession } from "@/features/auth/services/auth-session";
 import { useTripPreview } from "@/features/home/providers/trip-preview-provider";
 import type { Memory } from "@/features/home/types/home-types";
 import { ApiError } from "@/services/api/api-error";
+import { tripQueryKeys } from "@/features/trip/api/trip-query-keys";
+import { memoryQueryKeys as homeMemoryQueryKeys } from "@/features/home/api/memory-query-keys";
 import { memoryApi, memoryQueryKeys, type ServerMemory } from "../api/memory-api";
 import { loadMemoryTrips } from "../api/memory-trips-api";
 import { localMemorySchema } from "../schemas/local-memory-schema";
@@ -46,7 +48,6 @@ export function useMemoryActions() {
   const profile = useProfile();
   const client = useQueryClient();
   const persist = useTripPreview((state) => state.persistLocalPhoto);
-  const exportPhoto = useTripPreview((state) => state.exportLocalPhoto);
   const removeLocal = useTripPreview((state) => state.removeMemory);
   const updateLocal = useTripPreview((state) => state.updateMemoryNote);
   const localMemories = useTripPreview((state) => state.memories);
@@ -54,6 +55,8 @@ export function useMemoryActions() {
   function accept(memory: ServerMemory) {
     client.setQueryData<ServerMemory[]>(queryKey, (old = []) => [memory, ...old.filter((item) => item.id !== memory.id)]);
     void client.invalidateQueries({ queryKey });
+    void client.invalidateQueries({ queryKey: homeMemoryQueryKeys.all });
+    void client.invalidateQueries({ queryKey: tripQueryKeys.all });
   }
   const upload = useMutation({
     mutationKey: ["memory-upload"],
@@ -65,13 +68,9 @@ export function useMemoryActions() {
       const assertSession = () => {
         if (version !== authSession.getVersion()) throw new ApiError("CANCELLED");
       };
-      let photo = localMemorySchema.parse(memory);
+      const photo = localMemorySchema.parse(memory);
       if (photo.local.userId && photo.local.userId !== profile.data.id)
         throw new ApiError("CANCELLED");
-      if (!photo.local.deviceSaved) {
-        await exportPhoto(photo.id);
-        photo = { ...photo, local: { ...photo.local, deviceSaved: true } };
-      }
       assertSession();
       if (!onlineManager.isOnline()) throw new ApiError("NETWORK");
       return uploadLocalMemory(photo, profile.data.id, persist, assertSession, onProgress);
@@ -109,7 +108,10 @@ export function useMemoryActions() {
         void client.invalidateQueries({ queryKey });
       } else await removeLocal(memory.id);
     },
-    onSettled: () => { void client.invalidateQueries({ queryKey }); },
+    onSettled: () => {
+      void client.invalidateQueries({ queryKey: homeMemoryQueryKeys.all });
+      void client.invalidateQueries({ queryKey: tripQueryKeys.all });
+    },
   });
   return { upload, update, remove };
 }

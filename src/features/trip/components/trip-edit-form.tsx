@@ -33,6 +33,7 @@ export function TripEditForm({
   today: string;
   onCommit: (mutation: TripMutation) => boolean;
 }) {
+  const [baseVersion] = useState(trip.serverVersion);
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
   const { copy: formCopy } = useTripCopy();
@@ -62,7 +63,6 @@ export function TripEditForm({
   const [picker, setPicker] = useState<"destination" | "dates" | null>(null);
   const [moreOpen, setMoreOpen] = useState(
     !!(
-      trip.accommodation ||
       trip.notes ||
       trip.budget ||
       trip.preferences?.length
@@ -369,23 +369,6 @@ export function TripEditForm({
             </View>
             <Controller
               control={control}
-              name="accommodation"
-              render={({ field, fieldState }) => (
-                <AppInput
-                  compact
-                  label={copy.accommodation}
-                  placeholder={copy.accommodationPlaceholder}
-                  value={field.value}
-                  ref={field.ref}
-                  onChangeText={field.onChange}
-                  onBlur={field.onBlur}
-                  error={fieldState.error?.message}
-                  maxLength={200}
-                />
-              )}
-            />
-            <Controller
-              control={control}
               name="notes"
               render={({ field, fieldState }) => (
                 <AppInput
@@ -420,6 +403,7 @@ export function TripEditForm({
               nextEnd !== (trip.endDate ?? "");
             onCommit({
               kind: "info",
+              baseVersion,
               values,
               ...(datesChanged && nextStart && nextEnd
                 ? { dateRange: { startDate: nextStart, endDate: nextEnd } }

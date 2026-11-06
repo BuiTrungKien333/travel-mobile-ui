@@ -67,7 +67,7 @@ test("missing/invalid ranges don't accidentally produce a live trip", () => {
   }
 });
 
-test("backlog includes untimed day entries and pool entries with their real source; scheduled views exclude both", () => {
+test("assigned visits stay in their day even without a time; only unassigned places belong to the pool", () => {
   const trip = fixture();
   trip.days[0].stops.push(stop("waiting", ""), stop("invalid", "25:00"));
   trip.days.push({ date: "2026-10-25", stops: [stop("waiting", "")] });
@@ -76,14 +76,12 @@ test("backlog includes untimed day entries and pool entries with their real sour
     scheduledStops(trip.days[0])
       .map((entry) => entry.id)
       .join(),
-    "a,b",
+    "a,b,waiting,invalid",
   );
   const backlog = tripBacklog(trip);
-  assert.equal(backlog.length, 4);
-  assert.equal(new Set(backlog.map((entry) => entry.key)).size, 4);
+  assert.equal(backlog.length, 1);
+  assert.equal(new Set(backlog.map((entry) => entry.key)).size, 1);
   assert.equal(backlog[0].date, null);
-  assert.equal(backlog[1].date, "2026-10-24");
-  assert.equal(backlog[3].date, "2026-10-25");
 });
 
 test("scheduling an untimed day entry removes it from backlog and retains notes and source immutability", () => {
@@ -124,7 +122,8 @@ test("scheduled-only reordering leaves untimed entries, pinned slots and time sl
     result.days[0].stops.map((entry) => entry.time).join(),
     "09:00,,10:00,11:00",
   );
-  assert.equal(tripBacklog(result)[0].stop.id, "waiting");
+  assert.equal(tripBacklog(result).length, 0);
+  assert.equal(scheduledStops(result.days[0])[1].id, "waiting");
 });
 
 test("visit range handles default durations, crossing midnight and unassigned times", () => {

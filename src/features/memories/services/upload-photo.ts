@@ -60,6 +60,7 @@ async function performUpload(
 ) {
   assertSession();
   if (memory.local.userId && memory.local.userId !== userId) throw new ApiError("CANCELLED");
+  if (!memory.tripId) throw new ApiError("TRIP_001");
   const experiencedAt = new Date(`${memory.date}T${memory.time}:00`);
   if (!Number.isFinite(experiencedAt.getTime()) || experiencedAt.getTime() > Date.now()) throw new ApiError("MEMORY_FUTURE_DATE");
   const limits = await memoryApi.limits();
@@ -80,7 +81,10 @@ async function performUpload(
   const serverId = draft.local.serverId;
   if (!serverId) throw new ApiError("INVALID_RESPONSE");
   assertSession();
-  if (!draft.local.uploaded) await memoryApi.upload(serverId, body, onProgress);
+  // A previous upload can succeed even when its response is lost. Read before retrying.
+  const current = await memoryApi.detail(serverId);
+  assertSession();
+  if (!draft.local.uploaded && current.media.length === 0) await memoryApi.upload(serverId, memory.tripId, body, onProgress);
   assertSession();
   await persist({ ...draft, local: { ...draft.local, uploaded: true } });
   const result = await memoryApi.detail(serverId);

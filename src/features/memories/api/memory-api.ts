@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { apiClient } from "@/services/api/client";
 import { ApiError } from "@/services/api/api-error";
-import { MEMORY_NOTE_MAX_LENGTH } from "../constants/memory-limits";
+import { tripQueryKeys } from "@/features/trip/api/trip-query-keys";
+import { MEMORY_NOTE_MAX_LENGTH, MEMORY_MAX_PIXELS, MEMORY_MAX_DIMENSION } from "../constants/memory-limits";
 
 export const memoryEndpoints = {
   memories: "/api/v1/journal/memories",
@@ -11,7 +12,7 @@ export const memoryEndpoints = {
 } as const;
 export const memoryQueryKeys = {
   list: (userId: string) => ["memories", userId] as const,
-  trips: (userId: string) => ["memory-trips", userId] as const,
+  trips: (userId: string) => [...tripQueryKeys.all, "memories", userId] as const,
 };
 
 const imageUrl = z.url().refine((value) => /^https?:\/\//i.test(value));
@@ -27,8 +28,8 @@ export const serverMemorySchema = z.object({
 });
 export type ServerMemory = z.infer<typeof serverMemorySchema>;
 export const uploadLimitsSchema = z.object({
-  maxFileBytes: z.number().int().positive(), maxPixels: z.number().int().positive(),
-  maxDimension: z.number().int().positive(),
+  maxFileBytes: z.number().int().positive(), maxPixels: z.number().int().positive().default(MEMORY_MAX_PIXELS),
+  maxDimension: z.number().int().positive().default(MEMORY_MAX_DIMENSION),
 });
 export type UploadLimits = z.infer<typeof uploadLimitsSchema>;
 const createSchema = z.object({
@@ -63,7 +64,7 @@ export const memoryApi = {
     return parseApiData(serverMemorySchema, response.data);
   },
   async detail(id: string) {
-    const response = await apiClient.get<unknown>(`${memoryEndpoints.memories}/${z.guid().parse(id)}`);
+    const response = await apiClient.get<unknown>(`${memoryEndpoints.memories}/detail`, { params: { memoryId: z.guid().parse(id) } });
     return parseApiData(serverMemorySchema, response.data);
   },
   async updateNote(id: string, version: number, note: string) {
@@ -79,9 +80,9 @@ export const memoryApi = {
     const response = await apiClient.get<unknown>(memoryEndpoints.limits, { signal });
     return parseApiData(uploadLimitsSchema, response.data);
   },
-  async upload(memoryId: string, body: FormData, onProgress?: (progress: number) => void) {
+  async upload(memoryId: string, tripId: string, body: FormData, onProgress?: (progress: number) => void) {
     const response = await apiClient.post<unknown>(memoryEndpoints.upload, body, {
-      params: { memoryId: z.guid().parse(memoryId) }, timeout: 120000,
+      params: { memoryId: z.guid().parse(memoryId), tripId: z.guid().parse(tripId) }, timeout: 120000,
       // Axios' JSON default must be cleared; the platform supplies the multipart boundary.
       headers: { "Content-Type": undefined },
       onUploadProgress: ({ loaded, total }) => { if (total) onProgress?.(Math.min(1, loaded / total)); },

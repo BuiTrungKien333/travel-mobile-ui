@@ -124,11 +124,13 @@ export function PlaceTargetSelector({
 export function PlaceSearchResultRow({
   place,
   checked,
+  alreadyAdded = false,
   onPreview,
   onToggle,
 }: {
   place: TripStop;
   checked: boolean;
+  alreadyAdded?: boolean;
   onPreview: () => void;
   onToggle: () => void;
 }) {
@@ -176,6 +178,7 @@ export function PlaceSearchResultRow({
           <AppText variant="caption" tone="muted">
             {place.address?.[locale] ?? copy.customAddress}
           </AppText>
+          {alreadyAdded ? <AppText variant="caption" tone="primary">{copy.alreadyAdded}</AppText> : null}
         </View>
       </Pressable>
       <Pressable

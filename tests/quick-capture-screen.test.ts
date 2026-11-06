@@ -11,6 +11,8 @@ function fixture(available = true) {
   const tokens = tripModuleLoader()<typeof import("../src/theme/tokens.ts")>("src/theme/tokens.ts");
   let inset: number | undefined;
   const load = tripModuleLoader({
+    "@/components/ui/app-button": { AppButton: "AppButton" },
+    "../components/memory-load-state": { MemoryLoadState: "MemoryLoadState" },
     react: {
       ...React,
       useContext: () => inset,

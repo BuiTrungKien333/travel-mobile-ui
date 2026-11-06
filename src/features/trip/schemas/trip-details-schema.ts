@@ -7,6 +7,7 @@ import {
   tripTransportModes,
 } from "../constants/trip-form";
 import type { TripDetailsCopy } from "../i18n/trip-details-copy";
+import { tripCoordinateSchema } from "../api/trip-types";
 
 export const clockPattern = /^([01]\d|2[0-3]):[0-5]\d$/;
 export function tripInfoSchema(copy: TripDetailsCopy) {
@@ -73,11 +74,15 @@ export function stopDetailsSchema(copy: TripDetailsCopy) {
     pinned: z.boolean(),
     note: z.string().trim().max(500, copy.invalidText),
     targetDate: z.string().nullable(),
+  }).superRefine((value, context) => {
+    if (value.pinned && (!value.targetDate || !clockPattern.test(value.time)))
+      context.addIssue({ code: "custom", path: ["time"], message: copy.pinTimeRequired });
   });
 }
 export function daySettingsSchema(copy: TripDetailsCopy) {
   return z.object({
     startLocation: z.string().trim().max(200, copy.invalidText),
+    startCoordinate: tripCoordinateSchema.nullable().optional(),
     startTime: z
       .string()
       .refine((value) => !value || clockPattern.test(value), copy.invalidTime),
@@ -90,6 +95,9 @@ export function tripStartPointSchema(copy: TripDetailsCopy) {
   return daySettingsSchema(copy)
     .omit({ transport: true })
     .superRefine((value, context) => {
+      if ((value.startLocation && !value.startCoordinate) || (!value.startLocation && value.startCoordinate)) {
+        context.addIssue({ code: "custom", path: ["startLocation"], message: copy.originSelectRequired });
+      }
       if (value.returnToStart && !value.startLocation) {
         context.addIssue({
           code: "custom",

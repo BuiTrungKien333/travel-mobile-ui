@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Controller, useForm } from "react-hook-form";
-import { View } from "react-native";
+import { Controller, useForm, useWatch } from "react-hook-form";
+import { Switch, View } from "react-native";
 import { z } from "zod";
 import { AppButton } from "@/components/ui/app-button";
 import { AppInput } from "@/components/ui/app-input";
@@ -8,7 +8,7 @@ import { AppText } from "@/components/ui/app-text";
 import type { Trip, TripStop } from "@/features/home/types/home-types";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
-import { stopDetailsSchema } from "../schemas/trip-details-schema";
+import { clockPattern, stopDetailsSchema } from "../schemas/trip-details-schema";
 import { TripStartTimeField } from "./trip-start-time-field";
 import { PlaceTargetSelector } from "./place-picker-list-items";
 import type { TripMutation } from "../types/trip-details-types";
@@ -20,11 +20,13 @@ export function StopDetailsForm({
   stop,
   date,
   onCommit,
+  saving = false,
 }: {
   trip: Trip;
   stop: TripStop;
   date: string | null;
   onCommit: Commit;
+  saving?: boolean;
 }) {
   const { copy } = useTripDetailsCopy();
   const theme = useAppTheme();
@@ -33,6 +35,7 @@ export function StopDetailsForm({
     control,
     handleSubmit,
     setError,
+    setValue,
     formState: { errors },
   } = useForm<z.input<typeof schema>, unknown, z.output<typeof schema>>({
     resolver: zodResolver(schema),
@@ -44,6 +47,9 @@ export function StopDetailsForm({
       targetDate: date,
     },
   });
+  const time = useWatch({ control, name: "time" });
+  const targetDate = useWatch({ control, name: "targetDate" });
+  const canPin = targetDate !== null && clockPattern.test(time);
   return (
     <>
       <Controller
@@ -55,7 +61,7 @@ export function StopDetailsForm({
               destination={trip.destination}
               days={trip.days}
               date={field.value}
-              onChange={field.onChange}
+              onChange={(value) => { field.onChange(value); if (value === null) setValue("pinned", false); }}
             />
           </View>
         )}
@@ -69,7 +75,7 @@ export function StopDetailsForm({
             label={copy.arrival}
             hint={copy.stopArrivalHint}
             value={field.value}
-            onChange={field.onChange}
+            onChange={(value) => { field.onChange(value); if (!clockPattern.test(value)) setValue("pinned", false); }}
             onBlur={field.onBlur}
             error={fieldState.error?.message}
           />
@@ -108,6 +114,16 @@ export function StopDetailsForm({
           />
         )}
       />
+      <Controller control={control} name="pinned" render={({ field }) => (
+        <View style={{ flexDirection: "row", alignItems: "center", gap: theme.spacing.sm }}>
+          <View style={{ flex: 1 }}>
+            <AppText variant="caption">{copy.pin}</AppText>
+            <AppText variant="caption" tone="muted">{canPin ? copy.pinnedHint : copy.pinTimeRequired}</AppText>
+          </View>
+          <Switch accessibilityLabel={copy.pin} disabled={!canPin || saving} value={field.value} onValueChange={field.onChange}
+            trackColor={{ false: theme.colors.border, true: theme.colors.primaryText }} />
+        </View>
+      )} />
       {errors.root?.message ? (
         <AppText accessibilityRole="alert" tone="error">
           {errors.root.message}
@@ -116,6 +132,7 @@ export function StopDetailsForm({
       <AppButton
         size="small"
         variant="gradient"
+        loading={saving}
         onPress={handleSubmit(({ targetDate, ...values }) => {
           if (
             !onCommit({

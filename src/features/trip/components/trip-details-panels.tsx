@@ -5,9 +5,7 @@ import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import type { Trip, TripDay } from "@/features/home/types/home-types";
-import { OngoingWeatherDetails } from "@/features/home/components/ongoing-weather-details";
-import { ongoingWeatherSnapshot } from "@/features/home/data/ongoing-preview";
-import { getTripForecast } from "../data/trip-details-preview";
+import { useWeatherForecastQuery } from "../api/maps-hooks";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 import type {
   TripDetailsSheetState,
@@ -23,6 +21,7 @@ import { TripReorder } from "./trip-reorder";
 import { TripOptimizationSheet } from "./trip-optimization-preview";
 import { TripDeleteAlert } from "./trip-delete-alert";
 import { tripTransportModes } from "../constants/trip-form";
+import type { ItineraryOptimizationProposal } from "../api/itinerary-types";
 import {
   mergeScheduledOrder,
   scheduledStops,
@@ -36,9 +35,18 @@ type Props = {
   sheet: TripDetailsSheetState | null;
   onSheetChange: (sheet: TripDetailsSheetState | null) => void;
   onCommit: (mutation: TripMutation) => boolean;
+  saving?: boolean;
+  saveError?: string | null;
+  itineraryUpdatedAt?: string | null;
   onEditHistory: () => void;
   onJournal: () => void;
   onDelete: () => void;
+  optimization?: { sourceUpdatedAt: string; proposal: ItineraryOptimizationProposal };
+  optimizing: boolean;
+  applyingOptimization: boolean;
+  optimizationError?: string;
+  onRetryOptimization: () => void;
+  onApplyOptimization: () => void;
 };
 
 export function TripDetailsPanels({
@@ -52,16 +60,28 @@ export function TripDetailsPanels({
   onEditHistory,
   onJournal: openJournal,
   onDelete,
+  optimization,
+  optimizing,
+  applyingOptimization,
+  optimizationError,
+  onRetryOptimization,
+  onApplyOptimization,
+  saving = false,
+  saveError,
+  itineraryUpdatedAt,
 }: Props) {
   const [hostReady, setHostReady] = useState(false);
+  const [reorderStamp] = useState(itineraryUpdatedAt);
+  const [formTripVersion] = useState(trip.serverVersion);
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
-  const closeSheet = () => setSheet(null);
-  const forecast = getTripForecast(trip, day?.date);
-  const currentWeather =
-    ongoingWeatherSnapshot.tripId === trip.id &&
-    ongoingWeatherSnapshot.date === day?.date &&
-    day?.date === today;
+  const closeSheet = () => { if (!saving && !applyingOptimization) setSheet(null); };
+  const weatherPoint = day?.stops.find((stop) => stop.location)?.location
+    ?? trip.unscheduledStops?.find((stop) => stop.location)?.location;
+  const weatherQuery = useWeatherForecastQuery(
+    weatherPoint?.latitude, weatherPoint?.longitude, day?.date, sheet?.kind === "weather",
+  );
+  const forecast = weatherQuery.data?.dailySummaries.find((entry) => entry.date === day?.date);
   const scheduledDay = day ? { ...day, stops: scheduledStops(day) } : undefined;
   const sheetTitle = sheet
     ? {
@@ -97,7 +117,10 @@ export function TripDetailsPanels({
           onShow={() => setHostReady(true)}
           title={sheetTitle}
           onClose={closeSheet}
+          dismissible={!saving}
         >
+          {saveError ? <AppText accessibilityRole="alert" tone="error" variant="caption">{saveError}</AppText> : null}
+          {saving ? <AppText accessibilityLiveRegion="polite" variant="caption" tone="muted">{copy.savingChanges}</AppText> : null}
           {sheet.kind === "menu" ? (
             <>
               <AppButton
@@ -171,11 +194,19 @@ export function TripDetailsPanels({
           ) : null}
           {sheet.kind === "day" && day ? (
             canEdit ? (
-              <TripDayScheduleForm trip={trip} day={day} onCommit={commit} />
+              <>
+                <AppText variant="caption" tone="muted">
+                  {copy.daySettingsBackendHint}
+                </AppText>
+                <View pointerEvents={saving ? "none" : "auto"}>
+                  <TripDayScheduleForm key={day.date} trip={trip} day={day} onCommit={commit}
+                    saving={saving} itineraryUpdatedAt={itineraryUpdatedAt} />
+                </View>
+              </>
             ) : (
               <>
                 <AppText>
-                  {day.startLocation || trip.accommodation || copy.chooseStart}
+                  {day.startLocation || copy.chooseStart}
                 </AppText>
                 <AppText>
                   {day.startTime || copy.noTime} ·{" "}
@@ -186,9 +217,13 @@ export function TripDetailsPanels({
           ) : null}
           {sheet.kind === "transport" && day && canEdit ? (
             <>
+              <AppText variant="caption" tone="muted">
+                {copy.daySettingsBackendHint}
+              </AppText>
               {tripTransportModes.map((transport) => (
                 <AppButton
                   key={transport}
+                  disabled={saving}
                   variant={
                     transport === (day.transport ?? "car") ? "soft" : "outline"
                   }
@@ -215,6 +250,7 @@ export function TripDetailsPanels({
               onApply={(ids) =>
                 commit({
                   kind: "reorder",
+                  expectedItineraryUpdatedAt: reorderStamp,
                   date: day.date,
                   ids: mergeScheduledOrder(day, ids),
                 })
@@ -222,18 +258,8 @@ export function TripDetailsPanels({
             />
           ) : null}
           {sheet.kind === "weather" ? (
-            currentWeather ? (
-              <OngoingWeatherDetails
-                tripId={trip.id}
-                today={today}
-                destination={trip.destination}
-              />
-            ) : (
-              <TripForecastDetails
-                forecast={forecast}
-                destination={trip.destination}
-              />
-            )
+            <TripForecastDetails forecast={forecast} destination={trip.destination}
+              loading={weatherQuery.isFetching} error={weatherQuery.isError} hasCoordinates={!!weatherPoint} />
           ) : null}
           {sheet.kind === "dates" ? (
             <AppText variant="caption" tone="muted">
@@ -245,16 +271,15 @@ export function TripDetailsPanels({
       {sheet?.kind === "optimize" ? (
         <TripOptimizationSheet
           key={`${trip.id}:${day?.date ?? "none"}`}
-          day={scheduledDay}
+          proposal={optimization?.proposal}
+          loading={optimizing}
+          applying={applyingOptimization}
+          error={optimizationError}
+          onRetry={onRetryOptimization}
           onClose={closeSheet}
-          onApply={(ids) => {
-            if (day)
-              commit({
-                kind: "reorder",
-                date: day.date,
-                ids: mergeScheduledOrder(day, ids),
-              });
-          }}
+          onApply={onApplyOptimization}
+          pinnedKeys={trip.days.flatMap((entry) => entry.stops.filter((stop) => stop.pinned).map((stop) => `${entry.date}:${stop.id}`))}
+          daySettings={trip.days}
         />
       ) : null}
       {hostReady && sheet?.kind === "dates" ? (
@@ -266,7 +291,7 @@ export function TripDetailsPanels({
             trip.startDate && trip.startDate < today ? trip.startDate : today
           }
           onApply={(startDate, endDate) =>
-            commit({ kind: "dates", startDate, endDate })
+            commit({ kind: "dates", startDate, endDate, baseVersion: formTripVersion })
           }
           onClose={closeSheet}
         />

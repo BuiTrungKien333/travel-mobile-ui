@@ -1,10 +1,21 @@
 // Contract fixture derived from travel-system's MemoryController, MediaController and DTOs.
+/* global pm */
 const http = require("node:http");
+const { Buffer } = require("node:buffer");
 const userId = "10000000-0000-0000-0000-000000000001";
 const memoryId = "20000000-0000-0000-0000-000000000001";
 const mediaId = "30000000-0000-0000-0000-000000000001";
 const tripId = "40000000-0000-0000-0000-000000000001";
 const placeId = "50000000-0000-0000-0000-000000000001";
+const trip = {
+  id: tripId, title: "A real trip", destination: { name: "Đà Lạt", provinceId: null },
+  startDate: "2026-01-01", endDate: "2026-01-02", status: "COMPLETED", mode: "RECAP", coverImageUrl: null,
+  timeZone: "Asia/Ho_Chi_Minh", preferences: [], budget: null, accommodation: null, notes: null,
+  readiness: { hasDates: true, hasPlaces: true, unscheduledCount: 1 }, dayCount: 2, stopCount: 1, memoryCount: 0, version: 0,
+  days: [1, 2].map((day) => ({ id: `70000000-0000-0000-0000-00000000000${day}`, date: `2026-01-0${day}`, dayNumber: day })),
+  createdAt: "2026-01-01T00:00:00Z", updatedAt: "2026-01-01T00:00:00Z",
+};
+const context = { serverTime: "2026-01-01T00:00:00Z", evaluatedDate: "2026-01-01" };
 const stateKey = "memory-backend.state";
 const fresh = () => ({ mode: "ok", memory: null, creates: 0, uploads: 0, keys: [], multipart: false });
 const success = (data) => ({ success: true, data });
@@ -32,13 +43,24 @@ const server = http.createServer(async (req, res) => {
     }
     const json = () => Buffer.isBuffer(body) || typeof body === "string" ? JSON.parse(body.toString()) : body;
     const path = url.pathname;
-    if (path === "/api/v1/media/limits") return send(res, 200, success({ maxFileBytes: 10485760, maxPixels: 25000000, maxDimension: 12000 }));
-    if (path === "/api/v1/trips") return send(res, 200, success({
-      content: [{ id: tripId, title: "A real trip", destination: { name: "Đà Lạt" },
-        startDate: "2026-01-01", endDate: "2026-01-02", status: "COMPLETED", coverImageUrl: null }], page: 0, totalPages: 1,
+    if (path === "/api/v1/media/limits") return send(res, 200, success({ maxFileBytes: 10485760 }));
+    if (path === "/api/v1/trips" && req.method === "GET") return send(res, 200, success({
+      content: [trip], page: 0, size: 100, totalElements: 1, totalPages: 1, context,
     }));
+    if (path === `/api/v1/trips/${tripId}` && req.method === "GET") return send(res, 200, success({ trip, context }));
+    if (path === "/api/v1/trips" && req.method === "POST") {
+      const input = json();
+      if (!input.clientRequestId || typeof input.title !== "string" || typeof input.destination?.name !== "string" || !input.startDate || !input.endDate ||
+        (input.budget !== undefined && (typeof input.budget.amount !== "number" || input.budget.currency !== "VND"))) return send(res, 400, { code: "COMMON_001" });
+      return send(res, 201, success({ trip: { ...trip, ...input, status: "PLANNING", mode: "PLANNING" }, context }));
+    }
     if (path === `/api/v1/trips/${tripId}/places`) return send(res, 200, success([
-      { id: "60000000-0000-0000-0000-000000000001", placeId, place: { name: "Lâm Viên", address: null, latitude: null, longitude: null } },
+      { id: "60000000-0000-0000-0000-000000000001", tripId, placeId,
+        priority: null, estimatedDuration: null, notes: null, plannedOrder: 0, visited: true,
+        createdAt: "2026-01-01T00:00:00Z", updatedAt: "2026-01-01T00:00:00Z",
+        place: { id: placeId, providerPlaceId: null, name: "Lâm Viên", address: null,
+          latitude: null, longitude: null, provinceId: null, provinceName: null, category: null,
+          createdAt: "2026-01-01T00:00:00Z" } },
     ]));
     if (path === "/api/v1/journal/memories" && req.method === "POST") {
       const input = json();
@@ -55,6 +77,7 @@ const server = http.createServer(async (req, res) => {
     }
     if (path === "/api/v1/media/upload" && req.method === "POST") {
       if (!state.memory || url.searchParams.get("memoryId") !== state.memory.id) return send(res, 404, { code: "MEMORY_001" });
+      if (url.searchParams.get("tripId") !== state.memory.tripId) return send(res, 400, { code: "TRIP_001" });
       state.uploads++;
       // Reject JSON, a missing boundary, or the wrong multipart field name.
       const text = Buffer.isBuffer(body) ? body.toString("latin1") : String(body);
@@ -72,7 +95,7 @@ const server = http.createServer(async (req, res) => {
       if (state.mode === "upload-response-lost") return send(res, 500, { code: "UPLOAD_004" });
       return send(res, 201, success({ mediaId, url: state.memory.coverImageUrl }));
     }
-    if (path === `/api/v1/journal/memories/${memoryId}` && req.method === "GET") {
+    if (path === "/api/v1/journal/memories/detail" && url.searchParams.get("memoryId") === memoryId && req.method === "GET") {
       if (!state.memory) return send(res, 404, { code: "MEMORY_001" });
       return send(res, 200, success(state.mode === "malformed" ? { ...state.memory, id: "bad" } : state.memory));
     }

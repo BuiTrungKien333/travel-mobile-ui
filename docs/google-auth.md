@@ -27,7 +27,7 @@ Sau khi tạo keystore/bản native đầu tiên, dùng `android/gradlew.bat sig
 
 ### iOS
 
-Tạo iOS OAuth client đúng bundle identifier. `app.config.js` suy ra `com.googleusercontent.apps.<phần ID trước .apps.googleusercontent.com>`, Nitro plugin thêm URL scheme và các CocoaPods cần thiết. `expo-build-properties` bật scene support cho SDK 57/iOS 27; plugin dự án thêm xử lý Google URL vào AppDelegate mà Expo scene delegate chuyển tiếp đến, giữ callback của Router/dev-client. Không cần viết đè SceneDelegate. [Thiết lập Google Sign-In cho iOS](https://developers.google.com/identity/sign-in/ios/start-integrating).
+Tạo iOS OAuth client đúng bundle identifier. `app.config.ts` suy ra `com.googleusercontent.apps.<phần ID trước .apps.googleusercontent.com>`, Nitro plugin thêm URL scheme và các CocoaPods cần thiết. `expo-build-properties` bật scene support cho SDK 57/iOS 27; plugin dự án thêm xử lý Google URL vào AppDelegate mà Expo scene delegate chuyển tiếp đến, giữ callback của Router/dev-client. Không cần viết đè SceneDelegate. [Thiết lập Google Sign-In cho iOS](https://developers.google.com/identity/sign-in/ios/start-integrating).
 
 Không cần Firebase, `google-services.json`, client secret hay quyền truy cập Google Drive/Calendar cho luồng đăng nhập này.
 

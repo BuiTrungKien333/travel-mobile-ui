@@ -7,20 +7,23 @@ export type TripScheduleSnapshot = Pick<
 export type TripMutation =
   | {
       kind: "info";
+      baseVersion?: number;
       dateRange?: { startDate: string; endDate: string };
       values: Pick<
         Trip,
         "title" | "budget" | "preferences" | "accommodation" | "notes"
       > & { destination?: string };
     }
-  | { kind: "dates"; startDate: string; endDate: string }
+  | { kind: "dates"; startDate: string; endDate: string; baseVersion?: number }
   | {
       kind: "day";
       date: string;
+      baseVersion?: number;
+      expectedItineraryUpdatedAt?: string | null;
       durations?: { stopId: string; durationMinutes: number }[];
       values: Pick<
         TripDay,
-        "startLocation" | "startTime" | "returnToStart" | "transport"
+        "startLocation" | "startCoordinate" | "startTime" | "returnToStart" | "transport"
       >;
     }
   | { kind: "add"; date: string | null; stops: TripStop[] }
@@ -32,7 +35,7 @@ export type TripMutation =
       values: Pick<TripStop, "time" | "durationMinutes" | "pinned" | "note">;
     }
   | { kind: "remove"; date: string | null; stopId: string }
-  | { kind: "reorder"; date: string; ids: string[] }
+  | { kind: "reorder"; date: string; ids: string[]; expectedItineraryUpdatedAt?: string | null }
   | { kind: "restore"; snapshot: TripScheduleSnapshot };
 
 export type TripDetailsSheetState = {

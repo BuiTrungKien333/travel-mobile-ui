@@ -6,6 +6,7 @@ import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
 import { ScreenSafeArea } from "@/components/common/screen-safe-area";
 import { useAppTheme } from "@/hooks/use-app-theme";
+import { todayCalendarDate } from "@/utils/calendar-date";
 import { getTripTitle } from "@/features/trip/utils/trip-formatters";
 import { CameraLayout } from "../components/camera-layout";
 import { useCameraCopy } from "../i18n/camera-copy";
@@ -31,7 +32,7 @@ export function TripCameraScreen({
   const { copy, locale } = useCameraCopy();
   const library = useMemories();
   const trip = library.trips.find((entry) => entry.id === tripId);
-  const today = new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+  const today = todayCalendarDate();
   const count = library.memories.filter((entry) => entry.tripId === tripId && !!entry.photo).length;
   const date = day ?? today;
   if (library.isPending || library.isError) return <ScreenSafeArea style={{ flex: 1 }}><MemoryLoadState loading={library.isPending} error={library.isError} onRetry={() => void library.refetch()} /></ScreenSafeArea>;
@@ -39,7 +40,8 @@ export function TripCameraScreen({
     !trip ||
     date > today ||
     trip.status === "cancelled" ||
-    !trip.days.some((entry) => entry.date === date)
+    !trip.days.some((entry) => entry.date === date) ||
+    (!!stopId && !trip.days.some((entry) => entry.stops.some((stop) => stop.id === stopId)))
   )
     return (
       <ScreenSafeArea

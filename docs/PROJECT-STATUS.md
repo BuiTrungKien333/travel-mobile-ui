@@ -1,5 +1,73 @@
 # Tiến độ Travel Mobile UI
 
+> Định hướng ngày 05/11/2026: đồ án môn học của sinh viên năm cuối, ưu tiên app chạy ổn, logic đúng, luồng rõ ràng và UI/UX mượt, đẹp. Xem [Kế hoạch hoàn thiện đồ án](MOBILE-MVP-IMPLEMENTATION-PLAN.md); production là giai đoạn sau. Các mốc preview tháng 10 bên dưới là lịch sử, không mô tả đầy đủ trạng thái API hiện tại.
+
+## Phần 7 · Code cho toàn bộ P0-03 · 06/11/2026
+
+- Người dùng cho phép hoàn thiện toàn P0-03 trong một lượt. Code sáu luồng đã được triển khai; **QA điện thoại còn chờ**, xem [P0-03-ACCEPTANCE.md](P0-03-ACCEPTANCE.md).
+- Sửa lịch: `scheduleMutationRequest` tạo request từ snapshot; chuyển điểm về pool lưu lịch và metadata bằng `poolUpdates` trong cùng transaction backend. Không PATCH metadata trước PUT lịch. Form thông tin/ngày/reorder giữ version lúc mở; lỗi giữ form, Cancel không ghi. Di chuyển ngày vẫn mở được chi tiết; xóa pool quay lại được sau refetch.
+- Ngày/pool: lượt ghé đã gán ngày nhưng chưa có giờ vẫn ở ngày đó, được xem/reorder/check-in theo thứ tự server. Chỉ điểm chưa gán ngày thuộc pool. Không để pool che ngày được mở từ liên kết.
+- Đang đi: Home có thẻ điểm tiếp theo dùng query server; check-in có guard, không tự đánh dấu khi request lỗi; các query liên quan được làm mới. Nút chỉ đường ở Home/chi tiết mở Maps bằng tọa độ và phương tiện, thay vì chỉ phóng bản đồ. Lượt ghé tương lai/chuyến hủy không check-in.
+- Ảnh: giữ bản riêng trước đồng bộ; ghi vào thư viện là bản sao tùy quyền, không chặn upload khi bị từ chối. Phân biệt bản riêng/thư viện/đang upload/đã đồng bộ; chặn rời lúc lưu, hỏi trước khi bỏ ảnh chưa giữ được bản riêng. Xem sau có guard gán ảnh, chặn ngày/giờ tương lai trước khi đổi local và có nút mở album khi upload lỗi.
+- Tối ưu: hiện thứ tự/giờ hiện tại và đề xuất, số lượt ghé thay đổi. Không Apply khi rỗng, thiếu/trùng/khác điểm hoặc vi phạm ghim; lỗi cần lấy đề xuất mới. Chặn gửi lặp/đóng/lấy đề xuất khác lúc Apply; đóng preview chưa ghi lịch.
+- Backend đã đạt 32 test PostgreSQL (11 itinerary/pins, 20 trip mutations, 1 xuất response thật); compile đạt. Mobile: **86 test trọng tâm đạt**; toàn bộ suite **288 test, 279 đạt, 9 lỗi cũ**, giảm từ 19 lỗi ở phần 6 nhờ chuyển test stop-details/optimization/live sang API hiện hành. 9 lỗi còn lại ở memory simulation, place-details, trip UI preview cũ và forecast preview; không coi full suite là xanh. TypeScript đạt. ESLint file sửa không có lỗi, còn 1 cảnh báo `require()` camera có từ trước; lint toàn repo vẫn 51 lỗi/3 cảnh báo cũ. Không có migration/dependency mới, cần restart backend + reload mobile. Database test tạm đã dừng và dọn.
+- P0-04 (chủ sở hữu/tài khoản ảnh local, phục hồi metadata và độ bền dữ liệu) còn riêng; không tự chuyển sang production, không commit/push tự động.
+
+## Phần 6 · Thêm điểm vào chuyến và xếp ngày · 05/11/2026
+
+- Route `/trip/add-places` dùng `useAddTripPlaces` → `add-trip-places.ts`: đọc trip/pool, kiểm tra ngày/trạng thái, chỉ thêm điểm chưa có. Nếu xếp ngày, đọc itinerary mới, giữ nguyên các lượt ghé rồi nối điểm còn thiếu bằng token `expectedUpdatedAt`. Không dùng snapshot cũ của màn hình để thay toàn bộ lịch.
+- Retry sau lỗi POST/PUT hoặc mất response đối chiếu lại dữ liệu server; điểm đã nằm trong ngày đích không bị thêm lần nữa. Điểm đã được xếp ngày khác không tự bị di chuyển. Nếu thêm được điểm nhưng lưu lịch lỗi, điểm vẫn ở pool và lựa chọn vẫn còn để thử lại.
+- Picker giữ từ khóa/lựa chọn qua preview và background refetch, kể cả lỗi refetch có dữ liệu cache. Các điểm đã lưu có nhãn riêng trong danh sách đang chọn; kết quả search cũ trong lúc debounce không được chọn. ID điểm riêng dùng request ID thay vì số lượng danh sách, tránh trùng ID sau bỏ chọn/thêm lại; sửa fallback “Địa điểm” bị lỗi chữ.
+- Chặn bấm lưu lặp, chỉnh lựa chọn và Back lúc lưu; route chỉ quay lại sau khi mutation/cache refresh kết thúc. Back từ chi tiết về kết quả; rời picker có lựa chọn cần xác nhận. Ngày đã bị xóa có thông báo và có thể đổi sang ngày khác/pool.
+- 20 test mới (12 API, 8 picker/route) đạt; cùng test tạo chuyến là **39 test trọng tâm**. TypeScript và ESLint file sửa đạt. Full suite **271 test, 252 đạt, 19 lỗi cũ**, tên lỗi giống phần 5; lint toàn repo vẫn 51 lỗi/3 cảnh báo cũ. Test dùng platform/HTTP double, chưa QA điện thoại hoặc phiên backend chạy thật.
+- Không sửa backend/DB/dependency. Identity và request mapping dùng chung cho tạo chuyến và thêm vào chuyến. Checklist: [phần 6](api-contract-integration.md#existing-trip-place-selection). Dừng review/push; phần kế tiếp là sửa lịch, lưu/hủy theo P0-03.
+
+## Phần 5 · Tạo chuyến và thử lại địa điểm còn thiếu · 05/11/2026
+
+- P0-03 bắt đầu ở luồng tạo chuyến. Tách gọi API sang `create-trip-with-places.ts` và mutation hook; kiểm tra dữ liệu địa điểm trước khi tạo, giữ `clientRequestId` khi thử lại cùng thông tin.
+- Nếu chuyến đã tạo nhưng thêm điểm lỗi, form chuyển sang màn phục hồi với tiến độ và tên các điểm còn thiếu; không tự đóng. Retry đọc `GET /trips/{id}/places` trước rồi chỉ thêm điểm chưa có. Đối chiếu provider ID hoặc tên/tọa độ cho điểm riêng, kể cả POST đã lưu nhưng mất response. Các điểm ban đầu ở Chưa xếp lịch.
+- Chặn submit liên tiếp từ trước validation; nút Back và đóng form không làm mất phiên đang lưu. Có lựa chọn mở chuyến để thêm sau, kèm xác nhận rõ phần chưa lưu. Cache Home/Trips/chi tiết được làm mới cả khi chỉ lưu được một phần.
+- 12 test mới cho API và form/hook đạt; cùng 7 test tạo chuyến hiện có là 19 test trọng tâm đạt. TypeScript và ESLint file sửa đạt. Full suite: **251 test, 232 đạt, 19 lỗi cũ**, tên các lỗi giống phần 4; lint toàn repo vẫn 51 lỗi/3 cảnh báo cũ. Test mới thay platform/HTTP bằng double, không phải kiểm thử thiết bị hay phiên backend đang chạy.
+- Chưa đổi backend, schema DB hoặc dependency. Xem [checklist phần 5](api-contract-integration.md#trip-creation-recovery). Dừng để review/push; tiếp theo là luồng tìm/chọn/thêm điểm vào chuyến đã có, sau đó sửa lịch/lưu/hủy theo P0-03.
+
+## Phần 4 · Route và tối ưu dùng thiết lập ngày · 05/11/2026
+
+- V18 thêm tọa độ điểm xuất phát theo ngày; form tìm địa điểm qua API, chọn kết quả hoặc điểm có tọa độ trong ngày rồi lưu. Sửa chữ sẽ bỏ tọa độ cũ; nơi lưu trú là shortcut tìm kiếm, không tự được coi là vị trí xuất phát.
+- Polyline, tổng quãng đường và chặng giữa các điểm dùng phương tiện đã chọn; cache phân biệt phương tiện. Có chặng từ điểm xuất phát và chặng quay về. Thiếu tọa độ không được bỏ qua địa điểm để vẽ một lộ trình khác; route bị tắt không vẽ lại polyline cũ từ cache.
+- Optimizer đọc origin/giờ đi/phương tiện/quay về đã lưu, giữ ghim khi đi từ một điểm xuất phát riêng. Haversine vẫn là mô hình tối ưu quãng đường và ước tính thời gian; UI giải thích tính ước tính của đề xuất.
+- Backend: 24 test unit và 29 test PostgreSQL đạt. Mobile: 41 test trọng tâm đạt, gồm response thật, route/cache theo phương tiện và không vẽ đường cũ. Chưa QA phần này trên điện thoại; restart backend để chạy V18, reload mobile và thử [checklist phần 4](api-contract-integration.md#day-routing-and-optimization).
+- TypeScript và ESLint các file sửa đạt. Bộ test mobile đầy đủ có 239 test: 220 đạt, 19 lỗi cũ, không skip khi dùng fixture thật; danh sách lỗi không đổi so với phần 3. Lint toàn dự án còn 51 lỗi, 3 cảnh báo cũ.
+- Không thêm dependency hoặc đổi cấu hình native. Phần tiếp theo theo kế hoạch là P0-03: hoàn thiện luồng tạo/thêm/sửa chuyến, lưu/hủy, phản hồi thao tác và các test của luồng API thật. Dừng để review/push trước khi tiếp tục.
+
+## Phần 3 · Ghim điểm và giờ ghé · 05/11/2026
+
+- Migration V17 thêm `itinerary_items.pinned`, mặc định false; lượt ghim bắt buộc có giờ đến. Ghim thuộc lượt ghé trong một ngày, không thuộc Place dùng chung.
+- Mobile bật switch ghim trên thẻ lượt ghé và trong form; lưu/tải lại đầy đủ, chặn ghim khi chưa chọn ngày/giờ. Form giữ snapshot khi mở, chặn lưu lặp và đóng sheet lúc lưu; lỗi vẫn hiện trong sheet. Preview tối ưu có nhãn điểm ghim.
+- Held–Karp nhận vị trí ghim và chỉ xét các đường đi giữ vị trí đó. Timeline giữ giờ hẹn, đợi nếu đến sớm, trả `409/TRIP_014` nếu kết quả đến muộn. Apply kiểm tra lại vị trí/giờ và giữ cờ ghim/ghi chú.
+- Lưu lịch gửi `expectedUpdatedAt`; backend trả timestamp đã đọc lại từ PostgreSQL để tránh xung đột nhầm do nano/microsecond. Đổi ngày chuyến cũng làm cũ token của lịch đã mở.
+- 21 test unit thuật toán/timeline/service và 26 test PostgreSQL đạt. Mobile: 34 test trọng tâm đạt, gồm contract bằng response thật. Chưa QA phần này trên điện thoại; checklist tại [API contract](api-contract-integration.md#pinned-visits).
+- TypeScript và ESLint các file sửa đạt. Bộ test mobile đầy đủ có 232 test: 213 đạt, 19 lỗi, không skip khi dùng fixture thật; đối chiếu log cho thấy danh sách lỗi không đổi so với phần 2. Lint toàn dự án còn 51 lỗi, 3 cảnh báo cũ.
+- Phần kế tiếp: tọa độ điểm xuất phát và dùng phương tiện/giờ đi/quay về trong route/optimizer. Dừng để người dùng review/push trước khi tiếp tục.
+
+## Phần 2 · Lưu thiết lập ngày · 05/11/2026
+
+- Backend bổ sung `PUT /api/v1/trips/{tripId}/days/{date}`; detail/create/update trả đủ thiết lập trong `days`. Dùng cột của migration V14, không thêm migration.
+- Lưu điểm xuất phát dạng tên/địa chỉ, giờ đi, phương tiện, quay về và thời lượng điểm ghé trong một giao dịch. Giữ nguyên giờ đến, thứ tự, ghi chú và ngày khác; đổi khoảng ngày giữ thiết lập của ngày còn lại.
+- Mobile đọc lại thiết lập, lưu cả ngày rỗng và đổi riêng phương tiện; đang lưu có phản hồi, chặn bấm lặp/đóng sheet, lỗi hiện trong sheet và giữ nội dung. Khi xung đột cần đóng/mở lại editor để lấy bản mới.
+- TypeScript và ESLint các file sửa đạt; 29 test mobile về API/lịch trình đạt, gồm 7 test mới và kiểm tra response thật từ PostgreSQL. Backend: 28 test CRUD/mutation PostgreSQL, 1 test xuất contract và 4 test controller tối ưu đều đạt.
+- Toàn bộ test mobile hiện có 227 test: 207 đạt, 19 lỗi ở các test preview/contract cũ, 1 skip khi chưa cung cấp fixture backend; test fixture đã chạy riêng và đạt. Lint toàn dự án còn 51 lỗi, 3 cảnh báo cũ; không coi bộ test tổng thể đã xanh.
+- Package đang cài khớp bản Expo SDK đề xuất ở lượt kiểm tra này; không đổi dependency. Chưa xác nhận thao tác trên thiết bị. Restart backend trước khi thử mobile; checklist tại [API contract](api-contract-integration.md#day-settings).
+- Phần tiếp theo của P0-02: lưu ghim, nối origin/phương tiện/giờ/quay về vào route và optimizer. Dừng để review/push trước khi làm tiếp.
+
+## Phần 1 · Hợp nhất cấu hình Expo · 05/11/2026
+
+- Dùng một `app.config.ts`, ghép Maps, Google, dev-client và scene support; giữ cấu hình camera/media từ `app.json`.
+- Test cấu hình kiểm tra đường nạp thực tế của Expo thay vì gọi file `.js` không được sử dụng.
+- Kiểm tra phần này: 5/5 test cấu hình đạt; TypeScript source, kiểm tra strict riêng config/test và ESLint hai file đã sửa đạt. Lint toàn dự án vẫn có 51 lỗi, 3 cảnh báo đã tồn tại trong source.
+- Hướng dẫn build và checklist thiết bị: [DEVICE-SETUP.md](DEVICE-SETUP.md).
+- Expo Doctor: 20/21; còn 9 package lệch phiên bản SDK đề xuất. Chưa xác nhận build/QA trên thiết bị; đây là bước hoàn thành phần code cấu hình của P0-01.
+- Dừng sau phần này để người dùng review/push; đồng bộ dependency và thử native sẽ làm ở phần tiếp theo khi tiếp tục.
+
 Cập nhật: **27/10/2026**. Phạm vi: frontend Home, danh sách/tạo/chi tiết chuyến đi và tìm chọn địa điểm. Ngày trong fixture Home vẫn là **21/10/2026** để tái hiện các trạng thái.
 
 ## Tìm và thêm địa điểm · 27/10/2026

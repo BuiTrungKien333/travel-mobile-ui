@@ -28,6 +28,11 @@ const tokens = tripModuleLoader()<typeof import("../src/theme/tokens.ts")>(
   "src/theme/tokens.ts",
 );
 const load = tripModuleLoader({
+  "../api/maps-hooks": {
+    usePlaceRouteQuery: () => ({ data: undefined }),
+    useWeatherForecastQuery: () => ({ data: undefined }),
+    useCurrentWeatherQuery: () => ({ data: undefined }),
+  },
   react: { useState: () => [0, () => {}] },
   "react-native": {
     Pressable: "Pressable",
@@ -82,7 +87,7 @@ const trip: Trip = {
   days: [{ date: "2026-10-21", stops: [stop] }],
 };
 
-test("Live summary opens the shared optimizer for a day with multiple stops", () => {
+test("Live summary opens the shared optimizer and respects trip-level availability", () => {
   const opened: string[] = [];
   const props = {
     trip,
@@ -104,7 +109,7 @@ test("Live summary opens the shared optimizer for a day with multiple stops", ()
     elements(TripDayTools({ ...props, day: trip.days[0] })).some(
       (element) => element.accessibilityLabel === "Tối ưu lộ trình",
     ),
-    false,
+    true,
   );
   assert.equal(
     elements(TripDayTools({ ...props, showOptimize: false })).some(
@@ -152,7 +157,7 @@ test("Live timeline check-in is a separate marker control without opening detail
   assert.equal(visits, 2);
 });
 
-test("Live origin hides missing/blank locations, uses saved lodging, and never prompts for a missing time", () => {
+test("Live origin hides missing locations and uses an explicit start without inventing a time", () => {
   const props = {
     trip,
     day: trip.days[0],
@@ -167,6 +172,7 @@ test("Live origin hides missing/blank locations, uses saved lodging, and never p
   );
   const lodging = TripStartNode({
     ...props,
+    day: { ...props.day, startLocation: "Khách sạn A" },
     trip: { ...trip, accommodation: "  Khách sạn A  " },
   });
   assert.ok(lodging);

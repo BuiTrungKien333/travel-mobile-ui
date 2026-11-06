@@ -152,7 +152,7 @@ export function MemoryCapturePicker({
                       setTripId(item.id);
                       return;
                     }
-                    void sync.mutateAsync({ localId: item.id, trip: item })
+                    void sync.mutateAsync({ trip: item })
                       .then(async (id) => {
                         await linkTrip(item.id, id);
                         setTripId(id);

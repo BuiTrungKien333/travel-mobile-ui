@@ -47,7 +47,16 @@ export function PreviewPanels() {
       />
     );
   if (panel.kind === "create") {
-    return <CreateTripModal visible onClose={closePanel} />;
+    return (
+      <CreateTripModal
+        visible
+        onClose={closePanel}
+        onCreated={(tripId) => {
+          closePanel();
+          router.push({ pathname: "/trip/[tripId]", params: { tripId } });
+        }}
+      />
+    );
   }
   if (panel.kind === "journal" || panel.kind === "current-weather") {
     return (

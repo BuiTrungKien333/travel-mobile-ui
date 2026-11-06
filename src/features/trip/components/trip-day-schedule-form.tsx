@@ -9,28 +9,31 @@ import { AppInput } from "@/components/ui/app-input";
 import { AppText } from "@/components/ui/app-text";
 import type { Trip, TripDay } from "@/features/home/types/home-types";
 import { useAppTheme } from "@/hooks/use-app-theme";
-import {
-  getAddressSearchPreview,
-  getPlaceSearchPreview,
-} from "../data/place-search-preview";
 import { searchPlaces } from "../utils/place-search";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 import { tripDayScheduleSchema } from "../schemas/trip-details-schema";
 import type { TripMutation } from "../types/trip-details-types";
 import { TripStartTimeField } from "./trip-start-time-field";
 import { TripVisitDurationRow } from "./trip-visit-duration-row";
+import { useDebouncedValue, usePlaceSearchQuery } from "../api/maps-hooks";
+import type { PlaceCoordinate } from "../utils/place-search";
 
 export function TripDayScheduleForm({
   trip,
   day,
   onCommit,
+  saving = false,
+  itineraryUpdatedAt,
 }: {
   trip: Trip;
   day: TripDay;
   onCommit: (mutation: TripMutation) => boolean;
+  saving?: boolean;
+  itineraryUpdatedAt?: string | null;
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
+  const [base] = useState({ version: trip.serverVersion, itineraryUpdatedAt });
   const [shortcut, setShortcut] = useState<"home" | "stay" | null>(null);
   const [searching, setSearching] = useState(false);
   const [locationNotice, setLocationNotice] = useState(false);
@@ -47,8 +50,9 @@ export function TripDayScheduleForm({
   } = useForm<z.input<typeof schema>, unknown, z.output<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: {
-      startLocation: day.startLocation || trip.accommodation || "",
-      startTime: day.startTime ?? "08:30",
+      startLocation: day.startLocation ?? "",
+      startCoordinate: day.startCoordinate ?? null,
+      startTime: day.startTime ?? "",
       returnToStart: day.returnToStart ?? false,
       durations: day.stops.map((stop) => ({
         stopId: stop.id,
@@ -57,6 +61,11 @@ export function TripDayScheduleForm({
     },
   });
   const location = useWatch({ control, name: "startLocation" });
+  const coordinate = useWatch({ control, name: "startCoordinate" });
+  const searchText = useDebouncedValue(searching ? location.trim() : "");
+  const currentSearch = searching && searchText === location.trim();
+  const searchQuery = usePlaceSearchQuery(searchText, day.stops.find((stop) => stop.location)?.location);
+  const remoteMatches = currentSearch ? (searchQuery.data ?? []).filter((place) => place.latitude !== null && place.longitude !== null) : [];
   const durationValues = useWatch({ control, name: "durations" });
   const total = durationValues.reduce((sum, entry) => {
     const value = Number(entry.minutes);
@@ -71,18 +80,15 @@ export function TripDayScheduleForm({
   const query = location.trim();
   const candidates = Array.from(
     new Map(
-      [
-        ...day.stops,
-        ...getPlaceSearchPreview(trip.destination),
-        ...getAddressSearchPreview(),
-      ].map((place) => [place.id, place]),
+      day.stops.filter((place) => place.location).map((place) => [place.id, place]),
     ).values(),
   );
   const matches =
     searching && query.length > 1
       ? searchPlaces(candidates, query).slice(0, 4)
       : [];
-  function choosePlace(name: string) {
+  function choosePlace(name: string, point?: PlaceCoordinate) {
+    setValue("startCoordinate", point ?? null, { shouldDirty: true });
     setValue("startLocation", name, {
       shouldDirty: true,
       shouldValidate: true,
@@ -111,10 +117,12 @@ export function TripDayScheduleForm({
       return;
     }
     setShortcut(id);
+    setValue("startCoordinate", null, { shouldDirty: true });
     setValue("startLocation", id === "stay" ? (trip.accommodation ?? "") : "", {
       shouldDirty: true,
       shouldValidate: true,
     });
+    if (id === "stay" && trip.accommodation) setSearching(true);
     if (id === "stay" && trip.accommodation) Keyboard.dismiss();
     else setFocus("startLocation");
   }
@@ -150,6 +158,7 @@ export function TripDayScheduleForm({
                     accessibilityLabel={copy.originClearSearch}
                     onPress={() => {
                       field.onChange("");
+                      setValue("startCoordinate", null, { shouldDirty: true });
                       setSearching(false);
                       setDayChoicesOpen(false);
                       setShortcut(null);
@@ -176,6 +185,7 @@ export function TripDayScheduleForm({
               onBlur={field.onBlur}
               onChangeText={(value) => {
                 field.onChange(value);
+                setValue("startCoordinate", null, { shouldDirty: true });
                 setSearching(true);
                 setDayChoicesOpen(false);
                 setLocationNotice(false);
@@ -283,9 +293,10 @@ export function TripDayScheduleForm({
               day.stops.map((stop, index) => (
                 <Pressable
                   key={stop.id}
+                  disabled={!stop.location}
                   accessibilityRole="button"
                   accessibilityLabel={`${copy.originChoose} ${stop.name[locale]}`}
-                  onPress={() => choosePlace(stop.name[locale])}
+                  onPress={() => choosePlace(stop.name[locale], stop.location)}
                   style={({ pressed }) => ({
                     minHeight: theme.layout.compactTouchTarget,
                     justifyContent: "center",
@@ -332,6 +343,7 @@ export function TripDayScheduleForm({
                     place.locationType === "address"
                       ? (place.address?.[locale] ?? place.name[locale])
                       : place.name[locale],
+                    place.location,
                   );
                 }}
                 style={({ pressed }) => [
@@ -359,7 +371,24 @@ export function TripDayScheduleForm({
             </AppText>
           </View>
         ) : null}
-        {searching && query.length > 1 && !matches.length ? (
+        {coordinate ? <AppText variant="caption" tone="primary">{copy.originSelected}</AppText> : null}
+        {searching && query.length >= 2 && (!currentSearch || searchQuery.isFetching) ? <AppText variant="caption" tone="muted">{copy.originSearching}</AppText> : null}
+        {currentSearch && searchQuery.isError ? <View style={{ gap: theme.spacing.xs }}>
+          <AppText accessibilityRole="alert" variant="caption" tone="error">{copy.originSearchFailed}</AppText>
+          <AppButton size="small" variant="soft" onPress={() => { void searchQuery.refetch(); }}>{copy.retry}</AppButton>
+        </View> : null}
+        {searching ? remoteMatches.map((place, index) => (
+          <Pressable key={`${place.providerPlaceId ?? place.name}:${index}`} accessibilityRole="button"
+            accessibilityLabel={`${copy.originChoose} ${place.name}`}
+            onPress={() => { if (place.latitude !== null && place.longitude !== null)
+              choosePlace(place.name.slice(0, 200), { latitude: place.latitude, longitude: place.longitude }); }}
+            style={({ pressed }) => ({ minHeight: theme.layout.touchTarget, padding: theme.spacing.sm,
+              gap: theme.spacing.xxs, opacity: pressed ? theme.motion.pressOpacity : 1 })}>
+            <AppText variant="caption">{place.name}</AppText>
+            {place.address ? <AppText variant="caption" tone="muted">{place.address}</AppText> : null}
+          </Pressable>
+        )) : null}
+        {currentSearch && query.length > 1 && !matches.length && !remoteMatches.length && !searchQuery.isFetching && !searchQuery.isError ? (
           <AppText variant="caption" tone="muted">
             {copy.originSearchEmpty}
           </AppText>
@@ -473,6 +502,7 @@ export function TripDayScheduleForm({
       <AppButton
         size="small"
         variant="gradient"
+        loading={saving}
         style={{ borderRadius: theme.radius.sm, marginTop: theme.spacing.sm }}
         onPress={handleSubmit(
           ({ durations, ...values }) => {
@@ -481,7 +511,9 @@ export function TripDayScheduleForm({
               !onCommit({
                 kind: "day",
                 date: day.date,
-                values,
+                baseVersion: base.version,
+                expectedItineraryUpdatedAt: base.itineraryUpdatedAt,
+                values: { ...values, startCoordinate: values.startCoordinate ?? undefined },
                 durations: durations.map((entry) => ({
                   stopId: entry.stopId,
                   durationMinutes: entry.minutes,

@@ -1,13 +1,18 @@
 import { router } from "expo-router";
-import { View } from "react-native";
+import { usePreventRemove } from "expo-router/react-navigation";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, View } from "react-native";
 import { ScreenSafeArea } from "@/components/common/screen-safe-area";
 import { AppText } from "@/components/ui/app-text";
 import { AppButton } from "@/components/ui/app-button";
-import { useTripPreview } from "@/features/home/providers/trip-preview-provider";
 import { useAppTheme } from "@/hooks/use-app-theme";
+import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 import { usePlaceSearchCopy } from "../i18n/place-search-copy";
-import { getTripDetailsMode } from "../utils/trip-details-layout";
 import { PlacePickerScreen } from "./place-picker-screen";
+import { useTripPlacesQuery, useTripQuery } from "../api/trip-hooks";
+import { useTripItineraryQuery } from "../api/itinerary-hooks";
+import { toTrip } from "../api/trip-adapters";
+import { useAddTripPlaces } from "../hooks/use-add-trip-places";
 
 function goBack() {
   if (router.canGoBack()) router.back();
@@ -20,14 +25,24 @@ export function TripPlacePickerScreen({
   tripId?: string;
   date?: string;
 }) {
-  const trip = useTripPreview((state) =>
-    state.trips.find((entry) => entry.id === tripId),
-  );
-  const today = useTripPreview((state) => state.today);
-  const mutateTrip = useTripPreview((state) => state.mutateTrip);
+  const tripQuery = useTripQuery(tripId);
+  const placesQuery = useTripPlacesQuery(tripId);
+  const itineraryQuery = useTripItineraryQuery(tripId);
+  const addPlaces = useAddTripPlaces(tripId ?? "");
+  const [completed, setCompleted] = useState(false);
+  usePreventRemove(addPlaces.isPending, () => undefined);
+  useEffect(() => {
+    if (completed && !addPlaces.isPending) goBack();
+  }, [completed, addPlaces.isPending]);
+  const trip = tripQuery.data ? toTrip(tripQuery.data, placesQuery.data ?? [], itineraryQuery.data) : undefined;
   const theme = useAppTheme();
   const { copy } = usePlaceSearchCopy();
-  if (!trip || (date && !trip.days.some((day) => day.date === date)))
+  const { copy: detailsCopy } = useTripDetailsCopy();
+  if (tripId && ((!tripQuery.data && tripQuery.isPending) || (!placesQuery.data && placesQuery.isPending) || (!itineraryQuery.data && itineraryQuery.isPending)))
+    return <ScreenSafeArea style={{ flex: 1, backgroundColor: theme.colors.background }}><View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}><ActivityIndicator color={theme.colors.primary} /></View></ScreenSafeArea>;
+  if (tripId && ((!tripQuery.data && tripQuery.isError) || (!placesQuery.data && placesQuery.isError) || (!itineraryQuery.data && itineraryQuery.isError)))
+    return <ScreenSafeArea style={{ flex: 1, backgroundColor: theme.colors.background }}><View style={{ padding: theme.spacing.lg, gap: theme.spacing.lg }}><AppText accessibilityRole="alert" tone="error">{detailsCopy.itineraryLoadError}</AppText><AppButton variant="outline" onPress={() => { void tripQuery.refetch(); void placesQuery.refetch(); void itineraryQuery.refetch(); }}>{detailsCopy.retry}</AppButton><AppButton onPress={goBack}>{copy.back}</AppButton></View></ScreenSafeArea>;
+  if (!trip)
     return (
       <ScreenSafeArea
         style={{ flex: 1, backgroundColor: theme.colors.background }}
@@ -45,15 +60,10 @@ export function TripPlacePickerScreen({
       destination={trip.destination}
       initialDate={date ?? null}
       onClose={goBack}
-      onApply={(stops, targetDate) => {
-        if (getTripDetailsMode(trip, today) === "cancelled") return false;
-        const success = mutateTrip(trip.id, {
-          kind: "add",
-          date: targetDate,
-          stops,
-        });
-        if (success) goBack();
-        return success;
+      onApply={async (stops, targetDate) => {
+        await addPlaces.mutateAsync({ stops, date: targetDate });
+        setCompleted(true);
+        return true;
       }}
     />
   );

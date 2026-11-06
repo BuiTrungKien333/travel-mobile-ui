@@ -37,8 +37,9 @@ function MemoryUploadFixture() {
     "@/features/home/providers/trip-preview-provider": { useTripPreview: (select: (value: typeof state) => unknown) => select(state) },
     "../api/memory-api": { memoryQueryKeys: { list: () => ["memories"] } },
     "../api/memory-trips-api": {},
-    "../services/upload-photo": { uploadLocalMemory: async (memory: Memory) => {
-      assert.equal(memory.local?.deviceSaved, true);
+    "../services/upload-photo": { uploadLocalMemory: async (memory: Memory, _userId: string, _persist: unknown, assertSession: () => void) => {
+      if (changeAccount) version++;
+      assertSession();
       calls.push("upload");
     } },
   });
@@ -59,22 +60,20 @@ test("offline upload fails without queuing or retrying when connectivity returns
   assert.equal(f.upload.retry, false);
   assert.equal(f.upload.networkMode, "always");
   await assert.rejects(f.upload.mutationFn({ memory: f.memory }), { code: "NETWORK" });
-  assert.deepEqual(f.calls, ["device"]);
+  assert.deepEqual(f.calls, []);
   f.setOnline(true);
   await new Promise<void>((resolve) => setImmediate(resolve));
-  assert.deepEqual(f.calls, ["device"]);
+  assert.deepEqual(f.calls, []);
   assert.ok(f.memory.local);
   await f.upload.mutationFn({ memory: { ...f.memory, local: { ...f.memory.local, deviceSaved: true } } });
-  assert.deepEqual(f.calls, ["device", "upload"]);
+  assert.deepEqual(f.calls, ["upload"]);
 });
 
-test("upload never starts if saving on device fails or the account changes during saving", async () => {
-  for (const scenario of ["device", "account"]) {
-    const f = MemoryUploadFixture();
-    f.setOnline(true);
-    if (scenario === "device") f.failExport();
-    else f.changeAccountOnExport();
-    await assert.rejects(f.upload.mutationFn({ memory: f.memory }));
-    assert.deepEqual(f.calls, ["device"]);
-  }
+test("upload uses the private app copy without demanding library permission; account change still aborts", async () => {
+  const f = MemoryUploadFixture(); f.setOnline(true); f.failExport();
+  await f.upload.mutationFn({ memory: f.memory });
+  assert.deepEqual(f.calls, ["upload"]);
+  const changed = MemoryUploadFixture(); changed.setOnline(true); changed.changeAccountOnExport();
+  await assert.rejects(changed.upload.mutationFn({ memory: changed.memory }), { code: "CANCELLED" });
+  assert.deepEqual(changed.calls, []);
 });

@@ -6,10 +6,11 @@ import { GlassBackdrop } from "@/components/common/glass-backdrop";
 import type { Trip, TripDay } from "@/features/home/types/home-types";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
-import { getTripStartInfo } from "../utils/trip-details-layout";
+import { getTripStartInfo, scheduledStops } from "../utils/trip-details-layout";
+import { usePlaceRouteQuery } from "../api/maps-hooks";
+import { sameCoordinate } from "../utils/day-route";
 
 export function TripStartNode({
-  trip,
   day,
   canEdit,
   onPress,
@@ -25,7 +26,7 @@ export function TripStartNode({
 }) {
   const theme = useAppTheme();
   const { copy } = useTripDetailsCopy();
-  const start = getTripStartInfo(trip, day, live);
+  const start = getTripStartInfo(day, live);
   if (!start) return null;
   return (
     <Pressable
@@ -117,7 +118,6 @@ export function TripTimelineEmpty({
 }
 
 export function TripTimelineTail({
-  trip,
   day,
   empty,
   backlogCount,
@@ -135,6 +135,12 @@ export function TripTimelineTail({
 }) {
   const theme = useAppTheme();
   const { copy } = useTripDetailsCopy();
+  const timedStops = scheduledStops(day);
+  const lastPoint = timedStops[timedStops.length - 1]?.location;
+  const origin = day?.startCoordinate;
+  const samePoint = sameCoordinate(lastPoint, origin);
+  const returnRoute = usePlaceRouteQuery(lastPoint && origin ? [lastPoint, origin] : [],
+    !!day?.returnToStart && !!lastPoint && !!origin && !samePoint, day?.transport);
   return (
     <View style={{ gap: theme.spacing.md, paddingTop: theme.spacing.lg }}>
       {day && empty ? (
@@ -157,7 +163,9 @@ export function TripTimelineTail({
       {day?.returnToStart ? (
         <AppText variant="caption" tone="muted">
           {copy.returnLabel}:{" "}
-          {day.startLocation || trip.accommodation || copy.unknownRoute}
+          {day.startLocation || copy.unknownRoute}
+          {samePoint ? ` · 0 ${copy.minutes}` : returnRoute.data
+            ? ` · ${(returnRoute.data.distanceMeters / 1000).toFixed(1)} km · ${Math.round(returnRoute.data.durationSeconds / 60)} ${copy.minutes}` : ""}
         </AppText>
       ) : null}
       {day && canEdit ? (

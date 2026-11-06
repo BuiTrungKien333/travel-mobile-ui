@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   FlatList,
+  ActivityIndicator,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -18,6 +19,8 @@ import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { usePickerSheetMotion } from "../hooks/use-picker-sheet-motion";
 import { useTripCopy } from "../i18n/trip-copy";
+import { useDestinations } from "../hooks/use-destinations";
+import { AppButton } from "@/components/ui/app-button";
 
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
@@ -36,17 +39,6 @@ type DestinationPickerSheetProps = {
   onClose: () => void;
 };
 
-const popularDestinations = [
-  { name: "Đà Lạt, Lâm Đồng", city: "Đà Lạt" },
-  { name: "Đà Nẵng", city: "Đà Nẵng" },
-  { name: "Hội An, Quảng Nam", city: "Hội An" },
-  { name: "Nha Trang, Khánh Hòa", city: "Nha Trang" },
-  { name: "Sapa, Lào Cai", city: "Sapa" },
-  { name: "Phú Quốc, Kiên Giang", city: "Phú Quốc" },
-  { name: "Hà Nội", city: "Hà Nội" },
-  { name: "Quy Nhơn, Bình Định", city: "Quy Nhơn" },
-];
-
 export function DestinationPickerSheet(props: DestinationPickerSheetProps) {
   return props.visible ? <DestinationPickerSession {...props} /> : null;
 }
@@ -60,6 +52,7 @@ function DestinationPickerSession({
   const theme = useAppTheme();
   const insets = useSafeAreaInsets();
   const [customInput, setCustomInput] = useState("");
+  const destinations = useDestinations(customInput);
   const [isInputFocused, setIsInputFocused] = useState(false);
 
   const { sheetMotion, backdropMotion, dragGesture, close, reduceMotion } =
@@ -75,23 +68,11 @@ function DestinationPickerSession({
     }
   };
 
-  const filteredDestinations = useMemo(() => {
-    const q = customInput.trim();
-    if (!q) return popularDestinations;
-    const lower = q.toLowerCase();
-    const matched = popularDestinations.filter(
-      (d) =>
-        d.name.toLowerCase().includes(lower) ||
-        d.city.toLowerCase().includes(lower),
-    );
-    const hasExactMatch = popularDestinations.some(
-      (d) => d.name.toLowerCase() === lower || d.city.toLowerCase() === lower,
-    );
-    if (!hasExactMatch) {
-      return [{ name: q, city: q }, ...matched];
-    }
-    return matched;
-  }, [customInput]);
+  const query = customInput.trim();
+  const options = destinations.data ?? [];
+  const filteredDestinations = query && !options.some((item) => item.name.toLowerCase() === query.toLowerCase())
+    ? [{ id: "custom", code: "", name: query }, ...options]
+    : options;
 
   return (
     <Modal
@@ -243,15 +224,18 @@ function DestinationPickerSession({
             {/* Destinations List */}
             <FlatList
               data={filteredDestinations}
-              keyExtractor={(item) => item.name}
+              keyExtractor={(item) => item.id}
+              ListHeaderComponent={destinations.isPending ? <ActivityIndicator color={theme.colors.primary} /> : destinations.isError ? (
+                <View style={{ gap: theme.spacing.sm }}>
+                  <AppText tone="error" accessibilityRole="alert">{copy.destinationsError}</AppText>
+                  <AppButton variant="outline" onPress={() => void destinations.refetch()}>{copy.retry}</AppButton>
+                </View>
+              ) : null}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
               style={styles.list}
               renderItem={({ item }) => {
                 const isSelected =
-                  currentDestination
-                    .toLowerCase()
-                    .includes(item.city.toLowerCase()) ||
                   currentDestination.toLowerCase() === item.name.toLowerCase();
                 return (
                   <Pressable

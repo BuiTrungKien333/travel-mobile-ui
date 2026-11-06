@@ -7,13 +7,10 @@ import { AppIcon } from "@/components/ui/app-icon";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import type { TripStop } from "@/features/home/types/home-types";
 import { usePlaceSearchCopy } from "../i18n/place-search-copy";
-import { getPlaceDetailsPreview } from "../data/place-details-preview";
 import type { PlaceMapRegion } from "../utils/place-search";
 import { TripPlanningMap } from "./trip-planning-map";
 import { PlaceSearchMap } from "./place-search-map";
 import { DetailIconButton } from "./trip-details-header";
-
-const defaultLocationImage = require("@/assets/images/home/next-trip-navigation.webp");
 
 /** The same resizable map frame as trip details, with place information below. */
 export function PlaceDetailsContent({
@@ -51,9 +48,8 @@ export function PlaceDetailsContent({
   const { copy, locale } = usePlaceSearchCopy();
   const [availableHeight, setAvailableHeight] = useState(0);
   const resizeLock = useSharedValue(0);
-  const details = getPlaceDetailsPreview(place);
   const isAddress = place.locationType === "address";
-  const photo = details.photo ?? (isAddress ? defaultLocationImage : null);
+  const photo = null;
   const headerTopSpacing =
     topInset !== undefined ? topInset + theme.spacing.xl : theme.spacing.xxl;
   const header = (
@@ -79,17 +75,17 @@ export function PlaceDetailsContent({
     {
       icon: "clock" as const,
       label: copy.hours,
-      value: details.hours ?? copy.unavailable,
+      value: copy.unavailable,
     },
     {
       icon: "ticket" as const,
       label: copy.admission,
-      value: details.admission?.[locale] ?? copy.unavailable,
+      value: copy.unavailable,
     },
     {
       icon: "route" as const,
       label: copy.visitDuration,
-      value: `${place.durationMinutes ?? 45} ${copy.minutes}`,
+      value: place.durationMinutes ? `${place.durationMinutes} ${copy.minutes}` : copy.unavailable,
     },
   ];
   return (
@@ -231,9 +227,6 @@ export function PlaceDetailsContent({
               ))}
             </View>
           )}
-          <AppText variant="caption" tone="muted">
-            {copy.detailsPreview}
-          </AppText>
         </View>
         {afterInfo}
         {children}

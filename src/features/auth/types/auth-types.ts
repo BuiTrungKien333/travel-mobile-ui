@@ -20,6 +20,11 @@ export const authDataSchema = z.object({
 
 export type AuthData = z.infer<typeof authDataSchema>;
 export type AuthUser = z.infer<typeof authUserSchema>;
+export const updateProfileSchema = z.object({
+  fullName: z.string().trim().min(1).max(100),
+  avatarUrl: z.union([z.literal(""), z.url().max(1000).refine((value) => /^https?:\/\//i.test(value))]).optional(),
+});
+export type UpdateProfile = z.infer<typeof updateProfileSchema>;
 export type AuthStatus =
   | "restoring"
   | "authenticated"
