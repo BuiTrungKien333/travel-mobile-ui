@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useUnsavedExit } from "@/hooks/use-unsaved-exit";
 import { Pressable, View } from "react-native";
 import { AppButton } from "@/components/ui/app-button";
 import { AppIcon } from "@/components/ui/app-icon";
@@ -73,9 +74,11 @@ export function TripDetailsPanels({
   const [hostReady, setHostReady] = useState(false);
   const [reorderStamp] = useState(itineraryUpdatedAt);
   const [formTripVersion] = useState(trip.serverVersion);
+  const [dirty, setDirty] = useState(false);
+  const requestExit = useUnsavedExit(dirty, saving || applyingOptimization);
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
-  const closeSheet = () => { if (!saving && !applyingOptimization) setSheet(null); };
+  const closeSheet = () => requestExit(() => setSheet(null));
   const weatherPoint = day?.stops.find((stop) => stop.location)?.location
     ?? trip.unscheduledStops?.find((stop) => stop.location)?.location;
   const weatherQuery = useWeatherForecastQuery(
@@ -116,7 +119,8 @@ export function TripDetailsPanels({
           }
           onShow={() => setHostReady(true)}
           title={sheetTitle}
-          onClose={closeSheet}
+          onClose={() => setSheet(null)}
+          beforeClose={requestExit}
           dismissible={!saving}
         >
           {saveError ? <AppText accessibilityRole="alert" tone="error" variant="caption">{saveError}</AppText> : null}
@@ -124,6 +128,7 @@ export function TripDetailsPanels({
           {sheet.kind === "menu" ? (
             <>
               <AppButton
+                disabled={saving}
                 variant="outline"
                 leadingIcon={
                   <AppIcon
@@ -140,6 +145,7 @@ export function TripDetailsPanels({
                 {copy.edit}
               </AppButton>
               <AppButton
+                disabled={saving}
                 variant="outline"
                 leadingIcon={
                   <AppIcon
@@ -155,12 +161,14 @@ export function TripDetailsPanels({
               >
                 {copy.journal}
               </AppButton>
-              <DeleteTripButton onDelete={onDelete} />
+              <DeleteTripButton onDelete={onDelete} busy={saving} />
             </>
           ) : null}
           {sheet.kind === "info" ? (
             canEdit ? (
-              <TripEditForm trip={trip} today={today} onCommit={commit} />
+              <View pointerEvents={saving ? "none" : "auto"}>
+                <TripEditForm trip={trip} today={today} onCommit={commit} saving={saving} onDirtyChange={setDirty} />
+              </View>
             ) : (
               <>
                 <AppText variant="heading">
@@ -200,7 +208,7 @@ export function TripDetailsPanels({
                 </AppText>
                 <View pointerEvents={saving ? "none" : "auto"}>
                   <TripDayScheduleForm key={day.date} trip={trip} day={day} onCommit={commit}
-                    saving={saving} itineraryUpdatedAt={itineraryUpdatedAt} />
+                    saving={saving} itineraryUpdatedAt={itineraryUpdatedAt} onDirtyChange={setDirty} />
                 </View>
               </>
             ) : (
@@ -245,7 +253,7 @@ export function TripDetailsPanels({
             </>
           ) : null}
           {sheet.kind === "reorder" && day && scheduledDay ? (
-            <TripReorder
+            <TripReorder onDirtyChange={setDirty}
               stops={scheduledDay.stops}
               onApply={(ids) =>
                 commit({
@@ -300,7 +308,7 @@ export function TripDetailsPanels({
   );
 }
 
-function DeleteTripButton({ onDelete }: { onDelete: () => void }) {
+function DeleteTripButton({ onDelete, busy }: { onDelete: () => void; busy: boolean }) {
   const theme = useAppTheme();
   const { copy } = useTripDetailsCopy();
   const [confirmVisible, setConfirmVisible] = useState(false);
@@ -309,6 +317,8 @@ function DeleteTripButton({ onDelete }: { onDelete: () => void }) {
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={copy.delete}
+        accessibilityState={{ disabled: busy, busy }}
+        disabled={busy}
         onPress={() => setConfirmVisible(true)}
         style={({ pressed }) => ({
           minHeight: theme.layout.touchTarget,

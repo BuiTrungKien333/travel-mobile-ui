@@ -1,6 +1,8 @@
 import { useI18n } from "@/hooks/use-i18n";
 
 const vi = {
+  changesSaved: "Đã lưu thay đổi",
+  deleteError: "Chưa xóa được chuyến đi. Dữ liệu vẫn được giữ lại; hãy thử lại.",
   selectedStop: "Đang xem",
   optimizationInvalid: "Đề xuất chưa khớp lịch hiện tại hoặc thay đổi điểm ghim. Hãy lấy đề xuất mới trước khi áp dụng.",
   optimizationChangedVisits: "{count} lượt ghé thay đổi thứ tự, giờ hoặc thời lượng",
@@ -273,6 +275,8 @@ const vi = {
     "Các địa điểm được lưu vào Chưa xếp lịch để bạn tự chọn ngày và giờ.",
 };
 const en: typeof vi = {
+  changesSaved: "Changes saved",
+  deleteError: "Couldn't delete the trip. Your data is still available; please try again.",
   selectedStop: "Selected stop",
   optimizationInvalid: "This proposal no longer matches the itinerary or changes a pin. Request a new proposal before applying.",
   optimizationChangedVisits: "{count} visits change order, time or duration",

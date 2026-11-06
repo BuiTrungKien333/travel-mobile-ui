@@ -36,6 +36,7 @@ export function TripDetailsSheet({
   variant = "default",
   contentGap,
   dismissible = true,
+  beforeClose,
 }: {
   title: string;
   children: ReactNode;
@@ -49,6 +50,7 @@ export function TripDetailsSheet({
   variant?: "default" | "weather";
   contentGap?: number;
   dismissible?: boolean;
+  beforeClose?: (leave: () => void) => void;
 }) {
   const theme = useAppTheme();
   const insets = useScreenInsets();
@@ -57,7 +59,7 @@ export function TripDetailsSheet({
   const safeTop = insets.top + (topSpacing ?? theme.spacing.lg);
   const { copy } = useTripDetailsCopy();
   const { sheetMotion, backdropMotion, dragGesture, close: dismiss, reduceMotion } =
-    usePickerSheetMotion(onClose);
+    usePickerSheetMotion(onClose, beforeClose);
   const close = () => { if (dismissible) dismiss(); };
   const handle = (
     <View

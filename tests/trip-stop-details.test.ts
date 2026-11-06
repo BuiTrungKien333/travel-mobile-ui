@@ -39,12 +39,13 @@ function harness(future = false, pool = false) {
     return [slots[index], (value: unknown) => { slots[index] = value; }];
   }
   const load = tripModuleLoader({
+    "./use-i18n": { useI18n: () => ({ t: (key: string) => key }) },
     react: { useState: state, useRef: (initial: unknown) => state(() => ({ current: initial }))[0],
       useEffect: (effect: () => void) => effects.push(effect) },
     "react/jsx-runtime": { jsx: (type: unknown, props: Record<string, unknown>) => ({ type, props }),
       jsxs: (type: unknown, props: Record<string, unknown>) => ({ type, props }) },
     "expo-router": { router: { canGoBack: () => true, back: () => { backs++; } } },
-    "expo-router/react-navigation": { usePreventRemove() {} },
+    "expo-router/react-navigation": { usePreventRemove() {}, useNavigation: () => ({ dispatch() {} }) },
     "react-native": { View: "View", KeyboardAvoidingView: "KeyboardAvoidingView", Platform: { OS: "android" },
       Linking: { openURL: async (url: string) => { links.push(url); } },
       StyleSheet: { create: (value: unknown) => value, hairlineWidth: 1 } },
@@ -106,6 +107,9 @@ function harness(future = false, pool = false) {
   function render(input = props) {
     cursor = 0; effects.length = 0;
     let tree = TripStopDetailsScreen(input) as Node;
+    const children = Array.isArray(tree.props.children) ? tree.props.children as Node[] : [];
+    const content = children.find((child) => child && typeof child.type === "function" && child.type.name === "StopDetailsContent");
+    if (content) tree = content;
     if (typeof tree.type === "function") tree = tree.type(tree.props) as Node;
     effects.forEach((effect) => effect());
     return tree;

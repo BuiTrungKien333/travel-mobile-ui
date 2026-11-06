@@ -1,3 +1,5 @@
+import { QueryFeedback } from "@/components/common/query-feedback";
+import { requiredQueryState } from "@/utils/required-query-state";
 import { router } from "expo-router";
 import { usePreventRemove } from "expo-router/react-navigation";
 import { tripDirectionsUrl } from "@/features/home/utils/map-links";
@@ -5,8 +7,8 @@ import { useOngoingCopy } from "@/features/home/i18n/ongoing-copy";
 import { useTripVisit } from "../hooks/use-trip-visit";
 import { reviewOptimization } from "../utils/optimization-review";
 import { useQueryClient } from "@tanstack/react-query";
-import { useRef, useState } from "react";
-import { ActivityIndicator, Linking, StyleSheet, View } from "react-native";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Linking, StyleSheet, View } from "react-native";
 import Animated, { useSharedValue } from "react-native-reanimated";
 import { ScreenSafeArea } from "@/components/common/screen-safe-area";
 import { AppButton } from "@/components/ui/app-button";
@@ -117,15 +119,18 @@ export function TripDetailsScreen({
   expandMap?: boolean;
 }) {
   const tripQuery = useTripQuery(tripId);
+  const [deleted, setDeleted] = useState(false);
+  useEffect(() => { if (deleted) backToTrips(); }, [deleted]);
   const placesQuery = useTripPlacesQuery(tripId);
   const itineraryQuery = useTripItineraryQuery(tripId);
+  const loadState = requiredQueryState([tripQuery, placesQuery, itineraryQuery]);
   const { copy } = useTripDetailsCopy();
   const theme = useAppTheme();
-  if (tripId && ((!tripQuery.data && tripQuery.isPending) || (!placesQuery.data && placesQuery.isPending) || (!itineraryQuery.data && itineraryQuery.isPending)))
+  if (tripId && loadState === "loading")
     return <ScreenSafeArea style={[styles.fill, { backgroundColor: theme.colors.background }]}>
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}><ActivityIndicator color={theme.colors.primary} /></View>
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}><QueryFeedback loading /><AppButton variant="outline" onPress={backToTrips}>{copy.back}</AppButton></View>
     </ScreenSafeArea>;
-  if (tripId && ((!tripQuery.data && tripQuery.isError) || (!placesQuery.data && placesQuery.isError) || (!itineraryQuery.data && itineraryQuery.isError)))
+  if (tripId && loadState === "error")
     return <ScreenSafeArea style={[styles.fill, { backgroundColor: theme.colors.background }]}>
       <View style={{ padding: theme.spacing.xl, gap: theme.spacing.lg }}>
         <DetailIconButton name="back" label={copy.back} onPress={backToTrips} />
@@ -158,10 +163,15 @@ export function TripDetailsScreen({
     );
   return (
     <TripDetailsContent
+      feedback={<QueryFeedback refreshing={tripQuery.isRefetching || placesQuery.isRefetching || itineraryQuery.isRefetching}
+        error={tripQuery.isError || placesQuery.isError || itineraryQuery.isError ? copy.itineraryLoadError : null}
+        retrying={tripQuery.isFetching || placesQuery.isFetching || itineraryQuery.isFetching}
+        onRetry={() => { void tripQuery.refetch(); void placesQuery.refetch(); void itineraryQuery.refetch(); }} />}
       key={trip.id}
       trip={trip}
       selectedDate={selectedDate}
       expandMap={expandMap}
+      onDeleted={() => setDeleted(true)}
     />
   );
 }
@@ -170,10 +180,14 @@ function TripDetailsContent({
   trip,
   selectedDate,
   expandMap,
+  onDeleted,
+  feedback,
 }: {
   trip: Trip;
   selectedDate?: string;
   expandMap: boolean;
+  onDeleted: () => void;
+  feedback?: ReactNode;
 }) {
   const theme = useAppTheme();
   const queryClient = useQueryClient();
@@ -192,6 +206,7 @@ function TripDetailsContent({
   const optimizeItineraryMutation = useOptimizeItineraryMutation(trip.id);
   const applyItineraryOptimizationMutation = useApplyItineraryOptimizationMutation(trip.id);
   const [commitError, setCommitError] = useState<string | null>(null);
+  const [savedNotice, setSavedNotice] = useState(false);
   const commitInFlight = useRef(false);
   const [committing, setCommitting] = useState(false);
   usePreventRemove(committing || visit.isPending || applyItineraryOptimizationMutation.isPending, () => undefined);
@@ -248,7 +263,7 @@ function TripDetailsContent({
         });
     },
   });
-  const { list, jump, onScrollToIndexFailed } = useTripTimelineScroll<Row>(
+  const { list, jump, onScrollToIndexFailed, rememberOffset } = useTripTimelineScroll<Row>(
     selectionKey,
     mapFirstLayout
       ? planningMapGeometry.headerHeight + selectorHeight + theme.spacing.lg
@@ -345,6 +360,7 @@ function TripDetailsContent({
     commitInFlight.current = true;
     setCommitting(true);
     setCommitError(null);
+    setSavedNotice(false);
     const perform = async () => {
       if (mutation.kind === "info") {
         const version = mutation.baseVersion ?? trip.serverVersion;
@@ -400,7 +416,7 @@ function TripDetailsContent({
         throw new Error("INVALID_TRIP_MUTATION");
       }
     };
-    void perform().then((saved) => { if (saved !== false) setSheet(null); }).catch((error: unknown) => {
+    void perform().then((saved) => { if (saved !== false) { setSheet(null); setSavedNotice(true); } }).catch((error: unknown) => {
       if (error instanceof ApiError && error.status === 409) void queryClient.invalidateQueries({ queryKey: tripQueryKeys.all });
       setCommitError(error instanceof ApiError && error.status === 409 ? (mutation.kind === "day" ? copy.daySettingsConflict : copy.versionConflict)
         : error instanceof Error && error.message === "PLACE_COORDINATES_REQUIRED"
@@ -425,7 +441,7 @@ function TripDetailsContent({
     });
   }
   function openJournal() {
-    router.push("/tabs/memories");
+    router.push({ pathname: "/memories/[tripId]", params: { tripId: trip.id } });
   }
   function addPlace() {
     openPlacePicker(backlog ? null : (day?.date ?? null));
@@ -437,6 +453,7 @@ function TripDetailsContent({
     });
   }
   function selectDate(date: string | null) {
+    setSavedNotice(false);
     setBacklog(date === null);
     if (date) router.setParams({ day: date });
   }
@@ -694,6 +711,9 @@ function TripDetailsContent({
   return (
     <View style={[styles.fill, { backgroundColor: theme.colors.background }]}>
       <ScreenSafeArea edges={["top", "left", "right"]} style={styles.fill}>
+        {feedback}
+        {savedNotice ? <AppText accessibilityLiveRegion="polite" variant="caption" tone="primary"
+          style={{ paddingHorizontal: theme.spacing.lg, paddingVertical: theme.spacing.sm }}>{copy.changesSaved}</AppText> : null}
         <View
           aria-hidden={panelOpen || sheet !== null}
           accessibilityElementsHidden={panelOpen || sheet !== null}
@@ -763,6 +783,8 @@ function TripDetailsContent({
                 keyExtractor={(item) => item.key}
                 renderItem={renderRow}
                 onScrollToIndexFailed={onScrollToIndexFailed}
+                onScrollEndDrag={rememberOffset}
+                onMomentumScrollEnd={rememberOffset}
                 initialNumToRender={8}
                 scrollEnabled={!timelineDrag.draggedId}
                 removeClippedSubviews={
@@ -868,8 +890,15 @@ function TripDetailsContent({
           onEditHistory={() => setEditHistory(true)}
           onJournal={openJournal}
           onDelete={() => {
-            if (trip.serverVersion === undefined) return;
-            void deleteTripMutation.mutateAsync({ tripId: trip.id, version: trip.serverVersion }).then(backToTrips).catch(() => setCommitError("Không xóa được chuyến đi."));
+            if (trip.serverVersion === undefined || commitInFlight.current) return;
+            commitInFlight.current = true;
+            setCommitError(null);
+            setCommitting(true);
+            let removed = false;
+            void deleteTripMutation.mutateAsync({ tripId: trip.id, version: trip.serverVersion })
+              .then(() => { removed = true; })
+              .catch(() => setCommitError(copy.deleteError))
+              .finally(() => { commitInFlight.current = false; setCommitting(false); if (removed) onDeleted(); });
           }}
           optimization={optimizeItineraryMutation.data}
           optimizing={optimizeItineraryMutation.isPending}

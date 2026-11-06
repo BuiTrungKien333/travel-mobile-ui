@@ -1,5 +1,15 @@
 # Bàn giao ngữ cảnh cho agent tiếp theo
 
+## Mốc hiện hành · Phần 10 — P1-02 · 06/11/2026
+
+Code P1-02 đã triển khai; **QA điện thoại còn chờ** theo [P1-02-ACCEPTANCE.md](P1-02-ACCEPTANCE.md). Dừng review/push, không tự commit/push. Các mốc P1-01/P0 bên dưới là lịch sử; phần tiếp theo P1-03 khi người dùng yêu cầu.
+
+`backOrReplace` giữ caller của ảnh, fallback đúng album/deep link. Timeline giữ offset theo ngày/pool qua end-drag/momentum, không ghi đè handler Reanimated bản đồ; picker giữ offset kết quả khi preview. `useUnsavedExit` dùng Router compatibility exports để chặn busy và hỏi dirty cho route/local form. Form chuyến/ngày/lượt ghé/reorder gửi dirty state cho host; ghi chú/profile tự guard. `TripDetailsSheet`/`usePickerSheetMotion` có beforeClose tùy chọn: xác nhận trước animation, swipe bị từ chối trở về vị trí mở. Caller cũ giữ callback commit sau animation. Keyboard avoidance Android/iOS, AppInput hint, focus/ref thời lượng và picker giờ đã nối.
+
+`QueryFeedback`/`requiredQueryState` giữ cached content khi lỗi nền và ưu tiên lỗi chưa có data hơn pending. Xóa chuyến dùng mutex commit, trạng thái bận và callback screen cha sau cleanup, tránh mất điều hướng khi removeQueries unmount content. Lưu thành công có notice; hủy preview ảnh hưởng ngày không tính đã lưu. Không sửa backend/.env/dependency. Giữ thay đổi format bảng người dùng đang thực hiện trong MOBILE-MVP-IMPLEMENTATION-PLAN.md, không hoàn nguyên.
+
+Kiểm chứng: TypeScript đạt; 25 focused đạt; full 312/306 đạt/6 lỗi harness cũ (trip-ui-flows 4, trip-weather-details 2). Lint repo 51 lỗi/3 cảnh báo cũ; changed scope còn lỗi refs cũ trong hook motion và warning DateTimePicker cũ. Source HEAD của hook cũng lỗi refs qua stdin (log baseline), không disable lint. Logs backend/target/p102-*.log; chưa QA thiết bị. Không tuyên bố full suite/lint xanh.
+
 ## Mốc hiện hành · Phần 9 — P1-01 · 06/11/2026
 
 Người dùng yêu cầu triển khai P1-01. Code hoàn tất, **QA giao diện điện thoại còn chờ** theo [P1-01-ACCEPTANCE.md](P1-01-ACCEPTANCE.md). Dừng cho người dùng review/push, không tự commit/push. Mốc P0-04 bên dưới là lịch sử; phần tiếp theo sau review là P1-02 khi người dùng yêu cầu.

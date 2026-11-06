@@ -1,5 +1,13 @@
 # Tiến độ Travel Mobile UI
 
+## Phần 10 · P1-02 — Điều hướng, form và trạng thái màn hình · 06/11/2026
+
+- Back ảnh về đúng nơi gọi, deep link có fallback; nhật ký chuyến mở đúng album. Timeline giữ offset theo ngày/pool; kết quả tìm kiếm giữ vị trí khi quay về từ preview.
+- Form thông tin/ngày/lượt ghé/reorder/ghi chú/tài khoản có xác nhận bỏ dữ liệu chưa lưu; chặn thoát đang lưu. Sheet xác nhận trước animation, giữ form trên màn khi người dùng chọn tiếp tục chỉnh sửa.
+- Android/iOS keyboard avoidance và ref/focus lỗi được nối cho các form đang dùng. QueryFeedback thống nhất loading/cập nhật/lỗi/retry, giữ dữ liệu cache/form khi refetch lỗi. Xóa chuyến chặn lặp và không mất đường quay lại khi cache bị xóa.
+- TypeScript đạt; 25 test trọng tâm đạt; full 312/306 đạt/6 lỗi cũ. Lint toàn repo còn 51 lỗi/3 cảnh báo cũ; phạm vi file sửa còn 1 lỗi refs và 1 cảnh báo DateTimePicker đã có trước. Không thêm rule disable, dependency/native config/backend/.env.
+- Checklist: [P1-02-ACCEPTANCE.md](P1-02-ACCEPTANCE.md). Chưa QA điện thoại, chỉ reload mobile cho code mới. Dừng review/push; tiếp theo P1-03 khi được yêu cầu.
+
 ## Phần 9 · P1-01 — Đồng nhất giao diện và phân cấp thông tin · 06/11/2026
 
 - Đã triển khai code P1-01: typography theo vai trò, AppButton tối thiểu 48, StatusBadge dùng chung, thẻ/ảnh/header theo token; không tăng đồng loạt cỡ chữ hay đổi branding/navigation.

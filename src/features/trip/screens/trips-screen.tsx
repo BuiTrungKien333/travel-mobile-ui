@@ -1,6 +1,7 @@
 import { router } from "expo-router";
 import { useBottomTabBarHeight } from "expo-router/js-tabs";
-import { ActivityIndicator, FlatList, StyleSheet, View } from "react-native";
+import { FlatList, StyleSheet, View } from "react-native";
+import { QueryFeedback } from "@/components/common/query-feedback";
 import { ScreenSafeArea } from "@/components/common/screen-safe-area";
 
 import { AppButton } from "@/components/ui/app-button";
@@ -32,6 +33,8 @@ export function TripsScreen() {
       style={[styles.screen, { backgroundColor: theme.colors.background }]}
     >
       <FlatList
+        refreshing={tripsQuery.isRefetching}
+        onRefresh={() => void tripsQuery.refetch()}
         data={trips}
         keyExtractor={(trip) => trip.id}
         showsVerticalScrollIndicator={false}
@@ -81,18 +84,16 @@ export function TripsScreen() {
                 {copy.createTrip}
               </AppButton>
             </View>
+            <QueryFeedback refreshing={tripsQuery.isRefetching}
+              error={tripsQuery.isError && tripsQuery.data !== undefined ? copy.tripsLoadError : null}
+              onRetry={() => void tripsQuery.refetch()} retrying={tripsQuery.isFetching} />
           </View>
         }
         ListEmptyComponent={
           tripsQuery.isPending ? (
-            <View style={{ padding: theme.spacing.xl, alignItems: "center" }}>
-              <ActivityIndicator color={theme.colors.primary} />
-            </View>
+            <QueryFeedback loading />
           ) : tripsQuery.isError ? (
-            <View style={{ gap: theme.spacing.md, padding: theme.spacing.lg }}>
-              <AppText accessibilityRole="alert" tone="error">{copy.tripsLoadError}</AppText>
-              <AppButton variant="outline" onPress={() => void tripsQuery.refetch()}>{copy.retry}</AppButton>
-            </View>
+            <QueryFeedback error={copy.tripsLoadError} onRetry={() => void tripsQuery.refetch()} retrying={tripsQuery.isFetching} />
           ) : trips.length === 0 ? (
           <View
             style={[

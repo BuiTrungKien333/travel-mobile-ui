@@ -1,4 +1,5 @@
-import { ActivityIndicator, View } from "react-native";
+import { View } from "react-native";
+import { QueryFeedback } from "@/components/common/query-feedback";
 import { AppButton } from "@/components/ui/app-button";
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
@@ -23,10 +24,7 @@ export function MemoryLoadState({ loading, error, onRetry }: {
         <AppText accessibilityRole="alert" tone="error">{copy.storageError}</AppText>
         <AppButton variant="outline" onPress={() => void retryLocal()}>{copy.retry}</AppButton>
       </> : null}
-      {loading ? <ActivityIndicator color={theme.colors.primaryText} accessibilityLabel={copy.loading} /> : error ? <>
-        <AppText accessibilityRole="alert" tone="error">{copy.loadError}</AppText>
-        <AppButton onPress={onRetry}>{copy.retry}</AppButton>
-      </> : null}
+      <QueryFeedback loading={loading} error={error ? copy.loadError : null} onRetry={onRetry} />
     </View>
   );
 }

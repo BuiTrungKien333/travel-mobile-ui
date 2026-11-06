@@ -4,6 +4,8 @@ import { Image } from "expo-image";
 import { useState } from "react";
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
   Alert,
   Pressable,
   ScrollView,
@@ -56,7 +58,10 @@ export function ProfileScreen() {
       edges={["top", "left", "right"]}
       style={[styles.screen, { backgroundColor: theme.colors.background }]}
     >
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.screen}>
       <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         contentContainerStyle={[
           styles.content,
           {
@@ -377,6 +382,7 @@ export function ProfileScreen() {
           </Pressable>
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
     </ScreenSafeArea>
   );
 }

@@ -6,6 +6,7 @@ import { AppInput } from "@/components/ui/app-input";
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useI18n } from "@/hooks/use-i18n";
+import { useUnsavedExit } from "@/hooks/use-unsaved-exit";
 import { useUpdateProfile } from "../hooks/use-auth";
 import { updateProfileSchema, type UpdateProfile, type AuthUser } from "../types/auth-types";
 
@@ -13,9 +14,10 @@ export function ProfileEditor({ user, onDone }: { user: AuthUser; onDone: () => 
   const theme = useAppTheme();
   const { t } = useI18n();
   const update = useUpdateProfile();
-  const { control, handleSubmit, setError, formState: { errors, isSubmitting } } = useForm<UpdateProfile>({
+  const { control, handleSubmit, setError, formState: { errors, isSubmitting, isDirty } } = useForm<UpdateProfile>({
     resolver: zodResolver(updateProfileSchema), defaultValues: { fullName: user.fullName, avatarUrl: user.avatarUrl ?? "" },
   });
+  const requestExit = useUnsavedExit(isDirty, isSubmitting);
   return <View style={{ gap: theme.spacing.md }}>
     <Controller control={control} name="fullName" render={({ field, fieldState }) => (
       <AppInput label={t("auth.register.fullName")} value={field.value} onChangeText={field.onChange} onBlur={field.onBlur} ref={field.ref}
@@ -30,6 +32,6 @@ export function ProfileEditor({ user, onDone }: { user: AuthUser; onDone: () => 
       try { await update.mutateAsync(values); onDone(); }
       catch { setError("root", { message: t("auth.profile.saveError") }); }
     })()}>{t("auth.profile.save")}</AppButton>
-    <AppButton variant="outline" disabled={isSubmitting} onPress={onDone}>{t("auth.profile.cancel")}</AppButton>
+    <AppButton variant="outline" disabled={isSubmitting} onPress={() => requestExit(onDone)}>{t("auth.profile.cancel")}</AppButton>
   </View>;
 }

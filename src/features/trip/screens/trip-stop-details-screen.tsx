@@ -1,7 +1,9 @@
+import { QueryFeedback } from "@/components/common/query-feedback";
+import { requiredQueryState } from "@/utils/required-query-state";
 import { router } from "expo-router";
-import { useEffect, useRef, useState } from "react";
-import { usePreventRemove } from "expo-router/react-navigation";
-import { ActivityIndicator, KeyboardAvoidingView, Linking, Platform, StyleSheet, View } from "react-native";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useUnsavedExit } from "@/hooks/use-unsaved-exit";
+import { KeyboardAvoidingView, Linking, Platform, StyleSheet, View } from "react-native";
 import { tripDirectionsUrl } from "@/features/home/utils/map-links";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ScreenSafeArea } from "@/components/common/screen-safe-area";
@@ -54,11 +56,12 @@ export function TripStopDetailsScreen({
   const tripQuery = useTripQuery(tripId);
   const placesQuery = useTripPlacesQuery(tripId);
   const itineraryQuery = useTripItineraryQuery(tripId);
+  const loadState = requiredQueryState([tripQuery, placesQuery, itineraryQuery]);
   const trip = tripQuery.data ? toTrip(tripQuery.data, placesQuery.data ?? [], itineraryQuery.data) : undefined;
   const theme = useAppTheme();
   const { copy } = useTripDetailsCopy();
-  if (tripId && ((!tripQuery.data && tripQuery.isPending) || (!placesQuery.data && placesQuery.isPending) || (!itineraryQuery.data && itineraryQuery.isPending)))
-    return <ScreenSafeArea style={[styles.fill, { backgroundColor: theme.colors.background }]}><View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}><ActivityIndicator color={theme.colors.primary} /></View></ScreenSafeArea>;
+  if (tripId && loadState === "loading")
+    return <ScreenSafeArea style={[styles.fill, { backgroundColor: theme.colors.background }]}><View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}><QueryFeedback loading /><AppButton variant="outline" onPress={goBack}>{copy.back}</AppButton></View></ScreenSafeArea>;
   let stop = (
     day
       ? trip?.days.find((entry) => entry.date === day)?.stops
@@ -70,7 +73,7 @@ export function TripStopDetailsScreen({
     stop = movedDay?.stops.find((entry) => entry.id === stopId) ?? trip.unscheduledStops?.find((entry) => entry.id === stopId);
     actualDate = movedDay?.date ?? null;
   }
-  if (tripId && ((!tripQuery.data && tripQuery.isError) || (!placesQuery.data && placesQuery.isError) || (!itineraryQuery.data && itineraryQuery.isError)))
+  if (tripId && loadState === "error")
     return <ScreenSafeArea style={[styles.fill, { backgroundColor: theme.colors.background }]}><View style={{ padding: theme.spacing.xl, gap: theme.spacing.lg }}><AppText accessibilityRole="alert" tone="error">{copy.itineraryLoadError}</AppText><AppButton variant="outline" onPress={() => { void tripQuery.refetch(); void placesQuery.refetch(); void itineraryQuery.refetch(); }}>{copy.retry}</AppButton></View></ScreenSafeArea>;
   if (!trip || !stop)
     return (
@@ -85,6 +88,10 @@ export function TripStopDetailsScreen({
     );
   return (
     <StopDetailsContent
+      feedback={<QueryFeedback refreshing={tripQuery.isRefetching || placesQuery.isRefetching || itineraryQuery.isRefetching}
+        error={tripQuery.isError || placesQuery.isError || itineraryQuery.isError ? copy.itineraryLoadError : null}
+        retrying={tripQuery.isFetching || placesQuery.isFetching || itineraryQuery.isFetching}
+        onRetry={() => { void tripQuery.refetch(); void placesQuery.refetch(); void itineraryQuery.refetch(); }} />}
       key={`${trip.id}:${stop.id}`}
       trip={trip}
       stop={stop}
@@ -99,11 +106,13 @@ function StopDetailsContent({
   stop,
   date,
   onRemoved,
+  feedback,
 }: {
   trip: Trip;
   stop: TripStop;
   date: string | null;
   onRemoved: () => void;
+  feedback?: ReactNode;
 }) {
   const theme = useAppTheme();
   const insets = useScreenInsets();
@@ -119,7 +128,8 @@ function StopDetailsContent({
   const [editing, setEditing] = useState(false);
   const [editTrip, setEditTrip] = useState(trip);
   const [saving, setSaving] = useState(false);
-  usePreventRemove(saving, () => undefined);
+  const [editDirty, setEditDirty] = useState(false);
+  const requestExit = useUnsavedExit(editing && editDirty, saving);
   const [mutationError, setMutationError] = useState<string | null>(null);
   const inFlight = useRef(false);
   const editable = getTripDetailsMode(trip, today) !== "cancelled";
@@ -184,7 +194,7 @@ function StopDetailsContent({
         style={[styles.fill, { backgroundColor: theme.colors.background }]}
       >
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={[
             styles.fill,
             {
@@ -204,7 +214,7 @@ function StopDetailsContent({
             topInset={insets.top}
             mapAction={<SharePlaceButton place={place} />}
             classification={<PlaceClassification place={place} />}
-            afterInfo={<PlaceAmenities place={place} />}
+            afterInfo={<>{feedback}<PlaceAmenities place={place} /></>}
             status={
               <View
                 style={{
@@ -362,7 +372,8 @@ function StopDetailsContent({
       {editing ? (
         <TripDetailsSheet
           title={copy.editVisit}
-          onClose={() => { if (!inFlight.current) setEditing(false); }}
+          onClose={() => setEditing(false)}
+          beforeClose={(leave) => { if (!inFlight.current) requestExit(leave); }}
           dismissible={!saving}
           topSpacing={theme.spacing.xxl}
           contentKey={stop.id}
@@ -376,6 +387,7 @@ function StopDetailsContent({
             date={date}
             onCommit={(mutation) => commit(mutation, editTrip)}
             saving={saving}
+            onDirtyChange={setEditDirty}
           />
           </View>
         </TripDetailsSheet>

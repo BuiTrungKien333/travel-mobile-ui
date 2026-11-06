@@ -2,7 +2,8 @@ import { MemorySyncBadge } from "../components/memory-sync-badge";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { usePreventRemove } from "expo-router/react-navigation";
+import { useUnsavedExit } from "@/hooks/use-unsaved-exit";
+import { backOrReplace } from "@/utils/back-or-replace";
 import { Controller, useForm } from "react-hook-form";
 import {
   KeyboardAvoidingView,
@@ -47,7 +48,7 @@ export function MemoryDetailScreen({
   memoryId?: string;
 }) {
   const [deleted, setDeleted] = useState(false);
-  useEffect(() => { if (deleted && tripId) router.dismissTo({ pathname: "/memories/[tripId]", params: { tripId } }); }, [deleted, tripId]);
+  useEffect(() => { if (deleted && tripId) backOrReplace({ pathname: "/memories/[tripId]", params: { tripId } }); }, [deleted, tripId]);
   const { copy } = useMemoriesCopy();
   const library = useMemories();
   const trip = library.trips.find((item) => item.id === tripId);
@@ -93,13 +94,13 @@ function MemoryDetail({
     control,
     handleSubmit,
     reset,
-    formState: { isSubmitting },
+    formState: { isSubmitting, isDirty },
   } = useForm({
     resolver: zodResolver(noteSchema),
     defaultValues: { text: memory.text },
   });
   const writing = isSubmitting || update.isPending || remove.isPending;
-  usePreventRemove(writing, () => undefined);
+  useUnsavedExit(editing && isDirty, writing);
   const index = photos.findIndex((item) => item.id === memory.id);
   const date =
     memory.date && isCalendarDate(memory.date)
@@ -150,7 +151,7 @@ function MemoryDetail({
     <MemoryPage
       title={trip.destination}
       subtitle={getTripTitle(trip, locale)}
-      onBack={album}
+      onBack={() => backOrReplace({ pathname: "/memories/[tripId]", params: { tripId: trip.id } })}
       action={
         <MemoryIconButton
           icon="memories"
@@ -161,7 +162,7 @@ function MemoryDetail({
       }
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
       >
         <ScrollView

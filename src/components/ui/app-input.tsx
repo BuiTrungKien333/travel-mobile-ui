@@ -86,6 +86,7 @@ export const AppInput = forwardRef<TextInput, AppInputProps>(function AppInput(
           {...props}
           ref={ref}
           accessibilityLabel={label}
+          accessibilityHint={error ?? props.accessibilityHint ?? helperText}
           allowFontScaling
           onBlur={(event) => {
             setFocused(false);

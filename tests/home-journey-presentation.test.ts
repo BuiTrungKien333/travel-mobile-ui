@@ -43,7 +43,7 @@ function nodes(node: unknown, type: string): ReactElement<Props>[] {
   return [...(node.type === type ? [node] : []), ...nodes(node.props.children, type)];
 }
 
-function homeFixture(trips: TripSummary[]) {
+function homeFixture(trips: TripSummary[], failed = false) {
   let visible = false;
   const routes: unknown[] = [];
   const tokens = load<typeof import("../src/theme/tokens.ts")>("src/theme/tokens.ts");
@@ -54,7 +54,8 @@ function homeFixture(trips: TripSummary[]) {
     "@/components/ui/app-text": { AppText: "AppText" }, "@/components/ui/app-icon": { AppIcon: "AppIcon" }, "@/components/ui/app-button": { AppButton: "AppButton" },
     "@/hooks/use-app-theme": { useAppTheme: () => ({ ...tokens, colors: {} }) }, "@/hooks/use-i18n": { useI18n: () => ({ locale: "vi" }) },
     "@/utils/calendar-date": { todayCalendarDate: () => today },
-    "@/features/trip/api/trip-hooks": { useTripsQuery: () => ({ data: trips, isPending: false, isError: false }) },
+    "@/features/trip/api/trip-hooks": { useTripsQuery: () => ({ data: trips, isPending: false, isError: failed }) },
+    "@/components/common/query-feedback": { QueryFeedback: "QueryFeedback" },
     "@/features/memories/hooks/use-memories": { useMemories: () => ({ memories: [], isPending: false, isError: false }) },
     "../components/home-header": { HomeHeader: "HomeHeader" }, "../components/home-live-journey": { HomeLiveJourney: "HomeLiveJourney" },
     "@/features/trip/components/create-trip-modal": { CreateTripModal: "CreateTripModal" },
@@ -83,4 +84,10 @@ test("completed Home action opens that journey's album; only an ongoing journey 
   assert.equal(nodes(f.render(), "HomeLiveJourney").length, 0);
   const active = homeFixture([trip({ status: "ACTIVE", id: "active" })]);
   assert.equal(nodes(active.render(), "HomeLiveJourney")[0].props.tripId, "active");
+});
+
+test("background request errors retain the cached Home journey and its primary action", () => {
+  const f = homeFixture([trip()], true);
+  assert.ok(nodes(f.render(), "AppButton").some((node) => node.props.children === "Xem kế hoạch"));
+  assert.equal(nodes(f.render(), "QueryFeedback").length, 1);
 });

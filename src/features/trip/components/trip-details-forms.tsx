@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { Switch, View } from "react-native";
 import { z } from "zod";
@@ -21,12 +22,14 @@ export function StopDetailsForm({
   date,
   onCommit,
   saving = false,
+  onDirtyChange,
 }: {
   trip: Trip;
   stop: TripStop;
   date: string | null;
   onCommit: Commit;
   saving?: boolean;
+  onDirtyChange?: (dirty: boolean) => void;
 }) {
   const { copy } = useTripDetailsCopy();
   const theme = useAppTheme();
@@ -36,7 +39,7 @@ export function StopDetailsForm({
     handleSubmit,
     setError,
     setValue,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<z.input<typeof schema>, unknown, z.output<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -47,6 +50,7 @@ export function StopDetailsForm({
       targetDate: date,
     },
   });
+  useEffect(() => { onDirtyChange?.(isDirty); }, [isDirty, onDirtyChange]);
   const time = useWatch({ control, name: "time" });
   const targetDate = useWatch({ control, name: "targetDate" });
   const canPin = targetDate !== null && clockPattern.test(time);
@@ -71,6 +75,7 @@ export function StopDetailsForm({
         name="time"
         render={({ field, fieldState }) => (
           <TripStartTimeField
+            ref={field.ref}
             compact
             label={copy.arrival}
             hint={copy.stopArrivalHint}

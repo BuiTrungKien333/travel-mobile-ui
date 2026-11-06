@@ -14,7 +14,7 @@ import { scheduleOnRN } from "react-native-worklets";
 import { useAppTheme } from "@/hooks/use-app-theme";
 
 /** Mount one session per opening; apply commits only after the exit animation finishes. */
-export function usePickerSheetMotion(onClose: () => void) {
+export function usePickerSheetMotion(onClose: () => void, beforeClose?: (leave: () => void) => void) {
   const theme = useAppTheme();
   const { height } = useWindowDimensions();
   const reduceMotion = useReducedMotion();
@@ -60,6 +60,10 @@ export function usePickerSheetMotion(onClose: () => void) {
       ),
     );
   }
+  function requestClose(afterClose?: () => void) {
+    if (beforeClose) beforeClose(() => close(afterClose));
+    else close(afterClose);
+  }
   const sheetMotion = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.get() }],
   }));
@@ -79,6 +83,11 @@ export function usePickerSheetMotion(onClose: () => void) {
         (event.translationY > minimumSwipe &&
           event.velocityY >= dismissVelocity)
       ) {
+        if (beforeClose) {
+          translateY.set(withTiming(0, { duration: enterDuration, reduceMotion: ReduceMotion.System }));
+          scheduleOnRN(requestClose);
+          return;
+        }
         closing.set(true);
         translateY.set(
           withTiming(
@@ -106,5 +115,5 @@ export function usePickerSheetMotion(onClose: () => void) {
           }),
         );
     });
-  return { sheetMotion, backdropMotion, dragGesture, close, reduceMotion };
+  return { sheetMotion, backdropMotion, dragGesture, close: requestClose, reduceMotion };
 }

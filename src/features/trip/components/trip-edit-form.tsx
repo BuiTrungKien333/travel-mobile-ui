@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { Keyboard, Pressable, StyleSheet, View } from "react-native";
@@ -28,10 +28,14 @@ export function TripEditForm({
   trip,
   today,
   onCommit,
+  onDirtyChange,
+  saving = false,
 }: {
   trip: Trip;
   today: string;
   onCommit: (mutation: TripMutation) => boolean;
+  onDirtyChange?: (dirty: boolean) => void;
+  saving?: boolean;
 }) {
   const [baseVersion] = useState(trip.serverVersion);
   const theme = useAppTheme();
@@ -41,6 +45,7 @@ export function TripEditForm({
   const {
     control,
     setValue,
+    setFocus,
     handleSubmit,
     formState: { errors, isDirty },
   } = useForm<z.input<typeof schema>, unknown, z.output<typeof schema>>({
@@ -56,6 +61,7 @@ export function TripEditForm({
       preferences: trip.preferences ?? [],
     },
   });
+  useEffect(() => { onDirtyChange?.(isDirty); }, [isDirty, onDirtyChange]);
   const [destination, startDate, endDate] = useWatch({
     control,
     name: ["destination", "startDate", "endDate"],
@@ -395,6 +401,7 @@ export function TripEditForm({
         size="small"
         variant="gradient"
         disabled={!isDirty}
+        loading={saving}
         onPress={handleSubmit(
           ({ startDate: nextStart, endDate: nextEnd, ...values }) => {
             Keyboard.dismiss();
@@ -421,6 +428,11 @@ export function TripEditForm({
             if (fieldErrors.destination) setPicker("destination");
             else if (fieldErrors.startDate || fieldErrors.endDate)
               setPicker("dates");
+              else if (fieldErrors.title) setFocus("title");
+              else {
+                const name = fieldErrors.budget ? "budget" : fieldErrors.accommodation ? "accommodation" : fieldErrors.notes ? "notes" : null;
+                if (name) requestAnimationFrame(() => setFocus(name));
+              }
           },
         )}
       >

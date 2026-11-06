@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, type Ref } from "react";
+import type { TextInput } from "react-native";
 import { Pressable, StyleSheet, View } from "react-native";
 import { AppInput } from "@/components/ui/app-input";
 import { AppText } from "@/components/ui/app-text";
@@ -17,6 +18,7 @@ export function TripVisitDurationRow({
   expanded,
   onToggle,
   error,
+  inputRef,
 }: {
   stop: TripStop;
   value: string;
@@ -25,6 +27,7 @@ export function TripVisitDurationRow({
   expanded: boolean;
   onToggle: () => void;
   error?: string;
+  inputRef?: Ref<TextInput>;
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
@@ -148,6 +151,7 @@ export function TripVisitDurationRow({
           </View>
           {custom ? (
             <AppInput
+              ref={inputRef}
               compact
               label={copy.dayVisitCustom}
               value={value}

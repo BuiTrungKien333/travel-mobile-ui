@@ -1,7 +1,8 @@
 import { router } from "expo-router";
 import { Image } from "expo-image";
+import { QueryFeedback } from "@/components/common/query-feedback";
 import { useState } from "react";
-import { ActivityIndicator, Pressable, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { AppButton } from "@/components/ui/app-button";
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
@@ -57,17 +58,13 @@ export function HomeScreen() {
         <AppText tone="muted">{subtitles[state]}</AppText>
       </View>
 
-      {(tripsQuery.isPending || memoriesQuery.isPending) ? (
-        <SurfaceCard><ActivityIndicator color={theme.colors.primary} /></SurfaceCard>
-      ) : null}
-      {(tripsQuery.isError || memoriesQuery.isError) ? (
-        <SurfaceCard>
-          <AppText accessibilityRole="alert" tone="error">{tripsQuery.isError ? copy.tripsLoadError : copy.memoriesLoadError}</AppText>
-          <AppButton variant="outline" onPress={() => { void tripsQuery.refetch(); void memoriesQuery.refetch(); }}>{copy.retry}</AppButton>
-        </SurfaceCard>
-      ) : null}
+      <QueryFeedback loading={tripsQuery.isPending || memoriesQuery.isPending}
+        refreshing={tripsQuery.isRefetching || memoriesQuery.isRefetching}
+        error={tripsQuery.isError ? copy.tripsLoadError : memoriesQuery.isError ? copy.memoriesLoadError : null}
+        retrying={tripsQuery.isFetching || memoriesQuery.isFetching}
+        onRetry={() => { void tripsQuery.refetch(); void memoriesQuery.refetch(); }} />
 
-      {!tripsQuery.isPending && !tripsQuery.isError ? (
+      {tripsQuery.data !== undefined ? (
         <SurfaceCard tinted>
           <View style={{ gap: theme.spacing.sm }}>
             {journey ? <TripStatusBadge status={state === "new" ? "draft" : state} locale={locale} /> : <AppIcon name="pin" size={theme.layout.iconLarge} color={theme.colors.primaryText} />}
@@ -86,7 +83,7 @@ export function HomeScreen() {
       ) : null}
 
       {state === "ongoing" && journey ? <HomeLiveJourney tripId={journey.id} today={today} /> : null}
-      {!tripsQuery.isPending && !tripsQuery.isError && trips.length > 0 ? (
+      {tripsQuery.data !== undefined && trips.length > 0 ? (
         <SurfaceCard tinted>
           <SectionHeading title={copy.footprint} />
           <View style={{ flexDirection: "row", justifyContent: "space-around", gap: theme.spacing.md }}>
@@ -102,7 +99,7 @@ export function HomeScreen() {
 
       <View style={{ gap: theme.spacing.sm }}>
         <SectionHeading title={ongoingCopy.recentJournal} action={ongoingCopy.allMemories} onPress={() => router.navigate("/tabs/memories")} />
-        {memoriesQuery.isError ? null : recentMemories.length ? (
+        {recentMemories.length ? (
           <View style={{ flexDirection: "row", gap: theme.spacing.sm }}>
             {recentMemories.map((memory) => {
               const photo = memory.photo;

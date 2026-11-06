@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Keyboard, Pressable, StyleSheet, Switch, View } from "react-native";
@@ -24,12 +24,14 @@ export function TripDayScheduleForm({
   onCommit,
   saving = false,
   itineraryUpdatedAt,
+  onDirtyChange,
 }: {
   trip: Trip;
   day: TripDay;
   onCommit: (mutation: TripMutation) => boolean;
   saving?: boolean;
   itineraryUpdatedAt?: string | null;
+  onDirtyChange?: (dirty: boolean) => void;
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
@@ -46,7 +48,7 @@ export function TripDayScheduleForm({
     setValue,
     setFocus,
     setError,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<z.input<typeof schema>, unknown, z.output<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -60,6 +62,7 @@ export function TripDayScheduleForm({
       })),
     },
   });
+  useEffect(() => { onDirtyChange?.(isDirty); }, [isDirty, onDirtyChange]);
   const location = useWatch({ control, name: "startLocation" });
   const coordinate = useWatch({ control, name: "startCoordinate" });
   const searchText = useDebouncedValue(searching ? location.trim() : "");
@@ -400,6 +403,7 @@ export function TripDayScheduleForm({
           name="startTime"
           render={({ field, fieldState }) => (
             <TripStartTimeField
+              ref={field.ref}
               compact
               value={field.value}
               onChange={field.onChange}
@@ -437,6 +441,7 @@ export function TripDayScheduleForm({
               name={`durations.${index}.minutes`}
               render={({ field, fieldState }) => (
                 <TripVisitDurationRow
+                    inputRef={field.ref}
                   stop={stop}
                   value={field.value}
                   onChange={field.onChange}
@@ -526,7 +531,11 @@ export function TripDayScheduleForm({
             const index = day.stops.findIndex(
               (_stop, index) => !!fieldErrors.durations?.[index]?.minutes,
             );
-            if (index >= 0) setExpandedStop(day.stops[index]?.id ?? null);
+            if (fieldErrors.startLocation) setFocus("startLocation");
+            else if (index >= 0) {
+              setExpandedStop(day.stops[index]?.id ?? null);
+              requestAnimationFrame(() => setFocus(`durations.${index}.minutes`));
+            }
           },
         )}
       >

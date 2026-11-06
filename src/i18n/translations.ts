@@ -1,5 +1,11 @@
 export const translations = {
   vi: {
+    "common.loading": "Đang tải…",
+    "common.unsavedTitle": "Bỏ thay đổi chưa lưu?",
+    "common.unsavedHint": "Thay đổi đang nhập chưa được lưu. Dữ liệu đã lưu trước đó vẫn được giữ lại.",
+    "common.keepEditing": "Tiếp tục chỉnh sửa",
+    "common.discardChanges": "Bỏ thay đổi",
+    "common.refreshing": "Đang cập nhật… Nội dung đã tải vẫn được giữ lại.",
     "auth.google.emailProof": "Hãy mở email xác nhận đăng nhập Google. Bấm xác nhận trong liên kết để vào ứng dụng; không cần nhập mật khẩu.",
     "auth.google.confirmTitle": "Xác nhận đăng nhập Google",
     "auth.google.confirmHint": "Chỉ tiếp tục nếu bạn vừa yêu cầu đăng nhập bằng tài khoản Google này.",
@@ -123,6 +129,12 @@ export const translations = {
     "validation.passwordMin": "Mật khẩu phải có ít nhất 8 ký tự.",
   },
   en: {
+    "common.loading": "Loading…",
+    "common.unsavedTitle": "Discard unsaved changes?",
+    "common.unsavedHint": "Your edits haven't been saved. Previously saved data will remain available.",
+    "common.keepEditing": "Keep editing",
+    "common.discardChanges": "Discard changes",
+    "common.refreshing": "Updating… Previously loaded content is still available.",
     "auth.google.emailProof": "Open your Google sign-in confirmation email. Confirm the link to enter the app; no password is needed.",
     "auth.google.confirmTitle": "Confirm Google sign-in",
     "auth.google.confirmHint": "Continue only if you just requested sign-in with this Google account.",

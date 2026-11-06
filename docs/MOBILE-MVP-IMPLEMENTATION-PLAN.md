@@ -37,14 +37,14 @@ Tài khoản mẫu và dữ liệu demo có kiểm soát được dùng để mi
 
 Mốc nguồn lúc rà soát: mobile `080fe5a` trên `minhduc`; backend `e854397` trên `feature/merge-test`.
 
-| Phần | Đã có | Cần hoàn thiện cho đồ án |
-| --- | --- | --- |
-| Tài khoản | Email/password, Google, refresh/logout, hồ sơ, email links | Cấu hình native; xử lý lỗi dễ hiểu; thử trên thiết bị trình diễn |
-| Chuyến đi/lịch trình | CRUD, địa điểm, xếp lịch, thay đổi ngày, tối ưu | Lưu đủ thiết lập ngày/ghim/phương tiện; dữ liệu nhất quán giữa các màn |
-| Bản đồ/thời tiết | Map native, search, route, forecast và current weather | Key và quyền hoạt động; phương tiện đúng; vị trí hiện tại và chỉ đường dễ dùng |
-| Kỷ niệm | Camera, chọn ảnh, lưu local, upload/retry, ghi chú, album | Luồng chọn nơi lưu rõ ràng; trạng thái lưu/upload đúng; dữ liệu theo tài khoản |
-| UI/UX | Có theme, component, điều hướng, sheet, timeline và viewer ảnh | Kiểm tra từng luồng trên điện thoại; thống nhất trạng thái và sửa giật/khựng |
-| Kiểm thử | Có unit/API contract và integration PostgreSQL | Ưu tiên các test bảo vệ luồng đang dùng; cập nhật test preview lỗi thời |
+| Phần                 | Đã có                                                          | Cần hoàn thiện cho đồ án                                                       |
+| -------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Tài khoản            | Email/password, Google, refresh/logout, hồ sơ, email links     | Cấu hình native; xử lý lỗi dễ hiểu; thử trên thiết bị trình diễn               |
+| Chuyến đi/lịch trình | CRUD, địa điểm, xếp lịch, thay đổi ngày, tối ưu                | Lưu đủ thiết lập ngày/ghim/phương tiện; dữ liệu nhất quán giữa các màn         |
+| Bản đồ/thời tiết     | Map native, search, route, forecast và current weather         | Key và quyền hoạt động; phương tiện đúng; vị trí hiện tại và chỉ đường dễ dùng |
+| Kỷ niệm              | Camera, chọn ảnh, lưu local, upload/retry, ghi chú, album      | Luồng chọn nơi lưu rõ ràng; trạng thái lưu/upload đúng; dữ liệu theo tài khoản |
+| UI/UX                | Có theme, component, điều hướng, sheet, timeline và viewer ảnh | Kiểm tra từng luồng trên điện thoại; thống nhất trạng thái và sửa giật/khựng   |
+| Kiểm thử             | Có unit/API contract và integration PostgreSQL                 | Ưu tiên các test bảo vệ luồng đang dùng; cập nhật test preview lỗi thời        |
 
 Mốc kiểm tra ở lượt rà soát trước khi đổi định hướng: TypeScript đạt; mobile **217 test: 199 đạt, 17 lỗi, 1 skip**; ESLint `src` có **51 lỗi, 3 cảnh báo**. Test contract backend thật skip khi không đặt `BACKEND_CONTRACT_FIXTURE`; xem [hướng dẫn API](api-contract-integration.md).
 
@@ -77,14 +77,14 @@ Các con số là bằng chứng kỹ thuật cần xử lý, không phải thư
 
 ### P0-03. Hoàn thiện luồng chính và phản hồi thao tác
 
-| Luồng | Điều cần làm rõ | Tiêu chí hoàn thành |
-| --- | --- | --- |
-| Tạo chuyến | Thông tin bắt buộc, chọn ngày, thêm địa điểm, nơi đến sau khi tạo | Tạo xong mở đúng chuyến; lỗi nhập liệu ở đúng trường; không mất nội dung khi quay lại |
-| Thêm địa điểm | Tìm → xem → chọn → xếp ngày hoặc để Chưa xếp lịch | Phân biệt đã chọn/đã thêm; giữ lựa chọn khi quay lại; tránh thêm trùng |
-| Sửa lịch | Đổi giờ, di chuyển ngày, reorder, ghim, lưu/hủy | Người dùng hiểu điều gì đã thay đổi; lưu có phản hồi; lỗi không giả báo thành công |
-| Đang đi | Xem điểm tiếp theo, chỉ đường, đánh dấu đã ghé | Dữ liệu và trạng thái được cập nhật ở mọi màn có liên quan |
-| Chụp ảnh | Chụp/chọn ảnh → chọn chuyến/ngày/địa điểm hoặc Lưu sau | Phân biệt ảnh đã lưu trên máy, đang upload và đã đồng bộ; không mất ảnh khi API lỗi |
-| Tối ưu | Xem kết quả và sự thay đổi trước khi áp dụng | Bấm Áp dụng mới đổi lịch; có thể đóng đề xuất mà giữ lịch cũ |
+| Luồng         | Điều cần làm rõ                                                   | Tiêu chí hoàn thành                                                                   |
+| ------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Tạo chuyến    | Thông tin bắt buộc, chọn ngày, thêm địa điểm, nơi đến sau khi tạo | Tạo xong mở đúng chuyến; lỗi nhập liệu ở đúng trường; không mất nội dung khi quay lại |
+| Thêm địa điểm | Tìm → xem → chọn → xếp ngày hoặc để Chưa xếp lịch                 | Phân biệt đã chọn/đã thêm; giữ lựa chọn khi quay lại; tránh thêm trùng                |
+| Sửa lịch      | Đổi giờ, di chuyển ngày, reorder, ghim, lưu/hủy                   | Người dùng hiểu điều gì đã thay đổi; lưu có phản hồi; lỗi không giả báo thành công    |
+| Đang đi       | Xem điểm tiếp theo, chỉ đường, đánh dấu đã ghé                    | Dữ liệu và trạng thái được cập nhật ở mọi màn có liên quan                            |
+| Chụp ảnh      | Chụp/chọn ảnh → chọn chuyến/ngày/địa điểm hoặc Lưu sau            | Phân biệt ảnh đã lưu trên máy, đang upload và đã đồng bộ; không mất ảnh khi API lỗi   |
+| Tối ưu        | Xem kết quả và sự thay đổi trước khi áp dụng                      | Bấm Áp dụng mới đổi lịch; có thể đóng đề xuất mà giữ lịch cũ                          |
 
 Mọi thao tác quan trọng có trạng thái đang xử lý, thành công hoặc lỗi kèm cách thử lại. Nút đang lưu không nhận thêm lần bấm; sheet/back có hành vi dễ dự đoán.
 
@@ -118,6 +118,8 @@ Mọi thao tác quan trọng có trạng thái đang xử lý, thành công ho�
 - Với nơi chưa có ảnh/giờ mở cửa/giá, dùng trạng thái thiếu dữ liệu có chủ đích và bố cục đầy đủ; bổ sung dữ liệu có nguồn cho các điểm trình diễn quan trọng.
 
 ### P1-02. Điều hướng, form và trạng thái màn hình
+
+**06/11/2026 — Đã triển khai phần code P1-02.** Back giữ nơi gọi/ngày/vị trí cuộn, form có guard dữ liệu chưa lưu và bàn phím/focus lỗi, query lỗi nền giữ nội dung, xóa chuyến chặn lặp và quay lại sau khi hoàn tất. Xem [P1-02-ACCEPTANCE.md](P1-02-ACCEPTANCE.md). **Chưa nghiệm thu điện thoại**; dừng review/push trước P1-03.
 
 - Back quay đúng nơi vừa đến, giữ ngày đã chọn, vị trí cuộn, từ khóa và lựa chọn còn đang nhập.
 - Tab đang chọn rõ ràng; giữ thiết kế navigation icon-only đã chốt, bổ sung nhãn trợ năng cho nút.
@@ -162,13 +164,13 @@ Trong quá trình làm đồ án vẫn giữ validation đầu vào, quyền s�
 
 ## 7. Các đợt triển khai đề xuất
 
-| Đợt | Trọng tâm | Đầu ra kiểm chứng được |
-| --- | --- | --- |
-| 1 | Chạy ổn trên thiết bị; sửa config và lỗi cản trở thao tác | App mở được, đăng nhập và sử dụng map/camera/API trên máy demo; có hướng dẫn chạy lại |
-| 2 | Hoàn thiện tạo chuyến, địa điểm và lịch trình; sửa UX ngay trong từng luồng | Tạo/sửa/lưu/hủy đúng; mở lại còn dữ liệu; màn hình và phản hồi thao tác rõ ràng |
-| 3 | Hoàn thiện đang đi, ảnh/ghi chú và xem lại | Check-in → chụp/chọn ảnh → lưu → album/Recap hoạt động liên tục, đúng dữ liệu |
-| 4 | Hoàn thiện bản đồ, thời tiết và tối ưu; rà UI/UX tổng thể | Demo giá trị du lịch rõ ràng; UI đồng nhất; sửa gesture/scroll/keyboard và các chỗ giật |
-| 5 | Chạy thử như buổi bảo vệ, sửa lỗi cuối và chuẩn bị báo cáo | Có bản cài hoặc development build ổn định, dữ liệu demo, kịch bản và bằng chứng kiểm thử |
+| Đợt | Trọng tâm                                                                   | Đầu ra kiểm chứng được                                                                   |
+| --- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| 1   | Chạy ổn trên thiết bị; sửa config và lỗi cản trở thao tác                   | App mở được, đăng nhập và sử dụng map/camera/API trên máy demo; có hướng dẫn chạy lại    |
+| 2   | Hoàn thiện tạo chuyến, địa điểm và lịch trình; sửa UX ngay trong từng luồng | Tạo/sửa/lưu/hủy đúng; mở lại còn dữ liệu; màn hình và phản hồi thao tác rõ ràng          |
+| 3   | Hoàn thiện đang đi, ảnh/ghi chú và xem lại                                  | Check-in → chụp/chọn ảnh → lưu → album/Recap hoạt động liên tục, đúng dữ liệu            |
+| 4   | Hoàn thiện bản đồ, thời tiết và tối ưu; rà UI/UX tổng thể                   | Demo giá trị du lịch rõ ràng; UI đồng nhất; sửa gesture/scroll/keyboard và các chỗ giật  |
+| 5   | Chạy thử như buổi bảo vệ, sửa lỗi cuối và chuẩn bị báo cáo                  | Có bản cài hoặc development build ổn định, dữ liệu demo, kịch bản và bằng chứng kiểm thử |
 
 Mỗi đợt hoàn thiện cả logic, trạng thái lỗi và giao diện của luồng liên quan. Thời gian triển khai được điều chỉnh theo hạn nộp môn học và kết quả đợt 1; không lấy kế hoạch production cũ làm khối lượng bắt buộc.
 

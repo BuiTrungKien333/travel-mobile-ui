@@ -1,5 +1,5 @@
 import DateTimePicker from "@expo/ui/community/datetime-picker";
-import { useState } from "react";
+import { useImperativeHandle, useState, type Ref } from "react";
 import { Keyboard, Platform, Pressable, View } from "react-native";
 import { AppButton } from "@/components/ui/app-button";
 import { AppIcon } from "@/components/ui/app-icon";
@@ -9,6 +9,7 @@ import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 import { timePickerDate, timePickerValue } from "../utils/time-picker-value";
 
 export type TripStartTimeFieldProps = {
+  ref?: Ref<{ focus: () => void }>;
   value: string;
   onChange: (value: string) => void;
   onBlur: () => void;
@@ -19,6 +20,7 @@ export type TripStartTimeFieldProps = {
 };
 
 export function TripStartTimeField({
+  ref,
   value,
   onChange,
   onBlur,
@@ -34,6 +36,11 @@ export function TripStartTimeField({
     : copy.chooseTime;
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(() => timePickerDate(value));
+  useImperativeHandle(ref, () => ({ focus: () => {
+    Keyboard.dismiss();
+    setDraft(timePickerDate(value));
+    setOpen(true);
+  } }));
   function close() {
     setOpen(false);
     onBlur();

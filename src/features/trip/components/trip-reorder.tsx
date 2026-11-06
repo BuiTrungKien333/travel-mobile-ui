@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent } from "react";
+import { useEffect, useState, type KeyboardEvent } from "react";
 import { Platform, Pressable, StyleSheet, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { scheduleOnRN } from "react-native-worklets";
@@ -18,14 +18,17 @@ import { TripStopDragFrame } from "./trip-stop-interactions";
 export function TripReorder({
   stops,
   onApply,
+  onDirtyChange,
 }: {
   stops: TripStop[];
   onApply: (ids: string[]) => void;
+  onDirtyChange?: (dirty: boolean) => void;
 }) {
   const [order, setOrder] = useState(stops);
   const theme = useAppTheme();
   const { copy } = useTripDetailsCopy();
   const changed = order.some((stop, index) => stop.id !== stops[index]?.id);
+  useEffect(() => { onDirtyChange?.(changed); }, [changed, onDirtyChange]);
   const drag = useTripTimelineDrag({
     stops: order,
     selectionKey: "manual-reorder",

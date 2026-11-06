@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import type { FlatList } from "react-native";
+import type { FlatList, NativeScrollEvent, NativeSyntheticEvent } from "react-native";
 import { useReducedMotion } from "react-native-reanimated";
 
 /** Variable height rows need a bounded retry after FlatList measures distant cells. */
@@ -8,6 +8,16 @@ export function useTripTimelineScroll<T>(selectionKey: string, viewOffset = 0) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pending = useRef<{ index: number; retries: number } | null>(null);
   const reduceMotion = useReducedMotion();
+  const offsets = useRef(new Map<string, number>());
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => list.current?.scrollToOffset({
+      offset: offsets.current.get(selectionKey) ?? 0, animated: false,
+    }));
+    return () => cancelAnimationFrame(frame);
+  }, [selectionKey]);
+  function rememberOffset(event: NativeSyntheticEvent<NativeScrollEvent>) {
+    offsets.current.set(selectionKey, Math.max(0, event.nativeEvent.contentOffset.y));
+  }
   useEffect(
     () => () => {
       if (timer.current) clearTimeout(timer.current);
@@ -50,5 +60,5 @@ export function useTripTimelineScroll<T>(selectionKey: string, viewOffset = 0) {
         });
     }, 120);
   }
-  return { list, jump, onScrollToIndexFailed };
+  return { list, jump, onScrollToIndexFailed, rememberOffset };
 }

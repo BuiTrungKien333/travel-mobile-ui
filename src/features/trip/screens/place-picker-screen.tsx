@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -51,6 +51,7 @@ export function PlacePickerScreen({
   initialSelected = [],
   onApply,
   onClose,
+  feedback,
 }: {
   destination: string;
   trip?: Trip;
@@ -58,6 +59,7 @@ export function PlacePickerScreen({
   initialSelected?: TripStop[];
   onApply: (stops: TripStop[], date: string | null) => boolean | void | Promise<boolean | void>;
   onClose: () => void;
+  feedback?: ReactNode;
 }) {
   const theme = useAppTheme();
   const insets = useScreenInsets();
@@ -65,6 +67,7 @@ export function PlacePickerScreen({
   const [selected, setSelected] = useState(() => initialSelected);
   const [date, setDate] = useState(initialDate);
   const [query, setQuery] = useState("");
+  const [listOffset, setListOffset] = useState(0);
   const deferredQuery = useDebouncedValue(query);
   const destinationSearch = usePlaceSearchQuery(destination);
   const destinationRegion = getPlaceMapRegion((destinationSearch.data ?? []).flatMap((place): TripStop[] =>
@@ -269,7 +272,7 @@ export function PlacePickerScreen({
       >
         <KeyboardAvoidingView
           pointerEvents={saving ? "none" : "auto"}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={[
             styles.fill,
             {
@@ -279,6 +282,7 @@ export function PlacePickerScreen({
             },
           ]}
         >
+          {feedback}
           {!focus ? (
             <View
               style={[
@@ -344,7 +348,7 @@ export function PlacePickerScreen({
                   placeholder={copy.search}
                   value={query}
                   editable={!saving}
-                  onChangeText={(value) => { if (!savingRef.current) setQuery(value); }}
+                  onChangeText={(value) => { if (!savingRef.current) { setQuery(value); setListOffset(0); } }}
                   autoCorrect={false}
                   returnKeyType="search"
                   onSubmitEditing={() => {
@@ -373,6 +377,9 @@ export function PlacePickerScreen({
                 <AppText accessibilityRole="alert" variant="caption" tone="error" style={{ paddingHorizontal: theme.spacing.lg }}>{copy.searchFailed}</AppText>
               ) : null}
               <FlatList
+                contentOffset={{ x: 0, y: listOffset }}
+                onScrollEndDrag={(event) => setListOffset(Math.max(0, event.nativeEvent.contentOffset.y))}
+                onMomentumScrollEnd={(event) => setListOffset(Math.max(0, event.nativeEvent.contentOffset.y))}
                 data={results}
                 keyExtractor={(item) => item.id}
                 keyboardShouldPersistTaps="handled"
@@ -406,6 +413,7 @@ export function PlacePickerScreen({
                         accessibilityState={{ selected: selectedOnly }}
                         onPress={() => {
                           setSelectedOnly((value) => !value);
+                          setListOffset(0);
                           setQuery("");
                         }}
                         style={{
