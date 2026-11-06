@@ -115,29 +115,31 @@ export function JourneyInvitationCard({
       <View style={{ gap: theme.spacing.sm }}>
         <AppText
           accessibilityRole="header"
-          variant="heading"
+          variant={returning ? "heading" : "subheading"}
           style={[
             styles.centeredText,
-            {
-              fontSize: theme.typography.fontSize.xl,
-              lineHeight: theme.typography.lineHeight.xl,
-            },
+            returning
+              ? {
+                  fontSize: theme.typography.fontSize.xl,
+                  lineHeight: theme.typography.lineHeight.xl,
+                }
+              : undefined,
           ]}
         >
           {returning ? copy.returningTitle : copy.newTitle}
         </AppText>
-        <View style={{ gap: theme.spacing.xs }}>
-          {!returning ? (
-            <AppText style={styles.centeredText}>{copy.newHint}</AppText>
-          ) : null}
-          <AppText variant="caption" tone="muted" style={styles.centeredText}>
-            {returning ? copy.returningDetail : copy.newDetail}
-          </AppText>
-        </View>
+        <AppText
+          variant={returning ? "caption" : "bodyLarge"}
+          tone={returning ? "muted" : "default"}
+          style={styles.centeredText}
+        >
+          {returning ? copy.returningDetail : copy.newHint}
+        </AppText>
       </View>
       <View style={{ marginTop: theme.spacing.sm }}>
         <AppButton
           variant="raised"
+          labelSize={returning ? "default" : "large"}
           onPress={() => openPanel({ kind: "create" })}
           trailingIcon={
             <AppIcon

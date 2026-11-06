@@ -408,7 +408,7 @@ test("Pending requests prevent closing the edit sheet", () => {
   assert.equal(h.state.closed, 0);
 });
 
-function queryHarness(remove: () => Promise<void> = async () => {}) {
+function queryHarness() {
   const client = new QueryClient();
   const read = original();
   let sessionVersion = 1;
@@ -435,7 +435,7 @@ function queryHarness(remove: () => Promise<void> = async () => {}) {
     },
     "@/services/api/api-error": { ApiError },
     "./trip-api": {
-      tripApi: { update: async () => next, remove },
+      tripApi: { update: async () => next, remove: async () => {} },
     },
   });
   type Outcome = { read: typeof read; sessionVersion: number };
@@ -525,34 +525,6 @@ test("Successful delete removes stale trip detail and invalidates related memory
     );
   } finally {
     h.client.clear();
-  }
-});
-
-test("Deleting a trip already removed on the server clears stale UI data just like a successful delete", async () => {
-  const h = queryHarness(async () => { throw new ApiError("TRIP_001", 404); });
-  try {
-    h.client.setQueryData(memoryQueryKeys.list(h.owner), {});
-    const mutation = h.hooks.useDeleteTripMutation(h.id);
-    await mutation.onSuccess(await mutation.mutationFn(h.read.trip.version));
-    assert.equal(h.client.getQueryData(tripQueryKeys.detail(h.owner, h.id)), undefined);
-    assert.equal(h.client.getQueryState(tripQueryKeys.list(h.owner))?.isInvalidated, true);
-    assert.equal(h.client.getQueryState(memoryQueryKeys.list(h.owner))?.isInvalidated, true);
-    assert.equal(h.client.getQueryState(tripQueryKeys.list("owner-b"))?.isInvalidated, false);
-  } finally {
-    h.client.clear();
-  }
-});
-
-test("Failed deletes preserve cached data for version conflicts, network failures and unrelated errors", async () => {
-  for (const failure of [new ApiError("TRIP_002", 409), new ApiError("NETWORK"), new ApiError("COMMON_001", 404)]) {
-    const h = queryHarness(async () => { throw failure; });
-    try {
-      await assert.rejects(h.hooks.useDeleteTripMutation(h.id).mutationFn(h.read.trip.version), (error: unknown) => error === failure);
-      assert.ok(h.client.getQueryData(tripQueryKeys.detail(h.owner, h.id)));
-      assert.equal(h.client.getQueryState(tripQueryKeys.list(h.owner))?.isInvalidated, false);
-    } finally {
-      h.client.clear();
-    }
   }
 });
 

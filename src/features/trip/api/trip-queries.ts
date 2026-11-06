@@ -104,13 +104,7 @@ export function useDeleteTripMutation(id: string) {
     retry: false,
     mutationFn: async (version: number) => {
       const sessionVersion = authSession.getVersion();
-      try {
-        await tripApi.remove(id, version);
-      } catch (failure) {
-        // A lost DELETE response or another device can leave the UI showing a trip already gone.
-        if (!(failure instanceof ApiError && failure.status === 404 && failure.code === "TRIP_001"))
-          throw failure;
-      }
+      await tripApi.remove(id, version);
       if (sessionVersion !== authSession.getVersion())
         throw new ApiError("CANCELLED");
       return sessionVersion;

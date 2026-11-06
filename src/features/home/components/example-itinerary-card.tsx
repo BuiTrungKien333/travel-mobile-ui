@@ -64,13 +64,8 @@ export function ExampleItineraryCard() {
           <View style={[homeStyles.grow, { gap: theme.spacing.sm }]}>
             <AppText
               accessibilityRole="header"
-              variant="heading"
+              variant="subheading"
               tone="primary"
-              style={{
-                fontFamily: theme.typography.fontFamily.semibold,
-                fontSize: theme.typography.fontSize.lg,
-                lineHeight: theme.typography.lineHeight.lg,
-              }}
             >
               {copy.exampleTitle}
             </AppText>

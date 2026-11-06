@@ -2,6 +2,21 @@
 
 Cập nhật: **06/11/2026**. Phạm vi: frontend Home, danh sách/tạo/chi tiết chuyến đi, camera và chuẩn bị hợp đồng tích hợp. Ngày trong fixture Home vẫn là **21/10/2026** để tái hiện các trạng thái.
 
+### Typography Home người mới và tạo chuyến · 06/11/2026
+
+- Tinh gọn copy tiếp theo: bỏ dòng “Bạn có thể bổ sung chi tiết sau” ở thẻ chuyến đầu tiên; bỏ caption Chọn điểm đến bị lặp khi chưa chọn nơi đến trong create form. Giữ label và giá trị chính, cùng vùng miền khi đã có destination. Xóa key newDetail VI/EN không còn dùng.
+- Home mới dùng AppText `title`24/32 cho lời chào, `subheading`18/26 cho hai tiêu đề thẻ, body16/24 cho hướng dẫn chính và tên điểm mẫu, secondary14/20, metadata/eyebrow12/16; CTA tạo chuyến16/24. Newscreen dùng chung cho API account rỗng và preview nên cả hai nhận cùng thay đổi. JourneyInvitationCard giữ typography returning cũ; ItineraryStopList giữ live cũ, chỉ chuẩn hóa phần sample.
+- Form tạo chuyến: header24/32, tên điểm đến/ngày/nhóm nội dung16/24, label/chips/link14/20, helper/count12/16; input14/20 và CTA16/24. Chuẩn hóa chiều cao dòng ở picker nơi đến/ngày, tên Province16/24, ô tìm kiếm14/20. Ô nhập tên/ngân sách/search và nút tạo dùng minHeight để giãn theo font hệ thống; ngày/tên điểm không bị ép một dòng, các hàng có wrap và minWidth0. Không đổi palette, logic submit/API hoặc bật picker Places đang chờ tích hợp.
+- **33 tests liên quan đạt, TypeScript/no-unused và diff check đạt**; không chạy lint hoặc thêm dependency. Chưa visual QA Android/iOS với font hệ thống lớn; kiểm tra trực tiếp còn cần trong vòng nghiệm thu. File log local `.expo/new-home-create-typography-*`.
+
+### QA-1 đã nghiệm thu; chuyển QA-3 theo phụ thuộc · 06/11/2026
+
+- Người dùng xác nhận QA-1 hoạt động hoàn hảo, chốt nghiệm thu chức năng Auth; điều kiện production vẫn theo kế hoạch riêng.
+- QA-2 source review: Home API có chuyến hiện fallback list, chưa nối dashboard ba trạng thái còn lại hoặc GET/home. Người dùng chọn **kiểm Trip CRUD trước**, rồi quay lại Home sau Places/Itinerary/Memory. Không đổi UI_PREVIEW, không suy Home từ trang đầu list và không nhập fixture vào DB.
+- QA-3 đã rà FE/BE/DB: list/create/read/PATCH/version/date preview/DELETE và destination catalog. Sửa double submit ở create form bằng guard trước RHF validation: regression trước sửa2 request, sau sửa1 request/1 điều hướng. Backend idempotency và retry key giữ nguyên. Bỏ fallback404 DELETE vừa thêm vì source/integration xác nhận xóa lại chính chủ đã trả204; không che lỗi thật hoặc giảm test ownership/rollback.
+- **41 mobile tests,29 backend tests, TS/no-unused và diff check đạt.** Backend tests dùng PostgreSQL Testcontainers riêng. Dev18081 anon Trips/Destinations401 và PATCH preflight8082 đạt; không tạo dữ liệu dev để ép QA. Chưa nghiệm thu UI Trip CRUD; xem batch T01–T10 và API/body trong [QA-ACCEPTANCE-PLAN.md](QA-ACCEPTANCE-PLAN.md). UI list chưa có controls tìm kiếm/lọc/sort dù API đã hỗ trợ; các module Places/lịch trình/thời tiết chưa được gán hoàn tất.
+- Mốc Git cập nhật trong lúc QA: mobile `3a515be`, backend `afbfa5c`; không reset/merge/commit/push trong lượt này. Mốc và trạng thái trong các mục cũ bên dưới là lịch sử.
+
 ### Khởi động nghiệm thu sau merge · 06/11/2026
 
 - **Tinh chỉnh kích thước Auth:** logo120×40→144×48 theo token riêng Auth; CTA Đăng nhập/Tạo tài khoản và link Đăng ký/Đăng nhập ở footer tăng chữ14→16, line-height24. AppButton có `labelSize="large"` opt-in, các module khác và input14 giữ nguyên. Đây là ngoại lệ mới cho quy ước label/link14 ở mốc Typography ngay dưới.

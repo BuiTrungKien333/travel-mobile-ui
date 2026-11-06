@@ -18,17 +18,12 @@ export function NewUserHomeScreen({ preview = false }: { preview?: boolean }) {
   return (
     <HomePage showHeader>
       <View style={{ gap: theme.spacing.xs }}>
-        <AppText
-          accessibilityRole="header"
-          variant="heading"
-          style={{
-            fontSize: theme.typography.fontSize.xl,
-            lineHeight: theme.typography.lineHeight.xl,
-          }}
-        >
+        <AppText accessibilityRole="header" variant="title">
           {copy.greeting}
         </AppText>
-        <AppText tone="muted">{copy.newSubtitle}</AppText>
+        <AppText variant="bodyLarge" tone="muted">
+          {copy.newSubtitle}
+        </AppText>
       </View>
       <EnterSection animated={false}>
         <TripHero selection={{ kind: "new" }} />

@@ -487,7 +487,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: typography.fontSize.lg,
-    lineHeight: typography.lineHeight.md,
+    lineHeight: typography.lineHeight.lg,
   },
   closeButton: {
     minWidth: layout.compactTouchTarget,
@@ -506,6 +506,7 @@ const styles = StyleSheet.create({
   },
   bannerColumn: {
     flex: 1,
+    minWidth: 0,
     alignItems: "center",
     gap: spacing.xxs,
   },
@@ -515,7 +516,7 @@ const styles = StyleSheet.create({
   },
   bannerDate: {
     fontSize: typography.fontSize.sm,
-    lineHeight: typography.lineHeight.compactAction,
+    lineHeight: typography.lineHeight.sm,
   },
   monthNavRow: {
     flexDirection: "row",
@@ -533,6 +534,7 @@ const styles = StyleSheet.create({
   },
   monthLabel: {
     fontSize: typography.fontSize.md,
+    lineHeight: typography.lineHeight.md,
   },
   weekdayRow: {
     flexDirection: "row",
@@ -542,6 +544,7 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: "center",
     fontSize: typography.fontSize.xs,
+    lineHeight: typography.lineHeight.xs,
   },
   daysGrid: {
     flexDirection: "row",
@@ -561,7 +564,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   dayText: {
-    fontSize: typography.fontSize.compactAction,
+    fontSize: typography.fontSize.sm,
+    lineHeight: typography.lineHeight.sm,
   },
   durationRow: {
     alignItems: "center",
@@ -569,5 +573,6 @@ const styles = StyleSheet.create({
   },
   durationText: {
     fontSize: typography.fontSize.sm,
+    lineHeight: typography.lineHeight.sm,
   },
 });

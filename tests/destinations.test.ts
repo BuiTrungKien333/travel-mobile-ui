@@ -462,6 +462,7 @@ test("actual create/edit forms carry picker IDs through RHF and submit payloads"
   let states: unknown[] = [];
   let cursor = 0;
   const submits: unknown[] = [];
+  const navigated: unknown[] = [];
   const load = tripModuleLoader(
     {
       react: {
@@ -572,7 +573,13 @@ test("actual create/edit forms carry picker IDs through RHF and submit payloads"
           },
         }),
       },
-      "expo-router": { router: { push: () => {} } },
+      "expo-router": {
+        router: {
+          push: (route: unknown) => {
+            navigated.push(route);
+          },
+        },
+      },
     },
     { Date, crypto: globalThis.crypto },
   );
@@ -602,7 +609,20 @@ test("actual create/edit forms carry picker IDs through RHF and submit payloads"
     (node) => node.props.variant === "raised",
   );
   assert.ok(submitButton);
-  await invoke(submitButton, "onPress");
+  await Promise.all([
+    invoke(submitButton, "onPress"),
+    invoke(submitButton, "onPress"),
+  ]);
+  assert.equal(
+    submits.length,
+    1,
+    "rapid submissions must issue only one create request",
+  );
+  assert.equal(
+    navigated.length,
+    1,
+    "successful creation must navigate only once",
+  );
   assert.equal(
     (submits[0] as { destination: { provinceId: string } }).destination
       .provinceId,

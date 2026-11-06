@@ -135,9 +135,14 @@ export function ItineraryStopList({
                   ]}
                 >
                   <AppText
-                    variant="caption"
+                    variant={live ? "caption" : "body"}
                     tone="primary"
-                    style={{ flexShrink: 0 }}
+                    style={{
+                      flexShrink: 0,
+                      fontFamily: live
+                        ? theme.typography.fontFamily.regular
+                        : theme.typography.fontFamily.medium,
+                    }}
                   >
                     {stop.time}
                   </AppText>
@@ -151,7 +156,7 @@ export function ItineraryStopList({
                   ) : null}
                 </View>
                 <AppText
-                  variant="label"
+                  variant={live ? "label" : "bodyLarge"}
                   style={{ fontFamily: theme.typography.fontFamily.semibold }}
                 >
                   {stop.name[locale]}

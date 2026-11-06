@@ -487,7 +487,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: typography.fontSize.lg,
-    lineHeight: typography.lineHeight.md,
+    lineHeight: typography.lineHeight.lg,
   },
   closeButton: {
     minWidth: layout.compactTouchTarget,
@@ -500,16 +500,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: spacing.md,
-    height: layout.compactTouchTarget,
+    minHeight: layout.compactTouchTarget,
     borderWidth: 1,
     gap: spacing.sm,
     marginBottom: spacing.lg,
   },
   input: {
     flex: 1,
+    minWidth: 0,
     fontSize: typography.fontSize.sm,
-    height: "100%",
-    paddingVertical: 0,
+    lineHeight: typography.lineHeight.sm,
+    minHeight: layout.compactTouchTarget,
+    paddingVertical: spacing.sm,
   },
   clearButton: {
     width: 28,
@@ -537,9 +539,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: spacing.sm + spacing.xxs,
     flex: 1,
+    minWidth: 0,
   },
   itemText: {
-    fontSize: typography.fontSize.sm,
-    lineHeight: typography.lineHeight.compactAction,
+    fontSize: typography.fontSize.md,
+    lineHeight: typography.lineHeight.md,
   },
 });

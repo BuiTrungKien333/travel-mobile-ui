@@ -4,8 +4,8 @@ Ngày khởi tạo: 06/11/2026. Đây là kế hoạch QA/nghiệm thu, không t
 
 ## Mốc đối chiếu
 
-- Mobile: `E:/travel-mobile-ui`, `connect/backend/home`, e2408ce.
-- Backend: `E:/travel-system/backend`, `fix/rag-ai-v2`, `8fc64b7` (đã merge minhduc bằng PR #4 sau lượt merge mobile).
+- Mobile: `E:/travel-mobile-ui`, `connect/backend/home`; mốc khảo sát ban đầu e2408ce, mốc QA-3 hiện tại `3a515be` sau commit được cập nhật trong phiên làm việc.
+- Backend: `E:/travel-system/backend`, `fix/rag-ai-v2`; mốc sau merge `8fc64b7`, mốc QA-3 hiện tại `afbfa5c`.
 - Cấu hình dev quan sát: frontend API `http://localhost:18081`; backend `.env` có `SERVER_PORT=18081`. Không mặc định dùng port 18080 từ lịch sử chat. Không thay env cá nhân trong lượt lập kế hoạch.
 - Android là nền tảng nghiệm thu chính; web dùng kiểm tra nhanh và đối chiếu. Safe area, bàn phím, gesture, native modules và hiệu năng phải có bằng chứng Android riêng.
 - Không xét RBAC nghiệp vụ actor ở giai đoạn này. Vẫn kiểm tra authentication và ownership/isolation dữ liệu giữa hai tài khoản.
@@ -140,7 +140,9 @@ Mong đợi: ...
 | Mốc | Phase | Source | Automated | UI | HTTP+DB | Việc tiếp theo |
 | --- | --- | --- | --- | --- | --- | --- |
 | 06/11/2026 | QA-0 | Đã sửa lịch sử/schema/config và các blocker sau merge | 403 tests xanh qua full-suite + reruns; DB sạch/upgrade đạt | Chưa nghiệm thu UI | Dev V14, health/CORS/401 đạt, dữ liệu cũ giữ nguyên | QA-1A Login L01–L10 |
-| 06/11/2026 | QA-1A–E | Đã rà Auth/session/email/Google và sửa logout SecureStore lỗi | Backend Auth/Security 106/106; mobile Auth 49/49; TS/no-unused đạt | Chờ người dùng | Dev18081: 6 negative/method cases + Google challenge đúng; luồng hợp lệ/DB được kiểm qua integration trên DB riêng, chưa login/inbox/Google thật trên dev | Test thủ công Auth bên dưới và L01–L10; chưa sang QA-2 |
+| 06/11/2026 | QA-1A–E | Đã rà Auth/session/email/Google và sửa logout SecureStore lỗi; hoàn thiện typography Auth | Backend Auth/Security106/106; mobile Auth50/50 và các lượt UI refinement; TS đạt | Người dùng xác nhận hoạt động hoàn hảo, chốt nghiệm thu chức năng QA-1 | Dev18081 smoke đạt; DB workflow qua Testcontainers. Không coi xác nhận chức năng là chứng minh rate-limit/load hoặc mọi điều kiện production | Chuyển QA-3 theo lựa chọn của người dùng, hoãn Home tổng hợp |
+| 06/11/2026 | QA-2 | Phát hiện Home có chuyến hiện fallback danh sách; dashboard/GET home chưa tích hợp | Baseline connected-home/home-selection/trip-api15/15; backend lịch/Trip CRUD9/9 | Chưa nghiệm thu bốn dashboard API | Không suy Home từ trang đầu Trip hoặc dùng fixture | Người dùng chọn kiểm Trip CRUD trước, quay lại Home sau các phụ thuộc |
+| 06/11/2026 | QA-3 | Rà list/create/read/PATCH/date preview/DELETE/destination; chặn double submit trước validation | Mobile41/41; backend29/29; TS/no-unused đạt | Chờ batch T01–T10 | Dev GET Trips/Destinations anonymous401 và PATCH CORS8082 đạt; luồng hợp lệ/DB được test trên PostgreSQL riêng | Người dùng nghiệm thu list/tạo/sửa/xóa; chưa tự chuyển Places |
 
 ## QA-1 · Kết quả rà soát và kiểm chứng 06/11/2026
 
@@ -215,3 +217,85 @@ Google ID token phải do Google SDK/GIS cấp với **nonce của chính challe
 - Không giới hạn số dòng hoặc tắt font scaling trong Auth; form/screen vẫn cuộn, safe area/keyboard behavior giữ nguyên. Footer link tăng vùng chạm tối thiểu44, xuống dòng khi thiếu chỗ; subtitle/footer rỗng không chiếm gap thừa. Các thông báo hướng dẫn/success/error chính chuyển16 để dễ đọc; không đổi logic/API/credentials/session.
 - Bộ Auth hiện50/50 tests đạt sau thay đổi. Chưa coi đây là bằng chứng layout font lớn trên thiết bị.
 - Nghiệm thu bổ sung: mở login/register/reset và màn chờ email trên Pixel7, thiết bị rộng khoảng320–360 logical px, VI/EN, font hệ thống mặc định và phóng lớn khoảng1.5×. Kiểm title/địa chỉ email dài/footer không cắt chữ; cuộn tới được submit khi mở bàn phím; lỗi form/success đủ rõ; tên profile dài không đẩy nội dung ra khỏi card. Google thật cần so sánh khung nút trên web và Android riêng.
+
+## Quyết định sau QA-1 · 06/11/2026
+
+Người dùng đã xác nhận QA-1 hoạt động hoàn hảo. Chốt **nghiệm thu chức năng Auth**; các điều kiện public ghi ở trên vẫn tách riêng.
+
+QA-2 source review cho thấy `ConnectedHomeScreen` chỉ dùng `NewUserHomeScreen` khi `totalElements=0`, có chuyến thì trả `ConnectedTripsScreen`. `HomeScreen`/`selectHome` đủ bốn trạng thái chỉ thuộc preview, không phải dashboard server-backed. `/home` và thống kê thuộc Phase8 tích hợp, phụ thuộc Places/Itinerary/Memory. Thống kê tỉnh/thành theo Memory gắn Place, không đếm mọi điểm đã thêm vào lịch làm “đã khám phá”. Không sửa bằng cách chọn từ 20 chuyến đầu hoặc chép API data vào preview store.
+
+**Lựa chọn người dùng:** kiểm thử Trip CRUD đã tích hợp trước, rồi quay lại Home. Thứ tự hiện tại: QA-1 đã chốt → QA-3 Trip CRUD đang nghiệm thu → các module phụ thuộc → quay lại QA-2. Không đánh dấu QA-2 hoàn thành.
+
+## QA-3 · Danh sách, tạo, sửa và xóa chuyến đi
+
+### Kết quả source và sửa lỗi
+
+- **P2 — Submit tạo chuyến có thể chạy đồng thời trước khi UI loading render.** Test component thực tế gọi hai onPress liên tiếp đã quan sát2 mutation calls. Backend clientRequestId đã chống trùng bản ghi nhưng frontend vẫn gửi dư request và có thể điều hướng lặp. Đã chặn ngay trước RHF async validation bằng ref, giải phóng trong finally, chặn đóng form khi đang submit. Giữ fingerprint/clientRequestId cho retry và logic API cũ. Regression xác nhận1 request/1 điều hướng; không thêm queue, dependency hoặc state server mới.
+- **Đính chính về DELETE:** backend đã hỗ trợ idempotency: xóa lại cùng chuyến của chính chủ trả204 kể cả bản ghi đã soft-delete. Test `TripMutationIntegrationTest.deleteIsIdempotentAndSoftDeletesOnlyRelatedMemoriesWhileKeepingMedia` đã xác nhận. Nhận định ban đầu về404 khi retry DELETE dựa trên mock chưa phản ánh contract thật. Đã bỏ catch404 và hai tests mô phỏng vừa thêm (đã nằm trong commit hiện tại); giữ behavior cũ: xóa thành công theo204, lỗi thật được xử lý. Không bỏ/giảm test tích hợp idempotency, ownership hoặc rollback.
+- Backend: create idempotent key+hash, transaction tạo Trip/Itinerary/days; GET owner-scoped/pagination; PATCH chỉ field dirty, phân biệt omitted/null, version409; preview ngày và acknowledge; hủy chỉ đọc nhưng vẫn xóa được; soft-delete owner và memory liên quan trong cùng transaction. Không sửa backend runtime/migration ở QA-3.
+- **Phạm vi chưa triển khai:** UI list có pagination/refresh nhưng chưa có điều khiển search/filter/sort; backend các tham số q/mode/sort đã có và có thể test Postman. Bản đồ/lịch trình/Places/Weather trong connected detail còn theo phase tích hợp riêng; không coi placeholder là chức năng đã hoàn tất và không khôi phục fixture vào tài khoản thật.
+
+### Kiểm chứng
+
+- **Backend29 tests đạt, 0 failures/errors/skips trong một lượt:** TripCrudIntegrationTest8, TripMutationIntegrationTest13, TripCalendarTest1, DestinationCatalogIntegrationTest7. PostgreSQL17 Testcontainers + Flyway thật; kiểm ownership, create/replay/concurrency, validation/ref, version conflict, PATCH/null/no-op, ngày giao nhau, rollback và DELETE idempotent. Test rollback chủ động gây SQL5xx trong log là kết quả dự kiến, không phải suite thất bại.
+- **Mobile41 tests đạt:** trip-api, trip-mutations, destinations, create-trip, trip-formatters, trip-details-actions, connected-home. Regression double submit thất bại trước sửa, đạt sau sửa. TypeScript/no-unused và diff check đạt. Không thêm test chỉ đo style hoặc chạy lint.
+- HTTP backend dev18081: GET Trips và Destinations không token →401/AUTH_001; OPTIONS PATCH với Origin8082 →200 và đúng allow-origin. Không tạo user/trip dev, không sửa DB dev cho smoke. Dữ liệu hợp lệ/persistence/concurrency được kiểm trên DB test riêng; UI do người dùng nghiệm thu tiếp.
+- Log local không commit: `.expo/qa3-create-before-fix.log`, `.expo/qa3-mobile-tests.log`, `.expo/qa3-types.log`; backend `.git/qa-preflight/qa3-trip-tests.log`, `qa3-http-smoke.json`. Không dùng mock404 cũ làm bằng chứng lỗi production.
+
+### Batch UI Trip CRUD
+
+Dùng tài khoản đã verified; chọn ngày không trước ngày hiện tại. Với mỗi case ghi lại Trip ID (không token), tên và số chuyến trước/sau. Cần nghiệm thu trên Android; web dùng thêm để kiểm phiên bản/cạnh tranh.
+
+| Case | Thao tác | Kết quả mong đợi |
+| --- | --- | --- |
+| T01 | Tài khoản chưa có trip → tab Chuyến đi → Tạo chuyến đi, bấm tạo khi thiếu nơi đến/ngày | Empty state đúng; lỗi field và đưa tới chỗ cần nhập; không tạo Trip |
+| T02 | Chọn nơi đến, hôm nay hoặc tương lai, đi1 ngày; bỏ ngân sách/sở thích | POST201; mở detail đúng ID, dayCount1; quay list/refresh vẫn đúng1 chuyến, không có địa điểm mẫu |
+| T03 | Tạo chuyến3 ngày, tên tiếng Việt, ngân sách0 rồi thử chuyến có ngân sách/sở thích | Số ngày inclusive đúng;0 khác với không nhập; tên/ngân sách/preferences đúng sau mở lại |
+| T04 | Bấm nhanh nút tạo2–3 lần trong cùng lần submit | Chỉ1 request đang chạy và1 lần điều hướng; không nhân đôi Trip. Nếu mạng lỗi, bật mạng và retry cùng form vẫn dùng create key của cùng payload |
+| T05 | Sửa riêng ghi chú/tên, lưu rồi đóng/mở detail và refresh list | PATCH chỉ field đã đổi; version tăng; ngày/ngân sách/sở thích không bị xóa hoặc reset |
+| T06 | Sửa ngày thành1 ngày hoặc kéo dài3 ngày; thử khoảng ngày ngược | Ngày hợp lệ lưu đúng days/dayCount/mode; ngày ngược bị chặn. Nếu đã có stops ngoài khoảng mới: phải preview và xác nhận trước khi áp dụng |
+| T07 | Mở Xóa → Không, rồi Xóa → Có | Không: giữ nguyên; Có: DELETE204, list không còn trip, GET detail404. Không xóa trip/memory tài khoản khác |
+| T08 | Mất mạng trước khi tạo/sửa/xóa, chờ lỗi rồi bật mạng/thử lại | Có lỗi và retry; không kẹt loading, không tự ghi đè hoặc tự replay mutation nền |
+| T09 | Mở form sửa, dùng Postman/thiết bị thứ2 cập nhật cùng trip, rồi lưu form cũ | 409/TRIP_002; đề nghị tải bản mới, giữ dữ liệu server; chỉ sửa lại sau khi review version mới |
+| T10 | Có hơn20 chuyến → Tải thêm/refresh; đổi account A/B | Tải đúng trang, lỗi tải có retry; cache/private trip không lẫn tài khoản; không nạp fixtures |
+
+Các case về stops/Memory cần dữ liệu test đã tích hợp ở phase tương ứng; không dùng UI preview để coi DB case đã đạt. Chưa có dữ liệu cho case nào thì ghi Not tested thay vì Passed.
+
+### API và body mẫu cho Postman
+
+Base URL: `http://localhost:18081`; header `Authorization: Bearer <accessToken>`, `Content-Type: application/json`, `Accept-Language: vi`. Không tạo Collection theo yêu cầu người dùng.
+
+| Method | Path | Body/kỳ vọng |
+| --- | --- | --- |
+| GET | `/api/v1/destinations?q=Đà%20Nẵng&page=0&size=20` | Không body;200, data.content chứa UUID tỉnh/thành |
+| POST | `/api/v1/trips` | Body bên dưới;201 mới hoặc200 replay cùng key/payload |
+| GET | `/api/v1/trips?page=0&size=20&sort=createdAt,desc` | Không body;200 data.content, totalElements/totalPages/context |
+| GET | `/api/v1/trips?mode=PLANNING&q=Đà&page=0&size=20&sort=startDate,asc` | mode hỗ trợ PLANNING/LIVE/RECAP/CANCELLED; UI chưa có controls tương ứng |
+| GET | `/api/v1/trips/<tripId>` | Không body;200 data.trip và data.context |
+| PATCH | `/api/v1/trips/<tripId>` | Ví dụ `{"version":0,"title":"Đà Lạt đã chỉnh","notes":"Mang áo khoác"}`;200, dùng version mới nhất |
+| POST | `/api/v1/trips/<tripId>/date-change-preview` | `{"version":0,"startDate":"2026-11-21","endDate":"2026-11-23"}`;200, chỉ xem tác động |
+| DELETE | `/api/v1/trips/<tripId>?version=0` | Không body;204, xóa lại chính chủ vẫn204; version stale khi trip còn sống→409 |
+
+Body tạo mẫu (đổi ngày nếu ngày hiện tại đã sau20/11/2026):
+
+```json
+{
+  "clientRequestId": "11111111-1111-4111-8111-111111111111",
+  "title": "Khám phá Đà Lạt",
+  "destination": { "name": "Đà Lạt", "provinceId": null },
+  "startDate": "2026-11-20",
+  "endDate": "2026-11-22",
+  "timeZone": "Asia/Ho_Chi_Minh",
+  "budget": { "amount": 2000000, "currency": "VND" },
+  "preferences": ["nature", "photography"],
+  "initialPlaceIds": []
+}
+```
+
+- Mỗi chuyến mới dùng clientRequestId UUID mới; **retry cùng lần tạo giữ nguyên key và payload**. Cùng key nhưng đổi payload →409/TRIP_004, không tự tạo chuyến khác.
+- Lấy ID ở `data.trip.id`, version ở `data.trip.version`; response update có version mới để dùng lần sau. Không luôn dùng0 cho trip đã sửa.
+- PATCH `{"version":<mới nhất>,"budget":null,"notes":null}` xóa rõ ràng hai field; bỏ field khỏi body giữ nguyên. `title`/dates không nhận null.
+- Đổi ngày phải gửi cả startDate/endDate. Nếu preview.requiresAcknowledgement=true, PATCH gồm ngày và `acknowledgeDateImpact:true`; khi false/không gửi sẽ không tự làm mất lịch cũ. Không tự gửi flag trước khi người dùng review tác động.
+- Kiểm accountB với tripA: GET/PATCH/DELETE đều404/TRIP_001, không lộ dữ liệu. Token thiếu →401. Không có mutation liên quan được chạy dưới accountB.
+
+**Trạng thái hiện tại:** tự động đạt; chờ người dùng T01–T10. Chưa chốt nghiệm thu QA-3, chưa sang QA-4 Places và chưa coi Home bốn trạng thái đã tích hợp.

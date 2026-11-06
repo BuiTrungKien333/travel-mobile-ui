@@ -79,6 +79,7 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
   const { copy: detailsCopy } = useTripDetailsCopy();
   const { copy: integrationCopy } = useTripIntegrationCopy();
   const createMutation = useCreateTripMutation();
+  const submitLock = useRef(false);
   const createAttempt = useRef<{ fingerprint: string; id: string } | null>(
     null,
   );
@@ -133,7 +134,7 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
       : 0;
 
   const requestClose = () => {
-    if (isSubmitting) return;
+    if (submitLock.current || isSubmitting) return;
     Keyboard.dismiss();
     if (isDirty) confirmDiscard(copy, onClose);
     else onClose();
@@ -184,7 +185,7 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
     );
   const handleBudgetChange = (text: string) =>
     budgetField.onChange(text.replace(/\D/g, ""));
-  const submit = handleSubmit(
+  const submitForm = handleSubmit(
     async (values) => {
       Keyboard.dismiss();
       if (!UI_PREVIEW_ENABLED) {
@@ -287,6 +288,17 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
     },
   );
 
+  const submit = async () => {
+    // Guard before async validation, rather than waiting for the next loading-state render.
+    if (submitLock.current) return;
+    submitLock.current = true;
+    try {
+      await submitForm();
+    } finally {
+      submitLock.current = false;
+    }
+  };
+
   return (
     <Modal
       visible
@@ -343,15 +355,9 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
 
           <View style={styles.headerTextCol}>
             <AppText
-              variant="heading"
-              style={[
-                styles.headerTitle,
-                {
-                  fontFamily: theme.typography.fontFamily.medium,
-                  color: theme.colors.text,
-                  marginTop: spacing.xxs,
-                },
-              ]}
+              variant="title"
+              accessibilityRole="header"
+              style={{ marginTop: theme.spacing.xxs }}
             >
               {copy.createTrip}
             </AppText>
@@ -403,14 +409,14 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
               </View>
 
               <View style={styles.cardInfoCol}>
-                <AppText variant="caption" tone="muted">
+                <AppText variant="label" tone="muted">
                   {copy.destination}
                 </AppText>
                 <AppText
                   style={[
                     styles.destinationTitle,
                     {
-                      fontFamily: theme.typography.fontFamily.bold,
+                      fontFamily: theme.typography.fontFamily.semibold,
                       color: destination
                         ? theme.colors.text
                         : theme.colors.textSecondary,
@@ -419,9 +425,11 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
                 >
                   {destination || copy.chooseDestination}
                 </AppText>
-                <AppText variant="caption" tone="muted">
-                  {destinationRegion(destination, copy)}
-                </AppText>
+                {destination.trim() ? (
+                  <AppText variant="caption" tone="muted">
+                    {destinationRegion(destination, copy)}
+                  </AppText>
+                ) : null}
               </View>
 
               <AppIcon
@@ -483,7 +491,7 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
                   style={[
                     styles.dateCardTitle,
                     {
-                      fontFamily: theme.typography.fontFamily.bold,
+                      fontFamily: theme.typography.fontFamily.semibold,
                       color: theme.colors.text,
                     },
                   ]}
@@ -530,11 +538,10 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
                   {copy.startDate}
                 </AppText>
                 <AppText
-                  numberOfLines={1}
                   style={[
                     styles.dateValueText,
                     {
-                      fontFamily: theme.typography.fontFamily.bold,
+                      fontFamily: theme.typography.fontFamily.medium,
                       color: startDate
                         ? theme.colors.text
                         : theme.colors.textSecondary,
@@ -561,11 +568,10 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
                   {copy.endDate}
                 </AppText>
                 <AppText
-                  numberOfLines={1}
                   style={[
                     styles.dateValueText,
                     {
-                      fontFamily: theme.typography.fontFamily.bold,
+                      fontFamily: theme.typography.fontFamily.medium,
                       color: endDate
                         ? theme.colors.text
                         : theme.colors.textSecondary,
@@ -617,6 +623,7 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
               ]}
             >
               <TextInput
+                allowFontScaling
                 value={tripTitle}
                 onChangeText={(text) => {
                   titleEdited.current = true;
@@ -666,14 +673,13 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
                 </Pressable>
               ) : null}
             </View>
-            <AppText variant="caption" tone="muted">
-              {errors.title ? (
-                <AppText accessibilityRole="alert" tone="error">
-                  {errors.title.message}
-                </AppText>
-              ) : (
-                copy.titleHint
-              )}
+            <AppText
+              variant={errors.title ? "body" : "caption"}
+              tone={errors.title ? "error" : "muted"}
+              accessibilityRole={errors.title ? "alert" : undefined}
+              accessibilityLiveRegion={errors.title ? "polite" : "none"}
+            >
+              {errors.title?.message || copy.titleHint}
             </AppText>
           </View>
 
@@ -694,7 +700,7 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
                 style={[
                   styles.sectionHeading,
                   {
-                    fontFamily: theme.typography.fontFamily.bold,
+                    fontFamily: theme.typography.fontFamily.semibold,
                     color: theme.colors.text,
                   },
                 ]}
@@ -812,11 +818,10 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
 
                       <View style={styles.stopInfoCol}>
                         <AppText
-                          numberOfLines={1}
                           style={[
                             styles.stopNameText,
                             {
-                              fontFamily: theme.typography.fontFamily.regular,
+                              fontFamily: theme.typography.fontFamily.medium,
                               color: theme.colors.text,
                             },
                           ]}
@@ -989,6 +994,7 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
                     ]}
                   >
                     <TextInput
+                      allowFontScaling
                       value={budget}
                       onChangeText={handleBudgetChange}
                       ref={budgetField.ref}
@@ -1019,21 +1025,20 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
                         styles.budgetSuffix,
                         {
                           color: theme.colors.primaryText,
-                          fontFamily: theme.typography.fontFamily.bold,
+                          fontFamily: theme.typography.fontFamily.medium,
                         },
                       ]}
                     >
                       VND
                     </AppText>
                   </View>
-                  <AppText variant="caption" tone="muted">
-                    {errors.budget ? (
-                      <AppText accessibilityRole="alert" tone="error">
-                        {errors.budget.message}
-                      </AppText>
-                    ) : (
-                      copy.budgetHint
-                    )}
+                  <AppText
+                    variant={errors.budget ? "body" : "caption"}
+                    tone={errors.budget ? "error" : "muted"}
+                    accessibilityRole={errors.budget ? "alert" : undefined}
+                    accessibilityLiveRegion={errors.budget ? "polite" : "none"}
+                  >
+                    {errors.budget?.message || copy.budgetHint}
                   </AppText>
                 </View>
 
@@ -1123,6 +1128,7 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
             >
               <AppText
                 accessibilityRole="alert"
+                variant="bodyLarge"
                 tone="error"
                 style={styles.errorText}
               >
@@ -1145,6 +1151,7 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
         >
           <AppButton
             variant="raised"
+            labelSize="large"
             loading={isSubmitting}
             onPress={submit}
             style={styles.createButton}
@@ -1199,10 +1206,6 @@ const styles = StyleSheet.create({
   headerTextCol: {
     flex: 1,
   },
-  headerTitle: {
-    fontSize: typography.fontSize.xl,
-    lineHeight: typography.lineHeight.md,
-  },
   headerSubtitle: {
     marginTop: spacing.xxs,
   },
@@ -1227,6 +1230,7 @@ const styles = StyleSheet.create({
   },
   cardInfoCol: {
     flex: 1,
+    minWidth: 0,
     gap: spacing.xxs,
   },
   destinationTitle: {
@@ -1237,12 +1241,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    flexWrap: "wrap",
+    gap: spacing.sm,
     marginBottom: spacing.md,
   },
   dateHeaderLeft: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.sm,
+    flexShrink: 1,
   },
   iconCircleSmall: {
     width: 28,
@@ -1252,8 +1259,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   dateCardTitle: {
-    fontSize: typography.fontSize.sm,
-    lineHeight: typography.lineHeight.compactAction,
+    fontSize: typography.fontSize.md,
+    lineHeight: typography.lineHeight.md,
   },
   dateColumnsContainer: {
     flexDirection: "row",
@@ -1263,6 +1270,7 @@ const styles = StyleSheet.create({
   },
   dateColumnBlock: {
     flex: 1,
+    minWidth: 0,
     gap: spacing.xs,
   },
   dateVerticalDivider: {
@@ -1271,8 +1279,8 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.sm + spacing.xxs,
   },
   dateValueText: {
-    fontSize: typography.fontSize.compactAction,
-    lineHeight: typography.lineHeight.compactAction,
+    fontSize: typography.fontSize.md,
+    lineHeight: typography.lineHeight.md,
   },
   durationBadge: {
     paddingHorizontal: spacing.sm + spacing.xxs,
@@ -1281,18 +1289,22 @@ const styles = StyleSheet.create({
   },
   durationText: {
     fontSize: typography.fontSize.xs,
+    lineHeight: typography.lineHeight.xs,
   },
   titleInputWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    height: 48,
+    minHeight: layout.touchTarget,
     borderWidth: 1,
     paddingHorizontal: spacing.md,
   },
   titleInput: {
     flex: 1,
+    minWidth: 0,
     fontSize: typography.fontSize.sm,
-    height: "100%",
+    lineHeight: typography.lineHeight.sm,
+    minHeight: layout.touchTarget,
+    paddingVertical: spacing.sm,
   },
   clearTitleButton: {
     width: 28,
@@ -1306,9 +1318,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    flexWrap: "wrap",
+    gap: spacing.sm,
   },
   sectionHeading: {
     fontSize: typography.fontSize.md,
+    lineHeight: typography.lineHeight.md,
   },
   addPlaceDashedCard: {
     borderWidth: 1.5,
@@ -1331,6 +1346,7 @@ const styles = StyleSheet.create({
   },
   addPlaceTitle: {
     fontSize: typography.fontSize.sm,
+    lineHeight: typography.lineHeight.sm,
   },
   stopsList: {
     gap: spacing.sm,
@@ -1343,21 +1359,25 @@ const styles = StyleSheet.create({
     gap: spacing.sm + spacing.xxs,
   },
   stopIndexBadge: {
-    width: 24,
-    height: 24,
+    minWidth: spacing.xl,
+    minHeight: spacing.xl,
+    padding: spacing.xxs,
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
   },
   stopIndexText: {
-    fontSize: typography.fontSize.navigationLabel,
+    fontSize: typography.fontSize.xs,
+    lineHeight: typography.lineHeight.xs,
   },
   stopInfoCol: {
     flex: 1,
+    minWidth: 0,
     justifyContent: "center",
   },
   stopNameText: {
-    fontSize: typography.fontSize.sm,
+    fontSize: typography.fontSize.md,
+    lineHeight: typography.lineHeight.md,
   },
   removeStopBtn: {
     width: layout.compactTouchTarget,
@@ -1375,7 +1395,8 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   addMoreStopsText: {
-    fontSize: typography.fontSize.compactAction,
+    fontSize: typography.fontSize.sm,
+    lineHeight: typography.lineHeight.sm,
   },
   accordionHeader: {
     flexDirection: "row",
@@ -1384,6 +1405,7 @@ const styles = StyleSheet.create({
   },
   accordionTitle: {
     fontSize: typography.fontSize.md,
+    lineHeight: typography.lineHeight.md,
   },
   accordionBody: {
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -1393,16 +1415,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    height: 48,
+    minHeight: layout.touchTarget,
     paddingHorizontal: spacing.md,
   },
   budgetInput: {
     flex: 1,
+    minWidth: 0,
     fontSize: typography.fontSize.sm,
-    height: "100%",
+    lineHeight: typography.lineHeight.sm,
+    minHeight: layout.touchTarget,
+    paddingVertical: spacing.sm,
   },
   budgetSuffix: {
-    fontSize: typography.fontSize.compactAction,
+    fontSize: typography.fontSize.xs,
+    lineHeight: typography.lineHeight.xs,
   },
   chipsContainer: {
     flexDirection: "row",
@@ -1419,18 +1445,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   chipCheck: {
-    fontSize: typography.fontSize.xs,
+    fontSize: typography.fontSize.sm,
+    lineHeight: typography.lineHeight.sm,
     fontWeight: "bold",
   },
   chipText: {
-    fontSize: typography.fontSize.compactAction,
+    fontSize: typography.fontSize.sm,
+    lineHeight: typography.lineHeight.sm,
   },
   errorBanner: {
     borderWidth: 1,
     padding: spacing.md,
   },
   errorText: {
-    fontSize: typography.fontSize.compactAction,
     textAlign: "center",
   },
   bottomBar: {
@@ -1440,7 +1467,7 @@ const styles = StyleSheet.create({
   },
   createButton: {
     width: "100%",
-    height: 48,
+    minHeight: layout.buttonHeight,
   },
   bottomHintText: {
     textAlign: "center",
