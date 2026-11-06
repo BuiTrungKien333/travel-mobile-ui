@@ -266,7 +266,7 @@ export function TripStopRow({
                         ? theme.colors.surfaceTint
                         : theme.colors.surface,
                     borderWidth: next ? 1 : StyleSheet.hairlineWidth,
-                    borderLeftWidth: next
+                    borderLeftWidth: next || highlighted
                       ? theme.spacing.xs
                       : StyleSheet.hairlineWidth,
                     borderColor: next
@@ -322,7 +322,8 @@ export function TripStopRow({
                         <AppIcon name="pin" size={theme.layout.iconSmall} />
                       ) : null}
                     </View>
-                    <AppText variant="label">{stop.name[locale]}</AppText>
+                      {highlighted && !next ? <AppText variant="caption" tone="primary">{copy.selectedStop}</AppText> : null}
+                      <AppText variant="cardTitle">{stop.name[locale]}</AppText>
                     <AppText variant="caption" tone="muted">
                       {metadata}
                     </AppText>

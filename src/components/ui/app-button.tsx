@@ -123,11 +123,9 @@ export function AppButton({
               ]
             : undefined,
           opacity: isDisabled ? 0.55 : pressed ? 0.82 : 1,
-          minHeight: isSmall
-            ? theme.layout.touchTarget
-            : styles.button.minHeight,
+          minHeight: theme.layout.touchTarget,
           paddingHorizontal: isSmall ? theme.spacing.lg : theme.spacing.xl,
-          paddingVertical: isSmall ? theme.spacing.sm : theme.spacing.none,
+          paddingVertical: isSmall ? theme.spacing.sm : theme.spacing.md,
         },
         isGradient ? styles.clipped : null,
         style,
@@ -201,7 +199,6 @@ const styles = StyleSheet.create({
   fullWidth: { width: "100%" },
   raisedTrailing: { position: "absolute", right: 0 },
   button: {
-    minHeight: 52,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,

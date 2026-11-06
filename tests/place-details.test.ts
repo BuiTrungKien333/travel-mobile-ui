@@ -5,6 +5,8 @@ import type { TripStop } from "../src/features/home/types/home-types.ts";
 import { tripModuleLoader } from "./helpers/load-trip-module.ts";
 
 type Props = {
+  source?: unknown;
+  emptyLabel?: string;
   children?: unknown;
   mapContent?: unknown;
   focused?: TripStop;
@@ -41,6 +43,8 @@ const load = tripModuleLoader({
   "@/hooks/use-i18n": { useI18n: () => ({ locale: "vi" }) },
   "@/components/ui/app-text": { AppText: "AppText" },
   "@/components/ui/app-icon": { AppIcon: "AppIcon" },
+  "@/components/ui/content-image": { ContentImage: "ContentImage" },
+  "./place-details-editorial": { PlaceIntroduction: "PlaceIntroduction" },
   "./trip-planning-map": { TripPlanningMap: "TripPlanningMap" },
   "./place-search-map": { PlaceSearchMap: "PlaceSearchMap" },
   "./trip-details-header": { DetailIconButton: "DetailIconButton" },
@@ -85,9 +89,9 @@ test("place details uses the shared resizable map with the selected pin and retu
   assert.ok(text(tree).includes(place.address?.vi ?? "missing address"));
   assert.ok(text(tree).includes("Giờ mở cửa"));
   assert.ok(text(tree).includes("Giá vé tham khảo"));
-  assert.ok(text(tree).includes("Chưa đồng bộ Google Maps"));
+  assert.ok(text(tree).includes("Chưa xác minh giá vé"));
   assert.equal(
-    elements(tree).filter((node) => node.type === "Image").length,
+    elements(tree).filter((node) => node.type === "ContentImage").length,
     1,
   );
 });
@@ -117,7 +121,9 @@ test("unknown places don't borrow another place's photo, admission or opening ho
     elements(tree).some((node) => node.type === "Image"),
     false,
   );
-  assert.ok(text(tree).includes("Chưa có ảnh"));
+  const fallback = elements(tree).find((node) => node.type === "ContentImage");
+  assert.equal(fallback?.props.emptyLabel, "Chưa có ảnh");
+  assert.equal(fallback?.props.source, undefined);
   assert.ok(text(tree).includes("Chưa có thông tin"));
 });
 

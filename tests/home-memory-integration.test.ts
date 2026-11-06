@@ -12,6 +12,10 @@ test("Home shows uploaded and local photos and opens each with a valid memory ro
   ];
   const tokens = tripModuleLoader()<typeof import("../src/theme/tokens.ts")>("src/theme/tokens.ts");
   const load = tripModuleLoader({
+    react: { useState: (initial: unknown) => [initial, () => {}] },
+    "../components/home-header": { HomeHeader: "HomeHeader" },
+    "@/features/trip/components/create-trip-modal": { CreateTripModal: "CreateTripModal" },
+    "@/features/trip/components/trip-status-badge": { TripStatusBadge: "TripStatusBadge" },
     "../components/home-live-journey": { HomeLiveJourney: "HomeLiveJourney" },
     "expo-router": { router: { push: (route: unknown) => routes.push(route) } },
     "expo-image": { Image: "Image" },

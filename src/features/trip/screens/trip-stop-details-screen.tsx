@@ -23,7 +23,6 @@ import { SharePlaceButton } from "../components/share-place-button";
 import {
   PlaceAmenities,
   PlaceClassification,
-  PlaceIntroduction,
 } from "../components/place-details-editorial";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 import type { TripMutation } from "../types/trip-details-types";
@@ -262,7 +261,6 @@ function StopDetailsContent({
               } : undefined}
             />
             {!date || !clockPattern.test(stop.time) ? <AppText variant="caption" tone="muted">{copy.pinTimeRequired}</AppText> : null}
-            <PlaceIntroduction place={place} />
           </PlaceDetailsContent>
           <View
             style={{

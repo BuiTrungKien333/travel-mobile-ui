@@ -38,6 +38,7 @@ function fixture() {
     "@/features/home/components/home-header": { HomeHeader: "HomeHeader" },
     "@/features/home/providers/trip-preview-provider": { useTripPreview: (select: (value: typeof state) => unknown) => select(state) },
     "../hooks/use-memories": { useMemories: () => library, useMemoryActions: () => ({ upload: { isError: false }, remove: { isError: false } }) },
+    "../components/memory-sync-badge": { MemorySyncBadge: "MemorySyncBadge" },
     "../components/memory-primitives": { MemoryPage: "MemoryPage", MemoryPicture: "MemoryPicture", MemoryEmpty: "MemoryEmpty", MemoryIconButton: "MemoryIconButton" },
     "../components/memory-load-state": { MemoryLoadState: "MemoryLoadState" },
   });

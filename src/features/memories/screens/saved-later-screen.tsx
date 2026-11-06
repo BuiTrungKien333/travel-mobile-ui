@@ -1,3 +1,4 @@
+import { MemorySyncBadge } from "../components/memory-sync-badge";
 import { router } from "expo-router";
 import { useRef, useState } from "react";
 import { usePreventRemove } from "expo-router/react-navigation";
@@ -95,7 +96,7 @@ export function SavedLaterScreen() {
               style={{
                 gap: theme.spacing.md,
                 padding: theme.spacing.md,
-                borderRadius: theme.radius.xxl,
+                borderRadius: theme.radius.xl,
                 backgroundColor: theme.colors.surface,
               }}
             >
@@ -113,6 +114,7 @@ export function SavedLaterScreen() {
               <AppText variant="caption" tone="muted">
                 {item.date} · {item.time}
               </AppText>
+              <MemorySyncBadge memory={item} />
               {item.local && !item.local.deviceSaved ? (
                 <>
                   <AppText variant="caption" tone="muted">

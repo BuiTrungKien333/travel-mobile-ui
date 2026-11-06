@@ -6,6 +6,7 @@ import {
 } from "react-native";
 import { GlassBackdrop } from "@/components/common/glass-backdrop";
 import { AppIcon, type AppIconName } from "@/components/ui/app-icon";
+import { TripStatusBadge } from "./trip-status-badge";
 import { AppText } from "@/components/ui/app-text";
 import type { Trip } from "@/features/home/types/home-types";
 import { tripDuration } from "@/features/home/utils/select-home";
@@ -84,43 +85,7 @@ export function TripDetailsHeader({
                   ? ` · ${days} ${days === 1 ? copy.day.toLowerCase() : copy.daysUnit}`
                   : ""}
               </AppText>
-              <View
-                style={{
-                  alignSelf: "flex-start",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: theme.spacing.xs,
-                  backgroundColor:
-                    mode === "live"
-                      ? theme.colors.successSurface
-                      : theme.colors.surfaceTint,
-                  paddingHorizontal: theme.spacing.sm,
-                  paddingVertical: theme.spacing.xxs,
-                  borderRadius: theme.radius.full,
-                }}
-              >
-                {mode === "live" ? (
-                  <View
-                    style={{
-                      width: theme.spacing.sm,
-                      height: theme.spacing.sm,
-                      borderRadius: theme.radius.full,
-                      backgroundColor: theme.colors.success,
-                    }}
-                  />
-                ) : null}
-                <AppText
-                  variant="caption"
-                  style={{
-                    color:
-                      mode === "live"
-                        ? theme.colors.onSuccessSurface
-                        : theme.colors.primaryText,
-                  }}
-                >
-                  {copy[mode]}
-                </AppText>
-              </View>
+              <TripStatusBadge status={mode === "live" ? "ongoing" : mode === "recap" ? "completed" : mode === "cancelled" ? "cancelled" : trip.status === "draft" ? "draft" : "upcoming"} locale={locale} />
             </>
           ) : null}
         </View>
@@ -177,8 +142,8 @@ export function DetailIconButton({
       accessibilityState={accessibilityState}
       onPress={onPress}
       style={({ pressed }) => ({
-        width: theme.layout.compactTouchTarget,
-        height: theme.layout.compactTouchTarget,
+        width: theme.layout.touchTarget,
+        height: theme.layout.touchTarget,
         alignItems: "center",
         justifyContent: "center",
         borderRadius: theme.radius.full,

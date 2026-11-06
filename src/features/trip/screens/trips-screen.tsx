@@ -10,7 +10,8 @@ import { HomeHeader } from "@/features/home/components/home-header";
 import { toTrip } from "../api/trip-adapters";
 import { useTripsQuery } from "../api/trip-hooks";
 import { useAppTheme } from "@/hooks/use-app-theme";
-import { spacing, typography } from "@/theme/tokens";
+import { spacing } from "@/theme/tokens";
+import { todayCalendarDate } from "@/utils/calendar-date";
 import { TripCard } from "../components/trip-card";
 import { useTripCopy } from "../i18n/trip-copy";
 import { CreateTripModal } from "../components/create-trip-modal";
@@ -23,7 +24,7 @@ export function TripsScreen() {
   const [createVisible, setCreateVisible] = useState(false);
   const tripsQuery = useTripsQuery();
   const trips = tripsQuery.data?.map((trip) => toTrip(trip)) ?? [];
-  const today = new Date().toLocaleDateString("en-CA");
+  const today = todayCalendarDate();
 
   return (
     <ScreenSafeArea
@@ -51,9 +52,8 @@ export function TripsScreen() {
             {/* Title: "Chuyến đi của bạn" */}
             <AppText
               accessibilityRole="header"
-              variant="heading"
+              variant="screenTitle"
               style={[
-                styles.screenHeading,
                 {
                   color: theme.colors.text,
                   fontFamily: theme.typography.fontFamily.bold,
@@ -62,16 +62,17 @@ export function TripsScreen() {
             >
               {copy.trips}
             </AppText>
+            <AppText variant="caption" tone="muted">{trips.length ? copy.tripsCount.replace("{count}", String(trips.length)) : copy.noTripsHint}</AppText>
 
             {/* Large centered Create Trip button */}
             <View style={styles.createButtonWrapper}>
               <AppButton
-                variant="raised"
+                variant="primary"
                 leadingIcon={
                   <AppIcon
                     name="plus"
-                    size={18}
-                    color={theme.colors.onRaisedAction}
+                    size={theme.layout.iconSmall}
+                    color={theme.colors.onPrimary}
                   />
                 }
                 onPress={() => setCreateVisible(true)}
@@ -89,8 +90,8 @@ export function TripsScreen() {
             </View>
           ) : tripsQuery.isError ? (
             <View style={{ gap: theme.spacing.md, padding: theme.spacing.lg }}>
-              <AppText accessibilityRole="alert" tone="error">Không tải được danh sách chuyến đi.</AppText>
-              <AppButton variant="outline" onPress={() => void tripsQuery.refetch()}>Thử lại</AppButton>
+              <AppText accessibilityRole="alert" tone="error">{copy.tripsLoadError}</AppText>
+              <AppButton variant="outline" onPress={() => void tripsQuery.refetch()}>{copy.retry}</AppButton>
             </View>
           ) : trips.length === 0 ? (
           <View
@@ -182,11 +183,6 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     marginBottom: spacing.xs + spacing.xxs,
-  },
-  screenHeading: {
-    fontSize: typography.fontSize.lg,
-    lineHeight: typography.lineHeight.md,
-    letterSpacing: -0.2,
   },
   createButtonWrapper: {
     width: "100%",

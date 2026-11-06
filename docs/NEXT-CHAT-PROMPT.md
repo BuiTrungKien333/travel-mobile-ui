@@ -6,6 +6,7 @@ Hãy đọc `AGENTS.md` nếu chưa có trong ngữ cảnh, rồi xem phần m�
 - `docs/MOBILE-MVP-IMPLEMENTATION-PLAN.md`
 - `docs/P0-03-ACCEPTANCE.md`
 - `docs/P0-04-ACCEPTANCE.md`
+- `docs/P1-01-ACCEPTANCE.md`
 
 Đây là đồ án môn Phát triển ứng dụng di động của sinh viên năm cuối. Ưu tiên app chạy đúng, thao tác rõ ràng, UI/UX mượt và đẹp; giữ Ocean Teal, Roboto, theme sáng, cỡ chữ gọn và navigation icon-only đã chốt. Không tự nâng dependency hoặc triển khai hạ tầng production.
 
@@ -19,6 +20,8 @@ Ngày 06/11/2026, người dùng cho phép làm toàn bộ P0-03 trong một lư
 
 P0-04 đã được triển khai trọn phần code trong lượt tiếp theo ngày 06/11/2026 theo yêu cầu riêng của người dùng. Backend có migration V19 chống trùng upload, cần restart để áp dụng. Xem mốc phần 8 trong handoff/status và checklist P0-04; QA điện thoại chưa hoàn tất.
 
-Nếu người dùng yêu cầu code tiếp, bám kế hoạch và lỗi QA thực tế; giai đoạn kế tiếp là P1-01 (đồng nhất giao diện/phân cấp thông tin), không tự chuyển sang production. Mặc định làm một phần có thể review rồi dừng; không tự commit/push.
+P1-01 đã được triển khai phần code theo yêu cầu ngày 06/11/2026: đọc mốc phần 9 và checklist P1-01. Chỉ cần reload mobile cho thay đổi này; QA giao diện điện thoại chưa hoàn tất.
+
+Nếu người dùng yêu cầu code tiếp, bám kế hoạch và lỗi QA thực tế; giai đoạn kế tiếp là P1-02 (điều hướng, form và trạng thái màn hình), không tự chuyển sang production. Mặc định làm một phần có thể review rồi dừng; không tự commit/push.
 
 Không tự commit/push. Giữ thay đổi của người dùng, không đọc/ghi đè bí mật trong .env. Báo đúng kiểm tra đã chạy; test với platform/HTTP double không thay thế QA thiết bị.

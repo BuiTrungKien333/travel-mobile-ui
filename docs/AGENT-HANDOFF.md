@@ -1,5 +1,13 @@
 # Bàn giao ngữ cảnh cho agent tiếp theo
 
+## Mốc hiện hành · Phần 9 — P1-01 · 06/11/2026
+
+Người dùng yêu cầu triển khai P1-01. Code hoàn tất, **QA giao diện điện thoại còn chờ** theo [P1-01-ACCEPTANCE.md](P1-01-ACCEPTANCE.md). Dừng cho người dùng review/push, không tự commit/push. Mốc P0-04 bên dưới là lịch sử; phần tiếp theo sau review là P1-02 khi người dùng yêu cầu.
+
+AppText thêm screenTitle/sectionTitle/cardTitle dùng scale hiện có; AppButton tối thiểu 48 và padding cho text wrap. StatusBadge dùng chung Home/trip/photo/category; ContentImage có fallback, TripCard dùng cover thật thay ảnh mẫu. Header, Home/Trips/Memories/Profile và sheet được căn theo token. Home dùng `selectHomeJourney` với TripSummary thật (ACTIVE/READY/PLANNING/COMPLETED/CANCELLED), không biến draft có ngày thành ongoing hoặc đếm cancelled là completed. CTA tạo mở CreateTripModal trực tiếp, completed mở album, ongoing giữ HomeLiveJourney. MemorySyncBadge chỉ trình bày checkpoint P0-04, không đổi cơ chế lưu/upload. Ngày chọn có nền/gạch chân/chữ đậm, stop focus có nhãn và viền.
+
+`place-reference.ts` chỉ có giới thiệu Hồ Xuân Hương/Ga Đà Lạt kèm nguồn Vietnam Tourism, khớp tên đầy đủ + vùng tọa độ, loại địa chỉ tự đặt. Giới thiệu mở/thu gọn trong PlaceDetailsContent cho cả kết quả search và điểm đã lưu; không mượn ảnh/giờ/vé mẫu. Không sửa backend, .env, dependency/native config. TypeScript/lint file sửa đạt; 17 test trọng tâm đạt; full 305/299 đạt/6 lỗi cũ ở trip-ui-flows (4), trip-weather-details (2), không skip/cancel. Logs trong backend/target/p101-*.log. Chưa chạy/đánh giá hình thức trên thiết bị thật.
+
 ## Mốc hiện hành · Phần 8 — P0-04 · 06/11/2026
 
 Người dùng đã yêu cầu và cho phép triển khai **toàn bộ P0-04 trong một lượt**. Code đã hoàn tất; nghiệm thu điện thoại còn chờ theo [P0-04-ACCEPTANCE.md](P0-04-ACCEPTANCE.md). Các câu “P0-04 chưa triển khai/phần tiếp theo” trong snapshot cũ bên dưới là lịch sử.

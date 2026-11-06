@@ -89,7 +89,7 @@ export function MemoryPage({
           }
         />
         <View style={styles.flex}>
-          <AppText accessibilityRole="header" variant="heading">
+          <AppText accessibilityRole="header" variant="screenTitle">
             {title}
           </AppText>
           {subtitle ? (
@@ -136,7 +136,7 @@ export function MemoryEmpty({
           size={theme.layout.iconLarge}
         />
       </View>
-      <AppText variant="heading" style={styles.center}>
+      <AppText variant="sectionTitle" style={styles.center}>
         {title}
       </AppText>
       <AppText tone="muted" style={styles.center}>

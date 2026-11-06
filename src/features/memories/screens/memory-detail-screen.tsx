@@ -1,3 +1,4 @@
+import { MemorySyncBadge } from "../components/memory-sync-badge";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
@@ -177,6 +178,7 @@ function MemoryDetail({
           }}
         >
           <View style={{ gap: theme.spacing.lg }}>
+            <MemorySyncBadge memory={memory} />
             <View
               style={{
                 flexDirection: "row",
@@ -192,7 +194,7 @@ function MemoryDetail({
             </View>
             <View
               style={{
-                borderRadius: theme.layout.cameraViewfinderRadius,
+                borderRadius: theme.radius.xl,
                 overflow: "hidden",
               }}
             >

@@ -197,7 +197,7 @@ export function MemoriesHistoryScreen(
       >
         <HomeHeader />
         <View style={{ gap: theme.spacing.xs }}>
-          <AppText accessibilityRole="header" variant="heading">
+          <AppText accessibilityRole="header" variant="screenTitle">
             {copy.title}
           </AppText>
           <AppText variant="caption" tone="muted">

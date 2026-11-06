@@ -108,6 +108,8 @@ Mọi thao tác quan trọng có trạng thái đang xử lý, thành công ho�
 
 ### P1-01. Đồng nhất giao diện và phân cấp thông tin
 
+**06/11/2026 — Đã triển khai phần code P1-01.** Chuẩn hóa tiêu đề/nút/badge/thẻ, Home theo dữ liệu thật và từng trạng thái chuyến, dấu hiệu ngày/điểm đang chọn, nhãn đồng bộ ảnh và placeholder thiếu ảnh. Hai điểm Đà Lạt có giới thiệu kèm nguồn chính thức; giờ/vé chưa xác minh vẫn ghi rõ. Xem [P1-01-ACCEPTANCE.md](P1-01-ACCEPTANCE.md). **Chưa nghiệm thu giao diện trên điện thoại**; dừng review/push trước P1-02.
+
 - Giữ Ocean Teal, Roboto, theme sáng và component có sẵn. Giữ kích thước chữ gọn đã chốt; kiểm tra khả năng đọc thay vì tự tăng đồng loạt.
 - Căn lề, spacing, radius, icon, header, button và sheet nhất quán giữa các màn.
 - Mỗi màn có hành động chính dễ nhận biết; thông tin phụ mở khi cần.

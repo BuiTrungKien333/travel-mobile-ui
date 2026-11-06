@@ -1,3 +1,4 @@
+import { MemorySyncBadge } from "../components/memory-sync-badge";
 import { router } from "expo-router";
 import { useState } from "react";
 import { FlatList, Pressable, ScrollView, View } from "react-native";
@@ -167,10 +168,10 @@ export function MemoryAlbumScreen({ tripId }: { tripId?: string }) {
             >
               {item.place?.[locale] ?? copy.noPlace}
             </AppText>
+            <MemorySyncBadge memory={item} syncing={upload.isPending && upload.variables?.memory.id === item.id} failed={upload.isError && upload.variables?.memory.id === item.id} />
             {item.pendingDeletion ? <>
-              <AppText variant="caption" tone="muted">{copy.pendingDelete}</AppText>
               <AppButton size="small" loading={remove.isPending} disabled={remove.isPending} onPress={() => remove.mutate(item)}>{copy.retryDelete}</AppButton>
-            </> : item.local && !item.local.uploaded ? <AppButton size="small" loading={upload.isPending && upload.variables?.memory.id === item.id} disabled={upload.isPending} onPress={() => upload.mutate({ memory: item })}>{copy.upload}</AppButton> : null}
+            </> : item.local && !item.local.uploaded ? <AppButton variant="outline" size="small" loading={upload.isPending && upload.variables?.memory.id === item.id} disabled={upload.isPending} onPress={() => upload.mutate({ memory: item })}>{copy.upload}</AppButton> : null}
           </View>
         )}
       />

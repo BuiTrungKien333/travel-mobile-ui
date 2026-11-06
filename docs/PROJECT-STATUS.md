@@ -1,5 +1,13 @@
 # Tiến độ Travel Mobile UI
 
+## Phần 9 · P1-01 — Đồng nhất giao diện và phân cấp thông tin · 06/11/2026
+
+- Đã triển khai code P1-01: typography theo vai trò, AppButton tối thiểu 48, StatusBadge dùng chung, thẻ/ảnh/header theo token; không tăng đồng loạt cỡ chữ hay đổi branding/navigation.
+- Home chọn đúng chuyến đang đi/sắp đi/bản nháp/đã đi; trạng thái chưa có chuyến mở trực tiếp form tạo thật. Không đếm chuyến hủy là đã đi.
+- Album/chi tiết/Xem sau phân biệt trạng thái đồng bộ; ngày đang chọn và điểm đang xem có dấu hiệu ngoài màu. Thẻ chuyến thiếu ảnh hiện placeholder thay vì mượn ảnh mẫu.
+- Giới thiệu địa điểm là thông tin phụ có thể mở/thu gọn. Hồ Xuân Hương/Ga Đà Lạt có nguồn Vietnam Tourism; không suy ra giá vé/giờ mở cửa.
+- Kiểm tra: TypeScript/lint file sửa đạt; 17 test trọng tâm đạt; full 305/299 đạt/6 lỗi harness cũ. Chưa QA điện thoại, xem [P1-01-ACCEPTANCE.md](P1-01-ACCEPTANCE.md). Không sửa backend/.env/dependency, chỉ reload JS cho thay đổi này. Dừng review/push, phần tiếp theo P1-02 khi được yêu cầu.
+
 ## Phần 8 · Code cho toàn bộ P0-04 · 06/11/2026
 
 - Ảnh mới được gắn đúng tài khoản; đổi tài khoản hoặc đăng nhập lại tạo store mới và vô hiệu hóa thao tác của phiên cũ. Ảnh cũ không có chủ sở hữu vẫn giữ trên máy, không tự nhận vào tài khoản đang đăng nhập.

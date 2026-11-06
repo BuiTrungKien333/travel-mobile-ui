@@ -1,6 +1,11 @@
 import { useI18n } from "@/hooks/use-i18n";
 
 const vi = {
+  resumeDraft: "Tiếp tục lên kế hoạch",
+  todayPlan: "Xem lịch hôm nay",
+  latestJourney: "Hành trình vừa qua",
+  openAlbum: "Xem kỷ niệm chuyến đi",
+  tripsLoadError: "Chưa tải được chuyến đi. Bạn có thể thử lại.",
   home: "Trang chủ",
   trips: "Chuyến đi",
   memories: "Kỷ niệm",
@@ -121,6 +126,11 @@ const vi = {
 };
 type HomeCopy = { [K in keyof typeof vi]: string };
 const en: HomeCopy = {
+  resumeDraft: "Continue planning",
+  todayPlan: "View today's plan",
+  latestJourney: "Your latest journey",
+  openAlbum: "View trip memories",
+  tripsLoadError: "Couldn't load your trips. Please try again.",
   home: "Home",
   trips: "Trips",
   memories: "Memories",

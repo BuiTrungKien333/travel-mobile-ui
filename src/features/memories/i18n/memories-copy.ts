@@ -1,6 +1,11 @@
 import { useI18n } from "@/hooks/use-i18n";
 
 const vi = {
+  syncingPhoto: "Đang đồng bộ",
+  syncFailed: "Chưa đồng bộ được",
+  syncedPhoto: "Đã đồng bộ",
+  pendingSync: "Chờ xác nhận đồng bộ",
+  privatePhoto: "Chỉ lưu trong ứng dụng",
   partialLocalPhotos: "Một số metadata ảnh trên máy chưa đọc được. Bản ảnh vẫn được giữ; các ảnh khác vẫn dùng bình thường.",
   unownedLocalPhotos: "Có ảnh cũ chưa xác định được tài khoản. App giữ nguyên bản gốc và không tự nhập vào album tài khoản này. Bạn có thể chọn lại ảnh của mình từ thư viện.",
   localAlbumOnly: "Đang xem bản ảnh trên máy. Kết nối để tải thông tin chuyến đi và đồng bộ thay đổi.",
@@ -76,6 +81,11 @@ const vi = {
   noteTooLong: "Lời nhắn tối đa 2000 ký tự.",
 };
 const en: typeof vi = {
+  syncingPhoto: "Syncing",
+  syncFailed: "Sync failed",
+  syncedPhoto: "Synced",
+  pendingSync: "Awaiting sync confirmation",
+  privatePhoto: "Kept in this app",
   partialLocalPhotos: "Some local photo metadata couldn't be read. The photo copies are kept; other photos remain available.",
   unownedLocalPhotos: "Some older photos have no account owner. Originals are kept and aren't automatically added to this account. You can import your own photos from your library.",
   localAlbumOnly: "Viewing photos kept on this device. Connect to load trip details and sync changes.",

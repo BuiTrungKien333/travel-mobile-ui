@@ -1,6 +1,7 @@
 import { useI18n } from "@/hooks/use-i18n";
 
 const vi = {
+  selectedStop: "Đang xem",
   optimizationInvalid: "Đề xuất chưa khớp lịch hiện tại hoặc thay đổi điểm ghim. Hãy lấy đề xuất mới trước khi áp dụng.",
   optimizationChangedVisits: "{count} lượt ghé thay đổi thứ tự, giờ hoặc thời lượng",
   currentVisit: "Hiện tại",
@@ -272,6 +273,7 @@ const vi = {
     "Các địa điểm được lưu vào Chưa xếp lịch để bạn tự chọn ngày và giờ.",
 };
 const en: typeof vi = {
+  selectedStop: "Selected stop",
   optimizationInvalid: "This proposal no longer matches the itinerary or changes a pin. Request a new proposal before applying.",
   optimizationChangedVisits: "{count} visits change order, time or duration",
   currentVisit: "Current",

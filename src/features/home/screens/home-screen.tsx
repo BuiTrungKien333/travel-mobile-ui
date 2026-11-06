@@ -1,5 +1,6 @@
 import { router } from "expo-router";
 import { Image } from "expo-image";
+import { useState } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { AppButton } from "@/components/ui/app-button";
 import { AppIcon } from "@/components/ui/app-icon";
@@ -8,10 +9,14 @@ import { useAppTheme } from "@/hooks/use-app-theme";
 import { todayCalendarDate } from "@/utils/calendar-date";
 import { useTripsQuery } from "@/features/trip/api/trip-hooks";
 import { useMemories } from "@/features/memories/hooks/use-memories";
-import { HomePage, SectionHeading, SurfaceCard } from "../components/home-primitives";
+import { HomePage, SectionHeading, SurfaceCard, TextAction } from "../components/home-primitives";
 import { useHomeCopy } from "../i18n/home-copy";
 import { useOngoingCopy } from "../i18n/ongoing-copy";
 import { HomeLiveJourney } from "../components/home-live-journey";
+import { HomeHeader } from "../components/home-header";
+import { CreateTripModal } from "@/features/trip/components/create-trip-modal";
+import { TripStatusBadge } from "@/features/trip/components/trip-status-badge";
+import { selectHomeJourney } from "../utils/home-journey";
 
 function tripDateRange(startDate: string | null, endDate: string | null, locale: string) {
   if (!startDate || !endDate) return "";
@@ -29,14 +34,15 @@ export function HomeScreen() {
   const memoriesQuery = useMemories();
   const today = todayCalendarDate();
   const trips = tripsQuery.data ?? [];
-  const currentTrip = trips
-    .filter((trip) => trip.status === "ACTIVE" || (trip.status !== "CANCELLED" && trip.status !== "COMPLETED" && trip.startDate && trip.endDate && trip.startDate <= today && trip.endDate >= today))
-    .sort((a, b) => (a.startDate ?? "").localeCompare(b.startDate ?? ""))[0];
-  const nextTrip = trips
-    .filter((trip) => trip.status !== "CANCELLED" && trip.status !== "COMPLETED" && trip.startDate && trip.startDate >= today)
-    .sort((a, b) => (a.startDate ?? "").localeCompare(b.startDate ?? ""))[0];
-  const journey = currentTrip ?? nextTrip;
-  const completedTrips = trips.filter((trip) => trip.status === "COMPLETED" || (!!trip.endDate && trip.endDate < today));
+  const [createVisible, setCreateVisible] = useState(false);
+  const { state, trip: journey, completed: completedTrips } = selectHomeJourney(trips, today);
+  const subtitles = { new: copy.newSubtitle, ongoing: copy.ongoingSubtitle, upcoming: copy.upcomingSubtitle,
+    draft: copy.draftHint, completed: copy.returningSubtitle };
+  const openJourney = () => {
+    if (!journey) return;
+    if (state === "completed") router.push({ pathname: "/memories/[tripId]", params: { tripId: journey.id } });
+    else router.push({ pathname: "/trip/[tripId]", params: { tripId: journey.id, ...(state === "ongoing" ? { day: today } : {}) } });
+  };
   const memoriesCount = trips.reduce((sum, trip) => sum + trip.memoryCount, 0);
   const totalPlaces = trips.reduce((sum, trip) => sum + trip.stopCount, 0);
   const recentMemories = memoriesQuery.memories.filter((memory) => memory.photo)
@@ -45,12 +51,10 @@ export function HomeScreen() {
 
   return (
     <HomePage>
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-        <Image accessible accessibilityLabel="Wego" source={require("@/assets/images/logo.png")} contentFit="contain" style={{ width: theme.layout.headerLogoWidth, height: theme.layout.headerLogoHeight }} />
-      </View>
+      <HomeHeader />
       <View style={{ gap: theme.spacing.xs }}>
-        <AppText accessibilityRole="header" variant="heading" style={{ fontSize: theme.typography.fontSize.xl }}>{copy.greeting}</AppText>
-        <AppText tone="muted">{copy.returningSubtitle}</AppText>
+        <AppText accessibilityRole="header" variant="screenTitle">{copy.greeting}</AppText>
+        <AppText tone="muted">{subtitles[state]}</AppText>
       </View>
 
       {(tripsQuery.isPending || memoriesQuery.isPending) ? (
@@ -58,26 +62,30 @@ export function HomeScreen() {
       ) : null}
       {(tripsQuery.isError || memoriesQuery.isError) ? (
         <SurfaceCard>
-          <AppText tone="error">{copy.memoriesLoadError}</AppText>
+          <AppText accessibilityRole="alert" tone="error">{tripsQuery.isError ? copy.tripsLoadError : copy.memoriesLoadError}</AppText>
           <AppButton variant="outline" onPress={() => { void tripsQuery.refetch(); void memoriesQuery.refetch(); }}>{copy.retry}</AppButton>
         </SurfaceCard>
       ) : null}
 
       {!tripsQuery.isPending && !tripsQuery.isError ? (
         <SurfaceCard tinted>
-          <View style={{ alignItems: "center", gap: theme.spacing.sm }}>
-            <AppIcon name={journey ? "map" : "pin"} size={theme.layout.iconLarge} color={theme.colors.primary} />
-            <AppText accessibilityRole="header" variant="label">{journey ? journey.destination.name : copy.returningTitle}</AppText>
-            <AppText tone="muted">{journey ? tripDateRange(journey.startDate, journey.endDate, locale === "vi" ? "vi-VN" : "en-GB") : copy.newHint}</AppText>
+          <View style={{ gap: theme.spacing.sm }}>
+            {journey ? <TripStatusBadge status={state === "new" ? "draft" : state} locale={locale} /> : <AppIcon name="pin" size={theme.layout.iconLarge} color={theme.colors.primaryText} />}
+            {state === "completed" ? <AppText variant="caption" tone="muted">{copy.latestJourney}</AppText> : null}
+            <AppText accessibilityRole="header" variant="sectionTitle">{journey ? journey.title || journey.destination.name : copy.newTitle}</AppText>
+            {journey ? <AppText variant="caption" tone="primary">{journey.destination.name}</AppText> : null}
+            <AppText variant="caption" tone="muted">{journey ? tripDateRange(journey.startDate, journey.endDate, locale === "vi" ? "vi-VN" : "en-GB") || copy.newHint : copy.newHint}</AppText>
           </View>
           {journey ? (
-            <AppButton variant="gradient" onPress={() => router.push({ pathname: "/trip/[tripId]", params: { tripId: journey.id } })}>{copy.plan}</AppButton>
+            state === "ongoing" ? <TextAction label={copy.todayPlan} onPress={openJourney} />
+              : <AppButton onPress={openJourney}>{state === "draft" ? copy.resumeDraft : state === "completed" ? copy.openAlbum : copy.plan}</AppButton>
           ) : null}
-          <AppButton variant={journey ? "outline" : "gradient"} onPress={() => router.navigate("/tabs/trips")}>{copy.createNew}</AppButton>
+          {journey ? <TextAction label={copy.createNew} icon="plus" onPress={() => setCreateVisible(true)} />
+            : <AppButton onPress={() => setCreateVisible(true)}>{copy.create}</AppButton>}
         </SurfaceCard>
       ) : null}
 
-      {currentTrip ? <HomeLiveJourney tripId={currentTrip.id} today={today} /> : null}
+      {state === "ongoing" && journey ? <HomeLiveJourney tripId={journey.id} today={today} /> : null}
       {!tripsQuery.isPending && !tripsQuery.isError && trips.length > 0 ? (
         <SurfaceCard tinted>
           <SectionHeading title={copy.footprint} />
@@ -107,6 +115,10 @@ export function HomeScreen() {
           <SurfaceCard><AppText tone="muted">{copy.noMemories}</AppText></SurfaceCard>
         ) : null}
       </View>
+      <CreateTripModal visible={createVisible} onClose={() => setCreateVisible(false)} onCreated={(tripId) => {
+        setCreateVisible(false);
+        router.push({ pathname: "/trip/[tripId]", params: { tripId } });
+      }} />
     </HomePage>
   );
 }

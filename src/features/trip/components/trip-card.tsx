@@ -1,4 +1,4 @@
-import { Image } from "expo-image";
+import { ContentImage } from "@/components/ui/content-image";
 import { Pressable, StyleSheet, View } from "react-native";
 
 import { AppIcon } from "@/components/ui/app-icon";
@@ -12,7 +12,6 @@ import {
   getTripDisplayStatus,
   getTripTitle,
 } from "../utils/trip-formatters";
-import { getTripCoverImage } from "../utils/trip-images";
 import { TripStatusBadge } from "./trip-status-badge";
 
 type TripCardProps = {
@@ -33,7 +32,6 @@ export function TripCard({
   const title = getTripTitle(trip, locale);
   const datesText = formatTripDates(trip, locale);
   const durationAndStops = formatTripDurationAndStops(trip, locale);
-  const coverImage = getTripCoverImage(trip);
 
   return (
     <Pressable
@@ -45,9 +43,9 @@ export function TripCard({
         {
           backgroundColor: theme.colors.surface,
           borderColor: theme.colors.border,
-          borderRadius: theme.radius.md,
-          paddingLeft: spacing.xs,
-          paddingVertical: spacing.sm + spacing.xxs,
+          borderRadius: theme.radius.xl,
+          paddingLeft: theme.spacing.md,
+          paddingVertical: theme.spacing.md,
           paddingRight: theme.spacing.md,
           opacity: pressed ? theme.motion.pressOpacity : 1,
         },
@@ -59,18 +57,12 @@ export function TripCard({
           style={[
             styles.imageWrapper,
             {
-              borderRadius: theme.radius.sm,
+              borderRadius: theme.radius.lg,
               borderColor: theme.colors.border,
             },
           ]}
         >
-          <Image
-            source={coverImage}
-            contentFit="cover"
-            cachePolicy="memory-disk"
-            transition={200}
-            style={StyleSheet.absoluteFill}
-          />
+          <ContentImage source={trip.coverImage} label={trip.destination} emptyLabel={locale === "vi" ? "Chưa có ảnh bìa" : "No cover photo"} />
         </View>
 
         {/* Right column: All trip details */}
@@ -82,8 +74,8 @@ export function TripCard({
 
           {/* Trip Name */}
           <AppText
-            variant="heading"
-            numberOfLines={1}
+            variant="sectionTitle"
+            numberOfLines={2}
             style={[
               styles.title,
               {
@@ -99,9 +91,8 @@ export function TripCard({
 
           {/* Destination */}
           <View style={[styles.metaRow, { gap: theme.spacing.xs }]}>
-            <AppIcon name="pin" size={14} color={theme.colors.primaryText} />
+            <AppIcon name="pin" size={theme.layout.iconSmall} color={theme.colors.primaryText} />
             <AppText
-              numberOfLines={1}
               style={[
                 styles.metaText,
                 {
@@ -120,11 +111,10 @@ export function TripCard({
           <View style={[styles.metaRow, { gap: theme.spacing.xs }]}>
             <AppIcon
               name="calendar"
-              size={13}
+              size={theme.layout.iconSmall}
               color={theme.colors.textSecondary}
             />
             <AppText
-              numberOfLines={1}
               style={[
                 styles.metaText,
                 {
@@ -143,11 +133,10 @@ export function TripCard({
           <View style={[styles.metaRow, { gap: theme.spacing.xs }]}>
             <AppIcon
               name="route"
-              size={13}
+              size={theme.layout.iconSmall}
               color={theme.colors.textSecondary}
             />
             <AppText
-              numberOfLines={1}
               style={[
                 styles.metaText,
                 {
@@ -199,7 +188,7 @@ const styles = StyleSheet.create({
   },
   imageWrapper: {
     width: layout.tripCardImageWidth,
-    height: layout.tripCardImageHeight,
+    minHeight: layout.tripCardImageHeight,
     overflow: "hidden",
     borderWidth: StyleSheet.hairlineWidth,
     borderCurve: "continuous",

@@ -123,6 +123,7 @@ export function SectionHeading({
     <View style={[styles.row, { gap: theme.spacing.sm }]}>
       <AppText
         accessibilityRole="header"
+        variant={isEyebrow ? "caption" : "sectionTitle"}
         tone={isEyebrow ? "muted" : "default"}
         style={[
           styles.grow,

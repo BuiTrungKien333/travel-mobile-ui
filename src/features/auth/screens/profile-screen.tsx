@@ -60,14 +60,14 @@ export function ProfileScreen() {
         contentContainerStyle={[
           styles.content,
           {
-            paddingHorizontal: theme.spacing.xl,
-            paddingTop: theme.spacing.md,
+            paddingHorizontal: theme.spacing.lg,
+            paddingTop: theme.spacing.lg,
             paddingBottom: tabBarHeight + theme.spacing.xl,
           },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.container, { gap: theme.spacing.xl }]}>
+        <View style={[styles.container, { maxWidth: theme.layout.contentMaxWidth, gap: theme.spacing.xl }]}>
           <View style={styles.topBar}>
             <View style={{ gap: theme.spacing.xxs }}>
               <Image
@@ -80,7 +80,7 @@ export function ProfileScreen() {
                   height: theme.layout.headerLogoHeight,
                 }}
               />
-              <AppText accessibilityRole="header" variant="heading">
+              <AppText accessibilityRole="header" variant="screenTitle">
                 {t("auth.profile.title")}
               </AppText>
             </View>

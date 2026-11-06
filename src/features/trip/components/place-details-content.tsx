@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Image } from "expo-image";
+import { ContentImage } from "@/components/ui/content-image";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { useSharedValue } from "react-native-reanimated";
 import { AppText } from "@/components/ui/app-text";
@@ -11,6 +11,7 @@ import type { PlaceMapRegion } from "../utils/place-search";
 import { TripPlanningMap } from "./trip-planning-map";
 import { PlaceSearchMap } from "./place-search-map";
 import { DetailIconButton } from "./trip-details-header";
+import { PlaceIntroduction } from "./place-details-editorial";
 
 /** The same resizable map frame as trip details, with place information below. */
 export function PlaceDetailsContent({
@@ -49,7 +50,6 @@ export function PlaceDetailsContent({
   const [availableHeight, setAvailableHeight] = useState(0);
   const resizeLock = useSharedValue(0);
   const isAddress = place.locationType === "address";
-  const photo = null;
   const headerTopSpacing =
     topInset !== undefined ? topInset + theme.spacing.xl : theme.spacing.xxl;
   const header = (
@@ -75,12 +75,12 @@ export function PlaceDetailsContent({
     {
       icon: "clock" as const,
       label: copy.hours,
-      value: copy.unavailable,
+      value: copy.openingUnknown,
     },
     {
       icon: "ticket" as const,
       label: copy.admission,
-      value: copy.unavailable,
+      value: copy.admissionUnknown,
     },
     {
       icon: "route" as const,
@@ -135,10 +135,7 @@ export function PlaceDetailsContent({
           <View style={[styles.fill, { gap: theme.spacing.xs }]}>
             <AppText
               accessibilityRole="header"
-              variant="heading"
-              style={{
-                fontSize: theme.typography.fontSize.lg,
-              }}
+              variant="screenTitle"
             >
               {isAddress && !showSavedName
                 ? copy.selectedLocation
@@ -149,23 +146,11 @@ export function PlaceDetailsContent({
             </AppText>
             {classification}
           </View>
-          {photo ? (
-            <Image
-              accessible={false}
-              source={photo}
-              contentFit="cover"
-              cachePolicy="memory-disk"
-              style={{
-                width: theme.layout.journeyThumbnailSize,
-                height: theme.layout.journeyThumbnailSize,
-                borderRadius: theme.radius.sm,
-              }}
-            />
-          ) : !isAddress ? (
+          {!isAddress ? (
             <View
               style={{
                 width: theme.layout.journeyThumbnailSize,
-                height: theme.layout.journeyThumbnailSize,
+                minHeight: theme.layout.journeyThumbnailSize,
                 backgroundColor: theme.colors.surfaceTint,
                 borderRadius: theme.radius.sm,
                 alignItems: "center",
@@ -173,17 +158,14 @@ export function PlaceDetailsContent({
                 gap: theme.spacing.xs,
               }}
             >
-              <AppIcon name="memories" color={theme.colors.textSecondary} />
-              <AppText variant="caption" tone="muted">
-                {copy.noPhoto}
-              </AppText>
+              <ContentImage label={place.name[locale]} emptyLabel={copy.noPhoto} />
             </View>
           ) : null}
         </View>
         {status}
         {nameInput}
         <View style={{ gap: theme.spacing.sm }}>
-          <AppText variant="label">{copy.placeInfo}</AppText>
+          <AppText variant="sectionTitle">{copy.placeInfo}</AppText>
           {isAddress ? (
             <AppText variant="caption" tone="muted">
               {copy.unavailable}
@@ -229,6 +211,7 @@ export function PlaceDetailsContent({
           )}
         </View>
         {afterInfo}
+        {!isAddress ? <PlaceIntroduction key={place.id} place={place} /> : null}
         {children}
       </ScrollView>
     </View>

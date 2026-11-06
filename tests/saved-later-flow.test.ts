@@ -41,6 +41,7 @@ function fixture() {
       } } }) },
     "../components/memory-capture-picker": { MemoryCapturePicker: "MemoryCapturePicker" },
     "../components/memory-load-state": { MemoryLoadState: "MemoryLoadState" },
+    "../components/memory-sync-badge": { MemorySyncBadge: "MemorySyncBadge" },
     "../components/memory-primitives": { MemoryPage: "MemoryPage", MemoryEmpty: "MemoryEmpty", MemoryIconButton: "MemoryIconButton" },
   });
   const { SavedLaterScreen } = load<typeof import("../src/features/memories/screens/saved-later-screen.tsx")>("src/features/memories/screens/saved-later-screen.tsx");

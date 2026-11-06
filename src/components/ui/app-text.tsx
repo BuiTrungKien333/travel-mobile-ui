@@ -3,7 +3,7 @@ import { StyleSheet, Text } from "react-native";
 
 import { useAppTheme } from "@/hooks/use-app-theme";
 
-type TextVariant = "body" | "caption" | "heading" | "label" | "link";
+type TextVariant = "body" | "caption" | "heading" | "label" | "link" | "screenTitle" | "sectionTitle" | "cardTitle";
 
 type AppTextProps = ComponentProps<typeof Text> & {
   variant?: TextVariant;
@@ -19,6 +19,21 @@ export function AppText({
   const theme = useAppTheme();
 
   const variantStyle = {
+    screenTitle: {
+      fontFamily: theme.typography.fontFamily.bold,
+      fontSize: theme.typography.fontSize.lg,
+      lineHeight: theme.typography.lineHeight.lg,
+    },
+    sectionTitle: {
+      fontFamily: theme.typography.fontFamily.bold,
+      fontSize: theme.typography.fontSize.md,
+      lineHeight: theme.typography.lineHeight.md,
+    },
+    cardTitle: {
+      fontFamily: theme.typography.fontFamily.semibold,
+      fontSize: theme.typography.fontSize.sm,
+      lineHeight: theme.typography.lineHeight.sm,
+    },
     body: {
       fontFamily: theme.typography.fontFamily.regular,
       fontSize: theme.typography.fontSize.sm,

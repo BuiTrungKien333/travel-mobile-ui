@@ -108,6 +108,9 @@ export function TripPlanningDaySelector({
               width,
               minHeight: theme.layout.touchTarget,
               paddingVertical: theme.spacing.sm,
+              borderTopLeftRadius: theme.radius.md,
+              borderTopRightRadius: theme.radius.md,
+              backgroundColor: selected ? theme.colors.surfaceTint : undefined,
               justifyContent: "center",
               borderBottomWidth: theme.layout.tripPlanningDateIndicatorHeight,
               borderBottomColor: selected
@@ -126,7 +129,8 @@ export function TripPlanningDaySelector({
             >
               <AppText
                 variant="caption"
-                style={{ fontFamily: theme.typography.fontFamily.medium }}
+                tone={selected ? "primary" : "muted"}
+                style={{ fontFamily: selected ? theme.typography.fontFamily.bold : theme.typography.fontFamily.medium }}
               >
                 {item.kind === "day"
                   ? `${copy.day} ${item.index + 1}`

@@ -1,5 +1,11 @@
 import { useI18n } from "@/hooks/use-i18n";
 const vi = {
+  admissionUnknown: "Chưa xác minh giá vé",
+  referenceSource: "Nguồn tham khảo",
+  sourceError: "Chưa mở được nguồn thông tin. Hãy thử lại.",
+  verifyBeforeVisit: "Giờ mở cửa và giá vé chưa được xác minh. Hãy kiểm tra với địa điểm trước khi đến.",
+  showIntroduction: "Mở thông tin giới thiệu",
+  hideIntroduction: "Thu gọn thông tin giới thiệu",
   title: "Thêm địa điểm",
   back: "Quay lại",
   search: "Tìm địa điểm hoặc địa chỉ",
@@ -88,6 +94,12 @@ const vi = {
   searchFailed: "Không tìm được địa điểm. Kiểm tra cấu hình Places trên backend.",
 };
 const en: typeof vi = {
+  admissionUnknown: "Admission unverified",
+  referenceSource: "Reference source",
+  sourceError: "Couldn't open the information source. Please try again.",
+  verifyBeforeVisit: "Opening hours and admission are unverified. Please check with the venue before visiting.",
+  showIntroduction: "Show introduction",
+  hideIntroduction: "Collapse introduction",
   title: "Add places",
   back: "Back",
   search: "Search a place or address",
