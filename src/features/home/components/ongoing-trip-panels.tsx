@@ -257,7 +257,12 @@ function JournalNoteEditor({
   const schema = z.object({
     text: z.string().trim().max(500, copy.noteTooLong),
   });
-  const { control, handleSubmit } = useForm<z.infer<typeof schema>>({
+  const {
+    control,
+    handleSubmit,
+    setError,
+    formState: { isSubmitting },
+  } = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: { text: memory.text },
     mode: "onTouched",
@@ -293,10 +298,15 @@ function JournalNoteEditor({
           variant="soft"
           size="small"
           style={homeStyles.grow}
-          onPress={handleSubmit(({ text }) => {
-            updateMemoryNote(memory.id, text);
-            Keyboard.dismiss();
-            onDone();
+          loading={isSubmitting}
+          onPress={handleSubmit(async ({ text }) => {
+            try {
+              await updateMemoryNote(memory.id, text);
+              Keyboard.dismiss();
+              onDone();
+            } catch {
+              setError("text", { message: copy.photoUnavailable });
+            }
           })}
         >
           {copy.saveNote}

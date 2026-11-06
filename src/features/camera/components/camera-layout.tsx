@@ -13,6 +13,7 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import { StatusBar } from "expo-status-bar";
+import { useIsFocused } from "expo-router/react-navigation";
 import { ScreenSafeArea } from "@/components/common/screen-safe-area";
 import { GlassBackdrop } from "@/components/common/glass-backdrop";
 import { AppIcon } from "@/components/ui/app-icon";
@@ -29,6 +30,12 @@ export type CameraLayoutProps = {
   onDetails: () => void;
   onHome: () => void;
   onJournal: () => void;
+  embeddedBottomInset?: number;
+  journalLabel?: string;
+  subtitle?: string;
+  onSelectTrip?: () => void;
+  hideJournal?: boolean;
+  bottomNavigation?: ReactNode;
 };
 
 export function CameraLayout({
@@ -38,6 +45,12 @@ export function CameraLayout({
   onDetails,
   onHome,
   onJournal,
+  embeddedBottomInset,
+  journalLabel,
+  subtitle,
+  onSelectTrip,
+  hideJournal = false,
+  bottomNavigation,
   frame,
   frameControls,
   onCapture,
@@ -63,6 +76,12 @@ export function CameraLayout({
   error?: string;
 }) {
   const theme = useAppTheme();
+  const focused = useIsFocused();
+  const embedded = embeddedBottomInset !== undefined;
+  const textColor = embedded ? theme.colors.text : theme.colors.photoViewerText;
+  const mutedColor = embedded
+    ? theme.colors.textSecondary
+    : theme.colors.photoViewerMuted;
   const { copy } = useCameraCopy();
   const insets = useScreenInsets();
   const { width } = useWindowDimensions();
@@ -80,9 +99,17 @@ export function CameraLayout({
   };
   return (
     <ScreenSafeArea
-      style={{ flex: 1, backgroundColor: theme.colors.photoViewerBackdrop }}
+      edges={embedded ? ["top", "left", "right"] : undefined}
+      style={{
+        flex: 1,
+        backgroundColor: embedded
+          ? theme.colors.background
+          : theme.colors.photoViewerBackdrop,
+      }}
     >
-      <StatusBar style="light" />
+      {focused ? (
+        <StatusBar style={embedded && !theme.dark ? "dark" : "light"} />
+      ) : null}
       <View
         style={{
           width: "100%",
@@ -102,34 +129,58 @@ export function CameraLayout({
           onPress={onBack}
           disabled={busy}
         />
-        <View
-          style={{
+        <Pressable
+          accessibilityRole={onSelectTrip ? "button" : undefined}
+          accessibilityLabel={subtitle ? `${title}, ${subtitle}` : title}
+          disabled={!onSelectTrip || busy}
+          onPress={onSelectTrip}
+          style={({ pressed }) => ({
             flex: 1,
             minWidth: 0,
             overflow: "hidden",
             paddingHorizontal: theme.spacing.lg,
             paddingVertical: theme.spacing.sm,
-            minHeight: theme.layout.compactIconButtonSurfaceSize,
+            minHeight: theme.layout.compactTouchTarget,
             borderRadius: theme.radius.full,
             alignItems: "center",
             flexDirection: "row",
             justifyContent: "center",
-          }}
+            backgroundColor: embedded ? theme.colors.surfaceTint : undefined,
+            gap: theme.spacing.sm,
+            opacity: pressed ? theme.motion.pressOpacity : 1,
+          })}
         >
-          <GlassBackdrop variant="camera" borderRadius={theme.radius.full} />
-          <AppText
-            numberOfLines={1}
-            accessibilityRole="header"
-            variant="caption"
-            style={{
-              color: theme.colors.photoViewerText,
-              fontSize: theme.typography.fontSize.sm,
-              lineHeight: theme.typography.lineHeight.sm,
-            }}
-          >
-            {title}
-          </AppText>
-        </View>
+          {!embedded ? (
+            <GlassBackdrop variant="camera" borderRadius={theme.radius.full} />
+          ) : null}
+          <View style={{ flexShrink: 1, alignItems: "center" }}>
+            <AppText
+              numberOfLines={2}
+              accessibilityRole="header"
+              variant="caption"
+              style={{
+                color: textColor,
+                fontSize: theme.typography.fontSize.sm,
+                lineHeight: theme.typography.lineHeight.sm,
+              }}
+            >
+              {title}
+            </AppText>
+            {subtitle ? (
+              <AppText variant="caption" style={{ color: mutedColor }}>
+                {subtitle}
+              </AppText>
+            ) : null}
+          </View>
+          {onSelectTrip ? (
+            <AppIcon
+              name="chevron"
+              variant="light"
+              size={theme.layout.iconSmall}
+              color={theme.colors.primaryText}
+            />
+          ) : null}
+        </Pressable>
         <View
           accessible={false}
           style={{
@@ -147,6 +198,9 @@ export function CameraLayout({
           justifyContent: "space-evenly",
           gap: theme.spacing.xl,
           paddingVertical: theme.spacing.xl,
+          paddingBottom: embedded
+            ? embeddedBottomInset + theme.spacing.lg
+            : theme.spacing.xl,
         }}
       >
         <View
@@ -235,8 +289,10 @@ export function CameraLayout({
             variant="caption"
             style={{
               color: error
-                ? theme.colors.photoViewerDanger
-                : theme.colors.photoViewerMuted,
+                ? embedded
+                  ? theme.colors.error
+                  : theme.colors.photoViewerDanger
+                : mutedColor,
               textAlign: "center",
               maxWidth: size,
             }}
@@ -244,132 +300,154 @@ export function CameraLayout({
             {error || status}
           </AppText>
         ) : null}
-        <Pressable
-          accessibilityRole="button"
-          onPress={onJournal}
-          disabled={busy}
-          style={{
-            minHeight: theme.layout.compactTouchTarget,
-            justifyContent: "center",
-          }}
-        >
-          <View
+        {!hideJournal ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ disabled: busy }}
+            onPress={onJournal}
+            disabled={busy}
             style={{
-              flexDirection: "row",
-              alignItems: "center",
-              gap: theme.spacing.xs,
-              paddingHorizontal: theme.spacing.md,
-              paddingVertical: theme.spacing.xs + theme.spacing.xxs,
-              borderRadius: theme.radius.lg,
-              overflow: "hidden",
+              minHeight: theme.layout.compactTouchTarget,
+              justifyContent: "center",
             }}
           >
-            <GlassBackdrop variant="camera" borderRadius={theme.radius.lg} />
             <View
               style={{
-                minWidth: theme.spacing.xl,
-                minHeight: theme.spacing.xl,
-                paddingHorizontal: theme.spacing.xs,
-                paddingVertical: theme.spacing.xxs,
-                borderRadius: theme.radius.md,
-                backgroundColor: theme.colors.cameraMemoryBadge,
+                flexDirection: "row",
                 alignItems: "center",
-                justifyContent: "center",
+                gap: theme.spacing.xs,
+                paddingHorizontal: theme.spacing.md,
+                paddingVertical: theme.spacing.xs + theme.spacing.xxs,
+                borderRadius: theme.radius.lg,
+                overflow: "hidden",
               }}
             >
-              <AppText
-                variant="caption"
-                style={{ color: theme.colors.photoViewerBackdrop }}
+              {embedded ? (
+                <View
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    backgroundColor: theme.colors.surfaceTint,
+                  }}
+                />
+              ) : (
+                <GlassBackdrop
+                  variant="camera"
+                  borderRadius={theme.radius.lg}
+                />
+              )}
+              <View
+                style={{
+                  minWidth: theme.spacing.xl,
+                  minHeight: theme.spacing.xl,
+                  paddingHorizontal: theme.spacing.xs,
+                  paddingVertical: theme.spacing.xxs,
+                  borderRadius: theme.radius.md,
+                  backgroundColor: embedded
+                    ? theme.colors.primary
+                    : theme.colors.cameraMemoryBadge,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
               >
-                {count}
+                <AppText
+                  variant="caption"
+                  style={{
+                    color: embedded
+                      ? theme.colors.onPrimary
+                      : theme.colors.photoViewerBackdrop,
+                  }}
+                >
+                  {count}
+                </AppText>
+              </View>
+              <AppText variant="caption" style={{ color: textColor }}>
+                {journalLabel ?? copy.journal}
               </AppText>
-            </View>
-            <AppText
-              variant="caption"
-              style={{ color: theme.colors.photoViewerText }}
-            >
-              {copy.journal}
-            </AppText>
-            <View style={{ transform: [{ rotate: "90deg" }] }}>
-              <AppIcon
-                name="chevron"
-                variant="light"
-                size={theme.layout.iconSmall}
-                color={theme.colors.photoViewerMuted}
-              />
-            </View>
-          </View>
-        </Pressable>
-      </ScrollView>
-      <View
-        style={{
-          marginBottom: theme.spacing.xl,
-          alignSelf: "center",
-          width: Math.min(
-            width - insets.left - insets.right - theme.spacing.lg * 2,
-            theme.layout.cameraNavigationWidth,
-          ),
-          borderRadius: theme.radius.full,
-          overflow: "hidden",
-          flexDirection: "row",
-          paddingHorizontal: theme.spacing.sm,
-          paddingVertical: theme.spacing.xs,
-        }}
-      >
-        <GlassBackdrop
-          variant="camera-navigation"
-          borderRadius={theme.radius.full}
-        />
-        {(
-          [
-            { icon: "compass", label: copy.details, onPress: onDetails },
-            { icon: "home", label: copy.home, onPress: onHome },
-            { icon: "memories", label: copy.journal, onPress: onJournal },
-          ] as const
-        ).map((item) => (
-          <Pressable
-            key={item.icon}
-            accessibilityRole="button"
-            accessibilityLabel={item.label}
-            disabled={busy}
-            onPress={item.onPress}
-            style={({ pressed }) => ({
-              flex: 1,
-              minHeight: theme.layout.compactTouchTarget,
-              alignItems: "center",
-              justifyContent: "center",
-              borderRadius: theme.radius.full,
-              opacity: pressed ? theme.motion.pressOpacity : 1,
-            })}
-          >
-            <View
-              style={{
-                width: "100%",
-                minHeight: theme.layout.touchTarget,
-                borderRadius: theme.radius.full,
-                alignItems: "center",
-                justifyContent: "center",
-                paddingVertical: theme.spacing.xs,
-                backgroundColor:
-                  item.icon === "home"
-                    ? theme.colors.cameraNavigationActive
-                    : undefined,
-              }}
-            >
-              <AppIcon
-                name={item.icon}
-                variant={item.icon === "home" ? "solid" : "outline"}
-                size={theme.layout.iconMedium}
-                color={
-                  item.icon === "home"
-                    ? theme.colors.photoViewerText
-                    : theme.colors.photoViewerMuted
-                }
-              />
+              <View style={{ transform: [{ rotate: "90deg" }] }}>
+                <AppIcon
+                  name="chevron"
+                  variant="light"
+                  size={theme.layout.iconSmall}
+                  color={mutedColor}
+                />
+              </View>
             </View>
           </Pressable>
-        ))}
-      </View>
+        ) : null}
+      </ScrollView>
+      {bottomNavigation}
+      {!embedded ? (
+        <View
+          style={{
+            marginBottom: theme.spacing.xl,
+            alignSelf: "center",
+            width: Math.min(
+              width - insets.left - insets.right - theme.spacing.lg * 2,
+              theme.layout.cameraNavigationWidth,
+            ),
+            borderRadius: theme.radius.full,
+            overflow: "hidden",
+            flexDirection: "row",
+            paddingHorizontal: theme.spacing.sm,
+            paddingVertical: theme.spacing.xs,
+          }}
+        >
+          <GlassBackdrop
+            variant="camera-navigation"
+            borderRadius={theme.radius.full}
+          />
+          {(
+            [
+              { icon: "compass", label: copy.details, onPress: onDetails },
+              { icon: "home", label: copy.home, onPress: onHome },
+              { icon: "memories", label: copy.journal, onPress: onJournal },
+            ] as const
+          ).map((item) => (
+            <Pressable
+              key={item.icon}
+              accessibilityRole="button"
+              accessibilityLabel={item.label}
+              disabled={busy}
+              onPress={item.onPress}
+              style={({ pressed }) => ({
+                flex: 1,
+                minHeight: theme.layout.compactTouchTarget,
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: theme.radius.full,
+                opacity: pressed ? theme.motion.pressOpacity : 1,
+              })}
+            >
+              <View
+                style={{
+                  width: "100%",
+                  minHeight: theme.layout.touchTarget,
+                  borderRadius: theme.radius.full,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  paddingVertical: theme.spacing.xs,
+                  backgroundColor:
+                    item.icon === "home"
+                      ? theme.colors.cameraNavigationActive
+                      : undefined,
+                }}
+              >
+                <AppIcon
+                  name={item.icon}
+                  variant={item.icon === "home" ? "solid" : "outline"}
+                  size={theme.layout.iconMedium}
+                  color={
+                    item.icon === "home"
+                      ? theme.colors.photoViewerText
+                      : theme.colors.photoViewerMuted
+                  }
+                />
+              </View>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
     </ScreenSafeArea>
   );
 }

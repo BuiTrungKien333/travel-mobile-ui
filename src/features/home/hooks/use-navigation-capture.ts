@@ -13,7 +13,7 @@ export function useNavigationCapture() {
   }));
   return () => {
     if (!UI_PREVIEW_ENABLED) {
-      router.navigate("/tabs/memories");
+      router.push("/memories/quick-capture");
       return;
     }
     const selection = selectHome(trips, today);

@@ -1,4 +1,6 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ApiError } from "@/services/api/api-error";
+import type { UpdateProfile } from "../types/auth-types";
 
 import { useAuthStore } from "@/store/use-auth-store";
 import { authApi } from "../api/auth-api";
@@ -42,5 +44,20 @@ export function useProfile() {
     queryKey: authQueryKeys.profile,
     queryFn: ({ signal }) => authApi.profile(signal),
     enabled: authenticated,
+  });
+}
+
+export function useUpdateProfile() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (values: UpdateProfile) => {
+      const version = authSession.getVersion();
+      const user = await authApi.updateProfile(values);
+      if (version !== authSession.getVersion()) throw new ApiError("CANCELLED");
+      return user;
+    },
+    onSuccess: (user) => {
+      client.setQueryData(authQueryKeys.profile, user);
+    },
   });
 }

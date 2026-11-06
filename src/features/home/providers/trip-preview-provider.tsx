@@ -1,6 +1,12 @@
 // @refresh reset
 // Recreate the session fixture store when this module changes during UI development.
-import { createContext, useContext, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 import { useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import { createPreviewStore } from "../store/trip-preview-store";
@@ -19,6 +25,9 @@ export function TripPreviewProvider({ children }: { children: ReactNode }) {
       instance.setState({ trips: [], memories: [], visited: {}, panel: null });
     return instance;
   });
+  useEffect(() => {
+    void store.getState().loadLocalPhotos();
+  }, [store]);
   return (
     <PreviewContext.Provider value={store}>{children}</PreviewContext.Provider>
   );

@@ -2,7 +2,7 @@ import {
   BottomTabBarHeightCallbackContext,
   type BottomTabBarProps,
 } from "expo-router/js-tabs";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, type ReactNode } from "react";
 import { Keyboard, Platform, Pressable, StyleSheet, View } from "react-native";
 import Animated, {
   Easing,
@@ -22,28 +22,88 @@ type FloatingBottomNavigationProps = BottomTabBarProps & {
   animationEnabled?: boolean;
 };
 
-/** Measure one frame, including the raised shutter, so native hit areas stay inside it. */
+type NavigationItem = {
+  key: string;
+  label: string;
+  icon: (focused: boolean, color: string, size: number) => ReactNode;
+  onPress: () => void;
+  onLongPress?: () => void;
+  testID?: string;
+};
+
 export function FloatingBottomNavigation({
   state,
   descriptors,
   navigation,
+  ...props
+}: FloatingBottomNavigationProps) {
+  const onHeightChange = useContext(BottomTabBarHeightCallbackContext);
+  return (
+    <FloatingNavigation
+      {...props}
+      activeTab={state.index}
+      hideOnKeyboard={
+        descriptors[state.routes[state.index].key].options.tabBarHideOnKeyboard
+      }
+      onHeightChange={onHeightChange}
+      items={state.routes.map((route, index) => {
+        const options = descriptors[route.key].options;
+        return {
+          key: route.key,
+          label:
+            options.tabBarAccessibilityLabel ??
+            (typeof options.tabBarLabel === "string"
+              ? options.tabBarLabel
+              : (options.title ?? route.name)),
+          testID: options.tabBarButtonTestID,
+          icon: (focused, color, size) =>
+            options.tabBarIcon?.({ focused, color, size }),
+          onPress: () => {
+            const event = navigation.emit({
+              type: "tabPress",
+              target: route.key,
+              canPreventDefault: true,
+            });
+            if (state.index !== index && !event.defaultPrevented)
+              navigation.navigate(route.name, route.params);
+          },
+          onLongPress: () =>
+            navigation.emit({ type: "tabLongPress", target: route.key }),
+        };
+      })}
+    />
+  );
+}
+
+/** One measured frame also supplies the quick-capture navigation. */
+export function FloatingNavigation({
+  items,
+  activeTab,
   onCapture,
   captureLabel,
   animationEnabled = true,
-}: FloatingBottomNavigationProps) {
+  hideOnKeyboard = false,
+  onHeightChange,
+}: {
+  items: NavigationItem[];
+  activeTab?: number;
+  onCapture: () => void;
+  captureLabel: string;
+  animationEnabled?: boolean;
+  hideOnKeyboard?: boolean;
+  onHeightChange?: (height: number) => void;
+}) {
   const theme = useAppTheme();
   const insets = useSafeAreaInsets();
-  const onHeightChange = useContext(BottomTabBarHeightCallbackContext);
   const [frameWidth, setFrameWidth] = useState(0);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const geometry = floatingNavigationLayout(frameWidth, theme.layout);
-  const activeTab = state.index;
   const indicatorWidth = theme.layout.tabBarActiveDotSize;
   const activeTabOffset =
-    geometry.tabLeft[activeTab] + (geometry.itemWidth - indicatorWidth) / 2;
+    activeTab === undefined
+      ? 0
+      : geometry.tabLeft[activeTab] + (geometry.itemWidth - indicatorWidth) / 2;
   const duration = animationEnabled ? theme.motion.tabTransitionDuration : 0;
-  const hideOnKeyboard =
-    descriptors[state.routes[activeTab].key].options.tabBarHideOnKeyboard;
   const hidden = hideOnKeyboard && keyboardVisible;
 
   useEffect(() => {
@@ -128,7 +188,7 @@ export function FloatingBottomNavigation({
             accessibilityRole="tablist"
             style={[styles.row, { height: rowHeight }]}
           >
-            {frameWidth > 0 ? (
+            {frameWidth > 0 && activeTab !== undefined ? (
               <Animated.View
                 aria-hidden
                 accessibilityElementsHidden
@@ -146,89 +206,67 @@ export function FloatingBottomNavigation({
                 ]}
               />
             ) : null}
-            {[state.routes.slice(0, 2), state.routes.slice(2)].map(
-              (routes, groupIndex) => (
-                <View
-                  key={groupIndex === 0 ? "left" : "right"}
-                  style={[
-                    styles.group,
-                    {
-                      left: geometry.groupLeft[groupIndex],
-                      width: geometry.groupWidth,
-                      height: rowHeight,
-                      gap: geometry.groupGap,
-                    },
-                  ]}
-                >
-                  {routes.map((route) => {
-                    const index = state.routes.findIndex(
-                      (item) => item.key === route.key,
-                    );
-                    const focused = activeTab === index;
-                    const options = descriptors[route.key].options;
-                    const label =
-                      typeof options.tabBarLabel === "string"
-                        ? options.tabBarLabel
-                        : (options.title ?? route.name);
-                    const color = focused
-                      ? theme.colors.navigationActive
-                      : theme.colors.navigationInactive;
-                    return (
-                      <Pressable
-                        key={route.key}
-                        accessibilityRole="tab"
-                        accessibilityLabel={
-                          options.tabBarAccessibilityLabel ?? label
-                        }
-                        accessibilityState={{ selected: focused }}
-                        testID={options.tabBarButtonTestID}
-                        onPress={() => {
-                          const event = navigation.emit({
-                            type: "tabPress",
-                            target: route.key,
-                            canPreventDefault: true,
-                          });
-                          if (!focused && !event.defaultPrevented)
-                            navigation.navigate(route.name, route.params);
-                        }}
-                        onLongPress={() =>
-                          navigation.emit({
-                            type: "tabLongPress",
-                            target: route.key,
-                          })
-                        }
-                        style={({ pressed }) => [
-                          styles.tab,
+            {[items.slice(0, 2), items.slice(2)].map((routes, groupIndex) => (
+              <View
+                key={groupIndex === 0 ? "left" : "right"}
+                style={[
+                  styles.group,
+                  {
+                    left: geometry.groupLeft[groupIndex],
+                    width: geometry.groupWidth,
+                    height: rowHeight,
+                    gap: geometry.groupGap,
+                  },
+                ]}
+              >
+                {routes.map((route) => {
+                  const index = items.findIndex(
+                    (item) => item.key === route.key,
+                  );
+                  const focused = activeTab === index;
+                  const color = focused
+                    ? theme.colors.navigationActive
+                    : theme.colors.navigationInactive;
+                  return (
+                    <Pressable
+                      key={route.key}
+                      accessibilityRole="tab"
+                      accessibilityLabel={route.label}
+                      accessibilityState={{ selected: focused }}
+                      testID={route.testID}
+                      onPress={route.onPress}
+                      onLongPress={route.onLongPress}
+                      style={({ pressed }) => [
+                        styles.tab,
+                        {
+                          width: geometry.itemWidth,
+                          height: rowHeight,
+                          borderRadius: theme.radius.full,
+                          opacity: pressed ? theme.motion.pressOpacity : 1,
+                        },
+                      ]}
+                    >
+                      <View
+                        pointerEvents="none"
+                        style={[
+                          styles.icon,
                           {
-                            width: geometry.itemWidth,
-                            height: rowHeight,
-                            borderRadius: theme.radius.full,
-                            opacity: pressed ? theme.motion.pressOpacity : 1,
+                            width: theme.layout.tabBarIconSize,
+                            height: theme.layout.tabBarIconSize,
                           },
                         ]}
                       >
-                        <View
-                          pointerEvents="none"
-                          style={[
-                            styles.icon,
-                            {
-                              width: theme.layout.tabBarIconSize,
-                              height: theme.layout.tabBarIconSize,
-                            },
-                          ]}
-                        >
-                          {options.tabBarIcon?.({
-                            focused,
-                            color,
-                            size: theme.layout.tabBarIconSize,
-                          })}
-                        </View>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              ),
-            )}
+                        {route.icon(
+                          focused,
+                          color,
+                          theme.layout.tabBarIconSize,
+                        )}
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ))}
           </View>
         </View>
         <View

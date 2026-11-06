@@ -14,6 +14,10 @@
 
 **Tiến độ sau bước đặc tả:** create/list/detail metadata, PATCH/date-preview/DELETE, danh mục Province và Flyway V10–V11 đã nối frontend; auth/API mặc định development, preview opt-in. Xem [TRIP-API-INTEGRATION.md](TRIP-API-INTEGRATION.md). Bảng hiện trạng bên dưới giữ mốc khảo sát ban đầu; không hiểu là mọi module đã nối. Places/Itinerary/Map/Media/Weather/Home tổng hợp/AI còn theo roadmap; draft/AI ngoài MVP.
 
+### Merge Kỷ niệm/camera · 06/11/2026
+
+Đã nhận frontend Memory/Media và profile editor từ `feat/ui/memory-v2`, resolve giữ Home/nav/Trip CRUD, pagination và session hiện hành. Camera API mở quick capture, lưu local rồi upload/retry, tab Kỷ niệm mở album thật. Đây là tiến độ frontend **Phase 6/9**, chưa nghiệm thu backend media/e2e/thiết bị; không đánh dấu Phase 3/4 hay P0-03 của nhánh nguồn đã hoàn tất. Xem [báo cáo merge](MERGE-MEMORY-V2-2026-11-06.md). Backend và dependency không thay đổi.
+
 ### Mốc merge mobile · 02/11/2026
 
 **Follow-up Auth/Profile 03/11:** đã nhận UI Cá nhân và phần đổi email sau đăng ký từ nhánh nguồn sau review; auth thật mặc định development, fixture preview opt-in. Giữ API/session hiện có, sửa loading/tokens/recovery/logout feedback. Đây là hoàn thiện frontend Phase 1/9, chưa xác nhận e2e SMTP/Google hay hoàn tất Profile CRUD/backend phase. Xem [auth-integration.md](auth-integration.md).

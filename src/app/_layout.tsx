@@ -5,6 +5,7 @@ import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
 import { useEffect } from "react";
 import { AppState, Platform } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import {
   initialWindowMetrics,
   SafeAreaProvider,
@@ -46,38 +47,40 @@ export default function RootLayout() {
   }
 
   return (
-    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider value={lightTheme}>
-          <StatusBar style="dark" />
-          <MagicLinkProvider>
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                contentStyle: {
-                  backgroundColor: lightTheme.colors.background,
-                },
-              }}
-            >
-              <Stack.Screen name="index" />
-              <Stack.Screen name="forgot-password" />
-              <Stack.Screen name="verify-email" />
-              <Stack.Screen name="reset-password" />
-              <Stack.Screen name="google-link" />
-              <Stack.Protected
-                guard={!UI_PREVIEW_ENABLED && status === "anonymous"}
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider value={lightTheme}>
+            <StatusBar style="dark" />
+            <MagicLinkProvider>
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  contentStyle: {
+                    backgroundColor: lightTheme.colors.background,
+                  },
+                }}
               >
-                <Stack.Screen name="(auth)" />
-              </Stack.Protected>
-              <Stack.Protected
-                guard={UI_PREVIEW_ENABLED || status === "authenticated"}
-              >
-                <Stack.Screen name="(workspace)" />
-              </Stack.Protected>
-            </Stack>
-          </MagicLinkProvider>
-        </ThemeProvider>
-      </QueryClientProvider>
-    </SafeAreaProvider>
+                <Stack.Screen name="index" />
+                <Stack.Screen name="forgot-password" />
+                <Stack.Screen name="verify-email" />
+                <Stack.Screen name="reset-password" />
+                <Stack.Screen name="google-link" />
+                <Stack.Protected
+                  guard={!UI_PREVIEW_ENABLED && status === "anonymous"}
+                >
+                  <Stack.Screen name="(auth)" />
+                </Stack.Protected>
+                <Stack.Protected
+                  guard={UI_PREVIEW_ENABLED || status === "authenticated"}
+                >
+                  <Stack.Screen name="(workspace)" />
+                </Stack.Protected>
+              </Stack>
+            </MagicLinkProvider>
+          </ThemeProvider>
+        </QueryClientProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

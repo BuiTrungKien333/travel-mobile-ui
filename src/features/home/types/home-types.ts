@@ -30,6 +30,7 @@ export type TripDay = {
   date: string;
   stops: TripStop[];
   startLocation?: string;
+  startCoordinate?: { latitude: number; longitude: number };
   startTime?: string;
   returnToStart?: boolean;
   transport?: TravelMode;
@@ -49,6 +50,8 @@ export type Trip = {
   serverStopCount?: number;
   serverDayCount?: number;
   id: string;
+  serverVersion?: number;
+  serverItineraryUpdatedAt?: string | null;
   destination: string;
   title?: string;
   budget?: { amount: number; currency: "VND" };
@@ -68,6 +71,19 @@ export type HomeSelection =
   | { kind: "returning" }
   | { kind: "new" };
 export type Memory = {
+  local?: {
+    capturedAt: string;
+    deviceSaved: boolean;
+    userId?: string;
+    clientRequestId?: string;
+    serverId?: string;
+    uploaded?: boolean;
+    placeId?: string;
+    width?: number;
+    height?: number;
+    mimeType?: string;
+  };
+  remote?: { memoryId: string; mediaId: string; version: number };
   id: string;
   destination: string;
   text: string;

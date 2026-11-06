@@ -1,6 +1,12 @@
 # Tiến độ Travel Mobile UI
 
-Cập nhật: **05/11/2026**. Phạm vi: frontend Home, danh sách/tạo/chi tiết chuyến đi, camera và chuẩn bị hợp đồng tích hợp. Ngày trong fixture Home vẫn là **21/10/2026** để tái hiện các trạng thái.
+Cập nhật: **06/11/2026**. Phạm vi: frontend Home, danh sách/tạo/chi tiết chuyến đi, camera và chuẩn bị hợp đồng tích hợp. Ngày trong fixture Home vẫn là **21/10/2026** để tái hiện các trạng thái.
+
+### Merge memory-v2 · 06/11/2026
+
+- Nhận album/Kỷ niệm, quick capture, lưu ảnh local + upload/retry, profile editor và sửa gesture root/device URL. Resolve trên canonical API/query/session hiện hành; Home bốn trạng thái và bottom navigation mới nhất được giữ.
+- Source có thay đổi Trip/P0-03 dùng cấu trúc khác; giữ toàn bộ module Trip của target, chưa đánh dấu day settings/pins/recovery của source đã tích hợp. Package và native config giữ nguyên; backend không merge, không push.
+- **281/281 mobile tests**, TypeScript strict/no-unused và Metro web/Android bundling đạt; chưa QA thiết bị hoặc backend e2e. Xem [quyết định merge và giới hạn](MERGE-MEMORY-V2-2026-11-06.md).
 
 ### Bottom navigation web/Android · 05/11/2026
 

@@ -169,7 +169,7 @@ function harness(platform: string) {
   }>("src/components/common/floating-bottom-navigation.tsx");
   const render = () => {
     cursor = 0;
-    return FloatingBottomNavigation({
+    const root = FloatingBottomNavigation({
       state: { index: selected, routes },
       descriptors,
       navigation: {
@@ -185,6 +185,11 @@ function harness(platform: string) {
       captureLabel: "Capture",
       animationEnabled: false,
     });
+    return root && typeof root.type === "function"
+      ? (root.type as (props: Record<string, unknown>) => Node | null)(
+          root.props,
+        )
+      : root;
   };
   return {
     render,

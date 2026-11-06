@@ -1,3 +1,4 @@
+import { ProfileEditor } from "../components/profile-editor";
 import { router } from "expo-router";
 import { useBottomTabBarHeight } from "expo-router/js-tabs";
 import { Image } from "expo-image";
@@ -32,6 +33,7 @@ export function ProfileScreen() {
   const authenticated = useAuthStore(
     (state) => state.status === "authenticated",
   );
+  const [editing, setEditing] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
   const user = profile.data;
   const roleKey =
@@ -214,6 +216,17 @@ export function ProfileScreen() {
                     value={user.email}
                   />
                 </View>
+                {editing ? (
+                  <ProfileEditor
+                    key={user.id}
+                    user={user}
+                    onDone={() => setEditing(false)}
+                  />
+                ) : (
+                  <AppButton variant="outline" onPress={() => setEditing(true)}>
+                    {t("auth.profile.edit")}
+                  </AppButton>
+                )}
               </View>
             </>
           ) : !profile.isLoading && !profile.isError ? (

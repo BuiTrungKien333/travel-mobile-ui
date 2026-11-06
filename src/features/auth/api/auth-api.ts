@@ -9,6 +9,8 @@ import type {
 import {
   authDataSchema,
   authUserSchema,
+  updateProfileSchema,
+  type UpdateProfile,
   emailRequestResultSchema,
   googleChallengeSchema,
   googleLoginSchema,
@@ -48,6 +50,15 @@ const googleLoginEnvelope = z.object({
 });
 
 export const authApi = {
+  async updateProfile(values: UpdateProfile) {
+    const response = await apiClient.put<unknown>(
+      authEndpoints.profile,
+      updateProfileSchema.parse(values),
+    );
+    const parsed = profileEnvelope.safeParse(response.data);
+    if (!parsed.success) throw new ApiError("INVALID_RESPONSE");
+    return parsed.data.data;
+  },
   async googleChallenge(signal?: AbortSignal) {
     const response = await apiClient.post<unknown>(
       authEndpoints.googleChallenge,

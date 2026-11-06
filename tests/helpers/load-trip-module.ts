@@ -43,6 +43,7 @@ export function tripModuleLoader(
           return require(id);
         },
         requestAnimationFrame: (callback: () => void) => callback(),
+        ...globals,
       },
       { filename },
     );

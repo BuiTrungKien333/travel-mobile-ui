@@ -9,9 +9,11 @@ import {
 import type { HomeScenario, Memory, Trip } from "../types/home-types";
 import type { PreviewState } from "../types/preview-state";
 import { dayDistance } from "../utils/select-home";
-import { isCalendarDate } from "@/utils/calendar-date";
+import { todayCalendarDate, isCalendarDate } from "@/utils/calendar-date";
 import { tripFormLimits } from "../../trip/constants/trip-form";
 import { applyTripMutation } from "@/features/trip/utils/trip-mutations";
+import { localMemorySchema } from "@/features/memories/schemas/local-memory-schema";
+import { getMemoryCaptureDays } from "@/features/memories/utils/memory-albums";
 
 const PREVIEW_ENTRY_LIMIT = 20;
 
@@ -31,17 +33,201 @@ function scenarioSnapshot(scenario: HomeScenario) {
 
 export function createPreviewStore() {
   let nextId = 0;
+  let loadingPhotos: Promise<void> | undefined;
+  const exportedPhotos = new Set<string>();
+  const exportsInProgress = new Map<string, Promise<void>>();
   return createStore<PreviewState>((set, get) => ({
     ...scenarioSnapshot("returning"),
     today: MOCK_TODAY,
+    localPhotoStatus: "idle",
+    loadLocalPhotos: () => {
+      if (loadingPhotos) return loadingPhotos;
+      set({ localPhotoStatus: "loading" });
+      loadingPhotos =
+        import("@/features/memories/services/local-memory-storage")
+          .then((storage) => storage.readLocalMemories())
+          .then((memories) =>
+            set((state) => ({
+              localPhotoStatus: "ready",
+              memories: [
+                ...memories.filter(
+                  (photo) =>
+                    !state.memories.some((item) => item.id === photo.id),
+                ),
+                ...state.memories,
+              ],
+            })),
+          )
+          .catch(() => {
+            loadingPhotos = undefined;
+            set({ localPhotoStatus: "error" });
+          });
+      return loadingPhotos;
+    },
+    saveLocalPhoto: async ({
+      uri,
+      tripId,
+      date,
+      stopId,
+      remoteTrip,
+      local,
+    }) => {
+      if (!/^(file:|content:|blob:|data:image\/)/i.test(uri))
+        throw new Error("Invalid local photo");
+      await get().loadLocalPhotos();
+      if (get().localPhotoStatus !== "ready")
+        throw new Error("Local photo storage unavailable");
+      const trip =
+        remoteTrip ??
+        (tripId
+          ? get().trips.find(
+              (item) => item.id === tripId && item.status !== "cancelled",
+            )
+          : undefined);
+      const day = trip
+        ? getMemoryCaptureDays(trip, todayCalendarDate()).find(
+            (item) => item.date === date,
+          )
+        : undefined;
+      if (
+        tripId &&
+        (!trip ||
+          trip.id !== tripId ||
+          trip.status === "cancelled" ||
+          !day ||
+          (stopId && !day.stops.some((stop) => stop.id === stopId)))
+      )
+        throw new Error("Invalid photo destination");
+      const now = new Date();
+      const { createLocalMemory } =
+        await import("@/features/memories/services/local-memory-storage");
+      const memory = await createLocalMemory(uri, {
+        id: `local-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`,
+        destination: trip?.destination ?? "",
+        text: "",
+        date:
+          day?.date ??
+          `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`,
+        time: new Intl.DateTimeFormat("en-GB", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        }).format(now),
+        tripId: trip?.id,
+        place: day?.stops.find((item) => item.id === stopId)?.name,
+        local: { ...local, capturedAt: now.toISOString(), deviceSaved: false },
+      });
+      set((state) => ({ memories: [memory, ...state.memories] }));
+      return memory;
+    },
+    persistLocalPhoto: async (memory) => {
+      const parsed = localMemorySchema.parse(memory);
+      const { writeLocalMemory } =
+        await import("@/features/memories/services/local-memory-storage");
+      await writeLocalMemory(parsed);
+      set((state) => ({
+        memories: state.memories.map((item) =>
+          item.id === parsed.id ? parsed : item,
+        ),
+      }));
+    },
+    exportLocalPhoto: (id) => {
+      const existing = exportsInProgress.get(id);
+      if (existing) return existing;
+      const operation = (async () => {
+        const memory = localMemorySchema.parse(
+          get().memories.find((item) => item.id === id),
+        );
+        if (memory.local.deviceSaved) return;
+        if (!exportedPhotos.has(id)) {
+          const { saveJournalPhoto } =
+            await import("../services/journal-photo-actions");
+          await saveJournalPhoto(memory.photo);
+          exportedPhotos.add(id);
+        }
+        await get().markLocalPhotoSaved(id);
+        exportedPhotos.delete(id);
+      })().finally(() => {
+        exportsInProgress.delete(id);
+      });
+      exportsInProgress.set(id, operation);
+      return operation;
+    },
+    markLocalPhotoSaved: async (id) => {
+      const memory = localMemorySchema.parse(
+        get().memories.find((item) => item.id === id),
+      );
+      const updated = {
+        ...memory,
+        local: { ...memory.local, deviceSaved: true },
+      };
+      const { writeLocalMemory } =
+        await import("@/features/memories/services/local-memory-storage");
+      await writeLocalMemory(updated);
+      set((state) => ({
+        memories: state.memories.map((item) =>
+          item.id === id ? updated : item,
+        ),
+      }));
+    },
+    assignLocalPhoto: async (id, values, remoteTrip) => {
+      const memory = localMemorySchema.parse(
+        get().memories.find((item) => item.id === id),
+      );
+      const trip =
+        remoteTrip ??
+        get().trips.find(
+          (item) => item.id === values.tripId && item.status !== "cancelled",
+        );
+      const day = trip
+        ? getMemoryCaptureDays(trip, todayCalendarDate()).find(
+            (item) => item.date === values.day,
+          )
+        : undefined;
+      if (
+        !trip ||
+        trip.id !== values.tripId ||
+        trip.status === "cancelled" ||
+        !day ||
+        (values.stopId && !day.stops.some((item) => item.id === values.stopId))
+      )
+        throw new Error("Invalid photo destination");
+      const updated = {
+        ...memory,
+        tripId: trip.id,
+        date: day.date,
+        destination: trip.destination,
+        place: day.stops.find((item) => item.id === values.stopId)?.name,
+        local: {
+          ...memory.local,
+          placeId:
+            remoteTrip && values.stopId
+              ? (day.stops.find((stop) => stop.id === values.stopId)?.placeId ??
+                values.stopId)
+              : undefined,
+        },
+      };
+      const { writeLocalMemory } =
+        await import("@/features/memories/services/local-memory-storage");
+      await writeLocalMemory(updated);
+      set((state) => ({
+        memories: state.memories.map((item) =>
+          item.id === id ? updated : item,
+        ),
+      }));
+    },
     panel: null,
     openPanel: (panel) => set({ panel }),
     closePanel: () => set({ panel: null }),
     changeScenario: (scenario) =>
-      set({
+      set((state) => ({
         ...scenarioSnapshot(scenario),
+        memories: [
+          ...state.memories.filter((memory) => memory.local),
+          ...scenarioSnapshot(scenario).memories,
+        ],
         panel: null,
-      }),
+      })),
     createDraft: (values) => {
       if (get().trips.length >= PREVIEW_ENTRY_LIMIT) return false;
       if (
@@ -84,7 +270,7 @@ export function createPreviewStore() {
         })),
         startDate: values.startDate,
         endDate: values.endDate,
-        id: `draft-${++nextId}`,
+        id: values.id ?? `draft-${++nextId}`,
         status: "draft",
         days,
       };
@@ -93,6 +279,39 @@ export function createPreviewStore() {
         panel: { kind: "plan", tripId: trip.id },
       }));
       return true;
+    },
+    linkTrip: async (tripId, serverId) => {
+      const state = get();
+      if (!state.trips.some((trip) => trip.id === tripId)) return;
+      for (const memory of state.memories.filter(
+        (item) => item.tripId === tripId && item.local,
+      )) {
+        await get().persistLocalPhoto(
+          localMemorySchema.parse({ ...memory, tripId: serverId }),
+        );
+      }
+      set((current) => ({
+        trips: current.trips.map((trip) =>
+          trip.id === tripId ? { ...trip, id: serverId } : trip,
+        ),
+        memories: current.memories.map((memory) =>
+          memory.tripId === tripId ? { ...memory, tripId: serverId } : memory,
+        ),
+        panel:
+          current.panel &&
+          "tripId" in current.panel &&
+          current.panel.tripId === tripId
+            ? { ...current.panel, tripId: serverId }
+            : current.panel,
+        visited: Object.fromEntries(
+          Object.entries(current.visited).map(([key, value]) => [
+            key.startsWith(`${tripId}:`)
+              ? `${serverId}${key.slice(tripId.length)}`
+              : key,
+            value,
+          ]),
+        ),
+      }));
     },
     mutateTrip: (tripId, mutation) => {
       const state = get();
@@ -108,7 +327,9 @@ export function createPreviewStore() {
     deleteTrip: (tripId) =>
       set((state) => ({
         trips: state.trips.filter((trip) => trip.id !== tripId),
-        memories: state.memories.filter((memory) => memory.tripId !== tripId),
+        memories: state.memories.filter(
+          (memory) => memory.tripId !== tripId || memory.local,
+        ),
         visited: Object.fromEntries(
           Object.entries(state.visited).filter(
             ([key]) => !key.startsWith(`${tripId}:`),
@@ -163,12 +384,19 @@ export function createPreviewStore() {
       set({ memories: [memory, ...state.memories] });
       return memory;
     },
-    updateMemoryNote: (id, text) =>
+    updateMemoryNote: async (id, text) => {
+      const memory = get().memories.find((item) => item.id === id);
+      if (memory?.local) {
+        const { writeLocalMemory } =
+          await import("@/features/memories/services/local-memory-storage");
+        await writeLocalMemory(localMemorySchema.parse({ ...memory, text }));
+      }
       set((state) => ({
         memories: state.memories.map((memory) =>
           memory.id === id ? { ...memory, text } : memory,
         ),
-      })),
+      }));
+    },
     saveCapturedMoment: ({ tripId, date, uri, time, stopId }) => {
       const state = get();
       const trip = state.trips.find((entry) => entry.id === tripId);
@@ -195,9 +423,16 @@ export function createPreviewStore() {
       set({ memories: [memory, ...state.memories] });
       return memory;
     },
-    removeMemory: (id) =>
+    removeMemory: async (id) => {
+      const memory = get().memories.find((item) => item.id === id);
+      if (memory?.local) {
+        const { deleteLocalMemory } =
+          await import("@/features/memories/services/local-memory-storage");
+        await deleteLocalMemory(localMemorySchema.parse(memory));
+      }
       set((state) => ({
         memories: state.memories.filter((memory) => memory.id !== id),
-      })),
+      }));
+    },
   }));
 }

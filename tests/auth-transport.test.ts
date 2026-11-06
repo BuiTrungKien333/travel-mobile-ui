@@ -28,6 +28,9 @@ function barrier() {
 function setup() {
   const load = tripModuleLoader(
     {
+      "expo-constants": { __esModule: true, default: { expoConfig: null } },
+      "expo-device": { isDevice: false },
+      "react-native": { Platform: { OS: "web" } },
       "@/store/use-locale-store": {
         useLocaleStore: { getState: () => ({ locale: "vi" }) },
       },

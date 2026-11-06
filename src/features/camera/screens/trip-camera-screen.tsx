@@ -1,3 +1,5 @@
+import { UI_PREVIEW_ENABLED } from "@/constants/development";
+import { MemoriesCameraScreen } from "@/features/memories/screens/memories-camera-screen";
 import { requireOptionalNativeModule } from "expo";
 import { router } from "expo-router";
 import { Platform, View } from "react-native";
@@ -17,7 +19,7 @@ function back() {
 }
 
 /** Native-module check happens before evaluating camera imports, for older development builds. */
-export function TripCameraScreen({
+function PreviewTripCameraScreen({
   tripId,
   day,
   stopId,
@@ -125,5 +127,17 @@ export function TripCameraScreen({
       date={date}
       stopId={stopId}
     />
+  );
+}
+
+export function TripCameraScreen(props: {
+  tripId?: string;
+  day?: string;
+  stopId?: string;
+}) {
+  return UI_PREVIEW_ENABLED ? (
+    <PreviewTripCameraScreen {...props} />
+  ) : (
+    <MemoriesCameraScreen {...props} />
   );
 }
