@@ -32,7 +32,6 @@ export function timelineDropTarget(
   }
   return target;
 }
-
 export function moveTimelineStop(
   stops: readonly TripStop[],
   id: string,
@@ -57,4 +56,9 @@ export function moveTimelineStop(
   const [moved] = ids.splice(from, 1);
   ids.splice(to, 0, moved);
   return ids;
+}
+/** Slot equality avoids transferring an unchanged list to the UI thread on a React rerender. */
+export function sameTimelineSlots(left: readonly TimelineSlot[], right: readonly TimelineSlot[]) {
+  return left.length === right.length && left.every((slot, index) => slot.id === right[index].id
+    && slot.pinned === right[index].pinned && slot.height === right[index].height);
 }

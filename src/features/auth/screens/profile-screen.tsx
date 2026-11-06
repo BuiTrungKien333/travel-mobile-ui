@@ -18,6 +18,7 @@ import { LanguageSwitcher } from "@/components/common/language-switcher";
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
 import { AppButton } from "@/components/ui/app-button";
+import { ContentImage } from "@/components/ui/content-image";
 import { ProfileEditor } from "../components/profile-editor";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useI18n } from "@/hooks/use-i18n";
@@ -177,7 +178,7 @@ export function ProfileScreen() {
                     },
                   ]}
                 >
-                  <AppText
+                  {profile.data.avatarUrl ? <ContentImage source={profile.data.avatarUrl} label={t("auth.profile.avatar")} emptyLabel={getInitials(displayName ?? profile.data.fullName)} /> : <AppText
                     style={{
                       color: theme.colors.onPrimary,
                       fontFamily: theme.typography.fontFamily.bold,
@@ -185,7 +186,7 @@ export function ProfileScreen() {
                     variant="heading"
                   >
                     {getInitials(displayName ?? profile.data.fullName)}
-                  </AppText>
+                  </AppText>}
                 </View>
                 <View style={{ flex: 1, minWidth: 0, gap: theme.spacing.xs }}>
                   <AppText
@@ -450,7 +451,7 @@ const styles = StyleSheet.create({
   topBar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
   card: { borderWidth: 1, overflow: "hidden" },
   hero: { flexDirection: "row", alignItems: "center" },
-  avatar: { width: 72, height: 72, borderRadius: 36, borderWidth: 2, alignItems: "center", justifyContent: "center" },
+  avatar: { width: 72, height: 72, borderRadius: 36, borderWidth: 2, overflow: "hidden", alignItems: "center", justifyContent: "center" },
   roleBadge: { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 5 },
   detailRow: { flexDirection: "row", alignItems: "center" },
   iconFrame: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },

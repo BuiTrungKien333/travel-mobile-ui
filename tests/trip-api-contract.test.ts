@@ -12,6 +12,25 @@ const trip = {
   coverImageUrl: null, preferences: [], budget: null, accommodation: null, notes: null, days: [],
 };
 
+test("legacy demo preferences do not prevent opening a saved trip; request preferences remain strict", async () => {
+  // V11 seeds the featured Da Lat trip with these title-cased preferences.
+  const legacy = { ...trip, title: "Đà Lạt — Cuối tuần xanh", status: "ACTIVE", mode: "LIVE",
+    preferences: ["Nature", "Photography", "Museum"] };
+  const load = tripModuleLoader({ "@/services/api/client": { apiClient: {
+    get: async () => ({ data: { success: true, data: { trip: legacy, context } } }),
+  } } });
+  const { tripApi } = load<typeof import("../src/features/trip/api/trip-api.ts")>("src/features/trip/api/trip-api.ts");
+  const { toTrip } = load<typeof import("../src/features/trip/api/trip-adapters.ts")>("src/features/trip/api/trip-adapters.ts");
+  const detail = await tripApi.get(id);
+  assert.equal(detail.title, legacy.title);
+  assert.deepEqual(Array.from(detail.preferences), legacy.preferences);
+  assert.deepEqual(Array.from(toTrip(detail).preferences ?? []), ["nature", "photography"]);
+  const { updateTripRequestSchema, tripResponseSchema } = load<typeof import("../src/features/trip/api/trip-types.ts")>("src/features/trip/api/trip-types.ts");
+  assert.equal(updateTripRequestSchema.safeParse({ version: 3, preferences: ["Nature"] }).success, false);
+  assert.equal(updateTripRequestSchema.safeParse({ version: 3, preferences: ["nature", "photography"] }).success, true);
+  assert.equal(tripResponseSchema.safeParse({ ...legacy, preferences: [42] }).success, false);
+});
+
 test("trip pagination reads content and rejects legacy arrays or a repeated page", async () => {
   let mode = "ok";
   const pages: number[] = [];

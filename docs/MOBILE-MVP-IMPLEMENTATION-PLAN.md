@@ -129,6 +129,8 @@ Mọi thao tác quan trọng có trạng thái đang xử lý, thành công ho�
 
 ### P1-03. Chuyển động, gesture và hiệu năng cảm nhận
 
+**06/11/2026 — Đã triển khai phần code P1-03.** Chuyển màn theo giảm chuyển động, sheet/viewer phục hồi khi animation bị hủy, stale gesture không ghi dữ liệu, loại slot transfer/render thừa có kiểm chứng. ADB chưa có thiết bị; người dùng chọn hoàn thiện code/checklist trước. Xem [P1-03-ACCEPTANCE.md](P1-03-ACCEPTANCE.md). **Đo FPS/jank và QA điện thoại còn chờ**, không đánh dấu đã nghiệm thu hiệu năng thực tế. Dừng review/push trước P1-04.
+
 - Hoàn thiện chuyển màn, mở/đóng sheet, phản hồi nhấn và chuyển trạng thái theo motion token hiện có.
 - Cuộn timeline không xung đột với kéo bản đồ/reorder; pinch/pan/swipe viewer không làm kẹt nút Back hoặc backdrop.
 - Ưu tiên animation dùng Reanimated/Gesture Handler đã cài; giữ chuyển động có mục đích, hỗ trợ giảm chuyển động.

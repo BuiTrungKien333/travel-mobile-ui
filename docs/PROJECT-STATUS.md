@@ -1,5 +1,13 @@
 # Tiến độ Travel Mobile UI
 
+## Phần 11 · P1-03 — Chuyển động, gesture và hiệu năng cảm nhận · 06/11/2026
+
+- Code hoàn tất: giảm chuyển động áp dụng cho native Stack/camera, sheet chỉ dùng animation Reanimated; vòng đời đóng dùng serial để tránh callback muộn/Apply lặp và phục hồi khi bị hủy.
+- Reorder hủy khi đổi ngày/ghim/thứ tự/unmount, pan handle dùng một ngón. Timeline bỏ slot transfer trùng; viewer giữ snapshot/cửa sổ ba ảnh và tránh update state thừa khi loading/lỗi.
+- Viewer SharedValue dùng get/set phù hợp React Compiler; giữ gesture pinch/pan/paging/Back và các gate input hiện có.
+- TypeScript/lint file sửa đạt; 25 test trọng tâm đạt; full 323/317 đạt/6 lỗi test cũ. Lint repo còn 6 lỗi/2 cảnh báo cũ, không disable rule.
+- **Chưa đo/QA thiết bị**: ADB không có điện thoại, người dùng chọn code và checklist trước. Xem [P1-03-ACCEPTANCE.md](P1-03-ACCEPTANCE.md), không suy số đếm test thành FPS. Không sửa backend/.env/dependency/native config; dừng review/push trước P1-04.
+
 ## Phần 10 · P1-02 — Điều hướng, form và trạng thái màn hình · 06/11/2026
 
 - Back ảnh về đúng nơi gọi, deep link có fallback; nhật ký chuyến mở đúng album. Timeline giữ offset theo ngày/pool; kết quả tìm kiếm giữ vị trí khi quay về từ preview.

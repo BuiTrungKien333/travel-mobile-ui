@@ -35,7 +35,9 @@ const tripDaySchema = z.object({
   returnToStart: z.boolean(), transport: z.enum(["CAR", "MOTORCYCLE", "WALK"]),
 });
 export const tripResponseSchema = tripSummarySchema.extend({
-  preferences: preferencesSchema,
+  // Saved trips may contain legacy labels (e.g. V11's "Nature" or "Museum").
+  // Read the backend's string list; new writes still use preferencesSchema.
+  preferences: z.array(z.string()),
   budget: budgetSchema.nullable(),
   accommodation: z.string().nullable(),
   notes: z.string().nullable(),

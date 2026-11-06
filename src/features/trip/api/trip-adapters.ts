@@ -2,7 +2,7 @@ import type { Trip, TripDay, TripPreference, TripStop } from "@/features/home/ty
 import type { ItineraryResponse, SaveItineraryRequest } from "./itinerary-types";
 import type { TripPlaceResponse, TripResponse, TripSummary } from "./trip-types";
 
-const preferenceValues = new Set<TripPreference>([
+const preferenceValues = new Set<string>([
   "nature", "food", "culture", "relaxation", "photography", "adventure", "shopping", "beach",
 ]);
 
@@ -84,7 +84,9 @@ export function toTrip(
     destination: value.destination.name,
     title: value.title,
     budget: "budget" in value ? value.budget ?? undefined : undefined,
-    preferences: "preferences" in value ? value.preferences.filter((item): item is TripPreference => preferenceValues.has(item as TripPreference)) : [],
+    preferences: "preferences" in value ? [...new Set(value.preferences
+      .map((item) => item.trim().toLowerCase())
+      .filter((item): item is TripPreference => preferenceValues.has(item)))] : [],
     accommodation: "accommodation" in value ? value.accommodation ?? undefined : undefined,
     notes: "notes" in value ? value.notes ?? undefined : undefined,
     unscheduledStops: places

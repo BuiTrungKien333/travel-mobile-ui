@@ -45,6 +45,7 @@ export function TripStopInteractions({
     reduceMotion: ReduceMotion.System,
   };
   const swipe = Gesture.Pan()
+    .maxPointers(1)
     .enabled(!!onRemove)
     .activeOffsetX([-theme.spacing.sm, theme.spacing.sm])
     .failOffsetY([-theme.spacing.sm, theme.spacing.sm])
@@ -72,6 +73,7 @@ export function TripStopInteractions({
         x.set(withSpring(drag?.active.get() === id ? 0 : start.get(), spring));
     });
   const reorder = Gesture.Pan()
+    .maxPointers(1)
     .enabled(!!drag && !pinned)
     .activateAfterLongPress(theme.motion.tripTimelineHoldDuration)
     .activeOffsetY([-theme.spacing.xs, theme.spacing.xs])

@@ -1,8 +1,10 @@
 import { router } from "expo-router";
-import { useState } from "react";
-import { Linking, ActivityIndicator, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Linking, View } from "react-native";
+import { QueryFeedback } from "@/components/common/query-feedback";
+import { requiredQueryState } from "@/utils/required-query-state";
+import { ApiError } from "@/services/api/api-error";
 import { AppText } from "@/components/ui/app-text";
-import { AppButton } from "@/components/ui/app-button";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useTripQuery, useTripPlacesQuery } from "@/features/trip/api/trip-hooks";
 import { useTripItineraryQuery } from "@/features/trip/api/itinerary-hooks";
@@ -21,11 +23,22 @@ export function HomeLiveJourney({ tripId, today }: { tripId: string; today: stri
   const itinerary = useTripItineraryQuery(tripId);
   const theme = useAppTheme();
   const { copy } = useHomeCopy();
-  if (!trip.data || !places.data || !itinerary.data) return <View style={{ gap: theme.spacing.sm }}>
-    {trip.isError || places.isError || itinerary.isError ? <>
-      <AppText accessibilityRole="alert" tone="error">{copy.memoriesLoadError}</AppText>
-      <AppButton variant="outline" onPress={() => { void trip.refetch(); void places.refetch(); void itinerary.refetch(); }}>{copy.retry}</AppButton>
-    </> : <ActivityIndicator color={theme.colors.primary} />}
+  useEffect(() => {
+    if (!__DEV__) return;
+    for (const [resource, error] of [["trip", trip.error], ["places", places.error], ["itinerary", itinerary.error]] as const) {
+      if (error) console.warn("[Home today plan] Request failed", {
+        resource, code: error instanceof ApiError ? error.code : "UNKNOWN",
+        status: error instanceof ApiError ? error.status : undefined,
+      });
+    }
+  }, [trip.error, places.error, itinerary.error]);
+  const loadState = requiredQueryState([trip, places, itinerary]);
+  const error = trip.isError ? copy.todayTripLoadError : places.isError ? copy.todayPlacesLoadError
+    : itinerary.isError ? copy.todayItineraryLoadError : null;
+  if (loadState !== "ready" || !trip.data || !places.data || !itinerary.data) return <View style={{ gap: theme.spacing.sm }}>
+    <QueryFeedback loading={loadState === "loading"} error={error}
+      retrying={trip.isFetching || places.isFetching || itinerary.isFetching}
+      onRetry={() => { void trip.refetch(); void places.refetch(); void itinerary.refetch(); }} />
   </View>;
   return <LiveJourney trip={toTrip(trip.data, places.data, itinerary.data)} today={today} />;
 }

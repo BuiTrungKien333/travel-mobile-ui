@@ -1,5 +1,15 @@
 # Bàn giao ngữ cảnh cho agent tiếp theo
 
+## Mốc hiện hành · Phần 11 — P1-03 · 06/11/2026
+
+Người dùng yêu cầu P1-03 và chọn **hoàn thiện code/checklist trước vì chưa tiện cắm điện thoại**. Code hoàn tất; **đo/QA hiệu năng thiết bị còn chờ** theo [P1-03-ACCEPTANCE.md](P1-03-ACCEPTANCE.md). ADB chạy được sau sandbox escalation nhưng `devices -l` trống; không có số FPS/jank thật. Dừng review/push; không tự commit/push. Phần tiếp theo P1-04 khi được yêu cầu.
+
+`useMotionPreference` theo dõi giảm chuyển động để cập nhật root/auth/workspace Stack và camera route. `useDismissLifecycle` giữ phase/serial/Apply dùng chung sheet và photo viewer; canceled close bỏ Apply, cho retry, callback cũ/unmounted không được tác động. Sheet hook nhận enabled thứ ba để khóa busy; pan kết thúc gọi JS requestClose một lần, không chạy JS mỗi frame. Native Modal fade của các sheet có animation riêng đã bỏ để tránh hai nguồn chuyển động. Viewer SharedValue chuyển từ .value sang get/set cho React Compiler, giữ ReduceMotion.System. Danh sách viewer snapshot theo phiên, render/đo thumbnail cửa sổ tối đa 3 ảnh; viewer Home hiện chỉ nhận tối đa 6 ảnh, không tuyên bố tối ưu FPS cho album 300 ảnh.
+
+Reorder có revision ngày + ID/ghim, snapshot begin, drop guard và teardown; đổi dữ liệu/ngày không commit drop cũ. Slot arrays so sánh trước khi set; test 30 điểm/50 rerender giống nhau không transfer lại, giữ measured heights. Ảnh lỗi/spinner suy ra theo ảnh/attempt thay setState đồng bộ trong effect; map release lock worklet có identity/deps ổn định. Không thêm memo đại trà, dependency, backend/.env/native config hoặc benchmark native.
+
+Kiểm chứng: TypeScript đạt, lint file sửa 0 lỗi/cảnh báo; 25 focused đạt; full 323/317 đạt/6 lỗi cũ (trip-ui-flows 4, trip-weather-details 2). Full lint giảm từ 51 lỗi/3 cảnh báo còn 6 lỗi/2 cảnh báo cũ, không disable rule. Logs backend/target/p103-*.log. Dữ liệu 100 ảnh/30 điểm trong checklist là workload cần chuẩn bị để đo; chỉ có kiểm thử mô phỏng, chưa seed vào tài khoản thật.
+
 ## Mốc hiện hành · Phần 10 — P1-02 · 06/11/2026
 
 Code P1-02 đã triển khai; **QA điện thoại còn chờ** theo [P1-02-ACCEPTANCE.md](P1-02-ACCEPTANCE.md). Dừng review/push, không tự commit/push. Các mốc P1-01/P0 bên dưới là lịch sử; phần tiếp theo P1-03 khi người dùng yêu cầu.

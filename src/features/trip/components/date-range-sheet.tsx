@@ -126,7 +126,7 @@ function DateRangeSession({
     return dayDistance(selectedStart, selectedEnd) + 1;
   }, [selectedStart, selectedEnd]);
 
-  const { sheetMotion, backdropMotion, dragGesture, close, reduceMotion } =
+  const { sheetMotion, backdropMotion, dragGesture, close } =
     usePickerSheetMotion(onClose);
   const { copy, locale } = useTripCopy();
   const monthLabel = new Intl.DateTimeFormat(
@@ -148,7 +148,7 @@ function DateRangeSession({
     <Modal
       transparent
       visible={visible}
-      animationType={reduceMotion ? "none" : "fade"}
+      animationType="none"
       statusBarTranslucent
       onRequestClose={() => close()}
     >

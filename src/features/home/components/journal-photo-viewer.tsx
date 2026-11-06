@@ -31,6 +31,7 @@ import { PhotoActionError } from "../services/photo-action-error";
 import type { Memory } from "../types/home-types";
 import {
   fitPhoto,
+  photoViewerPages,
   type PhotoSelection,
   type PhotoSize,
 } from "../utils/photo-viewer-geometry";
@@ -41,7 +42,7 @@ import {
 } from "./photo-viewer-toolbar";
 
 export function JournalPhotoViewer({
-  memories,
+  memories: sourceMemories,
   selection,
   getSelection,
   onActiveChange,
@@ -55,6 +56,8 @@ export function JournalPhotoViewer({
   onClose: () => void;
   onDelete: (id: string) => void | Promise<void>;
 }) {
+  // Keep indices stable if a query refresh changes the underlying album during a gesture.
+  const [memories] = useState(() => sourceMemories.slice());
   const theme = useAppTheme();
   const insets = useScreenInsets();
   const window = useWindowDimensions();
@@ -92,11 +95,11 @@ export function JournalPhotoViewer({
   );
   const failed = photoStates[memory.id] === "failed";
   const loading = !photoStates[memory.id];
-  const [showSpinner, setShowSpinner] = useState(false);
+  const [spinnerFor, setSpinnerFor] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
-  useEffect(() => {
-    if (failed) setControls(true);
-  }, [failed]);
+  const loadingKey = `${memory.id}:${attempt}`;
+  const showSpinner = loading && spinnerFor === loadingKey;
+  const visibleControls = controls || failed;
   const active = useRef(true);
   const actionInFlight = useRef(false);
   const removeAfterClose = useRef(false);
@@ -116,16 +119,13 @@ export function JournalPhotoViewer({
     return () => clearTimeout(timer);
   }, [notice, theme.motion.photoViewerNoticeDuration]);
   useEffect(() => {
-    if (!loading) {
-      setShowSpinner(false);
-      return;
-    }
+    if (!loading) return;
     const timer = setTimeout(
-      () => setShowSpinner(true),
+      () => setSpinnerFor(loadingKey),
       theme.motion.enterDuration,
     );
     return () => clearTimeout(timer);
-  }, [loading, theme.motion.enterDuration]);
+  }, [loading, loadingKey, theme.motion.enterDuration]);
 
   function toggleControls() {
     setControls((value) => !value);
@@ -145,7 +145,7 @@ export function JournalPhotoViewer({
     pageCount: memories.length,
     onPageChange: changePage,
     blocked: confirming || showInfo || busy !== null,
-    controlsVisible: controls,
+    controlsVisible: visibleControls,
     onToggleControls: toggleControls,
     onDismiss: () => {
       onClose();
@@ -224,7 +224,8 @@ export function JournalPhotoViewer({
         const measured: Record<string, PhotoSelection> = {
           [selection.id]: selection,
         };
-        for (const photo of memories) {
+        for (const page of photoViewerPages(index, memories.length)) {
+          const photo = memories[page];
           const value = getSelection(photo.id);
           if (value) measured[photo.id] = value;
         }
@@ -305,9 +306,8 @@ export function JournalPhotoViewer({
                 pointerEvents="none"
                 style={[StyleSheet.absoluteFill, motion.carouselStyle]}
               >
-                {memories.map((photo, page) => {
-                  // Decode only the current photo and its immediate neighbours.
-                  if (Math.abs(page - index) > 1) return null;
+                {photoViewerPages(index, memories.length).map((page) => {
+                  const photo = memories[page];
                   const selected = page === index;
                   const metadata = photoInfo[photo.id] ?? selections[photo.id];
                   const fitted = fitPhoto(metadata?.size ?? viewport, viewport);
@@ -468,7 +468,7 @@ export function JournalPhotoViewer({
           ) : null}
           <PhotoViewerToolbar
             memory={memory}
-            visible={controls && !confirming && !showInfo}
+            visible={visibleControls && !confirming && !showInfo}
             animatedStyle={motion.controlsStyle}
             busy={busy}
             photoReady={!!info?.uri && !failed}

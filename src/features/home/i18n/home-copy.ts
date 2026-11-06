@@ -99,6 +99,9 @@ const vi = {
   noMemoriesHint:
     "Ghi lại một khoảnh khắc trong chuyến đi. Sau này, bạn sẽ muốn trở lại đây.",
   memoriesLoadError: "Không tải được kỷ niệm và thống kê hành trình.",
+  todayTripLoadError: "Chưa tải được thông tin chuyến đi hôm nay. Hãy thử lại.",
+  todayPlacesLoadError: "Chưa tải được địa điểm của chuyến đi hôm nay. Hãy thử lại.",
+  todayItineraryLoadError: "Chưa tải được lịch trình hôm nay. Hãy thử lại.",
   retry: "Thử lại",
   journeyStats: "Thống kê hành trình",
   statsTrips: "chuyến đi",
@@ -223,6 +226,9 @@ const en: HomeCopy = {
   noMemoriesHint:
     "Save a moment from your trip. One day, you'll be glad you did.",
   memoriesLoadError: "Couldn't load memories and journey statistics.",
+  todayTripLoadError: "Couldn't load today's trip. Please try again.",
+  todayPlacesLoadError: "Couldn't load places for today's trip. Please try again.",
+  todayItineraryLoadError: "Couldn't load today's itinerary. Please try again.",
   retry: "Try again",
   journeyStats: "Journey statistics",
   statsTrips: "trips",

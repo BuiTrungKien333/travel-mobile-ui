@@ -8,6 +8,7 @@ test("the root navigator remains inside a full-height gesture root for signed-in
   const Stack = Object.assign(() => null, { Screen: "Screen", Protected: "Protected" });
   let status = "authenticated";
   const load = tripModuleLoader({
+    "@/hooks/use-motion-preference": { useMotionPreference: () => false },
     react: { useEffect() {} },
     "react/jsx-runtime": { jsx: (type: unknown, props: Node["props"]) => ({ type, props }),
       jsxs: (type: unknown, props: Node["props"]) => ({ type, props }) },

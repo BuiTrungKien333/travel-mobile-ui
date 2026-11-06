@@ -1,4 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRef } from "react";
+import { uploadAvatar } from "../api/avatar-api";
 import { ApiError } from "@/services/api/api-error";
 import type { UpdateProfile } from "../types/auth-types";
 
@@ -49,9 +51,19 @@ export function useProfile() {
 
 export function useUpdateProfile() {
   const client = useQueryClient();
+  const uploaded = useRef<{ uri: string; url: string; version: number } | null>(null);
   return useMutation({
-    mutationFn: async (values: UpdateProfile) => {
+    mutationFn: async ({ avatarPhoto, ...values }: UpdateProfile & { avatarPhoto?: string }) => {
       const version = authSession.getVersion();
+      if (avatarPhoto) {
+        if (uploaded.current?.uri !== avatarPhoto || uploaded.current.version !== version) {
+          const url = await uploadAvatar(avatarPhoto);
+          if (version !== authSession.getVersion()) throw new ApiError("CANCELLED");
+          uploaded.current = { uri: avatarPhoto, url, version };
+        }
+        values.avatarUrl = uploaded.current.url;
+      }
+      if (version !== authSession.getVersion()) throw new ApiError("CANCELLED");
       const user = await authApi.updateProfile(values);
       if (version !== authSession.getVersion()) throw new ApiError("CANCELLED");
       return user;

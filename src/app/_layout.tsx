@@ -1,5 +1,6 @@
 import { QueryClientProvider, focusManager } from "@tanstack/react-query";
 import { Stack } from "expo-router";
+import { useMotionPreference } from "@/hooks/use-motion-preference";
 import { ThemeProvider } from "expo-router/react-navigation";
 import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
@@ -25,6 +26,7 @@ import { Roboto_600SemiBold } from "@expo-google-fonts/roboto/600SemiBold";
 import { Roboto_700Bold } from "@expo-google-fonts/roboto/700Bold";
 
 export default function RootLayout() {
+  const reducedMotion = useMotionPreference();
   const status = useAuthStore((state) => state.status);
   useEffect(() => {
     // Tạm ngưng khôi phục phiên/gọi refresh API trong bản xem trước UI.
@@ -56,6 +58,7 @@ export default function RootLayout() {
             <Stack
               screenOptions={{
                 headerShown: false,
+                animation: reducedMotion ? "none" : "default",
                 contentStyle: {
                   backgroundColor: lightTheme.colors.background,
                 },

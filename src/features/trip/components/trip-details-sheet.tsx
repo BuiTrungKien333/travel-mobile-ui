@@ -58,8 +58,8 @@ export function TripDetailsSheet({
   const weather = variant === "weather";
   const safeTop = insets.top + (topSpacing ?? theme.spacing.lg);
   const { copy } = useTripDetailsCopy();
-  const { sheetMotion, backdropMotion, dragGesture, close: dismiss, reduceMotion } =
-    usePickerSheetMotion(onClose, beforeClose);
+  const { sheetMotion, backdropMotion, dragGesture, close: dismiss } =
+    usePickerSheetMotion(onClose, beforeClose, dismissible);
   const close = () => { if (dismissible) dismiss(); };
   const handle = (
     <View
@@ -80,7 +80,7 @@ export function TripDetailsSheet({
       visible
       onShow={onShow}
       statusBarTranslucent
-      animationType={reduceMotion ? "none" : "fade"}
+      animationType="none"
       onRequestClose={() => close()}
     >
       <GestureHandlerRootView style={styles.fill}>

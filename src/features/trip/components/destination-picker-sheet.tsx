@@ -55,7 +55,7 @@ function DestinationPickerSession({
   const destinations = useDestinations(customInput);
   const [isInputFocused, setIsInputFocused] = useState(false);
 
-  const { sheetMotion, backdropMotion, dragGesture, close, reduceMotion } =
+  const { sheetMotion, backdropMotion, dragGesture, close } =
     usePickerSheetMotion(onClose);
   const { copy } = useTripCopy();
   const handleSelect = (dest: string) => {
@@ -78,7 +78,7 @@ function DestinationPickerSession({
     <Modal
       transparent
       visible={visible}
-      animationType={reduceMotion ? "none" : "fade"}
+      animationType="none"
       statusBarTranslucent
       onRequestClose={() => close()}
     >

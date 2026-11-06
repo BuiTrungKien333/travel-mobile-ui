@@ -8,6 +8,7 @@ Hãy đọc `AGENTS.md` nếu chưa có trong ngữ cảnh, rồi xem phần m�
 - `docs/P0-04-ACCEPTANCE.md`
 - `docs/P1-01-ACCEPTANCE.md`
 - `docs/P1-02-ACCEPTANCE.md`
+- `docs/P1-03-ACCEPTANCE.md`
 
 Đây là đồ án môn Phát triển ứng dụng di động của sinh viên năm cuối. Ưu tiên app chạy đúng, thao tác rõ ràng, UI/UX mượt và đẹp; giữ Ocean Teal, Roboto, theme sáng, cỡ chữ gọn và navigation icon-only đã chốt. Không tự nâng dependency hoặc triển khai hạ tầng production.
 
@@ -25,6 +26,8 @@ P1-01 đã được triển khai phần code theo yêu cầu ngày 06/11/2026: �
 
 P1-02 đã được triển khai phần code theo yêu cầu ngày 06/11/2026: đọc mốc phần 10 và checklist P1-02. Chỉ cần reload mobile; QA bàn phím/Back/gesture trên điện thoại còn chờ.
 
-Nếu người dùng yêu cầu code tiếp, bám kế hoạch và lỗi QA thực tế; giai đoạn kế tiếp là P1-03 (chuyển động, gesture và hiệu năng cảm nhận), không tự chuyển sang production. Mặc định làm một phần có thể review rồi dừng; không tự commit/push.
+P1-03 đã được triển khai phần code ngày 06/11/2026: đọc mốc phần 11 và checklist P1-03. Người dùng chưa tiện cắm điện thoại và chọn hoàn thiện code/checklist trước, nên đo FPS/jank/gesture trên máy thật còn chờ. Chỉ reload mobile cho code mới, không cần native build riêng.
+
+Nếu người dùng yêu cầu code tiếp, bám kế hoạch và lỗi QA thực tế; giai đoạn kế tiếp là P1-04 (những tính năng làm rõ giá trị app du lịch), không tự chuyển sang production. Mặc định làm một phần có thể review rồi dừng; không tự commit/push.
 
 Không tự commit/push. Giữ thay đổi của người dùng, không đọc/ghi đè bí mật trong .env. Báo đúng kiểm tra đã chạy; test với platform/HTTP double không thay thế QA thiết bị.

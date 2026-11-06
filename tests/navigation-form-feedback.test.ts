@@ -94,6 +94,7 @@ test("dirty sheet asks before its closing animation; cancelling a swipe leaves t
   let closed = 0;
   const timingTargets: number[] = [];
   const pan = {
+    enabled(_value: boolean) { return this; }, maxPointers(_value: number) { return this; },
     activeOffsetY(_value: unknown) { return this; }, failOffsetX(_value: unknown) { return this; },
     onUpdate(_callback: unknown) { return this; }, onFinalize(_callback: unknown) { return this; },
     onEnd(callback: typeof panEnd) { panEnd = callback; return this; },
@@ -108,7 +109,7 @@ test("dirty sheet asks before its closing animation; cancelling a swipe leaves t
       useSharedValue: <T>(initial: T) => { let value = initial; return { get: () => value, set: (next: T) => { value = next; } }; },
       withTiming: (target: number, _options: unknown, finish?: (finished: boolean) => void) => { timingTargets.push(target); finish?.(true); return target; },
     },
-    "react-native-worklets": { scheduleOnRN: (callback: () => void) => callback() },
+    "react-native-worklets": { scheduleOnRN: (callback: (...args: unknown[]) => void, ...args: unknown[]) => callback(...args) },
     "@/hooks/use-app-theme": { useAppTheme: () => tokens },
   });
   const { usePickerSheetMotion } = load<typeof import("../src/features/trip/hooks/use-picker-sheet-motion.ts")>("src/features/trip/hooks/use-picker-sheet-motion.ts");

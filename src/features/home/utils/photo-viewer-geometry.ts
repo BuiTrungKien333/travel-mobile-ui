@@ -92,3 +92,10 @@ export function zoomOffset(
   "worklet";
   return focal - center - ((focal - center - offset) / oldScale) * newScale;
 }
+/** Carousel geometry uses absolute page indices while only mounting adjacent images. */
+export function photoViewerPages(index: number, count: number): number[] {
+  if (!Number.isInteger(index) || !Number.isInteger(count) || count < 1 || index < 0 || index >= count) return [];
+  const start = Math.max(0, index - 1);
+  const end = Math.min(count - 1, index + 1);
+  return Array.from({ length: end - start + 1 }, (_, offset) => start + offset);
+}

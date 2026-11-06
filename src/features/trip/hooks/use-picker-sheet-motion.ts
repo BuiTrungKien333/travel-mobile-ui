@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
+import { useDismissLifecycle } from "@/hooks/use-dismiss-lifecycle";
 import { Keyboard, useWindowDimensions } from "react-native";
 import { Gesture } from "react-native-gesture-handler";
 import {
@@ -14,13 +15,13 @@ import { scheduleOnRN } from "react-native-worklets";
 import { useAppTheme } from "@/hooks/use-app-theme";
 
 /** Mount one session per opening; apply commits only after the exit animation finishes. */
-export function usePickerSheetMotion(onClose: () => void, beforeClose?: (leave: () => void) => void) {
+export function usePickerSheetMotion(onClose: () => void, beforeClose?: (leave: () => void) => void, enabled = true) {
   const theme = useAppTheme();
   const { height } = useWindowDimensions();
   const reduceMotion = useReducedMotion();
   const closing = useSharedValue(false);
   const translateY = useSharedValue<number>(theme.layout.sheetEntryOffset);
-  const commit = useRef<(() => void) | undefined>(undefined);
+  const dismissal = useDismissLifecycle(onClose);
   const enterDuration = theme.motion.tabTransitionDuration;
   const exitDuration = theme.motion.sheetDismissDuration;
   const dismissDistance = theme.layout.sheetDismissDistance;
@@ -38,29 +39,30 @@ export function usePickerSheetMotion(onClose: () => void, beforeClose?: (leave: 
     return () => cancelAnimation(translateY);
   }, [enterDuration, translateY]);
 
-  function finishClose() {
-    Keyboard.dismiss();
-    const apply = commit.current;
-    commit.current = undefined;
-    apply?.();
-    onClose();
+  function cancelClose(serial: number) {
+    if (!dismissal.cancel(serial)) return;
+    closing.set(false);
+    translateY.set(withTiming(0, { duration: enterDuration, reduceMotion: ReduceMotion.System }));
   }
   function close(afterClose?: () => void) {
-    if (closing.get()) return;
+    if (!enabled) return;
+    const serial = dismissal.begin(afterClose);
+    if (serial === undefined) return;
     closing.set(true);
-    commit.current = afterClose;
     Keyboard.dismiss();
     translateY.set(
       withTiming(
         height,
         { duration: exitDuration, reduceMotion: ReduceMotion.System },
         (finished) => {
-          if (finished) scheduleOnRN(finishClose);
+          if (finished) scheduleOnRN(dismissal.complete, serial);
+          else scheduleOnRN(cancelClose, serial);
         },
       ),
     );
   }
   function requestClose(afterClose?: () => void) {
+    if (!enabled) return;
     if (beforeClose) beforeClose(() => close(afterClose));
     else close(afterClose);
   }
@@ -71,6 +73,8 @@ export function usePickerSheetMotion(onClose: () => void, beforeClose?: (leave: 
     opacity: Math.max(0, Math.min(1, 1 - translateY.get() / fadeDistance)),
   }));
   const dragGesture = Gesture.Pan()
+    .enabled(enabled)
+    .maxPointers(1)
     .activeOffsetY(theme.spacing.sm)
     .failOffsetX([-theme.spacing.lg, theme.spacing.lg])
     .onUpdate((event) => {
@@ -85,19 +89,8 @@ export function usePickerSheetMotion(onClose: () => void, beforeClose?: (leave: 
       ) {
         if (beforeClose) {
           translateY.set(withTiming(0, { duration: enterDuration, reduceMotion: ReduceMotion.System }));
-          scheduleOnRN(requestClose);
-          return;
         }
-        closing.set(true);
-        translateY.set(
-          withTiming(
-            height,
-            { duration: exitDuration, reduceMotion: ReduceMotion.System },
-            (finished) => {
-              if (finished) scheduleOnRN(finishClose);
-            },
-          ),
-        );
+        scheduleOnRN(requestClose);
       } else
         translateY.set(
           withTiming(0, {

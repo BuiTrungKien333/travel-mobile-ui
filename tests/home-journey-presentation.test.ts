@@ -36,7 +36,7 @@ test("draft dates and cancelled trips never become ongoing journeys or completed
   assert.equal(selectHomeJourney([trip({ startDate: today, endDate: today })], today).state, "ongoing");
 });
 
-type Props = { children?: unknown; onPress?: () => void; visible?: boolean; onCreated?: (id: string) => void; tripId?: string };
+type Props = { children?: unknown; label?: string; onPress?: () => void; visible?: boolean; onCreated?: (id: string) => void; tripId?: string };
 function nodes(node: unknown, type: string): ReactElement<Props>[] {
   if (Array.isArray(node)) return node.flatMap((item) => nodes(item, type));
   if (!isValidElement<Props>(node)) return [];
@@ -90,4 +90,11 @@ test("background request errors retain the cached Home journey and its primary a
   const f = homeFixture([trip()], true);
   assert.ok(nodes(f.render(), "AppButton").some((node) => node.props.children === "Xem kế hoạch"));
   assert.equal(nodes(f.render(), "QueryFeedback").length, 1);
+});
+
+test("today plan opens the selected server trip on today's calendar date", () => {
+  const f = homeFixture([trip({ status: "ACTIVE", id: "active" })]);
+  const action = nodes(f.render(), "TextAction").find((node) => node.props.label === "Xem lịch hôm nay");
+  assert.ok(action); action.props.onPress?.();
+  assert.equal(JSON.stringify(f.routes[0]), JSON.stringify({ pathname: "/trip/[tripId]", params: { tripId: "active", day: today } }));
 });
