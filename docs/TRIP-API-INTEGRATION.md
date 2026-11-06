@@ -18,7 +18,7 @@ Cập nhật: **03/11/2026**. Phạm vi: **tạo → danh sách → chi tiết m
 - Idempotency: cùng owner + key + normalized payload không tạo trùng; concurrent requests trả một 201 và một 200. Khác payload trả409.
 - Frontend: DTO Zod, shared Axios, React Query theo owner, form tạo dùng request key giữ nguyên khi retry cùng payload.
 - Không đưa query data vào preview store. Lúc tích hợp, store fixture được làm rỗng để các route chưa nối không dùng nhầm dữ liệu mẫu.
-- Preview UI vẫn giữ nguyên. Chế độ thật dùng danh sách chuyến đi ở cả tab Home và Chuyến đi trong đợt này; dashboard Home thật nằm ở phase sau.
+- Home ở chế độ thật kiểm tra tổng số chuyến đi từ API: tài khoản chưa có chuyến đi dùng lại giao diện Người dùng mới (card chuyến đầu tiên + lịch trình mẫu) đã thiết kế. Loading/error không bị nhận nhầm là tài khoản rỗng. Tạo chuyến đi dùng form/API thật; ví dụ là sandbox, không ghi chuyến mẫu. Khi đã có chuyến đi vẫn dùng list thật trong lúc chờ API dashboard tổng hợp. Preview bốn trạng thái giữ nguyên thiết kế.
 - Chi tiết thật tái sử dụng khung map co giãn/header/date selector; hiện metadata thật và trạng thái chưa kết nối, không hiện đường đi/thời tiết/điểm dừng giả.
 - Nút `…` trong chi tiết mở Sửa / Nhật ký / Xóa. Form sửa dùng cùng UI preview, pending/error/retry, xác nhận date impact và giữ form khi 409. Nhật ký vẫn là module chưa nối.
 - Chức năng thêm địa điểm vào lịch báo chưa kết nối, không gửi fixture ID. Destination picker tạo/sửa đã nối Province: dòng danh mục gửi ID thật; dòng tự nhập/submit gửi provinceId=null. Có loading/empty/error/retry/load more; preview vẫn dùng dữ liệu mẫu.

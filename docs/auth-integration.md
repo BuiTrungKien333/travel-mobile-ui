@@ -1,5 +1,7 @@
 # Tích hợp auth
 
+**Dev web hiện tại · 05/11/2026:** frontend `http://localhost:8082`, API `http://localhost:18080`. Các URL trong email dùng `http://localhost:8082/verify-email`, `/reset-password` và `/google-link`. Đã đổi fallback profile dev, local backend env và env example; CORS dev đã có origin 8082. Khởi động lại backend để áp dụng, gửi lại link mới; email cũ không tự đổi URL. Native dùng scheme override theo hướng dẫn bên dưới. Google popup cần authorized origin 8082 ở Cloud Console, xem [google-auth.md](google-auth.md).
+
 **Review Phase 1 · 03/11/2026:** đã chạy 337 tests backend/194 mobile, sửa cache khi Google link đổi account; các giới hạn và nghiệm thu còn lại được ghi ở [PHASE-1-AUTH-REVIEW-2026-11-03.md](PHASE-1-AUTH-REVIEW-2026-11-03.md). Không coi build/tests là xác nhận SMTP/Google/device thật.
 
 ## Bổ sung từ `minhduc` · 03/11/2026
@@ -44,7 +46,7 @@ AUTH_RESEND_COOLDOWN=60s
 
 - Development build đã cài trên điện thoại: dùng scheme `travelplannermobileui` có sẵn trong `app.json`.
 - Expo Go: dùng URL của Metro hiện tại, ví dụ `exp://192.168.1.8:8081/--/verify-email` và `exp://192.168.1.8:8081/--/reset-password`. Port/IP phải khớp Metro; link chỉ dùng được khi Metro còn chạy.
-- Web development: `http://localhost:8081/verify-email` và `/reset-password`; từ điện thoại thay localhost bằng IP LAN. Web production cần host static hỗ trợ các route đã export.
+- Web development hiện tại: `http://localhost:8082/verify-email` và `/reset-password`; từ điện thoại thay localhost bằng IP LAN. Web production cần host static hỗ trợ các route đã export.
 - Production: cấu hình URL HTTPS thật. Để HTTPS mở trực tiếp app, cần domain cùng Universal Links/App Links; chưa cấu hình vì chưa có domain. Custom scheme/HTTP/Expo Go chỉ được cho phép ở profile `dev`.
 - Gmail: `smtp.gmail.com`, port 587, username là Gmail, password là App Password (cần bật xác minh hai bước); `AUTH_EMAIL_FROM` dùng địa chỉ gửi phù hợp.
 - Mailpit local: localhost:1025, `MAIL_SMTP_AUTH=false`, `MAIL_STARTTLS=false`, `MAIL_SSL_ENABLED=false`; chỉ dùng development. Inbox local không gửi đến hộp thư thật.

@@ -2,7 +2,7 @@
 
 **Ngày lập:** 02/11/2026
 
-**Trạng thái:** Đã bắt đầu triển khai theo từng module; chưa hoàn tất tích hợp MVP. Mốc mới nhất: Phase 2 đủ 7 operations và picker Province tạo/sửa, 357 backend/215 mobile tests đạt. Backend `integration/team-sync` vẫn tạm hoãn theo yêu cầu; master data và QA môi trường thực còn mở.
+**Trạng thái:** Phase 2 đủ 7 operations và picker Province tạo/sửa (357 backend/215 mobile tests ở lượt đó). Đã khảo sát/chốt đặc tả Phase 3 ngày 03/11: 9 API planned, chưa triển khai runtime. Backend `integration/team-sync` vẫn chưa merge; master data và QA môi trường thực còn mở.
 
 **Frontend:** `E:\travel-mobile-ui`
 
@@ -302,6 +302,10 @@ Theo thông điệp UI hiện tại, xóa chuyến làm chuyến và kỷ niệm
 
 ## 5. Phase 3 — Tìm kiếm và chi tiết địa điểm
 
+**Khảo sát/contract 03/11/2026:** xem [PHASE-3-PLACES-CONTRACT.md](PHASE-3-PLACES-CONTRACT.md) và [OpenAPI](api/places-discovery.openapi.json). Cả 9 API bên dưới vẫn **planned**, không phải endpoint đã có. Backend hiện mới có Place entity/repository; client `/places/search` nhập từ đồng đội chưa có endpoint tương ứng. Ưu tiên 3A internal read + provenance/owner-aware references trước custom; 3B Google search/resolve preview; 3C saved locations. Không merge backend hoặc sửa thuật toán planning.
+
+**Quy tắc cụ thể ưu tiên hơn DTO minh họa bên dưới:** resolve Google trả preview `id:null` + typed reference, không insert Place/TripPlace; chỉ INTERNAL/USER có UUID. Lưu Google vào itinerary và retention cần chốt trước Phase 4. Không lưu toàn bộ Google content vào DB hoặc hiển thị trên sơ đồ fallback. Thêm nguồn USER đòi hỏi chặn lookup UUID chéo tài khoản, kể cả initialPlaceIds của Trip create và lookup enrichment trong public planning. Chưa harden thì chưa bật custom writes.
+
 **Module:** Place discovery và địa điểm riêng.
 
 **Phụ thuộc:** Phase 2.
@@ -331,10 +335,10 @@ Autocomplete trả tập gợi ý nhỏ có giới hạn thay vì Page database:
 
 ```text
 PlaceDetail {
-  id, source, googlePlaceId?,
+  id?, reference, source,
   name, formattedAddress,
   latitude, longitude, provinceId?, category?,
-  openingHours?, openingStatus?, openingStatusAsOf?,
+  environmentType, openingHours?, openingStatus, businessStatus, openingStatusAsOf?,
   admission?, amenities[], tips[], description?,
   photos[] { url, attribution? },
   attribution?, dataAvailability, updatedAt?
@@ -620,6 +624,8 @@ PackingSummary {
 **Nghiệm thu:** đổi ngày đúng forecast; tick giữ sau restart/trên web; thiếu weather không crash hoặc đưa lời khuyên giả.
 
 ## 10. Phase 8 — Home, dấu ấn và các màn tổng hợp
+
+**Follow-up 05/11/2026:** Home tài khoản chưa có chuyến đã nối vào query Trip và dùng lại `NewUserHomeScreen` với thiết kế preview gốc. Chỉ hiện khi query thành công và tổng số chuyến bằng 0; loading/error có trạng thái riêng. CTA tạo dùng API thật, ví dụ giữ sandbox. Các dashboard có chuyến, dấu ấn và dữ liệu tổng hợp vẫn theo phạm vi Phase 8; chưa coi phase này hoàn tất.
 
 **Module:** Dashboard, Journey và Memories overview.
 

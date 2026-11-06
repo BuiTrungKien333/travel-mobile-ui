@@ -9,7 +9,6 @@ import Animated, {
 import { AppIcon } from "@/components/ui/app-icon";
 import { useAmbientMotion } from "@/hooks/use-ambient-motion";
 import { useAppTheme } from "@/hooks/use-app-theme";
-import { GlassBackdrop } from "./glass-backdrop";
 
 export function NavigationCameraButton({
   onPress,
@@ -26,14 +25,12 @@ export function NavigationCameraButton({
   const pulseScale = theme.motion.shutterPulseScale;
   const glowOpacity = theme.motion.shutterGlowOpacity;
   const glowVariation = theme.motion.shutterGlowVariation;
+  const size = theme.layout.tabBarCameraSize;
+  const ring = theme.layout.tabBarCameraRingWidth;
+  const diskSize = size - ring * 2;
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      {
-        scale:
-          pressed.value *
-          (1 + Math.sin(progress.value * Math.PI * 4) * pulseScale),
-      },
-    ],
+    // Ambient motion belongs to the halo; the actual button keeps its diameter.
+    transform: [{ scale: pressed.value }],
   }));
   const glowStyle = useAnimatedStyle(() => ({
     opacity:
@@ -50,7 +47,7 @@ export function NavigationCameraButton({
     });
   };
   const gradientUri = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><defs><linearGradient id="shutter" x2="1" y2="1"><stop stop-color="${theme.colors.primary}"/><stop offset="1" stop-color="${theme.colors.gradientActionEnd}"/></linearGradient></defs><rect width="64" height="64" fill="url(#shutter)"/></svg>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${diskSize}" height="${diskSize}" viewBox="0 0 ${diskSize} ${diskSize}"><defs><linearGradient id="shutter" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="${diskSize}" y2="${diskSize}"><stop offset="0" stop-color="${theme.colors.primary}"/><stop offset="1" stop-color="${theme.colors.gradientActionEnd}"/></linearGradient></defs><rect width="${diskSize}" height="${diskSize}" fill="url(#shutter)"/></svg>`,
   )}`;
   return (
     <Animated.View style={animatedStyle}>
@@ -76,12 +73,10 @@ export function NavigationCameraButton({
         onPressIn={() => setPressScale(theme.motion.shutterPressScale)}
         onPressOut={() => setPressScale(1)}
         style={{
-          width: theme.layout.tabBarCameraSize,
-          height: theme.layout.tabBarCameraSize,
-          padding: theme.spacing.xxs,
+          width: size,
+          height: size,
           borderRadius: theme.radius.full,
-          borderWidth: StyleSheet.hairlineWidth,
-          borderColor: theme.colors.navigationBorder,
+          backgroundColor: theme.colors.surface,
           boxShadow: [
             {
               ...theme.elevation.navigationCamera,
@@ -90,22 +85,26 @@ export function NavigationCameraButton({
           ],
         }}
       >
-        <GlassBackdrop borderRadius={theme.radius.full} variant="navigation" />
         <View
           style={[
             styles.disk,
             {
               borderRadius: theme.radius.full,
-              backgroundColor: theme.colors.gradientActionEnd,
-              borderWidth: StyleSheet.hairlineWidth,
-              borderColor: theme.colors.raisedActionHighlight,
+              left: ring,
+              top: ring,
+              width: diskSize,
+              height: diskSize,
+              backgroundColor: theme.colors.primary,
             },
           ]}
         >
           <Image
             accessible={false}
+            pointerEvents="none"
             source={{ uri: gradientUri }}
-            contentFit="cover"
+            contentFit="fill"
+            cachePolicy="memory"
+            transition={0}
             style={StyleSheet.absoluteFill}
           />
           <View
@@ -134,7 +133,7 @@ export function NavigationCameraButton({
 }
 const styles = StyleSheet.create({
   disk: {
-    flex: 1,
+    position: "absolute",
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
@@ -142,6 +141,6 @@ const styles = StyleSheet.create({
   highlight: {
     position: "absolute",
     height: "50%",
-    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopWidth: 1,
   },
 });

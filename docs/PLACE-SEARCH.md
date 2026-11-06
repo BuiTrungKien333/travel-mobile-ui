@@ -1,5 +1,7 @@
 # Tìm và thêm địa điểm · 27/10/2026
 
+**Hợp đồng tích hợp mới · 03/11/2026:** [Phase 3 Places](PHASE-3-PLACES-CONTRACT.md) đối chiếu source thực tế và chốt identity/API/ownership/provider rules. 9 endpoints còn planned; phần dưới mô tả UI preview, không phải backend đã nối. Giữ bố cục khi triển khai connected containers.
+
 ## Sửa lịch trình trong ngày · 29/10/2026
 
 - `TripDayScheduleForm` thay `TripStartPointForm`, mở từ nút/nốt điểm xuất phát hiện tại, tiêu đề Sửa lịch trình trong ngày. Ô tìm tên/địa chỉ dùng cùng `searchPlaces` (VI/EN, không dấu, địa chỉ), catalogue mẫu và địa chỉ mẫu; cho phép nhập địa chỉ bất kỳ. Dropdown riêng chứa đúng các địa điểm trong ngày để chọn nhanh. Chưa geocode/Google Maps/GPS.

@@ -1,8 +1,31 @@
 # Tiến độ Travel Mobile UI
 
-Cập nhật: **03/11/2026**. Phạm vi: frontend Home, danh sách/tạo/chi tiết chuyến đi, camera và chuẩn bị hợp đồng tích hợp. Ngày trong fixture Home vẫn là **21/10/2026** để tái hiện các trạng thái.
+Cập nhật: **05/11/2026**. Phạm vi: frontend Home, danh sách/tạo/chi tiết chuyến đi, camera và chuẩn bị hợp đồng tích hợp. Ngày trong fixture Home vẫn là **21/10/2026** để tái hiện các trạng thái.
+
+### Bottom navigation web/Android · 05/11/2026
+
+- Tinh chỉnh theo ảnh đối chiếu 06/11: Home/Cá nhân dịch ra ngoài đối xứng tối đa 8dp, giữ nguyên hai tab sát camera và tự giới hạn theo chiều rộng. Camera dùng đường kính 58dp, lõi 54dp, vòng trắng 2dp; SVG gradient có tọa độ rõ ràng, bỏ lớp backdrop riêng và chỉ animate halo thay vì phóng cả nút. 6 tests navigation đạt, TypeScript/no-unused đạt; chưa xác nhận trực quan bản mới trên Android.
+- `floatingNavigationLayout` tính vị trí hai nhóm tab, chấm active và camera từ cùng chiều rộng frame đã đo; bỏ phân bổ bằng flex độc lập và margin theo tâm toàn màn hình. Giữ 4 icon, camera giữa, notch và màu Ocean Teal.
+- Frame bao trọn phần camera nhô lên để vùng chạm native không vượt ngoài parent. Body/row có chiều cao rõ ràng; safe-area bottom tính một lần, giữ khoảng nổi tối thiểu. Gap âm cũ được thay bằng 0 (trước đó renderer đã clamp về 0); không dùng negative gap để ép icon gần nhau.
+- Web/native dùng chung `NavigationBarSurface` và SVG mặt nền; tách rgba thành RGB + alpha của SVG, bỏ filter shadow trong SVG native. Shadow dùng View, web bổ sung CSS backdrop blur cùng path; Android dùng nền bán trong suốt, không tuyên bố có native Liquid Glass/blur.
+- **224 tests đạt**, gồm 4 test mới về các viewport, tọa độ giữa platform, hit targets/clearance, tab events/keyboard và SVG material chung; TypeScript strict/no-unused đạt. Metro web và Android đều trả bundle HTTP 200 có các module navigation mới (Android retry sau lượt cold bundle timeout). Không thêm dependency, không lint/Expo Doctor. Chụp cửa sổ Pixel 7 qua computer-use bị timeout sau một lượt phục hồi; chưa xác nhận trực quan Android, không coi test hình học/bundle là screenshot QA.
+
+### Home tài khoản mới sau đăng nhập · 05/11/2026
+
+- Sửa tab Home API trước đó trỏ thẳng vào danh sách chuyến đi: `ConnectedHomeScreen` chỉ hiển thị Người dùng mới sau khi query thành công và `totalElements=0`; loading/error có phản hồi/thử lại riêng.
+- Tách `NewUserHomeScreen` dùng chung cho preview và API, giữ nguyên logo/header, greeting, card chuyến đầu tiên/animation/CTA và lịch trình mẫu Glassmorphism. API không hiện nhãn cả app là phiên preview; ví dụ vẫn là sandbox có nhãn minh họa, không tạo fake Trip.
+- Tạo chuyến đi mở form/API hiện có; server query được invalidate sau tạo/xóa. Không đổi auth/preview flag hoặc copy server data vào fixture store. Home có chuyến vẫn dùng fallback list thật đến phase dashboard tổng hợp.
+- TypeScript strict/no-unused và **220 tests đạt**, gồm 5 test mới về route, empty/loading/error/retry, thay đổi số chuyến và action tạo/sample. Export Android/Hermes và web đạt; web chạy lại trực tiếp Expo CLI sau lỗi wrapper PowerShell. Không lint theo yêu cầu; chưa nghiệm thu trực tiếp tài khoản thật trên UI máy ảo.
 
 ## Hợp đồng Trip CRUD · 02/11/2026
+
+### Phase 3 — Khảo sát và contract Places · 03/11/2026
+
+- Đã đối chiếu backend/mobile và xuất [contract triển khai](PHASE-3-PLACES-CONTRACT.md) + [OpenAPI 9 operations planned](api/places-discovery.openapi.json). Chưa thêm API Phase 3 hoặc nối UI.
+- Backend chỉ có model/repository Place, chưa có discovery/provider; client search nhập từ đồng đội chưa khớp endpoint. UI tìm/chi tiết vẫn dùng fixtures; connected cần nhận dữ liệu tường minh, không tự đọc giá/giờ mẫu.
+- Chốt tách UUID nội bộ / Google reference / TripPlace / ItineraryItem. Google resolve chỉ preview, không DB write; không lưu toàn bộ nội dung provider. Custom cần source/owner/idempotency và guard mọi tham chiếu, gồm Trip initialPlaceIds và public planning metadata lookup, trước khi bật.
+- Tiếp theo: lát cắt 3A internal suggestions/detail và bảo vệ provenance/ownership trước custom; rồi 3B Google preview. Materialize Google vào lịch, Photos, QA thiết bị/HTTP e2e và Phase 1 production gates còn mở. Backend đồng đội vẫn chưa merge.
+- Lượt này chỉ tài liệu: kiểm tra OpenAPI/schema/examples/refs và diff; không chạy lại app/backend tests/build, không gọi Google thật hoặc DB cá nhân. Các số kiểm thử bên dưới là mốc Phase 2 đã chạy trước đó.
 
 ### Phase 2 — Danh mục điểm đến và picker API · 03/11/2026
 

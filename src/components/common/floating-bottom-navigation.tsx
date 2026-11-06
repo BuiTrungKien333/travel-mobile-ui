@@ -2,7 +2,7 @@ import {
   BottomTabBarHeightCallbackContext,
   type BottomTabBarProps,
 } from "expo-router/js-tabs";
-import { Fragment, useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Keyboard, Platform, Pressable, StyleSheet, View } from "react-native";
 import Animated, {
   Easing,
@@ -11,8 +11,8 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
 import { useAppTheme } from "@/hooks/use-app-theme";
+import { floatingNavigationLayout } from "./floating-navigation-layout";
 import { NavigationCameraButton } from "./navigation-camera-button";
 import { NotchedNavigationBackdrop } from "./notched-navigation-backdrop";
 
@@ -22,7 +22,7 @@ type FloatingBottomNavigationProps = BottomTabBarProps & {
   animationEnabled?: boolean;
 };
 
-/** Floating over scenes; scroll content reserves the measured tab-bar height. */
+/** Measure one frame, including the raised shutter, so native hit areas stay inside it. */
 export function FloatingBottomNavigation({
   state,
   descriptors,
@@ -34,33 +34,14 @@ export function FloatingBottomNavigation({
   const theme = useAppTheme();
   const insets = useSafeAreaInsets();
   const onHeightChange = useContext(BottomTabBarHeightCallbackContext);
-  const [rowWidth, setRowWidth] = useState(0);
+  const [frameWidth, setFrameWidth] = useState(0);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const geometry = floatingNavigationLayout(frameWidth, theme.layout);
   const activeTab = state.index;
-  const cameraSize = theme.layout.tabBarCameraSize;
-  const preferredCameraSlot =
-    cameraSize + theme.layout.tabBarCameraSideSpacing * 2;
-  // Keep room around the camera on small screens while preserving 44px touch targets.
-  const itemWidth =
-    rowWidth > 0 &&
-    rowWidth < preferredCameraSlot + theme.layout.touchTarget * 4
-      ? theme.layout.compactTouchTarget
-      : theme.layout.touchTarget;
-  // Native layout clamps negative gaps to zero; keep indicator geometry in sync.
-  const groupGap = Math.max(0, theme.layout.tabBarGroupGap);
-  const groupWidth = itemWidth * 2 + groupGap;
-  // Fixed-size pairs stay compact; only the central clearance adapts on narrow screens.
-  const cameraSlotWidth = Math.min(
-    preferredCameraSlot,
-    Math.max(0, rowWidth - groupWidth * 2),
-  );
-  const sideWidth = (rowWidth - cameraSlotWidth) / 2;
-  const activeTabOffset =
-    activeTab < 2
-      ? sideWidth - groupWidth + activeTab * (itemWidth + groupGap)
-      : sideWidth + cameraSlotWidth + (activeTab - 2) * (itemWidth + groupGap);
   const indicatorWidth = theme.layout.tabBarActiveDotSize;
-  const duration = theme.motion.tabTransitionDuration;
+  const activeTabOffset =
+    geometry.tabLeft[activeTab] + (geometry.itemWidth - indicatorWidth) / 2;
+  const duration = animationEnabled ? theme.motion.tabTransitionDuration : 0;
   const hideOnKeyboard =
     descriptors[state.routes[activeTab].key].options.tabBarHideOnKeyboard;
   const hidden = hideOnKeyboard && keyboardVisible;
@@ -100,6 +81,7 @@ export function FloatingBottomNavigation({
   );
 
   if (hidden) return null;
+  const rowHeight = geometry.barHeight - theme.layout.tabBarPadding * 2;
 
   return (
     <View
@@ -110,10 +92,10 @@ export function FloatingBottomNavigation({
       style={[
         styles.dock,
         {
-          paddingTop: theme.layout.tabBarCameraRise + theme.spacing.xs,
+          paddingTop: theme.spacing.xs,
           paddingBottom: Math.max(
-            theme.spacing.lg,
-            insets.bottom + theme.spacing.xs,
+            theme.spacing.xl,
+            insets.bottom + theme.spacing.md,
           ),
           paddingLeft: insets.left + theme.spacing.lg,
           paddingRight: insets.right + theme.spacing.lg,
@@ -121,66 +103,60 @@ export function FloatingBottomNavigation({
       ]}
     >
       <View
+        pointerEvents="box-none"
+        onLayout={({ nativeEvent }) => setFrameWidth(nativeEvent.layout.width)}
         style={[
-          styles.shell,
+          styles.frame,
           {
             maxWidth: theme.layout.tabBarMaxWidth,
-            padding: theme.layout.tabBarPadding,
-            borderRadius: theme.radius.full,
+            paddingTop: theme.layout.tabBarCameraRise,
+            opacity: frameWidth > 0 ? 1 : 0,
           },
         ]}
       >
-        <NotchedNavigationBackdrop
-          width={rowWidth ? rowWidth + theme.layout.tabBarPadding * 2 : 0}
-          height={
-            Math.max(
-              theme.layout.touchTarget,
-              theme.layout.tabBarHeight - theme.layout.tabBarPadding * 2,
-            ) +
-            theme.layout.tabBarPadding * 2
-          }
-        />
         <View
-          accessibilityRole="tablist"
-          onLayout={({ nativeEvent }) => setRowWidth(nativeEvent.layout.width)}
-          style={styles.row}
+          style={{
+            height: geometry.barHeight,
+            padding: theme.layout.tabBarPadding,
+          }}
         >
-          {rowWidth > 0 ? (
-            <Animated.View
-              aria-hidden
-              accessibilityElementsHidden
-              importantForAccessibility="no-hide-descendants"
-              style={[
-                styles.indicator,
-                {
-                  left: (itemWidth - indicatorWidth) / 2,
-                  width: indicatorWidth,
-                  height: indicatorWidth,
-                  bottom: theme.layout.tabBarItemPaddingVertical,
-                  borderRadius: theme.radius.full,
-                  backgroundColor: theme.colors.navigationActive,
-                },
-                indicatorStyle,
-              ]}
-            />
-          ) : null}
-          {[state.routes.slice(0, 2), state.routes.slice(2)].map(
-            (routes, groupIndex) => (
-              <Fragment key={groupIndex === 0 ? "left" : "right"}>
-                {groupIndex === 1 ? (
-                  <View
-                    aria-hidden
-                    pointerEvents="none"
-                    style={{ width: cameraSlotWidth, flexShrink: 0 }}
-                  />
-                ) : null}
+          <NotchedNavigationBackdrop
+            width={frameWidth}
+            height={geometry.barHeight}
+          />
+          <View
+            accessibilityRole="tablist"
+            style={[styles.row, { height: rowHeight }]}
+          >
+            {frameWidth > 0 ? (
+              <Animated.View
+                aria-hidden
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+                style={[
+                  styles.indicator,
+                  {
+                    width: indicatorWidth,
+                    height: indicatorWidth,
+                    bottom: theme.layout.tabBarItemPaddingVertical,
+                    borderRadius: theme.radius.full,
+                    backgroundColor: theme.colors.navigationActive,
+                  },
+                  indicatorStyle,
+                ]}
+              />
+            ) : null}
+            {[state.routes.slice(0, 2), state.routes.slice(2)].map(
+              (routes, groupIndex) => (
                 <View
+                  key={groupIndex === 0 ? "left" : "right"}
                   style={[
                     styles.group,
                     {
-                      gap: groupGap,
-                      justifyContent:
-                        groupIndex === 0 ? "flex-end" : "flex-start",
+                      left: geometry.groupLeft[groupIndex],
+                      width: geometry.groupWidth,
+                      height: rowHeight,
+                      gap: geometry.groupGap,
                     },
                   ]}
                 >
@@ -224,48 +200,53 @@ export function FloatingBottomNavigation({
                         style={({ pressed }) => [
                           styles.tab,
                           {
-                            width: itemWidth,
-                            minHeight: Math.max(
-                              theme.layout.touchTarget,
-                              theme.layout.tabBarHeight -
-                                theme.layout.tabBarPadding * 2,
-                            ),
-                            paddingVertical:
-                              theme.layout.tabBarItemPaddingVertical,
+                            width: geometry.itemWidth,
+                            height: rowHeight,
                             borderRadius: theme.radius.full,
                             opacity: pressed ? theme.motion.pressOpacity : 1,
                           },
                         ]}
                       >
-                        {options.tabBarIcon?.({
-                          focused,
-                          color,
-                          size: theme.layout.tabBarIconSize,
-                        })}
+                        <View
+                          pointerEvents="none"
+                          style={[
+                            styles.icon,
+                            {
+                              width: theme.layout.tabBarIconSize,
+                              height: theme.layout.tabBarIconSize,
+                            },
+                          ]}
+                        >
+                          {options.tabBarIcon?.({
+                            focused,
+                            color,
+                            size: theme.layout.tabBarIconSize,
+                          })}
+                        </View>
                       </Pressable>
                     );
                   })}
                 </View>
-              </Fragment>
-            ),
-          )}
+              ),
+            )}
+          </View>
         </View>
-      </View>
-      <View
-        pointerEvents="box-none"
-        style={[
-          styles.camera,
-          {
-            marginLeft: -cameraSize / 2 + (insets.left - insets.right) / 2,
-            top: theme.spacing.xs + theme.layout.tabBarPadding,
-          },
-        ]}
-      >
-        <NavigationCameraButton
-          onPress={onCapture}
-          accessibilityLabel={captureLabel}
-          animationEnabled={animationEnabled}
-        />
+        <View
+          pointerEvents="box-none"
+          style={[
+            styles.camera,
+            {
+              left: geometry.cameraLeft,
+              top: theme.layout.tabBarPadding,
+            },
+          ]}
+        >
+          <NavigationCameraButton
+            onPress={onCapture}
+            accessibilityLabel={captureLabel}
+            animationEnabled={animationEnabled}
+          />
+        </View>
       </View>
     </View>
   );
@@ -279,23 +260,16 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: "center",
   },
-  shell: { width: "100%" },
-  camera: { position: "absolute", left: "50%" },
-  row: { flexDirection: "row", position: "relative", alignItems: "stretch" },
+  frame: { width: "100%", position: "relative" },
+  camera: { position: "absolute" },
+  row: { position: "relative" },
   group: {
-    flex: 1,
-    flexBasis: 0,
-    minWidth: 0,
-    flexDirection: "row",
-    alignItems: "stretch",
-  },
-  tab: {
-    flexShrink: 0,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  indicator: {
     position: "absolute",
-    pointerEvents: "none",
+    top: 0,
+    flexDirection: "row",
+    alignItems: "center",
   },
+  tab: { flexShrink: 0, alignItems: "center", justifyContent: "center" },
+  icon: { alignItems: "center", justifyContent: "center" },
+  indicator: { position: "absolute", left: 0, pointerEvents: "none" },
 });

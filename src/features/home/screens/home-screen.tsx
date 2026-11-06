@@ -7,10 +7,8 @@ import {
   EnterSection,
   HomePage,
   PreviewNotice,
-  SectionHeading,
 } from "../components/home-primitives";
 import { TripHero } from "../components/trip-hero";
-import { ExampleItineraryCard } from "../components/example-itinerary-card";
 import { TripCompletionCard } from "../components/trip-completion-card";
 import { FootprintCard } from "../components/footprint-card";
 import { JournalAlbum } from "../components/journal-album";
@@ -19,6 +17,7 @@ import { useHomeCopy } from "../i18n/home-copy";
 import { useTripPreview } from "../providers/trip-preview-provider";
 import { isPastTrip, selectHome } from "../utils/select-home";
 import { OngoingHomeScreen } from "./ongoing-home-screen";
+import { NewUserHomeScreen } from "./new-user-home-screen";
 
 export function HomeScreen() {
   const theme = useAppTheme();
@@ -30,6 +29,7 @@ export function HomeScreen() {
     openPanel: state.openPanel,
   }));
   const selection = selectHome(trips, today);
+  if (selection.kind === "new") return <NewUserHomeScreen preview />;
   if (selection.kind === "ongoing") {
     return (
       <OngoingHomeScreen
@@ -60,7 +60,6 @@ export function HomeScreen() {
     ),
   ).size;
   const subtitles = {
-    new: copy.newSubtitle,
     upcoming: copy.upcomingSubtitle,
     ongoing: copy.ongoingSubtitle,
     returning: copy.returningSubtitle,
@@ -106,12 +105,6 @@ export function HomeScreen() {
               })
             }
           />
-        ) : null}
-        {selection.kind === "new" ? (
-          <View style={{ gap: theme.spacing.sm }}>
-            <SectionHeading title={copy.example} variant="eyebrow" />
-            <ExampleItineraryCard />
-          </View>
         ) : null}
         {hasHistory ? (
           <FootprintCard

@@ -1,5 +1,9 @@
 # Google Sign-In cho Tripzy
 
+**Dev web hiện tại · 05/11/2026:** frontend `http://localhost:8082`, backend `http://localhost:18080`. Backend dev mặc định `GOOGLE_LINK_URL=http://localhost:8082/google-link`; xác thực email và reset lần lượt mở `/verify-email`, `/reset-password` trên cùng frontend. Khởi động lại backend sau khi sửa env/config. Các email đã gửi vẫn chứa link cũ, cần yêu cầu link mới.
+
+Web đang dùng Google Identity Services **popup callback**, không dùng custom scheme làm OAuth redirect. Trong Web OAuth client ở Google Cloud Console → Authorized JavaScript origins, thêm `http://localhost` và **`http://localhost:8082`** theo [hướng dẫn chính thức](https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid). `GOOGLE_LINK_URL` là email xác nhận liên kết khi cần chứng minh quyền sở hữu hộp thư, không thay thế authorized origin của Google. Chạy native thì override các link bằng scheme của bản development build.
+
 ## Hành vi đã triển khai
 
 - Cả màn hình đăng nhập và đăng ký có thể dùng Google. Android dùng Credential Manager: ưu tiên tài khoản đã cấp quyền, tự chọn khi phù hợp, mở chọn tài khoản mới nếu chưa có credential. iOS mở Google Sign-In để lấy token mới chứa nonce của lần đăng nhập.
@@ -15,7 +19,7 @@ Trong [Google Cloud Console](https://console.cloud.google.com/), chọn/tạo m�
 
 | Client | Cần điền | Dùng ở đâu |
 | --- | --- | --- |
-| **Web application** | Authorized JavaScript origins cho web, ví dụ `http://localhost` và `http://localhost:8081`, thêm HTTPS origin thật khi deploy | Backend `GOOGLE_WEB_CLIENT_ID`; app lấy ID công khai từ API challenge để làm audience trên Android/iOS/web |
+| **Web application** | Authorized JavaScript origins cho web: `http://localhost` và `http://localhost:8082`, thêm HTTPS origin thật khi deploy | Backend `GOOGLE_WEB_CLIENT_ID`; app lấy ID công khai từ API challenge để làm audience trên Android/iOS/web |
 | **Android** | Package name thật của app và SHA-1 của chứng chỉ ký bản đang chạy | Credential Manager kiểm tra package/chữ ký; không cần biến Android client ID trong app |
 | **iOS** | Bundle identifier thật của app | Mobile `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID`; config tự tạo reversed URL scheme |
 
@@ -40,7 +44,7 @@ GOOGLE_AUTH_ENABLED=true
 GOOGLE_WEB_CLIENT_ID=<Web OAuth client ID thật>.apps.googleusercontent.com
 GOOGLE_CHALLENGE_TTL=5m
 GOOGLE_LINK_TTL=10m
-GOOGLE_LINK_URL=travelplannermobileui://google-link
+GOOGLE_LINK_URL=http://localhost:8082/google-link
 ```
 
 Thay placeholder bằng **toàn bộ ID Google cấp**, không nối hậu tố lần nữa. Google login mặc định tắt cho đến khi có ID; nếu bật với ID sai định dạng, backend từ chối khởi động. SMTP cần bật theo [auth-integration.md](./auth-integration.md) nếu hỗ trợ email ngoài Gmail/Workspace. Google login Gmail/Workspace không cần SMTP.
