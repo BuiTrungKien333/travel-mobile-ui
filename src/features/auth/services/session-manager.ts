@@ -183,13 +183,20 @@ export class SessionManager {
 
   logout = async (): Promise<boolean> => {
     const token = this.refreshToken;
-    await this.expire();
-    if (!token) return true;
+    let revoked = true;
     try {
-      await this.dependencies.requestLogout(token);
-      return true;
-    } catch {
-      return false;
-    } // caller hiển thị thông báo thu hồi phía server chưa thành công.
+      await this.expire();
+    } finally {
+      // Always attempt server revocation, even if SecureStore deletion failed.
+      // A storage failure still propagates so the UI offers recovery instead of claiming success.
+      if (token) {
+        try {
+          await this.dependencies.requestLogout(token);
+        } catch {
+          revoked = false;
+        }
+      }
+    }
+    return revoked; // caller hiển thị thông báo thu hồi phía server chưa thành công.
   };
 }

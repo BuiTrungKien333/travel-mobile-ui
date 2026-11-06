@@ -19,19 +19,40 @@ export function AuthFooterLink({
   const theme = useAppTheme();
 
   return (
-    <View style={[styles.row, { gap: theme.spacing.xs }]}>
-      <AppText tone="muted" variant="caption">
-        {label}
-      </AppText>
+    <View
+      style={[
+        styles.row,
+        { minHeight: theme.layout.touchTarget, gap: theme.spacing.xs },
+      ]}
+    >
+      <AppText tone="muted">{label}</AppText>
       <Pressable
         accessibilityRole="link"
         accessibilityState={{ disabled }}
         disabled={disabled}
-        hitSlop={8}
+        hitSlop={theme.spacing.sm}
         onPress={onPress}
-        style={({ pressed }) => pressed && styles.pressed}
+        style={({ pressed }) => [
+          styles.action,
+          {
+            minWidth: theme.layout.compactTouchTarget,
+            minHeight: theme.layout.compactTouchTarget,
+            paddingVertical: theme.spacing.sm,
+            opacity: pressed ? theme.motion.pressOpacity : 1,
+          },
+        ]}
       >
-        <AppText tone="primary" variant="link">
+        <AppText
+          tone="primary"
+          variant="link"
+          style={[
+            styles.centered,
+            {
+              fontSize: theme.typography.fontSize.md,
+              lineHeight: theme.typography.lineHeight.md,
+            },
+          ]}
+        >
           {action}
         </AppText>
       </Pressable>
@@ -41,13 +62,11 @@ export function AuthFooterLink({
 
 const styles = StyleSheet.create({
   row: {
-    minHeight: 48,
     flexDirection: "row",
     flexWrap: "wrap",
     alignItems: "center",
     justifyContent: "center",
   },
-  pressed: {
-    opacity: 0.62,
-  },
+  action: { maxWidth: "100%", justifyContent: "center" },
+  centered: { textAlign: "center" },
 });

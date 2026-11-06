@@ -37,13 +37,17 @@ function GoogleLinkConfirmation({ token }: { token: string | null }) {
     >
       <View style={{ gap: theme.spacing.lg }}>
         {!token ? (
-          <AppText accessibilityRole="alert" tone="error">
+          <AppText variant="bodyLarge" accessibilityRole="alert" tone="error">
             {t("auth.error.invalidLink")}
           </AppText>
         ) : (
           <>
             {mutation.error ? (
-              <AppText accessibilityRole="alert" tone="error">
+              <AppText
+                variant="bodyLarge"
+                accessibilityRole="alert"
+                tone="error"
+              >
                 {authErrorMessage(mutation.error, t)}
               </AppText>
             ) : null}

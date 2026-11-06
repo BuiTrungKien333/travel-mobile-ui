@@ -59,17 +59,21 @@ function ResetPasswordForm({ token }: { token: string | null }) {
     >
       <View style={{ gap: theme.spacing.lg }}>
         {mutation.isSuccess ? (
-          <AppText accessibilityLiveRegion="polite">
+          <AppText variant="bodyLarge" accessibilityLiveRegion="polite">
             {t("auth.reset.success")}
           </AppText>
         ) : !token ? (
-          <AppText accessibilityRole="alert" tone="error">
+          <AppText variant="bodyLarge" accessibilityRole="alert" tone="error">
             {t("auth.error.invalidLink")}
           </AppText>
         ) : (
           <>
             {mutation.error ? (
-              <AppText accessibilityRole="alert" tone="error">
+              <AppText
+                variant="bodyLarge"
+                accessibilityRole="alert"
+                tone="error"
+              >
                 {authErrorMessage(mutation.error, t)}
               </AppText>
             ) : null}

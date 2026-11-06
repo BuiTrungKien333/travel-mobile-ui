@@ -179,6 +179,23 @@ test("failed storage deletion exposes recovery error instead of claiming logout 
   await assert.rejects(session.logout(), (error: unknown) => error instanceof ApiError && error.code === "STORAGE");
   assert.equal(session.getAccessToken(), null);
   assert.equal(state.statuses.at(-1), "restore-error");
+  assert.deepEqual(state.revoked, ["new.refresh"]);
+});
+
+test("storage deletion failure remains visible when server revocation also fails", async () => {
+  const { state, dependencies } = fixture();
+  const session = new SessionManager(dependencies);
+  await session.authenticate(async () => data());
+  dependencies.remove = async () => { throw new Error("storage unavailable"); };
+  dependencies.requestLogout = async (token) => {
+    state.revoked.push(token);
+    throw new ApiError("NETWORK");
+  };
+  await assert.rejects(session.logout(), (error: unknown) => error instanceof ApiError && error.code === "STORAGE");
+  assert.deepEqual(state.revoked, ["new.refresh"]);
+  assert.equal(session.getAccessToken(), null);
+  assert.equal(session.getRestoreError()?.code, "STORAGE");
+  assert.equal(state.statuses.at(-1), "restore-error");
 });
 test("offline logout clears local credentials and reports unsuccessful server revocation", async () => {
   const { state, dependencies } = fixture();

@@ -41,13 +41,17 @@ function VerifyEmailConfirmation({ token }: { token: string }) {
     >
       <View style={{ gap: theme.spacing.lg }}>
         {verify.isSuccess ? (
-          <AppText accessibilityLiveRegion="polite">
+          <AppText variant="bodyLarge" accessibilityLiveRegion="polite">
             {t("auth.verify.success")}
           </AppText>
         ) : (
           <>
             {verify.error ? (
-              <AppText accessibilityRole="alert" tone="error">
+              <AppText
+                variant="bodyLarge"
+                accessibilityRole="alert"
+                tone="error"
+              >
                 {authErrorMessage(verify.error, t)}
               </AppText>
             ) : null}

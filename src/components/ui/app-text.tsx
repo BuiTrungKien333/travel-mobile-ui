@@ -3,7 +3,15 @@ import { StyleSheet, Text } from "react-native";
 
 import { useAppTheme } from "@/hooks/use-app-theme";
 
-type TextVariant = "body" | "caption" | "heading" | "label" | "link";
+type TextVariant =
+  | "body"
+  | "bodyLarge"
+  | "caption"
+  | "heading"
+  | "title"
+  | "subheading"
+  | "label"
+  | "link";
 
 type AppTextProps = ComponentProps<typeof Text> & {
   variant?: TextVariant;
@@ -24,6 +32,11 @@ export function AppText({
       fontSize: theme.typography.fontSize.sm,
       lineHeight: theme.typography.lineHeight.sm,
     },
+    bodyLarge: {
+      fontFamily: theme.typography.fontFamily.regular,
+      fontSize: theme.typography.fontSize.md,
+      lineHeight: theme.typography.lineHeight.md,
+    },
     caption: {
       fontFamily: theme.typography.fontFamily.regular,
       fontSize: theme.typography.fontSize.xs,
@@ -33,6 +46,16 @@ export function AppText({
       fontFamily: theme.typography.fontFamily.bold,
       fontSize: theme.typography.fontSize.xxl,
       lineHeight: theme.typography.lineHeight.xxl,
+    },
+    title: {
+      fontFamily: theme.typography.fontFamily.semibold,
+      fontSize: theme.typography.fontSize.xxl,
+      lineHeight: theme.typography.lineHeight.xxl,
+    },
+    subheading: {
+      fontFamily: theme.typography.fontFamily.semibold,
+      fontSize: theme.typography.fontSize.lg,
+      lineHeight: theme.typography.lineHeight.lg,
     },
     label: {
       fontFamily: theme.typography.fontFamily.medium,

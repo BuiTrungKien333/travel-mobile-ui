@@ -94,10 +94,12 @@ export function ProfileScreen() {
                 height: theme.layout.headerLogoHeight,
               }}
             />
-            <AppText accessibilityRole="header" variant="heading">
+            <AppText accessibilityRole="header" variant="title">
               {t("auth.profile.title")}
             </AppText>
-            <AppText tone="muted">{t("auth.profile.subtitle")}</AppText>
+            <AppText variant="bodyLarge" tone="muted">
+              {t("auth.profile.subtitle")}
+            </AppText>
           </View>
           {profile.isLoading ? (
             <View
@@ -117,7 +119,11 @@ export function ProfileScreen() {
           ) : null}
           {profile.isError ? (
             <View style={{ gap: theme.spacing.md }}>
-              <AppText accessibilityRole="alert" tone="error">
+              <AppText
+                variant="bodyLarge"
+                accessibilityRole="alert"
+                tone="error"
+              >
                 {authErrorMessage(profile.error, t)}
               </AppText>
               <AppButton
@@ -167,7 +173,7 @@ export function ProfileScreen() {
                 </View>
                 <View style={[styles.grow, { gap: theme.spacing.xs }]}>
                   <AppText
-                    variant="heading"
+                    variant="subheading"
                     style={{ color: theme.colors.onHero }}
                   >
                     {user.fullName}
@@ -187,7 +193,9 @@ export function ProfileScreen() {
                 </View>
               </View>
               <View style={{ gap: theme.spacing.md }}>
-                <AppText variant="label">{t("auth.profile.details")}</AppText>
+                <AppText accessibilityRole="header" variant="subheading">
+                  {t("auth.profile.details")}
+                </AppText>
                 <View
                   style={[
                     styles.card,
@@ -230,10 +238,14 @@ export function ProfileScreen() {
               </View>
             </>
           ) : !profile.isLoading && !profile.isError ? (
-            <AppText tone="muted">{t("auth.profile.empty")}</AppText>
+            <AppText variant="bodyLarge" tone="muted">
+              {t("auth.profile.empty")}
+            </AppText>
           ) : null}
           <View style={{ gap: theme.spacing.md }}>
-            <AppText variant="label">{t("auth.profile.preferences")}</AppText>
+            <AppText accessibilityRole="header" variant="subheading">
+              {t("auth.profile.preferences")}
+            </AppText>
             <View
               style={[
                 styles.card,
@@ -257,9 +269,7 @@ export function ProfileScreen() {
                 ]}
               >
                 <AppText variant="label">{t("auth.profile.language")}</AppText>
-                <AppText variant="caption" tone="muted">
-                  {t("auth.profile.languageHint")}
-                </AppText>
+                <AppText tone="muted">{t("auth.profile.languageHint")}</AppText>
               </View>
               <LanguageSwitcher />
             </View>
@@ -267,7 +277,9 @@ export function ProfileScreen() {
           {authenticated ? (
             <>
               <View style={{ gap: theme.spacing.md }}>
-                <AppText variant="label">{t("auth.profile.security")}</AppText>
+                <AppText accessibilityRole="header" variant="subheading">
+                  {t("auth.profile.security")}
+                </AppText>
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={t("auth.profile.changePassword")}
@@ -297,7 +309,7 @@ export function ProfileScreen() {
                     <AppText variant="label">
                       {t("auth.profile.changePassword")}
                     </AppText>
-                    <AppText variant="caption" tone="muted">
+                    <AppText tone="muted">
                       {t("auth.profile.changePasswordHint")}
                     </AppText>
                   </View>
@@ -309,7 +321,11 @@ export function ProfileScreen() {
                 </Pressable>
               </View>
               {logoutError ? (
-                <AppText accessibilityRole="alert" tone="error">
+                <AppText
+                  variant="bodyLarge"
+                  accessibilityRole="alert"
+                  tone="error"
+                >
                   {logoutError}
                 </AppText>
               ) : null}
@@ -370,7 +386,9 @@ function DetailRow({
         <AppText variant="caption" tone="muted">
           {label}
         </AppText>
-        <AppText selectable>{value}</AppText>
+        <AppText variant="bodyLarge" selectable>
+          {value}
+        </AppText>
       </View>
     </View>
   );

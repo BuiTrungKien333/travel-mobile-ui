@@ -17,20 +17,20 @@ export function GoogleFeedback({
   const theme = useAppTheme();
   if (error && normalizeApiError(error).code !== "CANCELLED")
     return (
-      <AppText accessibilityRole="alert" tone="error">
+      <AppText variant="bodyLarge" accessibilityRole="alert" tone="error">
         {authErrorMessage(error, t)}
       </AppText>
     );
   if (outcome?.status !== "VERIFICATION_REQUIRED") return null;
   return (
     <View style={{ gap: theme.spacing.sm }}>
-      <AppText accessibilityLiveRegion="polite">
+      <AppText variant="bodyLarge" accessibilityLiveRegion="polite">
         {t("auth.google.emailProof")}
       </AppText>
-      <AppText variant="label">{outcome.email}</AppText>
-      <AppText variant="caption" tone="muted">
-        {t("auth.email.spamHint")}
+      <AppText variant="bodyLarge" selectable>
+        {outcome.email}
       </AppText>
+      <AppText tone="muted">{t("auth.email.spamHint")}</AppText>
     </View>
   );
 }

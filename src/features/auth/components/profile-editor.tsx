@@ -70,7 +70,7 @@ export function ProfileEditor({
         )}
       />
       {errors.root ? (
-        <AppText accessibilityRole="alert" tone="error">
+        <AppText variant="bodyLarge" accessibilityRole="alert" tone="error">
           {errors.root.message}
         </AppText>
       ) : null}

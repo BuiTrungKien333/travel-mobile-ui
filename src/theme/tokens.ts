@@ -39,6 +39,10 @@ export const layout = {
   tripTimelineConnectorWidth: 1.5,
   tripDateTabWidth: 88,
   contentMaxWidth: 560,
+  authContentMaxWidth: 480,
+  authDescriptionMaxWidth: 340,
+  authLogoWidth: 144,
+  authLogoHeight: 48,
   profileAvatarSize: 64,
   profilePreferenceTextMinWidth: 160,
   cameraContentMaxWidth: 440,
@@ -62,6 +66,7 @@ export const layout = {
   pickerListMaxHeight: 280,
   tripDayEditorSheetHeightRatio: 0.75,
   touchTarget: 48,
+  buttonHeight: 52,
   compactTouchTarget: 44,
   compactIconButtonSurfaceSize: 32,
   iconSmall: 18,
@@ -114,6 +119,10 @@ export const layout = {
   weatherSummaryMinWidth: 80,
   headerLogoWidth: 120,
   headerLogoHeight: 40,
+  sessionLogoWidth: 180,
+  sessionContentMaxWidth: 320,
+  sessionProgressWidth: 96,
+  sessionProgressHeight: 3,
   headerActionIconSize: 24,
   tabBarHeight: 60,
   tabBarMaxWidth: 480,
@@ -132,6 +141,7 @@ export const layout = {
 } as const;
 
 export const motion = {
+  sessionRestoreDuration: 1400,
   photoViewerSpring: {
     stiffness: 260,
     damping: 30,

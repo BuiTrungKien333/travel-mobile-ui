@@ -79,12 +79,12 @@ export function LoginScreen() {
     >
       <View style={{ gap: theme.spacing.lg }}>
         {notice === "local-logout" ? (
-          <AppText accessibilityRole="alert" tone="muted">
+          <AppText variant="bodyLarge" accessibilityRole="alert" tone="muted">
             {t("auth.session.localLogout")}
           </AppText>
         ) : null}
         {login.error ? (
-          <AppText accessibilityRole="alert" tone="error">
+          <AppText variant="bodyLarge" accessibilityRole="alert" tone="error">
             {authErrorMessage(login.error, t)}
           </AppText>
         ) : null}
@@ -172,6 +172,7 @@ export function LoginScreen() {
         <AppButton
           disabled={google.isPending}
           loading={isSubmitting}
+          labelSize="large"
           onPress={handleLogin}
         >
           {t("auth.login.submit")}

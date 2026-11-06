@@ -52,7 +52,15 @@ export function AuthScaffold({
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.container, { gap: theme.spacing.xxl }]}>
+        <View
+          style={[
+            styles.container,
+            {
+              maxWidth: theme.layout.authContentMaxWidth,
+              gap: theme.spacing.xxl,
+            },
+          ]}
+        >
           <View style={styles.languageRow}>
             <LanguageSwitcher />
           </View>
@@ -64,8 +72,8 @@ export function AuthScaffold({
                   contentFit="contain"
                   source={require("@/assets/images/logo.png")}
                   style={{
-                    width: theme.layout.headerLogoWidth,
-                    height: theme.layout.headerLogoHeight,
+                    width: theme.layout.authLogoWidth,
+                    height: theme.layout.authLogoHeight,
                   }}
                 />
               </View>
@@ -73,18 +81,27 @@ export function AuthScaffold({
             <AppText
               accessibilityRole="header"
               style={styles.title}
-              variant="heading"
+              variant="title"
             >
               {title}
             </AppText>
-            <AppText style={styles.subtitle} tone="muted">
-              {subtitle}
-            </AppText>
+            {subtitle ? (
+              <AppText
+                variant="bodyLarge"
+                style={[
+                  styles.subtitle,
+                  { maxWidth: theme.layout.authDescriptionMaxWidth },
+                ]}
+                tone="muted"
+              >
+                {subtitle}
+              </AppText>
+            ) : null}
           </View>
 
           {children}
 
-          <View style={styles.footer}>{footer}</View>
+          {footer != null ? <View style={styles.footer}>{footer}</View> : null}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -102,7 +119,6 @@ const styles = StyleSheet.create({
   },
   container: {
     width: "100%",
-    maxWidth: 480,
   },
   header: {
     alignItems: "center",
@@ -114,7 +130,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   subtitle: {
-    maxWidth: 340,
     textAlign: "center",
   },
   footer: {

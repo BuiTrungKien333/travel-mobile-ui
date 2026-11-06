@@ -16,8 +16,8 @@ const credentialResponse = z.object({
   credential: z.string().min(1).max(8192),
   state: z.string(),
 });
-// Google's large button is 40 CSS px; uniform zoom gives a >=44px target without changing branding.
-const googleButtonZoom = 1.1;
+// Uniform scaling preserves the official Google button's proportions.
+const googleLargeButtonHeight = 40;
 const googleMaxWidth = 400;
 
 export function GoogleButton({
@@ -27,6 +27,7 @@ export function GoogleButton({
 }: GoogleButtonProps) {
   const { locale, t } = useI18n();
   const theme = useAppTheme();
+  const googleButtonZoom = theme.layout.buttonHeight / googleLargeButtonHeight;
   const container = useRef<HTMLDivElement>(null);
   const [attempt, setAttempt] = useState(0);
   const [ready, setReady] = useState(false);
@@ -45,6 +46,7 @@ export function GoogleButton({
     let active = true;
     let renewal: ReturnType<typeof setTimeout> | undefined;
     let clickedVersion: number | undefined;
+    let resizeObserver: ResizeObserver | undefined;
     function prepareAgain() {
       if (!active) return;
       setReady(false);
@@ -76,26 +78,37 @@ export function GoogleButton({
               .finally(prepareAgain);
           },
         });
-        element.replaceChildren();
-        identity.renderButton(element, {
-          type: "standard",
-          theme: "outline",
-          size: "large",
-          text: "continue_with",
-          shape: "rectangular",
-          locale,
-          width: String(
+        let renderedWidth = 0;
+        const renderButton = () => {
+          const width = Math.floor(
             Math.min(
               googleMaxWidth,
               (element.parentElement?.clientWidth ?? googleMaxWidth) /
                 googleButtonZoom,
             ),
-          ),
-          state: challenge.challengeId,
-          click_listener: () => {
-            clickedVersion = authSession.getVersion();
-          },
-        });
+          );
+          if (!active || width <= 0 || width === renderedWidth) return;
+          renderedWidth = width;
+          element.replaceChildren();
+          identity.renderButton(element, {
+            type: "standard",
+            theme: "outline",
+            size: "large",
+            text: "continue_with",
+            shape: "rectangular",
+            locale,
+            width: String(width),
+            state: challenge.challengeId,
+            click_listener: () => {
+              clickedVersion = authSession.getVersion();
+            },
+          });
+        };
+        renderButton();
+        if (typeof ResizeObserver !== "undefined" && element.parentElement) {
+          resizeObserver = new ResizeObserver(renderButton);
+          resizeObserver.observe(element.parentElement);
+        }
         setReady(true);
         // Renew idle challenges before expiry. Old popup responses carry a different button state.
         renewal = setTimeout(
@@ -117,8 +130,9 @@ export function GoogleButton({
       active = false;
       abort.abort();
       clearTimeout(renewal);
+      resizeObserver?.disconnect();
     };
-  }, [locale, attempt]);
+  }, [locale, attempt, googleButtonZoom]);
 
   function handleRetry() {
     setError(null);
@@ -136,8 +150,12 @@ export function GoogleButton({
           display: ready && !loading ? "flex" : "none",
           justifyContent: "center",
           alignItems: "center",
-          minHeight: theme.spacing.section,
+          height: googleLargeButtonHeight,
           zoom: googleButtonZoom,
+          borderRadius: theme.radius.md / googleButtonZoom,
+          overflow: "hidden",
+          outline: `${1 / googleButtonZoom}px solid ${theme.colors.borderStrong}`,
+          outlineOffset: -1 / googleButtonZoom,
         }}
       />
       {(!ready || loading) && (
@@ -151,11 +169,7 @@ export function GoogleButton({
         </AppButton>
       )}
       {error ? (
-        <AppText
-          accessibilityLiveRegion="polite"
-          variant="caption"
-          tone="error"
-        >
+        <AppText accessibilityLiveRegion="polite" variant="body" tone="error">
           {authErrorMessage(error, t)}
         </AppText>
       ) : null}

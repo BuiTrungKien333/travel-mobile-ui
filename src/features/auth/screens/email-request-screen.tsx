@@ -82,7 +82,7 @@ export function EmailRequestScreen({
       ) : (
         <View style={{ gap: theme.spacing.lg }}>
           {request.error ? (
-            <AppText accessibilityRole="alert" tone="error">
+            <AppText variant="bodyLarge" accessibilityRole="alert" tone="error">
               {authErrorMessage(request.error, t)}
             </AppText>
           ) : null}

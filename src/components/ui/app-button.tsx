@@ -24,6 +24,7 @@ type AppButtonProps = {
   onPress: () => void;
   style?: StyleProp<ViewStyle>;
   size?: "default" | "small";
+  labelSize?: "default" | "large";
   variant?: "primary" | "outline" | "hero" | "soft" | "raised" | "gradient";
 };
 
@@ -38,6 +39,7 @@ export function AppButton({
   onPress,
   style,
   size = "default",
+  labelSize = "default",
   variant = "primary",
 }: AppButtonProps) {
   const theme = useAppTheme();
@@ -125,7 +127,7 @@ export function AppButton({
           opacity: isDisabled ? 0.55 : pressed ? 0.82 : 1,
           minHeight: isSmall
             ? theme.layout.touchTarget
-            : styles.button.minHeight,
+            : theme.layout.buttonHeight,
           paddingHorizontal: isSmall ? theme.spacing.lg : theme.spacing.xl,
           paddingVertical: isSmall ? theme.spacing.sm : theme.spacing.none,
         },
@@ -176,12 +178,18 @@ export function AppButton({
             textAlign: isRaised ? "center" : undefined,
             paddingHorizontal:
               isRaised && trailingIcon ? theme.spacing.xl : undefined,
-            fontSize: isSmall
-              ? theme.typography.fontSize.compactAction
-              : theme.typography.fontSize.sm,
-            lineHeight: isSmall
-              ? theme.typography.lineHeight.compactAction
-              : theme.typography.lineHeight.sm,
+            fontSize:
+              labelSize === "large"
+                ? theme.typography.fontSize.md
+                : isSmall
+                  ? theme.typography.fontSize.compactAction
+                  : theme.typography.fontSize.sm,
+            lineHeight:
+              labelSize === "large"
+                ? theme.typography.lineHeight.md
+                : isSmall
+                  ? theme.typography.lineHeight.compactAction
+                  : theme.typography.lineHeight.sm,
           }}
         >
           {children}
@@ -201,7 +209,6 @@ const styles = StyleSheet.create({
   fullWidth: { width: "100%" },
   raisedTrailing: { position: "absolute", right: 0 },
   button: {
-    minHeight: 52,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,

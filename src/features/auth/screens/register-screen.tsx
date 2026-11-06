@@ -116,7 +116,7 @@ export function RegisterScreen() {
     >
       <View style={{ gap: theme.spacing.lg }}>
         {register.error ? (
-          <AppText accessibilityRole="alert" tone="error">
+          <AppText variant="bodyLarge" accessibilityRole="alert" tone="error">
             {authErrorMessage(register.error, t)}
           </AppText>
         ) : null}
@@ -203,6 +203,7 @@ export function RegisterScreen() {
         <AppButton
           disabled={google.isPending}
           loading={isSubmitting}
+          labelSize="large"
           onPress={handleRegister}
         >
           {t("auth.register.submit")}
@@ -227,15 +228,11 @@ export function RegisterScreen() {
         />
         <GoogleFeedback error={google.error} outcome={google.data} />
 
-        <AppText style={styles.legal} tone="muted" variant="caption">
+        <AppText style={styles.legal} tone="muted">
           {t("auth.register.termsPrefix")}{" "}
-          <AppText tone="primary" variant="caption">
-            {t("auth.register.terms")}
-          </AppText>{" "}
+          <AppText tone="primary">{t("auth.register.terms")}</AppText>{" "}
           {t("auth.register.termsJoin")}{" "}
-          <AppText tone="primary" variant="caption">
-            {t("auth.register.privacy")}
-          </AppText>
+          <AppText tone="primary">{t("auth.register.privacy")}</AppText>
           {"."}
         </AppText>
       </View>

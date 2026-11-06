@@ -90,6 +90,7 @@ export const translations = {
     "auth.profile.guestRole": "Khách",
     "auth.profile.empty": "Thông tin tài khoản sẽ hiển thị sau khi đăng nhập.",
     "auth.session.restoring": "Đang khôi phục phiên đăng nhập…",
+    "auth.session.restoreFailed": "Chưa thể khôi phục đăng nhập",
     "auth.session.logout": "Đăng xuất",
     "auth.session.localLogout":
       "Đã đăng xuất trên thiết bị. Kết nối mạng chưa cho phép thu hồi phiên phía máy chủ.",
@@ -243,6 +244,7 @@ export const translations = {
     "auth.profile.guestRole": "Guest",
     "auth.profile.empty": "Your account details will appear after you sign in.",
     "auth.session.restoring": "Restoring your session…",
+    "auth.session.restoreFailed": "We couldn’t restore your session",
     "auth.session.logout": "Sign out",
     "auth.session.localLogout":
       "Signed out on this device. The network connection prevented revoking the session on the server.",

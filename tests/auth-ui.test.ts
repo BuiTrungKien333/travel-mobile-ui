@@ -47,6 +47,7 @@ function harness() {
     logoutCalls: 0,
     registerResets: 0,
     refreshes: 0,
+    restoreCalls: 0,
   };
   const navigation: unknown[] = [];
   const profile = {
@@ -112,6 +113,14 @@ function harness() {
       StyleSheet: { create: (value: unknown) => value, hairlineWidth: 1 },
     },
     "expo-image": { Image: "Image" },
+    "react-native-reanimated": {
+      __esModule: true,
+      default: { View: "AnimatedView" },
+      useAnimatedStyle: () => ({}),
+    },
+    "@/hooks/use-ambient-motion": {
+      useAmbientMotion: () => ({ get: () => 0 }),
+    },
     "expo-router": {
       router: {
         push: (value: unknown) => navigation.push(value),
@@ -142,7 +151,11 @@ function harness() {
       useGoogleLogin: () => ({ isPending: false, reset: () => {} }),
     },
     "../services/auth-session": {
-      authSession: { getVersion: () => state.version },
+      authSession: {
+        getVersion: () => state.version,
+        getRestoreError: () => null,
+        restore: async () => { state.restoreCalls++; },
+      },
     },
     "../utils/auth-error-message": { authErrorMessage: () => "safe-error" },
     "react-hook-form": {
@@ -352,4 +365,37 @@ test("Login displays only the recognized local logout notice", () => {
       expected,
     );
   }
+});
+
+test("Session recovery announces indeterminate loading and offers an explicit retry after failure", async () => {
+  const h = harness();
+  const { SessionGate } = h.load<{
+    SessionGate: (props: { failed: boolean }) => Element;
+  }>("src/features/auth/components/session-gate.tsx");
+  const loading = h.render(() => SessionGate({ failed: false }));
+  const progress = nodes(loading).find(
+    (node) => node.props.accessibilityRole === "progressbar",
+  );
+  assert.ok(progress);
+  assert.equal(progress.props.accessibilityLabel, "auth.session.restoring");
+  assert.equal(
+    (progress.props.accessibilityState as { busy: boolean }).busy,
+    true,
+  );
+  assert.equal(progress.props.accessibilityValue, undefined);
+  assert.equal(button(loading, "common.retry"), undefined);
+
+  const failed = h.render(() => SessionGate({ failed: true }));
+  assert.equal(
+    nodes(failed).some((node) => node.props.accessibilityRole === "progressbar"),
+    false,
+  );
+  assert.equal(
+    nodes(failed).find((node) => node.props.accessibilityRole === "alert")?.props.children,
+    "safe-error",
+  );
+  assert.equal(h.state.restoreCalls, 0);
+  await press(button(failed, "common.retry"));
+  assert.equal(h.state.restoreCalls, 1);
+  assert.deepEqual(h.navigation, []);
 });

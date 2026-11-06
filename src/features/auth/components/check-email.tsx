@@ -31,19 +31,19 @@ export function CheckEmail({
   };
   return (
     <View style={{ gap: theme.spacing.lg }}>
-      <AppText accessibilityLiveRegion="polite">
+      <AppText variant="bodyLarge" accessibilityLiveRegion="polite">
         {t(
           purpose === "verify"
             ? "auth.email.verifyInstructions"
             : "auth.email.resetInstructions",
         )}
       </AppText>
-      <AppText variant="label" style={{ textAlign: "center" }}>
+      <AppText variant="bodyLarge" selectable style={{ textAlign: "center" }}>
         {email}
       </AppText>
       <AppText tone="muted">{t("auth.email.spamHint")}</AppText>
       {request.error ? (
-        <AppText accessibilityRole="alert" tone="error">
+        <AppText variant="bodyLarge" accessibilityRole="alert" tone="error">
           {authErrorMessage(request.error, t)}
         </AppText>
       ) : null}
