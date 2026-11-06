@@ -21,7 +21,7 @@ export const tripSummarySchema = z.object({
   startDate: calendarDate.nullable(),
   endDate: calendarDate.nullable(),
   timeZone: z.literal("Asia/Ho_Chi_Minh"),
-  status: z.enum(["PLANNING", "ACTIVE", "COMPLETED", "CANCELLED"]),
+  status: z.enum(["PLANNING", "READY", "ACTIVE", "COMPLETED", "CANCELLED"]),
   mode: z.enum(["PLANNING", "LIVE", "RECAP", "CANCELLED"]),
   readiness: z.object({
     hasDates: z.boolean(),

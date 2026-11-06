@@ -135,7 +135,7 @@ export function ItineraryStopList({
                   ]}
                 >
                   <AppText
-                    variant={live ? "caption" : "body"}
+                    variant="caption"
                     tone="primary"
                     style={{
                       flexShrink: 0,
@@ -156,7 +156,7 @@ export function ItineraryStopList({
                   ) : null}
                 </View>
                 <AppText
-                  variant={live ? "label" : "bodyLarge"}
+                  variant={live ? "label" : "body"}
                   style={{ fontFamily: theme.typography.fontFamily.semibold }}
                 >
                   {stop.name[locale]}

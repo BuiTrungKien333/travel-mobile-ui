@@ -94,7 +94,11 @@ export function TripDetailsScreen({
       expandMap={expandMap}
     />
   ) : (
-    <ConnectedTripDetailsScreen tripId={tripId} selectedDate={selectedDate} />
+    <ConnectedTripDetailsScreen
+      tripId={tripId}
+      selectedDate={selectedDate}
+      expandMap={expandMap}
+    />
   );
 }
 
@@ -359,6 +363,7 @@ function TripDetailsContent({
     <TripDetailsHeader
       trip={trip}
       mode={mode}
+      today={today}
       hideTripInfo={mapFirstLayout}
       onBack={backToTrips}
       onMenu={() => setSheet({ kind: "menu" })}
@@ -522,6 +527,7 @@ function TripDetailsContent({
             <TripDetailsHeader
               trip={trip}
               mode={mode}
+              today={today}
               titleOnly
               onBack={backToTrips}
               onMenu={() => setSheet({ kind: "menu" })}

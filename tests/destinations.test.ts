@@ -560,6 +560,9 @@ test("actual create/edit forms carry picker IDs through RHF and submit payloads"
       "../screens/place-picker-screen": {
         PlacePickerScreen: "PlacePickerScreen",
       },
+      "../screens/connected-place-picker-screen": {
+        ConnectedPlacePickerScreen: "ConnectedPlacePickerScreen",
+      },
       "../utils/confirm-discard": { confirmDiscard: () => {} },
       "@/constants/development": { UI_PREVIEW_ENABLED: false },
       "@/features/home/providers/trip-preview-provider": {
@@ -605,6 +608,28 @@ test("actual create/edit forms carry picker IDs through RHF and submit payloads"
   values.startDate = "2026-11-20";
   values.endDate = "2026-11-21";
   tree = renderCreate();
+  const addPlace = nodes(tree, "Pressable").find(
+    (node) => node.props.accessibilityLabel === "Thêm địa điểm",
+  );
+  assert.ok(addPlace);
+  invoke(addPlace, "onPress");
+  tree = renderCreate();
+  const picker = nodes(tree, "ConnectedPlacePickerScreen")[0];
+  assert.ok(
+    picker,
+    "real create opens the connected picker, never the fixture picker",
+  );
+  assert.equal((picker.props.scope as { provinceId: string }).provinceId, id);
+  invoke(picker, "onApply", [
+    {
+      id,
+      placeId: id,
+      name: { vi: "Real catalog", en: "Real catalog" },
+      kind: { vi: "", en: "" },
+      time: "",
+    },
+  ]);
+  tree = renderCreate();
   const submitButton = nodes(tree, "AppButton").find(
     (node) => node.props.variant === "raised",
   );
@@ -617,6 +642,12 @@ test("actual create/edit forms carry picker IDs through RHF and submit payloads"
     submits.length,
     1,
     "rapid submissions must issue only one create request",
+  );
+  assert.equal(
+    JSON.stringify(
+      (submits[0] as { initialPlaceIds: string[] }).initialPlaceIds,
+    ),
+    JSON.stringify([id]),
   );
   assert.equal(
     navigated.length,

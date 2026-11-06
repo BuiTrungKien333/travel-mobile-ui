@@ -5,7 +5,7 @@ import { useSharedValue } from "react-native-reanimated";
 import { AppText } from "@/components/ui/app-text";
 import { AppIcon } from "@/components/ui/app-icon";
 import { useAppTheme } from "@/hooks/use-app-theme";
-import type { TripStop } from "@/features/home/types/home-types";
+import type { LocalizedText, TripStop } from "@/features/home/types/home-types";
 import { usePlaceSearchCopy } from "../i18n/place-search-copy";
 import { getPlaceDetailsPreview } from "../data/place-details-preview";
 import type { PlaceMapRegion } from "../utils/place-search";
@@ -31,6 +31,7 @@ export function PlaceDetailsContent({
   classification,
   afterInfo,
   mapAction,
+  suppliedDetails,
 }: {
   place: TripStop;
   places: TripStop[];
@@ -46,12 +47,18 @@ export function PlaceDetailsContent({
   classification?: ReactNode;
   afterInfo?: ReactNode;
   mapAction?: ReactNode;
+  /** Explicit server content; absence is reserved for the UI-preview caller. */
+  suppliedDetails?: {
+    photo: ReturnType<typeof getPlaceDetailsPreview>["photo"];
+    hours?: string;
+    admission?: LocalizedText;
+  };
 }) {
   const theme = useAppTheme();
   const { copy, locale } = usePlaceSearchCopy();
   const [availableHeight, setAvailableHeight] = useState(0);
   const resizeLock = useSharedValue(0);
-  const details = getPlaceDetailsPreview(place);
+  const details = suppliedDetails ?? getPlaceDetailsPreview(place);
   const isAddress = place.locationType === "address";
   const photo = details.photo ?? (isAddress ? defaultLocationImage : null);
   const headerTopSpacing =
@@ -89,7 +96,10 @@ export function PlaceDetailsContent({
     {
       icon: "route" as const,
       label: copy.visitDuration,
-      value: `${place.durationMinutes ?? 45} ${copy.minutes}`,
+      value:
+        place.durationMinutes !== undefined || suppliedDetails === undefined
+          ? `${place.durationMinutes ?? 45} ${copy.minutes}`
+          : copy.unavailable,
     },
   ];
   return (
@@ -231,9 +241,11 @@ export function PlaceDetailsContent({
               ))}
             </View>
           )}
-          <AppText variant="caption" tone="muted">
-            {copy.detailsPreview}
-          </AppText>
+          {suppliedDetails === undefined ? (
+            <AppText variant="caption" tone="muted">
+              {copy.detailsPreview}
+            </AppText>
+          ) : null}
         </View>
         {afterInfo}
         {children}

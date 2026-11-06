@@ -75,7 +75,7 @@ export function NextStopCard({
         <View style={[homeStyles.grow, { gap: theme.spacing.sm }]}>
           <AppText
             accessibilityRole="header"
-            variant="heading"
+            variant="subheading"
             style={{
               fontSize: theme.typography.fontSize.lg,
               lineHeight: theme.typography.lineHeight.lg,

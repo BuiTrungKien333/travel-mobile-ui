@@ -66,6 +66,10 @@ export function ExampleItineraryCard() {
               accessibilityRole="header"
               variant="subheading"
               tone="primary"
+              style={{
+                fontSize: theme.typography.fontSize.md,
+                lineHeight: theme.typography.lineHeight.md,
+              }}
             >
               {copy.exampleTitle}
             </AppText>

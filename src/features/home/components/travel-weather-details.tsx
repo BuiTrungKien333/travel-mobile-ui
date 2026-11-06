@@ -112,8 +112,8 @@ export function TravelWeatherDetails({
               accessibilityLabel={`${weather.temperature}°C`}
               style={{
                 fontFamily: typography.fontFamily.medium,
-                fontSize: typography.fontSize.display,
-                lineHeight: typography.lineHeight.display,
+                fontSize: typography.fontSize.weatherDisplay,
+                lineHeight: typography.lineHeight.weatherDisplay,
               }}
             >
               {weather.temperature}°

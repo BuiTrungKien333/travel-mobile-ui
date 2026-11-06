@@ -26,12 +26,14 @@ export function JournalAlbum({
   onCapture,
   variant = "today",
   title,
+  onDeletePhoto,
 }: {
   memories: Memory[];
   onOpen: () => void;
   onCapture?: () => void;
   variant?: "today" | "recent";
   title?: string;
+  onDeletePhoto?: (memory: Memory) => Promise<void>;
 }) {
   const theme = useAppTheme();
   const { copy } = useOngoingCopy();
@@ -58,7 +60,14 @@ export function JournalAlbum({
         <AppText
           accessibilityRole="header"
           variant="label"
-          style={homeStyles.grow}
+          style={[
+            homeStyles.grow,
+            {
+              fontSize: theme.typography.fontSize.md,
+              lineHeight: theme.typography.lineHeight.md,
+              fontFamily: theme.typography.fontFamily.semibold,
+            },
+          ]}
         >
           {title ?? (variant === "recent" ? copy.recentJournal : copy.journal)}
         </AppText>
@@ -137,7 +146,10 @@ export function JournalAlbum({
           }}
           onDelete={async (id) => {
             const memory = memories.find((item) => item.id === id);
-            if (memory) await remove.mutateAsync(memory);
+            if (memory) {
+              if (onDeletePhoto) await onDeletePhoto(memory);
+              else await remove.mutateAsync(memory);
+            }
           }}
         />
       ) : null}

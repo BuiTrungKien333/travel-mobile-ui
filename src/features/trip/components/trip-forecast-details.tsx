@@ -30,7 +30,7 @@ export function TripForecastDetails({
     );
   const rainy =
     !!forecast.alert || forecast.hours.some((hour) => hour.rainChance > 40);
-  const sunny = forecast.uv > 5;
+  const sunny = forecast.uv !== undefined && forecast.uv > 5;
   const cool = forecast.low < 20;
   const advice: Parameters<typeof TravelWeatherDetails>[0]["advice"] = rainy
     ? {
@@ -77,7 +77,7 @@ export function TripForecastDetails({
       destination={destination}
       context={`${copy.forecastDay} · ${new Intl.DateTimeFormat(locale, { weekday: "long", day: "2-digit", month: "2-digit", timeZone: "UTC" }).format(new Date(`${forecast.date}T12:00:00Z`))}`}
       conditionLabel={copy[forecast.condition]}
-      secondary={`${forecast.low}°–${forecast.high}°C · UV ${forecast.uv}`}
+      secondary={`${forecast.low}°–${forecast.high}°C${forecast.uv !== undefined ? ` · UV ${forecast.uv}` : ""}`}
       advice={advice}
       footnote={copy.forecastPreparationHint}
     />

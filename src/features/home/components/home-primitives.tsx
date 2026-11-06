@@ -1,6 +1,12 @@
 import type { ReactNode } from "react";
 import { useBottomTabBarHeight } from "expo-router/js-tabs";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import {
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 import Animated, { FadeInDown, ReduceMotion } from "react-native-reanimated";
 import { ScreenSafeArea } from "@/components/common/screen-safe-area";
 
@@ -15,10 +21,14 @@ export function HomePage({
   children,
   showHeader = false,
   backdrop,
+  onRefresh,
+  refreshing = false,
 }: {
   children: ReactNode;
   showHeader?: boolean;
   backdrop?: ReactNode;
+  onRefresh?: () => void;
+  refreshing?: boolean;
 }) {
   const theme = useAppTheme();
   const tabBarHeight = useBottomTabBarHeight();
@@ -33,6 +43,15 @@ export function HomePage({
         </View>
       ) : null}
       <ScrollView
+        refreshControl={
+          onRefresh ? (
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={theme.colors.primary}
+            />
+          ) : undefined
+        }
         contentInsetAdjustmentBehavior="never"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[

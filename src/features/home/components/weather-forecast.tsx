@@ -11,13 +11,16 @@ export function WeatherDateSelector({
   days,
   selectedDate,
   onSelect,
+  variant = "inline",
 }: {
   days: ForecastDay[];
   selectedDate: string;
   onSelect: (date: string) => void;
+  variant?: "inline" | "modal";
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useWeatherCopy();
+  const inModal = variant === "modal";
   return (
     <ScrollView
       horizontal
@@ -45,17 +48,21 @@ export function WeatherDateSelector({
                 borderWidth: StyleSheet.hairlineWidth,
                 borderColor: selected
                   ? theme.colors.softActionBorder
-                  : theme.colors.glassBorder,
+                  : inModal
+                    ? theme.colors.border
+                    : theme.colors.glassBorder,
                 backgroundColor: selected
                   ? theme.colors.softActionSurface
-                  : theme.colors.glassInset,
+                  : inModal
+                    ? theme.colors.surface
+                    : theme.colors.glassInset,
                 opacity: pressed ? theme.motion.pressOpacity : 1,
               },
             ]}
           >
             <AppText
               variant="caption"
-              tone={selected ? "primary" : "muted"}
+              tone={selected ? "primary" : inModal ? "default" : "muted"}
               style={{
                 fontFamily: selected
                   ? theme.typography.fontFamily.semibold

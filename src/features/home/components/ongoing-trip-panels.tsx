@@ -326,7 +326,7 @@ function JournalNoteEditor({
   );
 }
 
-function JourneySheet({
+export function JourneySheet({
   title,
   onClose,
   children,

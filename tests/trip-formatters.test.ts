@@ -92,6 +92,92 @@ test("getTripDisplayStatus identifies ongoing, upcoming, draft, completed, and c
   assert.equal(getTripDisplayStatus(cancelled, today), "cancelled");
 });
 
+test("preparation labels split at seven calendar days for both API and preview trips", () => {
+  const cases = [
+    ["2026-10-22", "upcoming"],
+    ["2026-10-28", "upcoming"],
+    ["2026-10-29", "planning"],
+    ["2026-11-20", "planning"],
+  ] as const;
+  for (const [startDate, expected] of cases) {
+    for (const serverMode of [undefined, "PLANNING"] as const) {
+      assert.equal(
+        getTripDisplayStatus(
+          makeTrip({ serverMode, startDate, endDate: startDate }),
+          today,
+        ),
+        expected,
+      );
+    }
+  }
+});
+
+test("calendar boundaries include the start and end day without replacing authoritative API modes", () => {
+  assert.equal(
+    getTripDisplayStatus(makeTrip({ startDate: today, endDate: today }), today),
+    "ongoing",
+  );
+  assert.equal(
+    getTripDisplayStatus(
+      makeTrip({ startDate: "2026-10-20", endDate: today }),
+      today,
+    ),
+    "ongoing",
+  );
+  assert.equal(
+    getTripDisplayStatus(
+      makeTrip({ startDate: "2026-10-20", endDate: "2026-10-20" }),
+      today,
+    ),
+    "completed",
+  );
+  for (const [serverMode, expected] of [
+    ["LIVE", "ongoing"],
+    ["RECAP", "completed"],
+    ["CANCELLED", "cancelled"],
+  ] as const) {
+    assert.equal(
+      getTripDisplayStatus(
+        makeTrip({
+          serverMode,
+          startDate: "2026-12-01",
+          endDate: "2026-12-03",
+        }),
+        today,
+      ),
+      expected,
+    );
+  }
+  assert.equal(
+    getTripDisplayStatus(
+      makeTrip({
+        serverMode: "PLANNING",
+        startDate: undefined,
+        endDate: undefined,
+      }),
+      today,
+    ),
+    "planning",
+  );
+});
+
+test("the seven-day preparation window works across months, years and leap days", () => {
+  for (const [evaluatedDate, startDate, expected] of [
+    ["2026-12-25", "2027-01-01", "upcoming"],
+    ["2026-12-24", "2027-01-01", "planning"],
+    ["2028-02-23", "2028-03-01", "upcoming"],
+    ["2028-02-22", "2028-03-01", "planning"],
+  ] as const) {
+    assert.equal(
+      getTripDisplayStatus(
+        makeTrip({ serverMode: "PLANNING", startDate, endDate: startDate }),
+        evaluatedDate,
+      ),
+      expected,
+    );
+  }
+});
+
 test("getTotalTripStops accurately sums stops across days", () => {
   const trip = makeTrip();
   assert.equal(getTotalTripStops(trip), 3);

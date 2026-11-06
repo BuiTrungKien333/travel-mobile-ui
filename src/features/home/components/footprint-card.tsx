@@ -194,6 +194,8 @@ function AchievementStat({
           variant="heading"
           style={{
             color,
+            fontSize: theme.typography.fontSize.xl,
+            lineHeight: theme.typography.lineHeight.xl,
             fontFamily: theme.typography.fontFamily.semibold,
             fontVariant: ["tabular-nums"],
           }}

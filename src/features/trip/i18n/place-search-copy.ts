@@ -1,5 +1,20 @@
 import { useI18n } from "@/hooks/use-i18n";
 const vi = {
+  loadingPlaces: "Đang tải địa điểm…",
+  catalogSearch: "Tìm trong các địa điểm gợi ý",
+  catalogHint: "Chọn từ các địa điểm gợi ý tại điểm đến của bạn.",
+  catalogEmpty:
+    "Chưa có địa điểm phù hợp ở điểm đến này. Thử từ khóa khác; bạn vẫn có thể tạo chuyến đi trước.",
+  requestFailed: "Chưa thể tải hoặc lưu địa điểm. Vui lòng thử lại.",
+  networkFailure:
+    "Chưa kết nối được máy chủ. Kiểm tra mạng rồi thử lại; lựa chọn của bạn vẫn được giữ.",
+  selectionLimit: "Tối đa 50 địa điểm mỗi lần.",
+  unscheduledHint:
+    "Địa điểm được lưu vào Chờ xếp lịch; chưa gán giờ hoặc ngày tham quan.",
+  tripPlaces: "Địa điểm trong chuyến đi",
+  tripPlacesHint: "Các địa điểm đã lưu cho chuyến đi của bạn.",
+  tripPlacesEmpty: "Chưa có địa điểm nào được lưu.",
+  addressUnavailable: "Chưa có địa chỉ",
   title: "Thêm địa điểm",
   back: "Quay lại",
   search: "Tìm địa điểm hoặc địa chỉ",
@@ -31,9 +46,9 @@ const vi = {
   minutes: "phút",
   unavailable: "Chưa có thông tin",
   noPhoto: "Chưa có ảnh",
-  detailsPreview: "Thông tin mẫu · Chưa đồng bộ Google Maps",
+  detailsPreview: "Thông tin mẫu · Chưa đồng bộ bản đồ",
   mapHint: "Kéo bản đồ để đặt ghim ở vị trí bạn muốn.",
-  preview: "Bản đồ xem trước · Chưa kết nối Google Maps",
+  preview: "Sơ đồ vị trí · Chưa kết nối bản đồ thật",
   selected: "Đã chọn",
   saveSelection: "Lưu lựa chọn",
   selectedOnly: "Xem các điểm đã chọn",
@@ -73,10 +88,26 @@ const vi = {
   moveEast: "Dời ghim sang phía đông",
   moveWest: "Dời ghim sang phía tây",
   nativeMapRequired: "Bản đồ thật cần development build trên iOS hoặc Android.",
-  routeUnavailable: "Chưa lấy được lộ trình. Kiểm tra cấu hình Maps trên backend.",
+  routeUnavailable:
+    "Chưa lấy được lộ trình. Kiểm tra cấu hình Maps trên backend.",
   liveMapLabel: "Bản đồ trực tiếp",
 };
 const en: typeof vi = {
+  loadingPlaces: "Loading places…",
+  catalogSearch: "Search suggested places",
+  catalogHint: "Choose from suggested places at your destination.",
+  catalogEmpty:
+    "No matching places for this destination. Try another search; you can still create your trip first.",
+  requestFailed: "Couldn't load or save places. Please try again.",
+  networkFailure:
+    "Can't reach the server. Check your connection and try again; your selection is kept.",
+  selectionLimit: "Up to 50 places per selection.",
+  unscheduledHint:
+    "Places are saved as unscheduled, without an assigned day or time.",
+  tripPlaces: "Trip places",
+  tripPlacesHint: "Places saved for your trip.",
+  tripPlacesEmpty: "No saved places yet.",
+  addressUnavailable: "Address not provided",
   title: "Add places",
   back: "Back",
   search: "Search a place or address",
@@ -108,9 +139,9 @@ const en: typeof vi = {
   minutes: "min",
   unavailable: "Not available yet",
   noPhoto: "No photo yet",
-  detailsPreview: "Sample information · Not synced with Google Maps",
+  detailsPreview: "Sample information · Not synced with maps",
   mapHint: "Drag the map to position your pin.",
-  preview: "Map preview · Google Maps not connected",
+  preview: "Location diagram · Live map not connected",
   selected: "Selected",
   saveSelection: "Save selection",
   selectedOnly: "View selected places",
@@ -149,8 +180,10 @@ const en: typeof vi = {
   moveSouth: "Move pin south",
   moveEast: "Move pin east",
   moveWest: "Move pin west",
-  nativeMapRequired: "The native map needs a development build on iOS or Android.",
-  routeUnavailable: "Route unavailable. Check Maps configuration on the backend.",
+  nativeMapRequired:
+    "The native map needs a development build on iOS or Android.",
+  routeUnavailable:
+    "Route unavailable. Check Maps configuration on the backend.",
   liveMapLabel: "Live map",
 };
 export function usePlaceSearchCopy() {

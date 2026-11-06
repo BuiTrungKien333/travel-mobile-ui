@@ -2,9 +2,11 @@ import { useI18n } from "@/hooks/use-i18n";
 
 const vi = {
   title: "Thời tiết chuyến đi",
+  viewForecast: "Xem dự báo",
   comfort: "ĐIỂM THUẬN LỢI",
   expected: "Nhiệt độ dự kiến",
   rainAlert: "Mưa nhẹ {from}–{to} · Khả năng {chance}%",
+  rainAt: "Khả năng mưa {chance}% lúc {from}",
   hourly: "Khung giờ trải nghiệm",
   rainChance: "Khả năng mưa",
   rain: "Mưa rào",
@@ -48,9 +50,11 @@ const vi = {
 };
 const en: typeof vi = {
   title: "Trip weather",
+  viewForecast: "View forecast",
   comfort: "TRAVEL COMFORT",
   expected: "Expected temperature",
   rainAlert: "Light rain {from}–{to} · {chance}% chance",
+  rainAt: "{chance}% chance of rain at {from}",
   hourly: "Your day, hour by hour",
   rainChance: "Chance of rain",
   rain: "Showers",

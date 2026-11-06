@@ -23,6 +23,25 @@ function parse<T>(
 }
 
 export const tripPlacesApi = {
+  async addPlaces(
+    tripId: string,
+    placeIds: string[],
+  ): Promise<TripPlaceResponse[]> {
+    if (
+      !placeIds.length ||
+      placeIds.length > 50 ||
+      new Set(placeIds).size !== placeIds.length ||
+      placeIds.some(
+        (placeId) => !addTripPlaceRequestSchema.safeParse({ placeId }).success,
+      )
+    )
+      throw new ApiError("INVALID_PLACE");
+    const response = await apiClient.post<unknown>(
+      `${base}/${encodeURIComponent(tripId)}/places/batch`,
+      { placeIds },
+    );
+    return parse(tripPlacesEnvelopeSchema, response.data);
+  },
   async listPlaces(
     tripId: string,
     signal?: AbortSignal,

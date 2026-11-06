@@ -227,8 +227,9 @@ export const typography = {
     lg: 18,
     xl: 20,
     xxl: 24,
+    weatherForecast: 28,
     display: 32,
-    weatherDisplay: 48,
+    weatherDisplay: 52,
   },
 
   lineHeight: {
@@ -240,8 +241,9 @@ export const typography = {
     lg: 26,
     xl: 28,
     xxl: 32,
+    weatherForecast: 36,
     display: 40,
-    weatherDisplay: 56,
+    weatherDisplay: 60,
   },
 
   fontWeight: {

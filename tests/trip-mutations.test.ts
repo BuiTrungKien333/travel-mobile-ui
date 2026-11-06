@@ -435,11 +435,18 @@ function queryHarness() {
     },
     "@/services/api/api-error": { ApiError },
     "./trip-api": {
-      tripApi: { update: async () => next, remove: async () => {} },
+      tripApi: {
+        create: async () => read,
+        update: async () => next,
+        remove: async () => {},
+      },
     },
   });
   type Outcome = { read: typeof read; sessionVersion: number };
   const hooks = load<{
+    useCreateTripMutation: () => {
+      onSuccess: (value: typeof read) => void;
+    };
     useUpdateTripMutation: (id: string) => {
       mutationFn: (payload: UpdateTripPayload) => Promise<Outcome>;
       onSuccess: (value: Outcome) => Promise<void>;
@@ -452,6 +459,8 @@ function queryHarness() {
   client.setQueryData(tripQueryKeys.detail(owner, id), read);
   client.setQueryData(tripQueryKeys.list(owner), [read.trip]);
   client.setQueryData(tripQueryKeys.list("owner-b"), []);
+  client.setQueryData(tripQueryKeys.dashboard(owner), {});
+  client.setQueryData(tripQueryKeys.dashboard("owner-b"), {});
   return {
     client,
     hooks,
@@ -465,6 +474,23 @@ function queryHarness() {
   };
 }
 
+test("Creating a trip refreshes the current account Home selection", () => {
+  const h = queryHarness();
+  try {
+    h.hooks.useCreateTripMutation().onSuccess(h.read);
+    assert.equal(
+      h.client.getQueryState(tripQueryKeys.dashboard(h.owner))?.isInvalidated,
+      true,
+    );
+    assert.equal(
+      h.client.getQueryState(tripQueryKeys.dashboard("owner-b"))?.isInvalidated,
+      false,
+    );
+  } finally {
+    h.client.clear();
+  }
+});
+
 test("Update publishes the returned version and invalidates only affected account queries", async () => {
   const h = queryHarness();
   try {
@@ -475,6 +501,14 @@ test("Update publishes the returned version and invalidates only affected accoun
         version: h.read.trip.version,
         notes: "Server note",
       }),
+    );
+    assert.equal(
+      h.client.getQueryState(tripQueryKeys.dashboard(h.owner))?.isInvalidated,
+      true,
+    );
+    assert.equal(
+      h.client.getQueryState(tripQueryKeys.dashboard("owner-b"))?.isInvalidated,
+      false,
     );
     assert.equal(
       h.client.getQueryData<typeof h.read>(tripQueryKeys.detail(h.owner, h.id))
@@ -506,6 +540,14 @@ test("Successful delete removes stale trip detail and invalidates related memory
     h.client.setQueryData(memoryQueryKeys.list(h.owner, h.id), {});
     const mutation = h.hooks.useDeleteTripMutation(h.id);
     await mutation.onSuccess(await mutation.mutationFn(h.read.trip.version));
+    assert.equal(
+      h.client.getQueryState(tripQueryKeys.dashboard(h.owner))?.isInvalidated,
+      true,
+    );
+    assert.equal(
+      h.client.getQueryState(tripQueryKeys.dashboard("owner-b"))?.isInvalidated,
+      false,
+    );
     assert.equal(
       h.client.getQueryData(tripQueryKeys.detail(h.owner, h.id)),
       undefined,

@@ -13,8 +13,8 @@ export type ForecastDay = {
   low: number;
   high: number;
   temperature: number;
-  comfort: number;
-  uv: number;
+  comfort?: number;
+  uv?: number;
   condition: WeatherCondition;
   alert?: { from: string; to: string; chance: number };
   hours: ForecastHour[];
@@ -178,13 +178,15 @@ export function suggestedPacking(
   days: ForecastDay[],
   outdoorWalking: boolean,
 ): PackingItem[] {
-  const rainy = days.some((day) =>
-    day.hours.some((hour) => hour.rainChance > 40),
+  const rainy = days.some(
+    (day) =>
+      (day.alert?.chance ?? 0) > 40 ||
+      day.hours.some((hour) => hour.rainChance > 40),
   );
   const items: PackingItem[] = [];
   if (days.some((day) => day.low < 20)) items.push("layer");
   if (rainy) items.push("umbrella");
-  if (days.some((day) => day.uv > 5)) items.push("sun");
+  if (days.some((day) => day.uv !== undefined && day.uv > 5)) items.push("sun");
   if (rainy && outdoorWalking) items.push("shoes");
   return items;
 }

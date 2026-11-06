@@ -20,9 +20,7 @@ const vi = {
   more: "Xem thêm",
   unavailable: "Chưa kết nối chức năng này",
   pending:
-    "Lịch trình, địa điểm, bản đồ và kỷ niệm sẽ được kết nối ở các bước tiếp theo. Thông tin chuyến đi đã được lưu trên máy chủ.",
-  placesPending:
-    "Tìm và thêm địa điểm sẽ được kết nối ở bước tiếp theo. Bạn có thể tạo chuyến đi trước.",
+    "Lịch trình, bản đồ và kỷ niệm sẽ được kết nối ở các bước tiếp theo. Thông tin chuyến đi và địa điểm đã được lưu trên máy chủ.",
   modulePending:
     "Camera và kỷ niệm chưa được kết nối máy chủ trong đợt này. Bạn có thể tạo và xem chuyến đi trong mục Chuyến đi.",
   trips: "Chuyến đi",
@@ -61,9 +59,7 @@ const en: typeof vi = {
   more: "Load more",
   unavailable: "This feature is not connected yet",
   pending:
-    "Itinerary, places, maps and memories will be connected in the next stages. Your trip information is saved on the server.",
-  placesPending:
-    "Place search will be connected in the next stage. You can create your trip first.",
+    "Itinerary, maps and memories will be connected in the next stages. Your trip information and places are saved on the server.",
   modulePending:
     "Camera and memories aren't connected to the server in this stage. You can create and view trips in the Trips tab.",
   trips: "Trips",

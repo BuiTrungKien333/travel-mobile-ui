@@ -1,5 +1,7 @@
 # Phase 3 — Khảo sát và contract tìm kiếm/chi tiết địa điểm
 
+> Cập nhật 06/11/2026: người dùng chọn **Mapbox**, hoàn tất catalog nội bộ + cấu hình trước. Đọc [QA4-PLACES-MAPBOX.md](QA4-PLACES-MAPBOX.md) và [OpenAPI runtime](api/places-qa4.openapi.json). Nội dung Google/9 operations planned dưới đây giữ làm lịch sử, không phải runtime/hướng provider hiện hành. Google sign-in không thay đổi.
+
 Ngày: **03/11/2026** · Contract **0.1.0** · **Đặc tả để triển khai, chưa có runtime API Phase 3**.
 
 Phạm vi lượt này: đối chiếu code hai repository, chốt bước tìm/xem/xác nhận lựa chọn, xác định phần thiếu và thứ tự triển khai. Không thay code runtime, migration, env, dependency; không merge backend `integration/team-sync`; không sửa planning/AI. Phase 2 có 7 operations đã triển khai nhưng QA UI → backend/thiết bị và master data vẫn chưa nghiệm thu.

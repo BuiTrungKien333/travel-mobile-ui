@@ -14,6 +14,7 @@ import type {
   DatePreviewRequest,
 } from "./trip-contract";
 import { memoryQueryKeys } from "@/features/home/api/memory-query-keys";
+import { weatherQueryKeys } from "@/features/weather/api/weather-query-keys";
 
 import { tripQueryKeys } from "./trip-query-keys";
 export { tripQueryKeys } from "./trip-query-keys";
@@ -55,6 +56,9 @@ export function useCreateTripMutation() {
     onSuccess: (read) => {
       client.setQueryData(tripQueryKeys.detail(owner, read.trip.id), read);
       void client.invalidateQueries({ queryKey: tripQueryKeys.list(owner) });
+      void client.invalidateQueries({
+        queryKey: tripQueryKeys.dashboard(owner),
+      });
     },
   });
 }
@@ -77,6 +81,10 @@ export function useUpdateTripMutation(id: string) {
         throw new ApiError("CANCELLED");
       client.setQueryData(tripQueryKeys.detail(owner, id), read);
       await Promise.all([
+        client.invalidateQueries({
+          queryKey: weatherQueryKeys.forTrip(owner, id),
+        }),
+        client.invalidateQueries({ queryKey: tripQueryKeys.dashboard(owner) }),
         client.invalidateQueries({ queryKey: tripQueryKeys.list(owner) }),
         client.invalidateQueries({
           queryKey: tripQueryKeys.itinerary(owner, id),
@@ -119,7 +127,9 @@ export function useDeleteTripMutation(id: string) {
       });
       client.removeQueries({ queryKey: tripQueryKeys.itinerary(owner, id) });
       client.removeQueries({ queryKey: tripQueryKeys.places(owner, id) });
+      client.removeQueries({ queryKey: weatherQueryKeys.forTrip(owner, id) });
       await Promise.all([
+        client.invalidateQueries({ queryKey: tripQueryKeys.dashboard(owner) }),
         client.invalidateQueries({ queryKey: tripQueryKeys.list(owner) }),
         client.invalidateQueries({ queryKey: memoryQueryKeys.list(owner) }),
         client.invalidateQueries({ queryKey: memoryQueryKeys.list(owner, id) }),

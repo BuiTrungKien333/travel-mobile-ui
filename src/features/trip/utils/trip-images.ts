@@ -1,14 +1,32 @@
 import type { ImageSource } from "expo-image";
-import { homeImages } from "@/features/home/data/home-mocks";
 import type { Trip } from "@/features/home/types/home-types";
+
+// Static requires let Metro bundle local photos on both native and web.
+const sampleCovers = [
+  require("@/assets/images/examples/IMG20260110152554.webp"),
+  require("@/assets/images/examples/IMG20260110163722.webp"),
+  require("@/assets/images/examples/IMG20260222171145.webp"),
+  require("@/assets/images/examples/IMG20260222171156.webp"),
+  require("@/assets/images/examples/IMG20260222172702.webp"),
+  require("@/assets/images/examples/IMG20260222172729.webp"),
+  require("@/assets/images/examples/IMG20260222173257.webp"),
+  require("@/assets/images/examples/IMG20260409062951.webp"),
+  require("@/assets/images/examples/IMG20260409064219.webp"),
+  require("@/assets/images/examples/IMG20260409141212.webp"),
+  require("@/assets/images/examples/IMG20260409143445.webp"),
+  require("@/assets/images/examples/IMG20260409143459.webp"),
+  require("@/assets/images/examples/IMG20260409143711.webp"),
+  require("@/assets/images/examples/IMG20260509091222.webp"),
+] as const;
 
 export function getTripCoverImage(trip: Trip): ImageSource | string | number {
   if (trip.coverImage) return trip.coverImage;
-  const destination = trip.destination.toLowerCase();
-  if (destination.includes("đà lạt") || destination.includes("da lat")) {
-    if (trip.status === "completed") return homeImages.dalatFlowerGarden;
-    if (trip.status === "draft") return homeImages.lamDongMuseum;
-    return homeImages.upcomingPhoto;
+
+  // Distribute by trip ID so the choice survives re-renders, edits and reloads
+  // without storing another copy of server data or changing the trip's cover.
+  let hash = 2166136261;
+  for (let index = 0; index < trip.id.length; index++) {
+    hash = Math.imul(hash ^ trip.id.charCodeAt(index), 16777619);
   }
-  return homeImages.forest;
+  return sampleCovers[(hash >>> 0) % sampleCovers.length];
 }

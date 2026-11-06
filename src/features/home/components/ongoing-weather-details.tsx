@@ -7,13 +7,16 @@ export function OngoingWeatherDetails({
   tripId,
   today,
   destination,
+  preview = true,
 }: {
   tripId: string;
   today: string;
   destination: string;
+  preview?: boolean;
 }) {
   const { copy } = useOngoingCopy();
   const weather =
+    preview &&
     ongoingWeatherSnapshot.tripId === tripId &&
     ongoingWeatherSnapshot.date === today
       ? ongoingWeatherSnapshot

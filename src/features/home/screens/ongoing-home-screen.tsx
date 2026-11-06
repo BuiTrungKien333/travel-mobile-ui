@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Image } from "expo-image";
 import { View } from "react-native";
+import { AppText } from "@/components/ui/app-text";
 
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { CheckInPrompt } from "../components/check-in-prompt";
@@ -11,14 +12,37 @@ import { OngoingTripHeader } from "../components/ongoing-trip-header";
 import { NextStopCard } from "../components/ongoing-trip-components";
 import { useOngoingCopy } from "../i18n/ongoing-copy";
 import { useTripPreview } from "../providers/trip-preview-provider";
-import type { Trip, TripStop } from "../types/home-types";
+import type { Memory, Trip, TripStop } from "../types/home-types";
 import { getDayProgress } from "../utils/day-progress";
 export function OngoingHomeScreen({
   trip,
   dayIndex,
+  runtime,
 }: {
   trip: Trip;
   dayIndex: number;
+  runtime?: {
+    today: string;
+    nextStop?: TripStop;
+    stopCount: number;
+    memories: Memory[];
+    busy: boolean;
+    onVisit: (stop: TripStop) => Promise<boolean>;
+    onDetails: () => void;
+    onWeather: () => void;
+    onPlan: () => void;
+    onJournal: () => void;
+    onCamera: () => void;
+    onDeletePhoto: (memory: Memory) => Promise<void>;
+    error?: string;
+    onRefresh: () => void;
+    refreshing: boolean;
+    weather?: {
+      temperature: number;
+      condition: "sun" | "cloud" | "rain";
+      label: string;
+    };
+  };
 }) {
   const theme = useAppTheme();
   const backdropUri = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
@@ -32,35 +56,57 @@ export function OngoingHomeScreen({
     return () => clearTimeout(timeout);
   }, [checkedInStop, promptDuration]);
   const { locale } = useOngoingCopy();
-  const { today, visited, memories, setVisited, openPanel } = useTripPreview(
-    (state) => ({
-      today: state.today,
-      visited: state.visited,
-      memories: state.memories,
-      setVisited: state.setVisited,
-      openPanel: state.openPanel,
-    }),
-  );
+  const {
+    today: previewToday,
+    visited,
+    memories,
+    setVisited,
+    openPanel,
+  } = useTripPreview((state) => ({
+    today: state.today,
+    visited: state.visited,
+    memories: state.memories,
+    setVisited: state.setVisited,
+    openPanel: state.openPanel,
+  }));
+  const today = runtime?.today ?? previewToday;
   const stops = trip.days.find((day) => day.date === today)?.stops ?? [];
-  const progress = getDayProgress(stops, visited[`${trip.id}:${today}`] ?? []);
-  const todayMemories = memories.filter(
-    (memory) => memory.tripId === trip.id && memory.date === today,
-  );
+  const progress = runtime
+    ? { nextStop: runtime.nextStop }
+    : getDayProgress(stops, visited[`${trip.id}:${today}`] ?? []);
+  const todayMemories =
+    runtime?.memories ??
+    memories.filter(
+      (memory) => memory.tripId === trip.id && memory.date === today,
+    );
   const dateLabel = new Intl.DateTimeFormat(
     locale === "vi" ? "vi-VN" : "en-GB",
     { weekday: "short", day: "2-digit", month: "2-digit", timeZone: "UTC" },
   ).format(new Date(`${today}T12:00:00Z`));
   const openCamera = () =>
-    openPanel({
-      kind: "camera",
-      tripId: trip.id,
-      date: today,
-      stopId: visited[`${trip.id}:${today}`]?.at(-1) ?? progress.nextStop?.id,
-    });
+    runtime
+      ? runtime.onCamera()
+      : openPanel({
+          kind: "camera",
+          tripId: trip.id,
+          date: today,
+          stopId:
+            visited[`${trip.id}:${today}`]?.at(-1) ?? progress.nextStop?.id,
+        });
   const openJournal = () =>
-    openPanel({ kind: "journal", tripId: trip.id, date: today });
-  const openPlan = () => openPanel({ kind: "plan", tripId: trip.id, dayIndex });
-  const handleVisit = (id: string, value: boolean) => {
+    runtime
+      ? runtime.onJournal()
+      : openPanel({ kind: "journal", tripId: trip.id, date: today });
+  const openPlan = () =>
+    runtime
+      ? runtime.onPlan()
+      : openPanel({ kind: "plan", tripId: trip.id, dayIndex });
+  const handleVisit = async (id: string, value: boolean) => {
+    if (runtime) {
+      if (runtime.nextStop && (await runtime.onVisit(runtime.nextStop)))
+        setCheckedInStop(runtime.nextStop);
+      return;
+    }
     setVisited(trip.id, today, id, value);
     if (value) setCheckedInStop(stops.find((stop) => stop.id === id) ?? null);
     else if (checkedInStop?.id === id) setCheckedInStop(null);
@@ -70,6 +116,8 @@ export function OngoingHomeScreen({
     <View style={{ flex: 1 }}>
       <HomePage
         showHeader
+        onRefresh={runtime?.onRefresh}
+        refreshing={runtime?.refreshing}
         backdrop={
           <Image
             accessible={false}
@@ -81,13 +129,19 @@ export function OngoingHomeScreen({
         }
       >
         <OngoingTripHeader
+          liveWeather={runtime?.weather}
+          preview={!runtime}
           trip={trip}
           dayIndex={dayIndex}
           dateLabel={dateLabel}
           today={today}
-          onDetails={() => openPanel({ kind: "trip-details", tripId: trip.id })}
-          onWeather={() =>
-            openPanel({ kind: "current-weather", tripId: trip.id })
+          onDetails={
+            runtime?.onDetails ??
+            (() => openPanel({ kind: "trip-details", tripId: trip.id }))
+          }
+          onWeather={
+            runtime?.onWeather ??
+            (() => openPanel({ kind: "current-weather", tripId: trip.id }))
           }
         />
         <NextStopCard
@@ -99,17 +153,22 @@ export function OngoingHomeScreen({
               params: { tripId: trip.id, day: today, map: "expanded" },
             })
           }
-          hasStops={stops.length > 0}
+          hasStops={runtime ? runtime.stopCount > 0 : stops.length > 0}
+          busy={runtime?.busy}
           onVisited={() => {
-            if (progress.nextStop) handleVisit(progress.nextStop.id, true);
+            if (progress.nextStop) void handleVisit(progress.nextStop.id, true);
           }}
           onJournal={openJournal}
           onPlan={openPlan}
         />
+        {runtime?.error ? (
+          <AppText accessibilityRole="alert">{runtime.error}</AppText>
+        ) : null}
         <JournalAlbum
           memories={todayMemories}
           onOpen={openJournal}
           onCapture={openCamera}
+          onDeletePhoto={runtime?.onDeletePhoto}
         />
       </HomePage>
       {checkedInStop ? (
@@ -117,6 +176,11 @@ export function OngoingHomeScreen({
           key={checkedInStop.id}
           stop={checkedInStop}
           onCapture={() => {
+            if (runtime) {
+              runtime.onCamera();
+              setCheckedInStop(null);
+              return;
+            }
             openPanel({
               kind: "camera",
               tripId: trip.id,

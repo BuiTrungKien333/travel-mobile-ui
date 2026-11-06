@@ -115,21 +115,13 @@ export function JourneyInvitationCard({
       <View style={{ gap: theme.spacing.sm }}>
         <AppText
           accessibilityRole="header"
-          variant={returning ? "heading" : "subheading"}
-          style={[
-            styles.centeredText,
-            returning
-              ? {
-                  fontSize: theme.typography.fontSize.xl,
-                  lineHeight: theme.typography.lineHeight.xl,
-                }
-              : undefined,
-          ]}
+          variant="subheading"
+          style={styles.centeredText}
         >
           {returning ? copy.returningTitle : copy.newTitle}
         </AppText>
         <AppText
-          variant={returning ? "caption" : "bodyLarge"}
+          variant="body"
           tone={returning ? "muted" : "default"}
           style={styles.centeredText}
         >
@@ -139,7 +131,6 @@ export function JourneyInvitationCard({
       <View style={{ marginTop: theme.spacing.sm }}>
         <AppButton
           variant="raised"
-          labelSize={returning ? "default" : "large"}
           onPress={() => openPanel({ kind: "create" })}
           trailingIcon={
             <AppIcon

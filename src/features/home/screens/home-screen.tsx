@@ -69,7 +69,7 @@ export function HomeScreen() {
       <View style={{ gap: theme.spacing.xs }}>
         <AppText
           accessibilityRole="header"
-          variant="heading"
+          variant="title"
           style={{
             fontSize: theme.typography.fontSize.xl,
             lineHeight: theme.typography.lineHeight.xl,

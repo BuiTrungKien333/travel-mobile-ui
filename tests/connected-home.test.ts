@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { homeFixture } from "./helpers/home-dashboard-fixture.ts";
+import type { HomeDashboard } from "../src/features/home/api/home-api.ts";
 import { test } from "node:test";
 import * as tokens from "../src/theme/tokens.ts";
 import { tripModuleLoader } from "./helpers/load-trip-module.ts";
@@ -34,10 +36,9 @@ const primitives = {
 function harness() {
   let refreshes = 0;
   const query = {
-    data: undefined as
-      | undefined
-      | { pages: { content: unknown[]; totalElements: number }[] },
+    data: undefined as HomeDashboard | undefined,
     isSuccess: false,
+    isRefetching: false,
     isError: false,
     error: undefined as unknown,
     refetch: async () => {
@@ -46,6 +47,60 @@ function harness() {
   };
   const load = tripModuleLoader({
     "react/jsx-runtime": { jsx: element, jsxs: element },
+    react: { useState: () => [false, () => {}] },
+    "expo-router": { router: { push: () => {}, navigate: () => {} } },
+    "@/services/api/client": { apiClient: {} },
+    "@/features/weather/api/weather-queries": {
+      useTripWeather: () => ({
+        data: undefined,
+        isPending: false,
+        isError: false,
+        refetch: async () => {},
+      }),
+    },
+    "../components/connected-trip-weather": {
+      TripWeatherModal: "TripWeatherModal",
+      WeatherQueryStatus: "WeatherQueryStatus",
+    },
+    "@/features/auth/hooks/use-auth": {
+      useProfile: () => ({ data: { id: "owner-a" } }),
+    },
+    "@/features/memories/hooks/use-memories": {
+      useMemoryActions: () => ({ remove: { mutateAsync: async () => {} } }),
+    },
+    "../providers/trip-preview-provider": {
+      useTripPreview: (select: (state: unknown) => unknown) =>
+        select({ memories: [] }),
+    },
+    "../api/home-queries": {
+      useHomeDashboard: () => query,
+      useHomeActions: () => ({
+        visit: { isError: false, isPending: false, reset: () => {} },
+        removePhoto: {},
+      }),
+    },
+    "../screens/ongoing-home-screen": {
+      OngoingHomeScreen: "OngoingHomeScreen",
+    },
+    "./ongoing-home-screen": { OngoingHomeScreen: "OngoingHomeScreen" },
+    "../components/upcoming-trip-card": {
+      UpcomingTripCard: "UpcomingTripCard",
+    },
+    "../components/journey-invitation-card": {
+      JourneyInvitationCard: "JourneyInvitationCard",
+    },
+    "../components/trip-completion-card": {
+      TripCompletionCard: "TripCompletionCard",
+    },
+    "../components/footprint-card": { FootprintCard: "FootprintCard" },
+    "../components/journal-album": { JournalAlbum: "JournalAlbum" },
+    "../components/travel-weather-dashboard": {
+      TravelWeatherDashboard: "TravelWeatherDashboard",
+    },
+    "../components/ongoing-trip-panels": { JourneySheet: "JourneySheet" },
+    "../components/ongoing-weather-details": {
+      OngoingWeatherDetails: "OngoingWeatherDetails",
+    },
     "@/features/trip/api/trip-queries": { useTripsQuery: () => query },
     "@/features/trip/screens/connected-trips-screen": {
       ConnectedTripsScreen: "ConnectedTripsScreen",
@@ -81,38 +136,33 @@ function harness() {
   };
 }
 
-test("authenticated Home route uses the connected Home while UI preview keeps its original screen", () => {
-  for (const preview of [false, true]) {
-    const load = tripModuleLoader({
-      "react/jsx-runtime": { jsx: element },
-      "@/constants/development": { UI_PREVIEW_ENABLED: preview },
-      "@/features/home/screens/home-screen": { HomeScreen: "HomeScreen" },
-      "@/features/home/screens/connected-home-screen": {
-        ConnectedHomeScreen: "ConnectedHomeScreen",
-      },
-    });
-    const route = load<{ default: () => Node }>(
-      "src/app/(workspace)/tabs/index.tsx",
-    );
+test("all server states reuse the Home dashboards, never the trip list", () => {
+  const h = harness();
+  for (const state of ["PLANNING", "UPCOMING"] as const) {
+    h.query.data = homeFixture(state);
+    const screen = h.render();
+    assert.equal(nodes(screen, "UpcomingTripCard").length, 1);
+    assert.equal(nodes(screen, "OngoingHomeScreen").length, 0);
+    assert.equal(nodes(screen, "TravelWeatherDashboard")[0].props.live, true);
     assert.equal(
-      route.default().type,
-      preview ? "HomeScreen" : "ConnectedHomeScreen",
+      nodes(screen, "UpcomingTripCard")[0].props.evaluatedDate,
+      "2026-11-07",
     );
   }
+  h.query.data = homeFixture("LIVE");
+  assert.equal(nodes(h.render(), "OngoingHomeScreen").length, 1);
+  h.query.data = homeFixture("RETURNING");
+  assert.equal(nodes(h.render(), "JourneyInvitationCard").length, 1);
+  assert.equal(nodes(h.render(), "UpcomingTripCard").length, 0);
+  assert.equal(nodes(h.render(), "FootprintCard")[0].props.visitedPlaces, 0);
 });
 
-test("confirmed empty account reuses first-trip and sample itinerary design without account-wide preview copy", () => {
+test("confirmed NEW reuses onboarding without an account-wide preview notice", () => {
   const h = harness();
-  h.query.data = { pages: [{ content: [], totalElements: 0 }] };
-  h.query.isSuccess = true;
+  h.query.data = homeFixture("NEW");
   assert.equal(h.render().type, h.NewUserHomeScreen);
   const screen = h.NewUserHomeScreen({});
   assert.equal(screen.type, "HomePage");
-  assert.equal(screen.props.showHeader, true);
-  assert.equal(
-    (nodes(screen, "TripHero")[0].props.selection as { kind: string }).kind,
-    "new",
-  );
   assert.equal(nodes(screen, "ExampleItineraryCard").length, 1);
   assert.equal(nodes(screen, "PreviewNotice").length, 0);
   assert.equal(
@@ -121,10 +171,9 @@ test("confirmed empty account reuses first-trip and sample itinerary design with
   );
 });
 
-test("loading and failed/refetch states never masquerade as a new account; retry refetches", async () => {
+test("loading/error never masquerade as NEW, and retry refetches", async () => {
   const h = harness();
   assert.notEqual(h.render().type, h.NewUserHomeScreen);
-  assert.equal(nodes(h.render(), "AppText")[0].props.children, "Loading");
   h.query.isError = true;
   assert.equal(
     nodes(h.render(), "AppText")[0].props.accessibilityRole,
@@ -132,21 +181,16 @@ test("loading and failed/refetch states never masquerade as a new account; retry
   );
   await press(nodes(h.render(), "AppButton")[0]);
   assert.equal(h.refreshes(), 1);
-  h.query.data = { pages: [{ content: [], totalElements: 0 }] };
-  assert.notEqual(h.render().type, h.NewUserHomeScreen);
 });
 
-test("Home reacts to server trip count after creation and deletion, not merely first-page content", () => {
+test("Home updates the selected card after server create/delete snapshots", () => {
   const h = harness();
-  h.query.isSuccess = true;
-  h.query.data = { pages: [{ content: [], totalElements: 1 }] };
-  assert.equal(h.render().type, "ConnectedTripsScreen");
-  h.query.data = { pages: [{ content: [], totalElements: 0 }] };
+  h.query.data = homeFixture("NEW");
   assert.equal(h.render().type, h.NewUserHomeScreen);
-  h.query.data = {
-    pages: [{ content: [{ id: "server-trip" }], totalElements: 1 }],
-  };
-  assert.equal(h.render().type, "ConnectedTripsScreen");
+  h.query.data = homeFixture("UPCOMING");
+  assert.equal(nodes(h.render(), "UpcomingTripCard").length, 1);
+  h.query.data = homeFixture("NEW");
+  assert.equal(h.render().type, h.NewUserHomeScreen);
 });
 
 test("reused onboarding actions open the real create form panel and the read-only sample sandbox", () => {

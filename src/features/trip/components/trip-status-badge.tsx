@@ -17,6 +17,12 @@ export function TripStatusBadge({
   const theme = useAppTheme();
 
   const config = {
+    planning: {
+      label: locale === "vi" ? "Đang lên kế hoạch" : "Planning",
+      bg: theme.colors.surfaceVariant,
+      text: theme.colors.textSecondary,
+      dotColor: theme.colors.primary,
+    },
     ongoing: {
       label: locale === "vi" ? "Đang diễn ra" : "Ongoing",
       bg: theme.colors.successSurface,

@@ -85,10 +85,29 @@ test("place details uses the shared resizable map with the selected pin and retu
   assert.ok(text(tree).includes(place.address?.vi ?? "missing address"));
   assert.ok(text(tree).includes("Giờ mở cửa"));
   assert.ok(text(tree).includes("Giá vé tham khảo"));
-  assert.ok(text(tree).includes("Chưa đồng bộ Google Maps"));
+  assert.ok(text(tree).includes("Chưa đồng bộ bản đồ"));
   assert.equal(
     elements(tree).filter((node) => node.type === "Image").length,
     1,
+  );
+});
+
+test("server content overrides preview facts and never invents a 45-minute visit", () => {
+  const fixture = getPlaceSearchPreview("Đà Lạt")[0];
+  const place = { ...fixture, durationMinutes: undefined };
+  const tree = PlaceDetailsContent({
+    place,
+    places: [place],
+    region: getPlaceMapRegion([place]),
+    onBack: () => {},
+    suppliedDetails: { photo: null },
+  });
+  assert.ok(text(tree).includes("Chưa có thông tin"));
+  assert.ok(!text(tree).includes("Thông tin mẫu"));
+  assert.ok(!text(tree).includes("45 phút"));
+  assert.equal(
+    elements(tree).filter((node) => node.type === "Image").length,
+    0,
   );
 });
 

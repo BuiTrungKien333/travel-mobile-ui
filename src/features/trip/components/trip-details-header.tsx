@@ -12,11 +12,16 @@ import { tripDuration } from "@/features/home/utils/select-home";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 import type { TripDetailsMode } from "../utils/trip-details-layout";
-import { formatTripDates, getTripTitle } from "../utils/trip-formatters";
+import {
+  formatTripDates,
+  getTripTitle,
+  getTripDisplayStatus,
+} from "../utils/trip-formatters";
 
 export function TripDetailsHeader({
   trip,
   mode,
+  today,
   onBack,
   onMenu,
   hideTripInfo = false,
@@ -26,6 +31,7 @@ export function TripDetailsHeader({
 }: {
   trip: Trip;
   mode: TripDetailsMode;
+  today: string;
   onBack: () => void;
   onMenu?: () => void;
   hideTripInfo?: boolean;
@@ -118,7 +124,10 @@ export function TripDetailsHeader({
                         : theme.colors.primaryText,
                   }}
                 >
-                  {copy[mode]}
+                  {mode === "planning" &&
+                  getTripDisplayStatus(trip, today) === "upcoming"
+                    ? copy.upcoming
+                    : copy[mode]}
                 </AppText>
               </View>
             </>

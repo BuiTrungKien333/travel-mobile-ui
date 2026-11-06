@@ -1,26 +1,44 @@
 import { useState } from "react";
+import type { ReactNode } from "react";
 import { StyleSheet, View } from "react-native";
 
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { suggestedPacking, weatherPreviews } from "../data/weather-preview";
+import type { ForecastDay } from "../data/weather-preview";
 import { useHomeAmbientMotion } from "../hooks/use-home-ambient-motion";
 import { useWeatherCopy } from "../i18n/weather-copy";
 import type { Trip } from "../types/home-types";
-import { homeStyles } from "./home-primitives";
+import { homeStyles, TextAction } from "./home-primitives";
 import { TravelWeatherArt } from "./travel-weather-art";
 import { TripGlassBackdrop } from "./trip-glass-backdrop";
 import { HourlyForecast, WeatherDateSelector } from "./weather-forecast";
 import { WeatherPackingChecklist } from "./weather-packing-checklist";
 
-export function TravelWeatherDashboard({ trip }: { trip: Trip }) {
+export function TravelWeatherDashboard({
+  trip,
+  live = false,
+  forecastDays,
+  onOpen,
+  notice,
+  locationName,
+}: {
+  trip: Trip;
+  live?: boolean;
+  forecastDays?: ForecastDay[];
+  onOpen?: () => void;
+  notice?: ReactNode;
+  locationName?: string;
+}) {
   const theme = useAppTheme();
   const { copy, locale } = useWeatherCopy();
-  const preview = weatherPreviews[trip.id];
+  const preview = live ? undefined : weatherPreviews[trip.id];
   const tripDates = trip.days.map((day) => day.date);
   const days =
-    preview?.days.filter((day) => tripDates.includes(day.date)) ?? [];
+    forecastDays ??
+    preview?.days.filter((day) => tripDates.includes(day.date)) ??
+    [];
   const [selectedDate, setSelectedDate] = useState(days[0]?.date);
   const selected = days.find((day) => day.date === selectedDate) ?? days[0];
   const progress = useHomeAmbientMotion();
@@ -61,19 +79,23 @@ export function TravelWeatherDashboard({ trip }: { trip: Trip }) {
           >
             {copy.title}
           </AppText>
+          {onOpen ? (
+            <TextAction label={copy.viewForecast} onPress={onOpen} />
+          ) : null}
         </View>
       </View>
+      {notice}
       {!selected ? (
         <View style={{ gap: theme.spacing.sm }}>
-          <AppIcon
-            name="cloud"
-            size={theme.layout.iconLarge}
-            color={theme.colors.weatherCloud}
-          />
-          <AppText variant="label">{copy.empty}</AppText>
-          <AppText variant="caption" tone="muted">
-            {copy.emptyHint}
-          </AppText>
+          <TravelWeatherArt condition="cloud" progress={progress} />
+          {!notice ? (
+            <>
+              <AppText variant="label">{copy.empty}</AppText>
+              <AppText variant="caption" tone="muted">
+                {copy.emptyHint}
+              </AppText>
+            </>
+          ) : null}
         </View>
       ) : (
         <>
@@ -101,7 +123,9 @@ export function TravelWeatherDashboard({ trip }: { trip: Trip }) {
                   tone="muted"
                   style={{ fontFamily: theme.typography.fontFamily.semibold }}
                 >
-                  {copy.comfort}
+                  {selected.comfort === undefined
+                    ? copy.expected
+                    : copy.comfort}
                 </AppText>
                 <View
                   style={[
@@ -112,15 +136,25 @@ export function TravelWeatherDashboard({ trip }: { trip: Trip }) {
                   <AppText
                     variant="heading"
                     tone="primary"
-                    style={{ fontVariant: ["tabular-nums"] }}
+                    style={[
+                      { fontVariant: ["tabular-nums"] },
+                      selected.comfort === undefined && {
+                        fontSize: theme.typography.fontSize.weatherForecast,
+                        lineHeight: theme.typography.lineHeight.weatherForecast,
+                      },
+                    ]}
                   >
-                    {new Intl.NumberFormat(locale, {
-                      maximumFractionDigits: 1,
-                    }).format(selected.comfort)}
+                    {selected.comfort === undefined
+                      ? `${selected.temperature}°`
+                      : new Intl.NumberFormat(locale, {
+                          maximumFractionDigits: 1,
+                        }).format(selected.comfort)}
                   </AppText>
-                  <AppText variant="caption" tone="muted">
-                    / 10
-                  </AppText>
+                  {selected.comfort !== undefined ? (
+                    <AppText variant="caption" tone="muted">
+                      / 10
+                    </AppText>
+                  ) : null}
                 </View>
               </View>
               <TravelWeatherArt
@@ -134,18 +168,24 @@ export function TravelWeatherDashboard({ trip }: { trip: Trip }) {
                 { gap: theme.spacing.sm, flexWrap: "wrap" },
               ]}
             >
-              <AppText
-                variant="label"
-                tone="primary"
-                accessibilityLabel={`${copy.expected}: ${selected.temperature}°C`}
-              >
-                {selected.temperature}°C
-              </AppText>
+              {selected.comfort !== undefined ? (
+                <AppText
+                  variant="label"
+                  tone="primary"
+                  accessibilityLabel={`${copy.expected}: ${selected.temperature}°C`}
+                >
+                  {selected.temperature}°C
+                </AppText>
+              ) : null}
+              {selected.uv !== undefined ? (
+                <AppText variant="caption" tone="muted">
+                  · UV {selected.uv}
+                </AppText>
+              ) : null}
               <AppText variant="caption" tone="muted">
-                · UV {selected.uv}
-              </AppText>
-              <AppText variant="caption" tone="muted">
-                · {copy[selected.condition]}
+                {selected.comfort === undefined
+                  ? `${Math.round(selected.low)}°–${Math.round(selected.high)}°C`
+                  : `· ${copy[selected.condition]}`}
               </AppText>
             </View>
             {selected.alert ? (
@@ -171,7 +211,7 @@ export function TravelWeatherDashboard({ trip }: { trip: Trip }) {
                   variant="caption"
                   style={{ color: theme.colors.weatherRainText }}
                 >
-                  {copy.rainAlert
+                  {(live ? copy.rainAt : copy.rainAlert)
                     .replace("{from}", selected.alert.from)
                     .replace("{to}", selected.alert.to)
                     .replace("{chance}", String(selected.alert.chance))}
@@ -188,6 +228,11 @@ export function TravelWeatherDashboard({ trip }: { trip: Trip }) {
           {days.length < tripDates.length ? (
             <AppText variant="caption" tone="muted">
               {copy.coverage}
+            </AppText>
+          ) : null}
+          {locationName ? (
+            <AppText variant="caption" tone="muted">
+              {locationName} · Open-Meteo
             </AppText>
           ) : null}
         </>

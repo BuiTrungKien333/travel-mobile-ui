@@ -56,6 +56,7 @@ import {
 import { DateRangeSheet } from "./date-range-sheet";
 import { DestinationPickerSheet } from "./destination-picker-sheet";
 import { PlacePickerScreen } from "../screens/place-picker-screen";
+import { ConnectedPlacePickerScreen } from "../screens/connected-place-picker-screen";
 
 type CreateTripModalProps = {
   visible: boolean;
@@ -210,12 +211,10 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
               ? null
               : { amount: values.budget, currency: "VND" },
           preferences: values.preferences,
-          initialPlaceIds: [],
+          initialPlaceIds: values.initialStops.map(
+            (stop) => stop.placeId ?? stop.id,
+          ),
         };
-        if (values.initialStops.length) {
-          setError("root", { message: integrationCopy.placesPending });
-          return;
-        }
         const fingerprint = JSON.stringify(payload);
         if (createAttempt.current?.fingerprint !== fingerprint)
           createAttempt.current = { fingerprint, id: createTripRequestId() };
@@ -308,7 +307,19 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
         showPlaceSheet ? () => setShowPlaceSheet(false) : requestClose
       }
     >
-      {showPlaceSheet ? (
+      {showPlaceSheet && !UI_PREVIEW_ENABLED ? (
+        <ConnectedPlacePickerScreen
+          destination={destination}
+          scope={{ provinceId: destinationProvinceId }}
+          initialSelected={selectedStops}
+          onApply={(stops) => {
+            setValue("initialStops", stops, { shouldDirty: true });
+            setNotice("");
+            setShowPlaceSheet(false);
+          }}
+          onClose={() => setShowPlaceSheet(false)}
+        />
+      ) : showPlaceSheet ? (
         <PlacePickerScreen
           destination={destination}
           initialSelected={selectedStops}
@@ -322,7 +333,11 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
       ) : null}
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={[styles.container, { backgroundColor: theme.colors.background }]}
+        style={[
+          styles.container,
+          { backgroundColor: theme.colors.background },
+          showPlaceSheet ? { display: "none" } : undefined,
+        ]}
       >
         {/* Header */}
         <View
@@ -729,10 +744,6 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
                 accessibilityRole="button"
                 accessibilityLabel={copy.addPlace}
                 onPress={() => {
-                  if (!UI_PREVIEW_ENABLED) {
-                    setNotice(integrationCopy.placesPending);
-                    return;
-                  }
                   if (!destination.trim()) {
                     setShowDestSheet(true);
                   } else {

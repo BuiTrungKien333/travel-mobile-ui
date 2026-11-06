@@ -1,6 +1,50 @@
 # Tiến độ Travel Mobile UI
 
+### Thời tiết chuyến đi · 07/11/2026
+
+- Home và chi tiết chuyến đã nối modal Liquid Glass vào `GET /api/v1/trips/{tripId}/weather`. Chuyến sắp đi có chọn ngày, dự báo theo giờ và gợi ý chuẩn bị. Chuyến đang đi thêm nhiệt độ hiện tại và cảm giác như. Giữ cache 10 phút theo tài khoản/chuyến/ngày và làm mới khi thay đổi dữ liệu chuyến.
+- Backend giới hạn ngày, kiểm tra quyền sở hữu và tọa độ, trả lỗi rõ nếu Open-Meteo thiếu dữ liệu hoặc không phản hồi. Đã xác nhận `/current` và `/forecast` gọi Open-Meteo thật ở backend dev 18081. Quy tắc chọn tọa độ và phạm vi dự báo ghi ở [Home với dữ liệu thật](HOME-DASHBOARD-INTEGRATION.md).
+
+### Ảnh bìa mặc định chuyến đi · 07/11/2026
+
+- Chuyến chưa có cover dùng một trong 14 ảnh WebP người dùng cung cấp ở `assets/images/examples` (thư mục thực tế hiện có, chưa có `asset/samples`). Phân phối theo hash Trip ID để chọn đa dạng nhưng ổn định qua render/reload/sửa tên hoặc trạng thái; không ghi ảnh thay thế vào DB hoặc sinh ảnh mới.
+- Dùng chung cho card Home, danh sách chuyến và fallback bìa album chuyến; ảnh bìa đã có/ảnh album thật tiếp tục được ưu tiên. Không thay ảnh ví dụ onboarding hoặc ảnh địa điểm bằng ảnh bìa chuyến.
+
+### Typography Home · 07/11/2026
+
+- Thống nhất Home thật và preview: lời chào/tên chuyến chính 20/28 semibold, tiêu đề card 18/26, tiêu đề nhóm/phụ 16/24, nội dung và nút tạo chuyến 14/20, metadata 12/16. Màn người mới giảm lời chào/mô tả; màn đã đi dùng cùng tiêu đề card 18; số dấu ấn giảm 24 xuống 20. Badge LIVE 12 để dễ đọc, tên điểm mẫu 14 và giờ 12.
+- Dùng typography tokens/AppText hiện có; giữ font scaling hệ thống và vùng chạm, không thay typography toàn ứng dụng hoặc logic chọn trạng thái/API. Chưa xác nhận trực quan trên thiết bị trong lượt chỉnh chữ này.
+
+### Home dữ liệu thật · 07/11/2026 — cập nhật mới nhất
+
+- Đã nối GET `/api/v1/home/dashboard` vào các thiết kế Home hiện có. Ưu tiên LIVE → UPCOMING (1–7 ngày) → PLANNING (>7 ngày/chưa có ngày) → RETURNING → NEW. PLANNING dùng lại card Sắp khởi hành với nhãn phù hợp; mỗi nhóm chọn chuyến mới tạo nhất, một card, xét toàn tài khoản.
+- Các card nhận ngày/số điểm/điểm tiếp theo/dấu ấn/ảnh thật; loading/error không fallback mock. CRUD cập nhật cache Home; Đã ghé ghi backend; camera/chỉ đường mở đúng chuyến. Giữ nguyên thiết kế và bottom navigation.
+- Backend **433/433**, mobile **304/304**, TypeScript/no-unused và diff-check đạt. Backend dev 18081 đã chạy API mới, không sửa dữ liệu dev. Chờ kiểm tra UI; thời tiết thật, itinerary QA-5 và Memory/Camera QA-6 chưa được gán hoàn tất.
+- Quy tắc/API/giới hạn/batch test: [HOME-DASHBOARD-INTEGRATION.md](HOME-DASHBOARD-INTEGRATION.md). Các đoạn Home deferred/chọn chuyến gần nhất bên dưới là lịch sử, được cập nhật này thay thế.
+
 Cập nhật: **06/11/2026**. Phạm vi: frontend Home, danh sách/tạo/chi tiết chuyến đi, camera và chuẩn bị hợp đồng tích hợp. Ngày trong fixture Home vẫn là **21/10/2026** để tái hiện các trạng thái.
+
+### Nhãn chuẩn bị chuyến đi · 06/11/2026
+
+- Áp dụng yêu cầu mới: hơn 7 ngày trước khởi hành → **Đang lên kế hoạch / Planning**; còn 1–7 ngày → **Sắp khởi hành / Upcoming**. Tới ngày bắt đầu và hết ngày kết thúc giữ Đang diễn ra; completed/cancelled và mode backend vẫn được ưu tiên.
+- Đây là phân loại hiển thị trong mode API **PLANNING**, không thêm enum/database status hoặc thay ý nghĩa filter `mode=PLANNING` (vẫn bao gồm cả hai nhóm). Danh sách thật chưa có bộ lọc trạng thái UI; không thêm control mới trong lượt này.
+- Card danh sách và header chi tiết dùng cùng helper; API mode dùng `context.evaluatedDate` của backend, preview dùng ngày của preview. Tính theo ngày lịch UTC từ date-only, không lấy múi giờ/đồng hồ thiết bị. PLANNING chưa có ngày giữ nhãn Planning; không tự suy LIVE đè mode server.
+- Giữ bốn kịch bản Home và cách chọn chuyến tương lai gần nhất; đồng hồ “Còn N ngày” vẫn là thông tin đếm ngược, không tạo thêm một trạng thái Home. Không đổi layout, quyền chỉnh sửa hoặc bắt đầu QA-5 trong lượt này.
+- Kiểm tra: mobile full suite **294/294**, TypeScript/no-unused và diff check đạt; bao gồm ranh giới 1/7/8 ngày, đầu/cuối chuyến, đổi tháng/năm/năm nhuận, mode backend ưu tiên và nhãn badge/header VI/EN. Không sửa backend nên không chạy lại backend tests; không chạy lint hoặc thêm dependency. Chưa visual QA trên thiết bị cho nhãn mới.
+
+### QA-4 — catalog thật và Mapbox · 06/11/2026
+
+**Phản hồi người dùng mới nhất:** đã test xong luồng gợi ý/tìm/thêm địa điểm nội bộ, yêu cầu chuyển bước. Ghi nhận vòng test phạm vi này hoàn tất; Mapbox live/địa chỉ riêng và độ chính xác tọa độ vẫn để sau. Bước tiếp theo đề xuất là QA-5A kết nối lịch trình thủ công từng ngày; chưa bắt đầu triển khai hoặc tuyên bố API itinerary/Live/Recap đã nghiệm thu.
+
+**Điều chỉnh mới theo người dùng:** nguồn gợi ý phải join `place_retrieval_profiles.approved=true` cùng INTERNAL/Province, không lấy toàn bộ Place nội bộ. Không yêu cầu tọa độ chính xác hoặc lọc quality; giữ dữ liệu hiện tại. V16 khôi phục catalog legacy đã duyệt bị V15 phân loại riêng tư; USER mới không bị công khai. Retrieval/index chỉ INTERNAL approved. **28/28** tests liên quan đạt; schema/frontend không đổi. Địa chỉ ngoài catalog vẫn là luồng tìm/xác nhận/lưu riêng, chưa nối provider UI như đã ghi trong scope.
+
+Kiểm tra cuối: backend full suite **421/421**, mobile full suite **290/290** + latest affected rerun **41/41**; TypeScript/no-unused và diff check đạt, không lint. Backend dev **18081** đã chạy mã mới với V15; trước/sau giữ nguyên 2 trips, 8 places, 0 memberships/memories/itinerary-items. Health 200, anonymous Places 401, CORS 8082 và đăng ký 4 tuyến mới trong OpenAPI đạt. Không gọi Mapbox live hoặc tự nghiệm thu Android/web.
+
+- Người dùng yêu cầu chuyển QA-4 và đổi provider Maps sang Mapbox, chọn **catalog nội bộ + cấu hình trước**, chưa thêm SDK. Chi tiết/API/test UI ở [QA4-PLACES-MAPBOX.md](QA4-PLACES-MAPBOX.md), hợp đồng chạy ở [places-qa4.openapi.json](api/places-qa4.openapi.json).
+- Nối gợi ý/tìm kiếm/chi tiết INTERNAL vào form tạo chuyến, gửi UUID thật trong initialPlaceIds; connected detail đọc membership thật và thêm nhiều điểm qua batch nguyên tử/retry không trùng. Điểm mới ở Chờ xếp lịch, chưa gán ngày/giờ. Không dùng fixture khi API lỗi hoặc thiếu catalog.
+- Backend V15 phân biệt source/owner; legacy có tham chiếu chuyến/lịch/kỷ niệm được ưu tiên riêng tư, giữ link và dữ liệu cũ. Create/add/batch/detail kiểm quyền; public optimizer không enrich USER; chuyến CANCELLED không sửa membership. Không sửa thuật toán planning/AI.
+- Adapter Mapbox Geocoding v6 `/places/addresses` đã chuẩn bị, mặc định tắt; temporary/no-store, không persist vào Trip/Place, không gọi provider có phí trong phiên. SDK, tìm địa chỉ trong UI và quyền lưu provider chưa tích hợp; Google OAuth giữ nguyên.
+- **QA-4 đang chờ nghiệm thu UI và cấu hình/provider**, không đánh dấu hoàn tất toàn Phase 3. QA-1 vẫn đã nghiệm thu; Home tổng hợp vẫn deferred. Các ghi chú cũ “Places chưa nối/chưa sang QA-4” phía dưới là lịch sử trước cập nhật này.
 
 ### Typography Home người mới và tạo chuyến · 06/11/2026
 
@@ -14,7 +58,7 @@ Cập nhật: **06/11/2026**. Phạm vi: frontend Home, danh sách/tạo/chi ti�
 - Người dùng xác nhận QA-1 hoạt động hoàn hảo, chốt nghiệm thu chức năng Auth; điều kiện production vẫn theo kế hoạch riêng.
 - QA-2 source review: Home API có chuyến hiện fallback list, chưa nối dashboard ba trạng thái còn lại hoặc GET/home. Người dùng chọn **kiểm Trip CRUD trước**, rồi quay lại Home sau Places/Itinerary/Memory. Không đổi UI_PREVIEW, không suy Home từ trang đầu list và không nhập fixture vào DB.
 - QA-3 đã rà FE/BE/DB: list/create/read/PATCH/version/date preview/DELETE và destination catalog. Sửa double submit ở create form bằng guard trước RHF validation: regression trước sửa2 request, sau sửa1 request/1 điều hướng. Backend idempotency và retry key giữ nguyên. Bỏ fallback404 DELETE vừa thêm vì source/integration xác nhận xóa lại chính chủ đã trả204; không che lỗi thật hoặc giảm test ownership/rollback.
-- **41 mobile tests,29 backend tests, TS/no-unused và diff check đạt.** Backend tests dùng PostgreSQL Testcontainers riêng. Dev18081 anon Trips/Destinations401 và PATCH preflight8082 đạt; không tạo dữ liệu dev để ép QA. Chưa nghiệm thu UI Trip CRUD; xem batch T01–T10 và API/body trong [QA-ACCEPTANCE-PLAN.md](QA-ACCEPTANCE-PLAN.md). UI list chưa có controls tìm kiếm/lọc/sort dù API đã hỗ trợ; các module Places/lịch trình/thời tiết chưa được gán hoàn tất.
+- **41 mobile tests,29 backend tests, TS/no-unused và diff check đạt.** Backend tests dùng PostgreSQL Testcontainers riêng. Dev 18081 anon Trips/Destinations401 và PATCH preflight8082 đạt; không tạo dữ liệu dev để ép QA. Chưa nghiệm thu UI Trip CRUD; xem batch T01–T10 và API/body trong [QA-ACCEPTANCE-PLAN.md](QA-ACCEPTANCE-PLAN.md). UI list chưa có controls tìm kiếm/lọc/sort dù API đã hỗ trợ; các module Places/lịch trình/thời tiết chưa được gán hoàn tất.
 - Mốc Git cập nhật trong lúc QA: mobile `3a515be`, backend `afbfa5c`; không reset/merge/commit/push trong lượt này. Mốc và trạng thái trong các mục cũ bên dưới là lịch sử.
 
 ### Khởi động nghiệm thu sau merge · 06/11/2026

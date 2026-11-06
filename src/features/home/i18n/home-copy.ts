@@ -1,6 +1,11 @@
 import { useI18n } from "@/hooks/use-i18n";
 
 const vi = {
+  dashboardLoading: "Đang chuẩn bị hành trình của bạn…",
+  planningSubtitle: "Từng bước chuẩn bị cho hành trình sắp tới.",
+  chooseTripDates: "Chọn ngày cho chuyến đi của bạn",
+  unscheduledPlaces: "địa điểm chờ xếp lịch",
+  weatherTitle: "Thời tiết tại điểm đến",
   home: "Trang chủ",
   trips: "Chuyến đi",
   memories: "Kỷ niệm",
@@ -103,6 +108,11 @@ const vi = {
 };
 type HomeCopy = { [K in keyof typeof vi]: string };
 const en: HomeCopy = {
+  dashboardLoading: "Getting your journey ready…",
+  planningSubtitle: "Make room for your next adventure.",
+  chooseTripDates: "Choose your trip dates",
+  unscheduledPlaces: "places waiting to be scheduled",
+  weatherTitle: "Weather at your destination",
   home: "Home",
   trips: "Trips",
   memories: "Memories",

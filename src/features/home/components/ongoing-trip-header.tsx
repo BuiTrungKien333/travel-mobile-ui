@@ -20,6 +20,8 @@ export function OngoingTripHeader({
   today,
   onDetails,
   onWeather,
+  preview = true,
+  liveWeather,
 }: {
   trip: Trip;
   dayIndex: number;
@@ -27,6 +29,12 @@ export function OngoingTripHeader({
   today: string;
   onDetails: () => void;
   onWeather: () => void;
+  preview?: boolean;
+  liveWeather?: {
+    temperature: number;
+    condition: "sun" | "cloud" | "rain";
+    label: string;
+  };
 }) {
   const theme = useAppTheme();
   const { copy } = useOngoingCopy();
@@ -38,10 +46,13 @@ export function OngoingTripHeader({
       ((1 - minimumOpacity) * (1 + Math.cos(progress.value * Math.PI * 4))) / 2,
   }));
   const weather =
+    liveWeather ??
+    (preview &&
     ongoingWeatherSnapshot.tripId === trip.id &&
     ongoingWeatherSnapshot.date === today
       ? ongoingWeatherSnapshot
-      : undefined;
+      : undefined);
+  const weatherLabel = liveWeather?.label ?? copy.weatherCloudShort;
 
   return (
     <View style={{ gap: theme.spacing.xs }}>
@@ -77,8 +88,8 @@ export function OngoingTripHeader({
           style={{
             color: theme.colors.onSuccessSurface,
             flexShrink: 1,
-            fontSize: theme.typography.fontSize.navigationLabel,
-            lineHeight: theme.typography.lineHeight.navigationLabel,
+            fontSize: theme.typography.fontSize.xs,
+            lineHeight: theme.typography.lineHeight.xs,
             fontFamily: theme.typography.fontFamily.semibold,
           }}
         >
@@ -88,7 +99,7 @@ export function OngoingTripHeader({
       <View style={[homeStyles.row, { gap: theme.spacing.sm }]}>
         <AppText
           accessibilityRole="header"
-          variant="heading"
+          variant="title"
           style={[
             homeStyles.grow,
             {
@@ -101,8 +112,14 @@ export function OngoingTripHeader({
         </AppText>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`${copy.weatherNow}${weather ? `, ${weather.temperature}°C, ${copy.weatherCloudShort}` : ""}`}
-          accessibilityHint={copy.weatherSampleHint}
+          accessibilityLabel={`${copy.weatherNow}${weather ? `, ${weather.temperature}°C, ${weatherLabel}` : ""}`}
+          accessibilityHint={
+            preview
+              ? copy.weatherSampleHint
+              : weather
+                ? copy.weatherNow
+                : copy.weatherUnavailable
+          }
           onPress={onWeather}
           style={({ pressed }) => [
             homeStyles.row,
@@ -138,7 +155,7 @@ export function OngoingTripHeader({
             {weather ? `${weather.temperature}°C` : "—"}
           </AppText>
           <AppText variant="caption" tone="muted" style={{ flexShrink: 1 }}>
-            {weather ? copy.weatherCloudShort : copy.weather}
+            {weather ? weatherLabel : copy.weather}
           </AppText>
           <AppIcon name="chevron" size={theme.spacing.md} />
         </Pressable>

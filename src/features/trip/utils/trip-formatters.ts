@@ -2,11 +2,13 @@ import type { Trip } from "../../home/types/home-types.ts";
 import {
   formatTripDates as formatDatesBase,
   tripDuration,
+  dayDistance,
 } from "../../home/utils/select-home.ts";
 
 export type TripDisplayStatus =
   | "ongoing"
   | "upcoming"
+  | "planning"
   | "draft"
   | "completed"
   | "cancelled";
@@ -16,12 +18,13 @@ export function getTripDisplayStatus(
   today: string,
 ): TripDisplayStatus {
   if (trip.serverMode) {
-    const labels: Record<NonNullable<Trip["serverMode"]>, TripDisplayStatus> = {
-      PLANNING: "upcoming",
+    if (trip.serverMode === "PLANNING")
+      return preparationStatus(trip.startDate, today);
+    const labels = {
       LIVE: "ongoing",
       RECAP: "completed",
       CANCELLED: "cancelled",
-    };
+    } as const;
     return labels[trip.serverMode];
   }
   if (trip.status === "cancelled") return "cancelled";
@@ -37,12 +40,21 @@ export function getTripDisplayStatus(
     return "ongoing";
   }
   if (trip.status === "planned" && trip.startDate && trip.startDate > today) {
-    return "upcoming";
+    return preparationStatus(trip.startDate, today);
   }
   if (trip.status === "planned" && trip.endDate && trip.endDate < today) {
     return "completed";
   }
   return "draft";
+}
+
+/** Both labels share backend PLANNING; date-only arithmetic avoids device timezone/DST drift. */
+function preparationStatus(
+  start: string | undefined,
+  today: string,
+): "planning" | "upcoming" {
+  const remaining = start ? dayDistance(today, start) : NaN;
+  return remaining >= 1 && remaining <= 7 ? "upcoming" : "planning";
 }
 
 export function getTripTitle(trip: Trip, locale: "vi" | "en" = "vi"): string {

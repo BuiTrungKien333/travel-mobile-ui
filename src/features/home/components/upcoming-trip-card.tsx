@@ -7,6 +7,8 @@ import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { getTripCoverImage } from "@/features/trip/utils/trip-images";
 import { getTotalTripStops } from "@/features/trip/utils/trip-formatters";
+import { TripStatusBadge } from "@/features/trip/components/trip-status-badge";
+import { getTripDisplayStatus } from "@/features/trip/utils/trip-formatters";
 import { useHomeCopy } from "../i18n/home-copy";
 import { useTripPreview } from "../providers/trip-preview-provider";
 import { useHomeAmbientMotion } from "../hooks/use-home-ambient-motion";
@@ -19,14 +21,23 @@ import {
 import { homeStyles } from "./home-primitives";
 import { DepartureClock } from "./upcoming-trip-indicators";
 
-export function UpcomingTripCard({ trip }: { trip: Trip }) {
+export function UpcomingTripCard({
+  trip,
+  evaluatedDate,
+  onPlan,
+}: {
+  trip: Trip;
+  evaluatedDate?: string;
+  onPlan?: () => void;
+}) {
   const theme = useAppTheme();
   const { copy, locale } = useHomeCopy();
   const animationProgress = useHomeAmbientMotion();
-  const { today, openPanel } = useTripPreview((state) => ({
+  const { today: previewToday, openPanel } = useTripPreview((state) => ({
     today: state.today,
     openPanel: state.openPanel,
   }));
+  const today = evaluatedDate ?? previewToday;
   const countdown = trip.startDate
     ? Math.max(0, dayDistance(today, trip.startDate))
     : null;
@@ -77,11 +88,17 @@ export function UpcomingTripCard({ trip }: { trip: Trip }) {
         ) : null}
       </View>
       <View style={{ padding: theme.spacing.lg, gap: theme.spacing.md }}>
+        {evaluatedDate ? (
+          <TripStatusBadge
+            status={getTripDisplayStatus(trip, today)}
+            locale={locale}
+          />
+        ) : null}
         <View style={{ gap: theme.spacing.xs }}>
           <View style={[homeStyles.row, { gap: theme.spacing.sm }]}>
             <AppText
               accessibilityRole="header"
-              variant="heading"
+              variant="subheading"
               style={{
                 flex: 1,
                 fontSize: theme.typography.fontSize.lg,
@@ -127,7 +144,9 @@ export function UpcomingTripCard({ trip }: { trip: Trip }) {
           variant="gradient"
           size="small"
           style={{ borderRadius: theme.radius.md }}
-          onPress={() => openPanel({ kind: "plan", tripId: trip.id })}
+          onPress={
+            onPlan ?? (() => openPanel({ kind: "plan", tripId: trip.id }))
+          }
           trailingIcon={
             <AppIcon
               name="arrow"

@@ -1,8 +1,18 @@
 # Kế hoạch nghiệm thu theo màn hình sau merge
 
+> Mới nhất · 07/11/2026: người dùng ưu tiên nối Home trước QA-5. Đã hoàn tất triển khai lựa chọn server toàn tài khoản + tái sử dụng UI Home; đang chờ người dùng kiểm tra [batch Home](HOME-DASHBOARD-INTEGRATION.md#batch-kiểm-tra-ui). Backend 433/433, mobile 304/304 và TS/diff đạt. QA-4 catalog nội bộ đã được người dùng test xong; QA-5 itinerary và QA-6 Camera/Memory vẫn chưa nghiệm thu. Không dùng dữ liệu fixture để thay phần tích hợp còn thiếu.
+
+> Phản hồi mới: người dùng đã test xong QA-4 gợi ý/tìm/thêm địa điểm nội bộ và yêu cầu bước tiếp theo. Ghi nhận hoàn tất vòng test UI trong phạm vi này; chưa mở rộng nghiệm thu sang Mapbox live, địa chỉ ngoài catalog hoặc độ chính xác tọa độ. Bước đề xuất tiếp theo: QA-5A lịch trình thủ công từng ngày (Chờ xếp lịch → chọn ngày → giờ/thời lượng/ghi chú → đổi thứ tự/gỡ khỏi ngày → lưu và mở lại). Giữ thiết kế timeline hiện có; tối ưu/AI và Mapbox SDK xử lý sau theo phạm vi đã thống nhất.
+
+> Trạng thái mới nhất 06/11/2026: người dùng chuyển sang QA-4, đổi Maps sang Mapbox, chọn catalog nội bộ + cấu hình trước. Xem [QA4-PLACES-MAPBOX.md](QA4-PLACES-MAPBOX.md) cho API/body mẫu và batch test UI. Chưa nghiệm thu toàn bộ QA-4, chưa tích hợp SDK hoặc lưu provider preview. Các mốc “chưa sang QA-4” bên dưới giữ làm lịch sử.
+
 Ngày khởi tạo: 06/11/2026. Đây là kế hoạch QA/nghiệm thu, không thay thế roadmap tích hợp hoặc là kết luận production-ready.
 
 ## Mốc đối chiếu
+
+Nhãn chuẩn bị mới theo yêu cầu: còn >7 ngày là Đang lên kế hoạch; 1–7 ngày là Sắp khởi hành, cùng API mode PLANNING. UI badge/header dùng cùng helper với ngày backend; quy tắc LIVE/RECAP/CANCELLED giữ nguyên. Mobile294/294 + TS/diff đạt. Khi test UI, tạo hai chuyến còn7 và8 ngày để đối chiếu; API filter PLANNING vẫn bao gồm cả hai, không có enum UPCOMING mới.
+
+**QA-4 mới nhất:** catalog INTERNAL/create/batch/chi tiết đã nối; backend 421/421, mobile 290/290 + latest affected 41/41, TS/diff đạt. Dev 18081 V15 giữ dữ liệu, health/CORS/401 đạt. Người dùng chọn cấu hình Mapbox trước, chưa thêm SDK; chờ checklist UI trong [QA4-PLACES-MAPBOX.md](QA4-PLACES-MAPBOX.md). Không coi provider mock là nghiệm thu live hoặc hoàn thành toàn bộ Places.
 
 - Mobile: `E:/travel-mobile-ui`, `connect/backend/home`; mốc khảo sát ban đầu e2408ce, mốc QA-3 hiện tại `3a515be` sau commit được cập nhật trong phiên làm việc.
 - Backend: `E:/travel-system/backend`, `fix/rag-ai-v2`; mốc sau merge `8fc64b7`, mốc QA-3 hiện tại `afbfa5c`.
@@ -140,9 +150,9 @@ Mong đợi: ...
 | Mốc | Phase | Source | Automated | UI | HTTP+DB | Việc tiếp theo |
 | --- | --- | --- | --- | --- | --- | --- |
 | 06/11/2026 | QA-0 | Đã sửa lịch sử/schema/config và các blocker sau merge | 403 tests xanh qua full-suite + reruns; DB sạch/upgrade đạt | Chưa nghiệm thu UI | Dev V14, health/CORS/401 đạt, dữ liệu cũ giữ nguyên | QA-1A Login L01–L10 |
-| 06/11/2026 | QA-1A–E | Đã rà Auth/session/email/Google và sửa logout SecureStore lỗi; hoàn thiện typography Auth | Backend Auth/Security106/106; mobile Auth50/50 và các lượt UI refinement; TS đạt | Người dùng xác nhận hoạt động hoàn hảo, chốt nghiệm thu chức năng QA-1 | Dev18081 smoke đạt; DB workflow qua Testcontainers. Không coi xác nhận chức năng là chứng minh rate-limit/load hoặc mọi điều kiện production | Chuyển QA-3 theo lựa chọn của người dùng, hoãn Home tổng hợp |
+| 06/11/2026 | QA-1A–E | Đã rà Auth/session/email/Google và sửa logout SecureStore lỗi; hoàn thiện typography Auth | Backend Auth/Security106/106; mobile Auth50/50 và các lượt UI refinement; TS đạt | Người dùng xác nhận hoạt động hoàn hảo, chốt nghiệm thu chức năng QA-1 | Dev 18081 smoke đạt; DB workflow qua Testcontainers. Không coi xác nhận chức năng là chứng minh rate-limit/load hoặc mọi điều kiện production | Chuyển QA-3 theo lựa chọn của người dùng, hoãn Home tổng hợp |
 | 06/11/2026 | QA-2 | Phát hiện Home có chuyến hiện fallback danh sách; dashboard/GET home chưa tích hợp | Baseline connected-home/home-selection/trip-api15/15; backend lịch/Trip CRUD9/9 | Chưa nghiệm thu bốn dashboard API | Không suy Home từ trang đầu Trip hoặc dùng fixture | Người dùng chọn kiểm Trip CRUD trước, quay lại Home sau các phụ thuộc |
-| 06/11/2026 | QA-3 | Rà list/create/read/PATCH/date preview/DELETE/destination; chặn double submit trước validation | Mobile41/41; backend29/29; TS/no-unused đạt | Chờ batch T01–T10 | Dev GET Trips/Destinations anonymous401 và PATCH CORS8082 đạt; luồng hợp lệ/DB được test trên PostgreSQL riêng | Người dùng nghiệm thu list/tạo/sửa/xóa; chưa tự chuyển Places |
+| 06/11/2026 | QA-3 | Rà list/create/read/PATCH/date preview/DELETE/destination; chặn double submit trước validation | Mobile41/41; backend29/29; TS/no-unused đạt | Chờ batch T01–T10 | Dev GET Trips/Destinations anonymous401 và PATCH CORS 8082 đạt; luồng hợp lệ/DB được test trên PostgreSQL riêng | Người dùng nghiệm thu list/tạo/sửa/xóa; chưa tự chuyển Places |
 
 ## QA-1 · Kết quả rà soát và kiểm chứng 06/11/2026
 
@@ -298,4 +308,4 @@ Body tạo mẫu (đổi ngày nếu ngày hiện tại đã sau20/11/2026):
 - Đổi ngày phải gửi cả startDate/endDate. Nếu preview.requiresAcknowledgement=true, PATCH gồm ngày và `acknowledgeDateImpact:true`; khi false/không gửi sẽ không tự làm mất lịch cũ. Không tự gửi flag trước khi người dùng review tác động.
 - Kiểm accountB với tripA: GET/PATCH/DELETE đều404/TRIP_001, không lộ dữ liệu. Token thiếu →401. Không có mutation liên quan được chạy dưới accountB.
 
-**Trạng thái hiện tại:** tự động đạt; chờ người dùng T01–T10. Chưa chốt nghiệm thu QA-3, chưa sang QA-4 Places và chưa coi Home bốn trạng thái đã tích hợp.
+**Mốc QA-3 trước khi người dùng yêu cầu chuyển phase:** các kiểm tra tự động đạt, chưa có checklist T01–T10 được trả từng mục. Người dùng đã yêu cầu sang QA-4; không coi yêu cầu này là bằng chứng mọi ca UI đã được thực thi. Home bốn trạng thái vẫn chưa tích hợp.

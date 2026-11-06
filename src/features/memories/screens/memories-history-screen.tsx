@@ -12,6 +12,7 @@ import {
   formatTripDates,
   getTripTitle,
 } from "@/features/trip/utils/trip-formatters";
+import { getTripCoverImage } from "@/features/trip/utils/trip-images";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useScreenInsets } from "@/hooks/use-screen-insets";
 import {
@@ -102,7 +103,7 @@ export function MemoriesHistoryScreen({
           ) : null
         }
         renderItem={({ item: { trip, photos } }) => {
-          const cover = photos[0]?.photo ?? trip.coverImage;
+          const cover = photos[0]?.photo ?? getTripCoverImage(trip);
           return (
             <Pressable
               accessibilityRole="button"
@@ -123,30 +124,12 @@ export function MemoriesHistoryScreen({
               })}
             >
               <View>
-                {cover ? (
-                  <MemoryPicture
-                    key={photos[0]?.id ?? trip.id}
-                    source={cover}
-                    label={trip.destination}
-                    aspectRatio={theme.layout.memoryTripCoverAspectRatio}
-                  />
-                ) : (
-                  <View
-                    style={{
-                      aspectRatio: theme.layout.memoryTripCoverAspectRatio,
-                      backgroundColor: theme.colors.surfaceTint,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: theme.spacing.sm,
-                    }}
-                  >
-                    <AppIcon
-                      name="memories"
-                      variant="outline"
-                      size={theme.layout.iconLarge}
-                    />
-                  </View>
-                )}
+                <MemoryPicture
+                  key={photos[0]?.id ?? trip.id}
+                  source={cover}
+                  label={trip.destination}
+                  aspectRatio={theme.layout.memoryTripCoverAspectRatio}
+                />
                 <View
                   style={{
                     position: "absolute",
