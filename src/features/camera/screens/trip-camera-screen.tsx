@@ -40,7 +40,8 @@ export function TripCameraScreen({
     !trip ||
     date > today ||
     trip.status === "cancelled" ||
-    !trip.days.some((entry) => entry.date === date)
+    !trip.days.some((entry) => entry.date === date) ||
+    (!!stopId && !trip.days.some((entry) => entry.stops.some((stop) => stop.id === stopId)))
   )
     return (
       <ScreenSafeArea

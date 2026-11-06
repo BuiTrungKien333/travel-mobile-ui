@@ -17,6 +17,7 @@ export function NextStopCard({
   onVisited,
   onJournal,
   onPlan,
+  busy = false,
 }: {
   stop?: TripStop;
   onDirections: () => void;
@@ -24,6 +25,7 @@ export function NextStopCard({
   onVisited: () => void;
   onJournal: () => void;
   onPlan: () => void;
+  busy?: boolean;
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useOngoingCopy();
@@ -166,6 +168,7 @@ export function NextStopCard({
             { flexGrow: 60, paddingHorizontal: theme.spacing.sm },
           ]}
           onPress={onDirections}
+          disabled={busy}
           leadingIcon={
             <AppIcon
               name="navigation"
@@ -180,6 +183,7 @@ export function NextStopCard({
           variant="outline"
           size="small"
           onPress={onVisited}
+          loading={busy}
           style={[
             styles.actionColumn,
             {

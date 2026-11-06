@@ -1,6 +1,10 @@
 import { useI18n } from "@/hooks/use-i18n";
 
 const vi = {
+  optimizationInvalid: "Đề xuất chưa khớp lịch hiện tại hoặc thay đổi điểm ghim. Hãy lấy đề xuất mới trước khi áp dụng.",
+  optimizationChangedVisits: "{count} lượt ghé thay đổi thứ tự, giờ hoặc thời lượng",
+  currentVisit: "Hiện tại",
+  proposedVisit: "Đề xuất",
   dateImpactTitle: "Đổi ngày chuyến đi?",
   dateImpactHint: "{count} địa điểm ở các ngày bị bỏ sẽ chuyển về Chưa xếp lịch. Kỷ niệm vẫn giữ ngày chụp.",
   versionConflict: "Chuyến đi vừa thay đổi ở nơi khác. Dữ liệu đã được tải lại; hãy kiểm tra trước khi lưu.",
@@ -268,6 +272,10 @@ const vi = {
     "Các địa điểm được lưu vào Chưa xếp lịch để bạn tự chọn ngày và giờ.",
 };
 const en: typeof vi = {
+  optimizationInvalid: "This proposal no longer matches the itinerary or changes a pin. Request a new proposal before applying.",
+  optimizationChangedVisits: "{count} visits change order, time or duration",
+  currentVisit: "Current",
+  proposedVisit: "Proposed",
   dateImpactTitle: "Change trip dates?",
   dateImpactHint: "{count} places on removed days will move to Not scheduled. Memories keep their capture dates.",
   versionConflict: "This trip changed elsewhere. It has been reloaded; review it before saving again.",

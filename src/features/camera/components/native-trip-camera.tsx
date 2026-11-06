@@ -7,10 +7,11 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
-import { useIsFocused } from "expo-router/react-navigation";
+import { useIsFocused, useNavigation, usePreventRemove } from "expo-router/react-navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   AppState,
   Linking,
   Platform,
@@ -73,7 +74,9 @@ export function NativeTripCamera(
   const [mountError, setMountError] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
-  const [pending, setPending] = useState<{ uri: string; id?: string; width?: number; height?: number; mimeType?: string } | null>(
+  const [deviceSaved, setDeviceSaved] = useState(false);
+  const [warning, setWarning] = useState("");
+  const [pending, setPending] = useState<{ uri: string; id?: string; deviceSaved?: boolean; width?: number; height?: number; mimeType?: string } | null>(
     null,
   );
   const [foreground, setForeground] = useState(
@@ -81,6 +84,14 @@ export function NativeTripCamera(
       AppState.currentState !== "inactive",
   );
   const focused = useIsFocused();
+  const navigation = useNavigation();
+  usePreventRemove(busy || (!!pending && !pending.id), ({ data }) => {
+    if (operation.current) return;
+    Alert.alert(copy.unsavedTitle, copy.unsavedHint, [
+      { text: copy.keepPhoto, style: "cancel" },
+      { text: copy.leavePhoto, style: "destructive", onPress: () => navigation.dispatch(data.action) },
+    ]);
+  });
   const panelOpen = useTripPreview((state) => state.panel !== null);
   const savePhoto = useTripPreview((state) => state.saveLocalPhoto);
   const exportPhoto = useTripPreview((state) => state.exportLocalPhoto);
@@ -114,9 +125,6 @@ export function NativeTripCamera(
       subscription.remove();
     };
   }, []);
-  useEffect(() => {
-    if (!pending) operation.current = false;
-  }, [pending]);
   const handleCameraRef = useCallback((instance: CameraView | null) => {
     camera.current = instance;
     if (!instance) setReady(false);
@@ -143,6 +151,7 @@ export function NativeTripCamera(
     operation.current = true;
     setBusy(true);
     setError("");
+    setWarning("");
     setSaved(false);
     setUploadProgress(null);
     try {
@@ -182,11 +191,19 @@ export function NativeTripCamera(
       }));
     if (!memory.photo || typeof memory.photo !== "string")
       throw new Error("Photo unavailable");
-    if (mounted.current) setPending({ uri: memory.photo, id: memory.id });
-    await exportPhoto(memory.id);
+    let exported = memory.local?.deviceSaved ?? false;
+    if (mounted.current) setPending({ uri: memory.photo, id: memory.id, deviceSaved: exported });
+    if (!exported) {
+      try { await exportPhoto(memory.id); exported = true; }
+      catch { if (mounted.current) setWarning(copy.libraryCopyError); }
+    }
+    if (mounted.current) {
+      setDeviceSaved(exported);
+      setPending({ uri: memory.photo, id: memory.id, deviceSaved: exported });
+    }
     if (!props.quick && memory.tripId) {
       await upload.mutateAsync({
-        memory: { ...memory, local: memory.local ? { ...memory.local, deviceSaved: true } : undefined },
+        memory: { ...memory, local: memory.local ? { ...memory.local, deviceSaved: exported } : undefined },
         onProgress: (value) => { if (mounted.current) setUploadProgress(value); },
       });
     }
@@ -369,6 +386,11 @@ export function NativeTripCamera(
   return (
     <CameraLayout
       {...props}
+      onBack={() => { if (!operation.current) props.onBack(); }}
+      onHome={() => { if (!operation.current) props.onHome(); }}
+      onJournal={() => { if (!operation.current) props.onJournal(); }}
+      onDetails={() => { if (!operation.current) props.onDetails(); }}
+      bottomNavigation={props.bottomNavigation ? <View pointerEvents={busy ? "none" : "auto"}>{props.bottomNavigation}</View> : undefined}
       onSelectTrip={pending ? undefined : props.onSelectTrip}
       frame={frame}
       busy={busy}
@@ -385,7 +407,7 @@ export function NativeTripCamera(
         setZoom(1);
         setMountError(false);
       }}
-      error={error}
+      error={error || warning}
       status={
         busy
           ? upload.isPending
@@ -393,11 +415,12 @@ export function NativeTripCamera(
             : copy.savingDevice
           : pending
           ? pending.id
-            ? copy.savedPrivate
+            ? !props.quick && props.tripId ? copy.savedAwaitingUpload : copy.savedPrivate
             : copy.confirmHint
           : saved
             ? !props.quick && props.tripId
               ? copy.uploaded
+              : !deviceSaved ? copy.savedPrivateInbox
               : Platform.OS === "web"
               ? copy.savedDownload
               : props.quick || !props.tripId

@@ -19,6 +19,7 @@ Cập nhật định hướng: **05/11/2026**, theo yêu cầu của người d�
 - **Phần 6 — Tìm/chọn/thêm điểm vào chuyến đã có (P0-03):** giữ lựa chọn qua xem chi tiết, tìm kiếm và refetch; phân biệt điểm đã chọn/đã lưu. Thêm vào Chờ xếp lịch hoặc đọc lịch mới và nối vào ngày đã chọn, giữ giờ/ghim/ghi chú hiện có. Retry đối chiếu pool và lịch đã lưu, không thêm trùng khi mất POST/PUT response; xung đột không giả báo thành công. Có test API, picker và điều hướng sau lưu, xem [checklist phần 6](api-contract-integration.md#existing-trip-place-selection). Chưa QA thiết bị. Tiếp theo là đổi giờ/di chuyển ngày/reorder, lưu/hủy trong P0-03; các luồng Đang đi, chụp ảnh và tối ưu vẫn cần rà tiếp.
 - P0-01 còn việc dựng/cài app và thử trên thiết bị với key/OAuth phù hợp; kiểm tra config chưa thay thế kiểm thử thiết bị.
 - Theo yêu cầu người dùng: xong mỗi phần thì dừng để review và push GitHub, sau đó mới triển khai phần tiếp theo.
+- **Phần 7 — Hoàn thiện code các luồng còn lại của P0-03 (06/11/2026):** người dùng cho phép làm toàn P0-03 trong một lượt. Đã nối sửa lịch/chuyển ngày/reorder/ghim/lưu–hủy, transaction trả điểm về pool, Home/chi tiết Đang đi và chỉ đường thật, lưu ảnh riêng–thư viện–upload/Xem sau, so sánh/áp dụng tối ưu. Điểm có ngày nhưng chưa có giờ vẫn nằm trong ngày đã chọn. Xem [checklist nghiệm thu P0-03](P0-03-ACCEPTANCE.md). **Code đã triển khai đủ sáu luồng; chưa đánh dấu nghiệm thu thiết bị hoàn tất.** Phần tiếp theo là QA theo checklist và P0-04 khi người dùng yêu cầu, không tiếp tục production tự động.
 
 ## 1. Kết quả cần đạt khi nộp và trình diễn
 
@@ -86,6 +87,8 @@ Các con số là bằng chứng kỹ thuật cần xử lý, không phải thư
 | Tối ưu | Xem kết quả và sự thay đổi trước khi áp dụng | Bấm Áp dụng mới đổi lịch; có thể đóng đề xuất mà giữ lịch cũ |
 
 Mọi thao tác quan trọng có trạng thái đang xử lý, thành công hoặc lỗi kèm cách thử lại. Nút đang lưu không nhận thêm lần bấm; sheet/back có hành vi dễ dự đoán.
+
+**Trạng thái 06/11/2026:** đã triển khai code cho sáu hàng trên. Các test API/schema/component được chạy với platform/HTTP double và PostgreSQL cho phần persistence; xem [checklist kiểm tra thực tế](P0-03-ACCEPTANCE.md). Chưa có xác nhận QA điện thoại, nên không đồng nhất “đã triển khai code” với “đã nghiệm thu xong trên thiết bị”.
 
 ### P0-04. Ảnh, ghi chú và tài khoản nhất quán
 

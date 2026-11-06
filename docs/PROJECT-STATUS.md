@@ -2,6 +2,17 @@
 
 > Định hướng ngày 05/11/2026: đồ án môn học của sinh viên năm cuối, ưu tiên app chạy ổn, logic đúng, luồng rõ ràng và UI/UX mượt, đẹp. Xem [Kế hoạch hoàn thiện đồ án](MOBILE-MVP-IMPLEMENTATION-PLAN.md); production là giai đoạn sau. Các mốc preview tháng 10 bên dưới là lịch sử, không mô tả đầy đủ trạng thái API hiện tại.
 
+## Phần 7 · Code cho toàn bộ P0-03 · 06/11/2026
+
+- Người dùng cho phép hoàn thiện toàn P0-03 trong một lượt. Code sáu luồng đã được triển khai; **QA điện thoại còn chờ**, xem [P0-03-ACCEPTANCE.md](P0-03-ACCEPTANCE.md).
+- Sửa lịch: `scheduleMutationRequest` tạo request từ snapshot; chuyển điểm về pool lưu lịch và metadata bằng `poolUpdates` trong cùng transaction backend. Không PATCH metadata trước PUT lịch. Form thông tin/ngày/reorder giữ version lúc mở; lỗi giữ form, Cancel không ghi. Di chuyển ngày vẫn mở được chi tiết; xóa pool quay lại được sau refetch.
+- Ngày/pool: lượt ghé đã gán ngày nhưng chưa có giờ vẫn ở ngày đó, được xem/reorder/check-in theo thứ tự server. Chỉ điểm chưa gán ngày thuộc pool. Không để pool che ngày được mở từ liên kết.
+- Đang đi: Home có thẻ điểm tiếp theo dùng query server; check-in có guard, không tự đánh dấu khi request lỗi; các query liên quan được làm mới. Nút chỉ đường ở Home/chi tiết mở Maps bằng tọa độ và phương tiện, thay vì chỉ phóng bản đồ. Lượt ghé tương lai/chuyến hủy không check-in.
+- Ảnh: giữ bản riêng trước đồng bộ; ghi vào thư viện là bản sao tùy quyền, không chặn upload khi bị từ chối. Phân biệt bản riêng/thư viện/đang upload/đã đồng bộ; chặn rời lúc lưu, hỏi trước khi bỏ ảnh chưa giữ được bản riêng. Xem sau có guard gán ảnh, chặn ngày/giờ tương lai trước khi đổi local và có nút mở album khi upload lỗi.
+- Tối ưu: hiện thứ tự/giờ hiện tại và đề xuất, số lượt ghé thay đổi. Không Apply khi rỗng, thiếu/trùng/khác điểm hoặc vi phạm ghim; lỗi cần lấy đề xuất mới. Chặn gửi lặp/đóng/lấy đề xuất khác lúc Apply; đóng preview chưa ghi lịch.
+- Backend đã đạt 32 test PostgreSQL (11 itinerary/pins, 20 trip mutations, 1 xuất response thật); compile đạt. Mobile: **86 test trọng tâm đạt**; toàn bộ suite **288 test, 279 đạt, 9 lỗi cũ**, giảm từ 19 lỗi ở phần 6 nhờ chuyển test stop-details/optimization/live sang API hiện hành. 9 lỗi còn lại ở memory simulation, place-details, trip UI preview cũ và forecast preview; không coi full suite là xanh. TypeScript đạt. ESLint file sửa không có lỗi, còn 1 cảnh báo `require()` camera có từ trước; lint toàn repo vẫn 51 lỗi/3 cảnh báo cũ. Không có migration/dependency mới, cần restart backend + reload mobile. Database test tạm đã dừng và dọn.
+- P0-04 (chủ sở hữu/tài khoản ảnh local, phục hồi metadata và độ bền dữ liệu) còn riêng; không tự chuyển sang production, không commit/push tự động.
+
 ## Phần 6 · Thêm điểm vào chuyến và xếp ngày · 05/11/2026
 
 - Route `/trip/add-places` dùng `useAddTripPlaces` → `add-trip-places.ts`: đọc trip/pool, kiểm tra ngày/trạng thái, chỉ thêm điểm chưa có. Nếu xếp ngày, đọc itinerary mới, giữ nguyên các lượt ghé rồi nối điểm còn thiếu bằng token `expectedUpdatedAt`. Không dùng snapshot cũ của màn hình để thay toàn bộ lịch.

@@ -15,6 +15,8 @@ export function useTripItineraryQuery(tripId: string | undefined) {
 export function useSaveItineraryMutation(tripId: string) {
   const client = useQueryClient();
   return useMutation({
+    retry: false,
+    networkMode: "always",
     mutationFn: (request: SaveItineraryRequest) => itineraryApi.save(tripId, request),
     onSuccess: async (itinerary) => {
       client.setQueryData(tripQueryKeys.itinerary(tripId), itinerary);
@@ -28,6 +30,8 @@ export function useSaveItineraryMutation(tripId: string) {
 
 export function useOptimizeItineraryMutation(tripId: string) {
   return useMutation({
+    retry: false,
+    networkMode: "always",
     mutationFn: () => itineraryApi.optimize(tripId),
   });
 }
@@ -35,10 +39,12 @@ export function useOptimizeItineraryMutation(tripId: string) {
 export function useApplyItineraryOptimizationMutation(tripId: string) {
   const client = useQueryClient();
   return useMutation({
+    retry: false,
+    networkMode: "always",
     mutationFn: (input: { expectedUpdatedAt: string; proposal: ItineraryOptimizationProposal }) =>
       itineraryApi.applyOptimization(tripId, input),
     onSuccess: async () => {
-      await client.invalidateQueries({ queryKey: tripQueryKeys.itinerary(tripId) });
+      await client.invalidateQueries({ queryKey: tripQueryKeys.all });
     },
   });
 }

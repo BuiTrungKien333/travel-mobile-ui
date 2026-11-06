@@ -6,6 +6,8 @@ import type { ItineraryOptimizationProposal } from "../api/itinerary-types";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 import { TripDetailsSheet } from "./trip-details-sheet";
 import type { TripDay } from "@/features/home/types/home-types";
+import { reviewOptimization } from "../utils/optimization-review";
+import { tripMessage } from "../utils/create-trip-formatters";
 
 export function TripOptimizationSheet({
   proposal,
@@ -30,6 +32,7 @@ export function TripOptimizationSheet({
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
+  const review = proposal ? reviewOptimization(proposal, daySettings) : undefined;
   return (
     <TripDetailsSheet
       title={copy.optimizeTitle}
@@ -39,7 +42,7 @@ export function TripOptimizationSheet({
       footer={
         <AppButton
           variant="gradient"
-          disabled={!proposal || loading || applying}
+          disabled={!proposal || !review?.valid || !!error || loading || applying}
           loading={applying}
           onPress={onApply}
         >
@@ -51,14 +54,16 @@ export function TripOptimizationSheet({
       {error ? (
         <View style={{ gap: theme.spacing.sm }}>
           <AppText accessibilityRole="alert" tone="error">{error}</AppText>
-          <AppButton variant="outline" disabled={loading} onPress={onRetry}>{copy.retryOptimization}</AppButton>
+          <AppButton variant="outline" disabled={loading || applying} onPress={onRetry}>{copy.retryOptimization}</AppButton>
         </View>
       ) : null}
+      {proposal && !review?.valid ? <AppText accessibilityRole="alert" tone="error">{copy.optimizationInvalid}</AppText> : null}
       {proposal ? (
         <View style={{ gap: theme.spacing.lg, paddingBottom: theme.spacing.md }}>
           <View style={[styles.summary, { backgroundColor: theme.colors.surfaceTint, borderColor: theme.colors.softActionBorder, borderRadius: theme.radius.md, padding: theme.spacing.md, gap: theme.spacing.xs }]}>
             <AppText variant="label">{copy.optimizedSummary}</AppText>
             <AppText variant="caption" tone="muted">{copy.optimizerEstimate}</AppText>
+            <AppText>{tripMessage(copy.optimizationChangedVisits, { count: review?.changed ?? 0 })}</AppText>
             <AppText>{copy.optimizedDistance}: {formatNumber(proposal.totalTripDistanceKm, locale)} km</AppText>
             <AppText>{copy.optimizedTravelTime}: {formatNumber(proposal.totalTripTransitMinutes, locale)} {copy.minutes}</AppText>
             {proposal.globalIssues?.length ? <AppText tone="error">{copy.optimizationIssues}: {proposal.globalIssues.length}</AppText> : null}
@@ -78,8 +83,11 @@ export function TripOptimizationSheet({
                   <AppText variant="caption" tone="primary">{index + 1}</AppText>
                   <View style={{ flex: 1, gap: theme.spacing.xxs }}>
                     <AppText>{stop.placeName}</AppText>
+                    <AppText variant="caption" tone="muted">{copy.currentVisit}: {
+                      (review?.previous.get(`${day.dayDate}:${stop.placeId}`)?.index ?? -1) + 1
+                    } · {review?.previous.get(`${day.dayDate}:${stop.placeId}`)?.stop.time || copy.noTime}</AppText>
                     {pinnedKeys.includes(`${day.dayDate}:${stop.placeId}`) ? <AppText variant="caption" tone="primary">{copy.pinned}</AppText> : null}
-                    <AppText variant="caption" tone="muted">{formatTime(stop.arrivalTime)} · {stop.durationMinutes} {copy.minutes}</AppText>
+                    <AppText variant="caption" tone="primary">{copy.proposedVisit}: {index + 1} · {formatTime(stop.arrivalTime)} · {stop.durationMinutes} {copy.minutes}</AppText>
                   </View>
                 </View>
               ))}

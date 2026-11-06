@@ -197,7 +197,7 @@ test("camera releases inactive previews and opens the gallery directly from the 
       saveJournalPhoto: async () => {},
     },
     "expo-image": { Image: "Image" },
-    "expo-router/react-navigation": { useIsFocused: () => focused },
+    "expo-router/react-navigation": { useIsFocused: () => focused, useNavigation: () => ({ dispatch() {} }), usePreventRemove() {} },
     "react-native": {
       View: "View",
       ActivityIndicator: "Spinner",

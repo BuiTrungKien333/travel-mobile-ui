@@ -71,9 +71,11 @@ export function TripDetailsPanels({
   itineraryUpdatedAt,
 }: Props) {
   const [hostReady, setHostReady] = useState(false);
+  const [reorderStamp] = useState(itineraryUpdatedAt);
+  const [formTripVersion] = useState(trip.serverVersion);
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
-  const closeSheet = () => { if (!saving) setSheet(null); };
+  const closeSheet = () => { if (!saving && !applyingOptimization) setSheet(null); };
   const weatherPoint = day?.stops.find((stop) => stop.location)?.location
     ?? trip.unscheduledStops?.find((stop) => stop.location)?.location;
   const weatherQuery = useWeatherForecastQuery(
@@ -248,6 +250,7 @@ export function TripDetailsPanels({
               onApply={(ids) =>
                 commit({
                   kind: "reorder",
+                  expectedItineraryUpdatedAt: reorderStamp,
                   date: day.date,
                   ids: mergeScheduledOrder(day, ids),
                 })
@@ -288,7 +291,7 @@ export function TripDetailsPanels({
             trip.startDate && trip.startDate < today ? trip.startDate : today
           }
           onApply={(startDate, endDate) =>
-            commit({ kind: "dates", startDate, endDate })
+            commit({ kind: "dates", startDate, endDate, baseVersion: formTripVersion })
           }
           onClose={closeSheet}
         />

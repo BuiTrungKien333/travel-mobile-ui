@@ -20,6 +20,7 @@ export function TripDetailsActions({
   onVisited,
   onJournal,
   onInfo,
+  visiting = false,
 }: {
   trip: Trip;
   mode: TripDetailsMode;
@@ -30,6 +31,7 @@ export function TripDetailsActions({
   onVisited: () => void;
   onJournal: () => void;
   onInfo: () => void;
+  visiting?: boolean;
 }) {
   const theme = useAppTheme();
   const insets = useScreenInsets();
@@ -63,7 +65,8 @@ export function TripDetailsActions({
               variant="raised"
               size="small"
               style={{ paddingHorizontal: theme.spacing.sm }}
-              accessibilityHint={copy.expandMap}
+              accessibilityHint={ongoingCopy.directionsHint}
+              disabled={visiting}
               onPress={onDirections}
               leadingIcon={
                 <AppIcon
@@ -91,6 +94,7 @@ export function TripDetailsActions({
             ]}
             leadingIcon={<AppIcon name="check" size={theme.layout.iconSmall} />}
             onPress={onVisited}
+            loading={visiting}
           >
             {copy.visited}
           </AppButton>

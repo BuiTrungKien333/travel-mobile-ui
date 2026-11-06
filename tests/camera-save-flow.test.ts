@@ -56,7 +56,7 @@ function cameraFixture(quick = false) {
     "expo-camera": { CameraView: "CameraView" },
     "expo-image": { Image: "Image" },
     "expo-image-picker": { launchImageLibraryAsync: async () => ({ canceled: true }) },
-    "expo-router/react-navigation": { useIsFocused: () => true },
+    "expo-router/react-navigation": { useIsFocused: () => true, useNavigation: () => ({ dispatch() {} }), usePreventRemove() {} },
     "react-native": { View: "View", ActivityIndicator: "Spinner", Platform: { OS: "android" }, AppState: { currentState: "active" }, StyleSheet: { absoluteFill: {} } },
     "react-native-reanimated": { __esModule: true, default: { View: "AnimatedView" }, useSharedValue: () => ({ get: () => 1, set: () => {} }), useAnimatedStyle: () => ({}), ReduceMotion: { System: "system" } },
     "@/hooks/use-app-theme": { useAppTheme: () => ({ ...tokens, colors: {} }) },
@@ -67,7 +67,7 @@ function cameraFixture(quick = false) {
       useMemoryTrips: () => ({ trips: [] }),
       useMemoryActions: () => ({ upload: { isPending: false, mutateAsync: async ({ memory }: { memory: LocalMemory }) => {
         events.push("upload");
-        assert.equal(memory.local.deviceSaved, true);
+        assert.equal(memory.local.deviceSaved, !deviceFails);
         if (uploadFails) throw new Error("Connection lost");
       } } }),
     },
@@ -114,17 +114,25 @@ test("quick capture without a trip saves on device and never uploads", async () 
   assert.equal(f.records[0].tripId, undefined);
 });
 
-test("a device save failure blocks upload and keeps the photo for an explicit retry", async () => {
+test("gallery denial keeps the private copy and permits upload without claiming a library copy", async () => {
   const f = cameraFixture();
   f.setDeviceFailure(true);
   f.render().props.onCapture();
   await flush();
+  assert.deepEqual(f.events, ["save", "device", "upload"]);
+  assert.equal(f.render().props.pending, false);
+  assert.equal(f.records[0].local.deviceSaved, false);
+  assert.ok(f.render().props.error);
+  assert.equal(f.records.length, 1);
+});
+
+test("quick capture still succeeds privately when phone library access is denied", async () => {
+  const f = cameraFixture(true);
+  f.setDeviceFailure(true);
+  f.render().props.onCapture(); await flush();
   assert.deepEqual(f.events, ["save", "device"]);
-  assert.equal(f.render().props.pending, true);
-  f.setDeviceFailure(false);
-  f.render().props.onCapture();
-  await flush();
-  assert.deepEqual(f.events, ["save", "device", "device", "upload"]);
+  assert.equal(f.render().props.pending, false);
+  assert.equal(f.render().props.status, "Đã giữ ảnh trong ứng dụng và Xem sau");
   assert.equal(f.records.length, 1);
 });
 

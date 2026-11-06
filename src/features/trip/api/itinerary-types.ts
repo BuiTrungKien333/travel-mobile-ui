@@ -50,6 +50,8 @@ export const saveItineraryRequestSchema = z.object({
     }).refine((stop) => !stop.pinned || stop.arrivalTime !== null, { path: ["arrivalTime"], message: "Pinned visits require an arrival time" })).max(100),
   })).max(90),
   expectedUpdatedAt: instant.optional(),
+  poolUpdates: z.array(z.object({ placeId: z.guid(), durationMinutes: z.number().int().min(5).max(480),
+    note: z.string().max(2000).nullable() })).max(100).optional(),
 });
 export type SaveItineraryRequest = z.infer<typeof saveItineraryRequestSchema>;
 

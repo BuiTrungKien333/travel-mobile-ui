@@ -1,6 +1,7 @@
 import { router } from "expo-router";
-import { useState } from "react";
-import { ActivityIndicator, FlatList, View } from "react-native";
+import { useRef, useState } from "react";
+import { usePreventRemove } from "expo-router/react-navigation";
+import { ActivityIndicator, Alert, FlatList, View } from "react-native";
 import { AppButton } from "@/components/ui/app-button";
 import { AppText } from "@/components/ui/app-text";
 import { useCameraCopy } from "@/features/camera/i18n/camera-copy";
@@ -33,6 +34,9 @@ export function SavedLaterScreen() {
   const exportPhoto = useTripPreview((state) => state.exportLocalPhoto);
   const [choosing, setChoosing] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const busyRef = useRef(false);
+  const [assignedTripId, setAssignedTripId] = useState<string | null>(null);
+  usePreventRemove(busy, () => undefined);
   const [error, setError] = useState("");
   const photos = memories.filter(
     (memory) =>
@@ -76,11 +80,13 @@ export function SavedLaterScreen() {
             </MemoryEmpty>
           }
           ListHeaderComponent={
-            error ? (
-              <AppText accessibilityRole="alert" tone="error">
-                {error}
-              </AppText>
-            ) : null
+            <View style={{ gap: theme.spacing.sm }}>
+              {error ? <AppText accessibilityRole="alert" tone="error">{error}</AppText>
+                : assignedTripId && !busy ? <AppText accessibilityLiveRegion="polite">{cameraCopy.uploaded}</AppText> : null}
+              {assignedTripId ? <AppButton variant="outline" disabled={busy} onPress={() => router.push({
+                pathname: "/memories/[tripId]", params: { tripId: assignedTripId },
+              })}>{copy.openAssignedAlbum}</AppButton> : null}
+            </View>
           }
           renderItem={({ item }) => (
             <View
@@ -114,7 +120,8 @@ export function SavedLaterScreen() {
                     variant="outline"
                     loading={busy}
                     onPress={() => {
-                      if (busy || typeof item.photo !== "string") return;
+                      if (busyRef.current || typeof item.photo !== "string") return;
+                      busyRef.current = true;
                       setBusy(true);
                       setError("");
                       void exportPhoto(item.id)
@@ -125,7 +132,7 @@ export function SavedLaterScreen() {
                               : photoCopy.actionError,
                           ),
                         )
-                        .finally(() => setBusy(false));
+                        .finally(() => { busyRef.current = false; setBusy(false); });
                     }}
                   >
                     {copy.saveDevice}
@@ -149,23 +156,32 @@ export function SavedLaterScreen() {
         <MemoryCapturePicker
           onClose={() => setChoosing(null)}
           onSelect={(selection) => {
+            if (busyRef.current) return;
             const id = choosing;
+            const trip = trips.find((item) => item.id === selection.tripId);
+            const memory = memories.find((item) => item.id === id);
+            if (!trip || !memory) { setError(copy.assignmentError); return; }
+            const timestamp = new Date(`${selection.day}T${memory.time ?? "00:00"}:00`).getTime();
+            if (!Number.isFinite(timestamp) || timestamp > Date.now()) {
+              Alert.alert(cameraCopy.futureDate);
+              return;
+            }
+            busyRef.current = true;
+            setAssignedTripId(null);
             setChoosing(null);
             setBusy(true);
             setError("");
-            const trip = trips.find((item) => item.id === selection.tripId);
-            const memory = memories.find((item) => item.id === id);
-            if (!trip || !memory) { setBusy(false); return; }
             let assigned = false;
             void assign(id, selection, trip)
               .then(() => {
                 assigned = true;
+                setAssignedTripId(trip.id);
                 return upload.mutateAsync({ memory: { ...memory, tripId: trip.id, date: selection.day,
                 destination: trip.destination,
                 local: memory.local ? { ...memory.local, placeId: selection.stopId || undefined } : undefined } });
               })
               .catch(() => setError(assigned ? copy.assignedUploadError : copy.assignmentError))
-              .finally(() => setBusy(false));
+              .finally(() => { busyRef.current = false; setBusy(false); });
           }}
         />
       ) : null}

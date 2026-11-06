@@ -48,7 +48,6 @@ export function useMemoryActions() {
   const profile = useProfile();
   const client = useQueryClient();
   const persist = useTripPreview((state) => state.persistLocalPhoto);
-  const exportPhoto = useTripPreview((state) => state.exportLocalPhoto);
   const removeLocal = useTripPreview((state) => state.removeMemory);
   const updateLocal = useTripPreview((state) => state.updateMemoryNote);
   const localMemories = useTripPreview((state) => state.memories);
@@ -69,13 +68,9 @@ export function useMemoryActions() {
       const assertSession = () => {
         if (version !== authSession.getVersion()) throw new ApiError("CANCELLED");
       };
-      let photo = localMemorySchema.parse(memory);
+      const photo = localMemorySchema.parse(memory);
       if (photo.local.userId && photo.local.userId !== profile.data.id)
         throw new ApiError("CANCELLED");
-      if (!photo.local.deviceSaved) {
-        await exportPhoto(photo.id);
-        photo = { ...photo, local: { ...photo.local, deviceSaved: true } };
-      }
       assertSession();
       if (!onlineManager.isOnline()) throw new ApiError("NETWORK");
       return uploadLocalMemory(photo, profile.data.id, persist, assertSession, onProgress);

@@ -33,6 +33,7 @@ export function TripEditForm({
   today: string;
   onCommit: (mutation: TripMutation) => boolean;
 }) {
+  const [baseVersion] = useState(trip.serverVersion);
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
   const { copy: formCopy } = useTripCopy();
@@ -402,6 +403,7 @@ export function TripEditForm({
               nextEnd !== (trip.endDate ?? "");
             onCommit({
               kind: "info",
+              baseVersion,
               values,
               ...(datesChanged && nextStart && nextEnd
                 ? { dateRange: { startDate: nextStart, endDate: nextEnd } }

@@ -1,10 +1,17 @@
 import { useI18n } from "@/hooks/use-i18n";
 
 const vi = {
+  libraryCopyError: "Ảnh đã giữ trong ứng dụng, nhưng chưa chép được vào thư viện điện thoại. Bạn vẫn có thể xem và đồng bộ ảnh.",
+  savedPrivateInbox: "Đã giữ ảnh trong ứng dụng và Xem sau",
+  savedAwaitingUpload: "Đã giữ ảnh trong ứng dụng. Chạm dấu tích để thử đồng bộ lại.",
+  unsavedTitle: "Ảnh chưa được lưu",
+  unsavedHint: "Chưa giữ được bản sao ảnh trong ứng dụng. Rời màn hình sẽ bỏ ảnh đang chụp. Bạn có thể ở lại để thử lưu lại.",
+  keepPhoto: "Giữ ảnh và thử lại",
+  leavePhoto: "Bỏ ảnh và rời màn hình",
   uploading: "Đang upload ảnh…",
   savingDevice: "Đang lưu ảnh vào thiết bị…",
   uploaded: "Đã upload ảnh vào kỷ niệm",
-  uploadError: "Chưa upload được ảnh. Ảnh đã được lưu vào thiết bị. Chạm dấu tích khi muốn thử upload lại.",
+  uploadError: "Chưa đồng bộ được ảnh. Bản sao vẫn được giữ trong ứng dụng. Chạm dấu tích để thử lại.",
   tooLarge: "Ảnh vượt dung lượng máy chủ cho phép. Hãy chọn ảnh nhỏ hơn.",
   invalidType: "Máy chủ hỗ trợ ảnh JPEG, PNG, GIF và WebP. Hãy chọn ảnh khác.",
   imageTooLarge: "Kích thước ảnh vượt giới hạn máy chủ. Hãy chọn ảnh nhỏ hơn.",
@@ -62,10 +69,17 @@ const vi = {
   savedDownload: "Đã lưu trong ứng dụng và gửi ảnh đến trình tải xuống",
 };
 const en: typeof vi = {
+  libraryCopyError: "The photo is kept in the app, but couldn't be copied to your phone library. You can still view and sync it.",
+  savedPrivateInbox: "Photo kept in the app and Saved for later",
+  savedAwaitingUpload: "Photo kept in the app. Tap the check to retry syncing.",
+  unsavedTitle: "Photo not saved",
+  unsavedHint: "The app couldn't keep a copy yet. Leaving will discard this capture. Stay to retry saving.",
+  keepPhoto: "Keep photo and retry",
+  leavePhoto: "Discard photo and leave",
   uploading: "Uploading photo…",
   savingDevice: "Saving photo to your device…",
   uploaded: "Photo uploaded to memories",
-  uploadError: "Couldn't upload. Your photo is saved on your device. Tap the check when you want to retry uploading.",
+  uploadError: "Couldn't sync. A copy is still kept in the app. Tap the check to retry.",
   tooLarge: "This photo exceeds the server's size limit. Choose a smaller image.",
   invalidType: "The server accepts JPEG, PNG, GIF and WebP. Choose another image.",
   imageTooLarge: "This photo exceeds the server's image dimensions. Choose a smaller image.",

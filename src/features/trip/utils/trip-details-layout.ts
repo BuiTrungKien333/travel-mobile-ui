@@ -23,7 +23,7 @@ export function getTripDetailsMode(trip: Trip, today: string): TripDetailsMode {
 }
 
 export function scheduledStops(day?: TripDay): TripStop[] {
-  return day?.stops.filter((stop) => clockPattern.test(stop.time)) ?? [];
+  return day?.stops ?? [];
 }
 
 export function getTripStartInfo(day?: TripDay, live = false) {
@@ -45,20 +45,12 @@ export function tripBacklog(trip: Trip) {
       date: null as string | null,
       key: `pool:${stop.id}`,
     })),
-    ...trip.days.flatMap((day) =>
-      day.stops
-        .filter((stop) => !clockPattern.test(stop.time))
-        .map((stop) => ({
-          stop,
-          date: day.date,
-          key: `${day.date}:${stop.id}`,
-        })),
-    ),
   ];
 }
 
-/** Reorder only timed visits, leaving backlog entries and pinned slots untouched. */
+/** The current UI reorders all visits assigned to a day, including untimed ones. */
 export function mergeScheduledOrder(day: TripDay, ids: string[]): string[] {
+  if (ids.length === day.stops.length) return ids;
   let index = 0;
   return day.stops.map((stop) =>
     clockPattern.test(stop.time) ? (ids[index++] ?? stop.id) : stop.id,

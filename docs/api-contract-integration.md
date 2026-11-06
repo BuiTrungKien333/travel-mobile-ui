@@ -59,6 +59,38 @@ Checklist trên điện thoại:
 
 Kiểm tra: `node --experimental-strip-types --test tests/add-trip-places.test.ts tests/place-picker-flow.test.ts tests/create-trip-recovery.test.ts tests/create-trip.test.ts` (39 test). Phần kế tiếp là rà luồng đổi giờ, di chuyển ngày, reorder, lưu/hủy trong P0-03.
 
+## P0-03 completion: schedule, live, capture and optimization
+
+Triển khai ngày **06/11/2026** hoàn thiện code sáu luồng trong kế hoạch; checklist thiết bị ở [P0-03-ACCEPTANCE.md](P0-03-ACCEPTANCE.md). Chưa QA điện thoại trong phiên này.
+
+`PUT /api/v1/trips/{id}/itinerary` nhận thêm `poolUpdates` tùy chọn:
+
+```json
+{
+  "expectedUpdatedAt": "2026-11-06T01:00:00Z",
+  "days": [],
+  "poolUpdates": [
+    {
+      "placeId": "40000000-0000-0000-0000-000000000001",
+      "durationMinutes": 95,
+      "note": "Ghi chú giữ khi bỏ khỏi ngày"
+    }
+  ]
+}
+```
+
+`days` vẫn là full replacement: ví dụ `[]` trên nghĩa là xóa toàn bộ lịch, chỉ dùng khi đó là chủ ý. Client thực tế gửi tất cả ngày/lượt ghé còn lại. Khi có pool update cần `expectedUpdatedAt`; ID phải thuộc trip, duy nhất và không xuất hiện trong lịch mới. Duration 5–480 phút, note tối đa 2000 ký tự hoặc null để xóa. Kiểm tra version và lưu itinerary/metadata pool trong một transaction: 409/validation lỗi không để lại metadata đã đổi một nửa. Request cũ bỏ qua trường này vẫn tương thích. Restart backend trước khi dùng mobile mới; không có migration mới.
+
+Các thay đổi phía mobile:
+
+- Lượt ghé có ngày nhưng không có giờ vẫn thuộc ngày đã chọn; pool chỉ gồm chưa gán ngày. Reorder/check-in dùng thứ tự server, không ưu tiên giờ trống lên trước.
+- Form info/dates/reorder dùng version/snapshot lúc mở. Giữ form khi lỗi; Back/Cancel chưa lưu không gọi mutation. Khi trả điểm về pool, `scheduleMutationRequest` gửi metadata cùng PUT, không PATCH trước.
+- Check-in dùng `PUT /trips/{id}/places/{placeId}` với `{ "visited": true/false }`, guard bấm lặp, không retry/queue ngầm. Invalidate `tripQueryKeys.all`, bao gồm Home, chi tiết, places và danh sách chuyến của Memories. API trả thành công mới cập nhật UI qua query server.
+- Chỉ đường dùng tọa độ và mode theo [Google Maps URLs](https://developers.google.com/maps/documentation/urls/get-started), gồm `driving`, `walking`, `two-wheeler`; khả năng hỗ trợ thực tế do Maps quyết định. Polyline trong app vẫn dùng backend Maps đã nối trước đó.
+- Preview tối ưu chỉ đọc. Hiện vị trí/giờ cũ và đề xuất; không tự sửa itinerary. Kiểm tra keyset ngày/điểm, trùng ID và ghim trước Apply; backend kiểm tra lại timestamp/ràng buộc khi ghi. Chặn Apply khi đang tải/có lỗi/proposal không hợp lệ; lỗi 409 yêu cầu lấy đề xuất mới.
+- Ảnh được giữ trong app trước khi upload. Quyền ghi thư viện điện thoại chỉ áp dụng bản sao gallery, không bắt buộc để đồng bộ bản riêng. UI chỉ báo “đã upload” sau upload thành công; lỗi vẫn giữ bản riêng và cho retry. Local ID/client request ID/server ID được giữ để phục hồi create/upload mất response theo cơ chế đã có.
+- Xem sau → chọn trip/day/place lưu liên kết local trước rồi upload. Timestamp tương lai bị chặn trước khi đổi record. Nếu upload lỗi, có nút mở đúng album để thử lại; chưa triển khai hàng đợi đồng bộ bền vững của P0-04.
+
 ## Day settings
 
 `PUT /api/v1/trips/{tripId}/days/{date}` saves a day's settings and any changed visit durations in one database transaction. The date is ISO `YYYY-MM-DD` and must be an existing day inside the trip. Restart the updated backend before running this mobile version. The columns already exist in migration V14; this change adds no migration or native dependency.

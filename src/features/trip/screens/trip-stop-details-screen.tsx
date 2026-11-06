@@ -1,6 +1,8 @@
 import { router } from "expo-router";
-import { useRef, useState } from "react";
-import { ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { usePreventRemove } from "expo-router/react-navigation";
+import { ActivityIndicator, KeyboardAvoidingView, Linking, Platform, StyleSheet, View } from "react-native";
+import { tripDirectionsUrl } from "@/features/home/utils/map-links";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ScreenSafeArea } from "@/components/common/screen-safe-area";
 import { GlassBackdrop } from "@/components/common/glass-backdrop";
@@ -29,8 +31,8 @@ import { getTripDetailsMode } from "../utils/trip-details-layout";
 import { getPlaceMapRegion } from "../utils/place-search";
 import { useDeleteTripPlaceMutation, useTripPlacesQuery, useTripQuery, useUpdateTripPlaceMutation } from "../api/trip-hooks";
 import { useSaveItineraryMutation, useTripItineraryQuery } from "../api/itinerary-hooks";
-import { toSaveItineraryRequest, toTrip } from "../api/trip-adapters";
-import { applyTripMutation } from "../utils/trip-mutations";
+import { toTrip } from "../api/trip-adapters";
+import { scheduleMutationRequest } from "../api/save-trip-schedule";
 import { ApiError } from "@/services/api/api-error";
 import { clockPattern } from "../schemas/trip-details-schema";
 
@@ -48,20 +50,28 @@ export function TripStopDetailsScreen({
   stopId?: string;
   day?: string;
 }) {
+  const [leaving, setLeaving] = useState(false);
+  useEffect(() => { if (leaving) goBack(); }, [leaving]);
   const tripQuery = useTripQuery(tripId);
   const placesQuery = useTripPlacesQuery(tripId);
   const itineraryQuery = useTripItineraryQuery(tripId);
   const trip = tripQuery.data ? toTrip(tripQuery.data, placesQuery.data ?? [], itineraryQuery.data) : undefined;
   const theme = useAppTheme();
   const { copy } = useTripDetailsCopy();
-  if (tripQuery.isPending || placesQuery.isPending || itineraryQuery.isPending)
+  if (tripId && ((!tripQuery.data && tripQuery.isPending) || (!placesQuery.data && placesQuery.isPending) || (!itineraryQuery.data && itineraryQuery.isPending)))
     return <ScreenSafeArea style={[styles.fill, { backgroundColor: theme.colors.background }]}><View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}><ActivityIndicator color={theme.colors.primary} /></View></ScreenSafeArea>;
-  const stop = (
+  let stop = (
     day
       ? trip?.days.find((entry) => entry.date === day)?.stops
       : trip?.unscheduledStops
   )?.find((entry) => entry.id === stopId);
-  if (tripQuery.isError || placesQuery.isError || itineraryQuery.isError)
+  let actualDate = day ?? null;
+  if (!stop && trip) {
+    const movedDay = trip.days.find((entry) => entry.stops.some((item) => item.id === stopId));
+    stop = movedDay?.stops.find((entry) => entry.id === stopId) ?? trip.unscheduledStops?.find((entry) => entry.id === stopId);
+    actualDate = movedDay?.date ?? null;
+  }
+  if (tripId && ((!tripQuery.data && tripQuery.isError) || (!placesQuery.data && placesQuery.isError) || (!itineraryQuery.data && itineraryQuery.isError)))
     return <ScreenSafeArea style={[styles.fill, { backgroundColor: theme.colors.background }]}><View style={{ padding: theme.spacing.xl, gap: theme.spacing.lg }}><AppText accessibilityRole="alert" tone="error">{copy.itineraryLoadError}</AppText><AppButton variant="outline" onPress={() => { void tripQuery.refetch(); void placesQuery.refetch(); void itineraryQuery.refetch(); }}>{copy.retry}</AppButton></View></ScreenSafeArea>;
   if (!trip || !stop)
     return (
@@ -76,10 +86,11 @@ export function TripStopDetailsScreen({
     );
   return (
     <StopDetailsContent
-      key={`${trip.id}:${day ?? "pool"}:${stop.id}`}
+      key={`${trip.id}:${stop.id}`}
       trip={trip}
       stop={stop}
-      date={day ?? null}
+      date={actualDate}
+      onRemoved={() => setLeaving(true)}
     />
   );
 }
@@ -88,10 +99,12 @@ function StopDetailsContent({
   trip,
   stop,
   date,
+  onRemoved,
 }: {
   trip: Trip;
   stop: TripStop;
   date: string | null;
+  onRemoved: () => void;
 }) {
   const theme = useAppTheme();
   const insets = useScreenInsets();
@@ -102,23 +115,23 @@ function StopDetailsContent({
   const removePlace = useDeleteTripPlaceMutation(trip.id);
   const saveItinerary = useSaveItineraryMutation(trip.id);
   const visited = stop.visited ?? false;
-  const [expandRequest, setExpandRequest] = useState(0);
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [removeError, setRemoveError] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editTrip, setEditTrip] = useState(trip);
   const [saving, setSaving] = useState(false);
+  usePreventRemove(saving, () => undefined);
   const [mutationError, setMutationError] = useState<string | null>(null);
   const inFlight = useRef(false);
   const editable = getTripDetailsMode(trip, today) !== "cancelled";
-  const canVisit = editable;
+  const canVisit = editable && date !== null && date <= today;
   const place = stop;
   const mapPlaces = place.location ? [place] : [];
   const region = getPlaceMapRegion(mapPlaces);
   function finishMutation() { inFlight.current = false; setSaving(false); }
   function failedMutation(error: unknown) {
     setRemoveError(true);
-    setMutationError(error instanceof ApiError && error.status === 409 ? copy.daySettingsConflict : copy.itinerarySaveError);
+    setMutationError(error instanceof ApiError && error.status === 409 ? copy.versionConflict : copy.itinerarySaveError);
   }
   function commit(mutation: TripMutation, source = trip) {
     if (!editable || inFlight.current || (mutation.kind !== "remove" && mutation.kind !== "stop")) return false;
@@ -129,16 +142,7 @@ function StopDetailsContent({
     if (mutation.kind === "remove") {
       const remove = async () => {
         if (date !== null) {
-          const candidate = applyTripMutation(source, mutation);
-          if (!candidate) throw new Error("INVALID_TRIP_MUTATION");
-          await updatePlace.mutateAsync({
-            placeId: stop.id,
-            request: {
-              estimatedDuration: stop.durationMinutes ?? 45,
-              notes: stop.note?.trim() ?? "",
-            },
-          });
-          await saveItinerary.mutateAsync(toSaveItineraryRequest(candidate));
+          await saveItinerary.mutateAsync(scheduleMutationRequest(source, mutation));
         } else {
           await removePlace.mutateAsync(mutation.stopId);
         }
@@ -146,25 +150,18 @@ function StopDetailsContent({
       void remove().then(() => {
         setEditing(false);
         setRemoveError(false);
-        goBack();
-      }).catch(failedMutation).finally(finishMutation);
+        setConfirmRemove(false);
+        return true;
+      }).catch((error: unknown) => { failedMutation(error); return false; }).then((removed) => {
+        finishMutation();
+        if (removed) onRemoved();
+      });
       return true;
     }
     if (mutation.kind !== "stop") return false;
     const save = async () => {
       if (date !== null || mutation.targetDate !== null) {
-        const candidate = applyTripMutation(source, mutation);
-        if (!candidate) throw new Error("INVALID_TRIP_MUTATION");
-        if (date !== null && mutation.targetDate === null) {
-          await updatePlace.mutateAsync({
-            placeId: stop.id,
-            request: {
-              estimatedDuration: mutation.values.durationMinutes ?? 45,
-              notes: mutation.values.note?.trim() ?? "",
-            },
-          });
-        }
-        await saveItinerary.mutateAsync(toSaveItineraryRequest(candidate));
+        await saveItinerary.mutateAsync(scheduleMutationRequest(source, mutation));
       } else {
         await updatePlace.mutateAsync({
           placeId: stop.id,
@@ -203,8 +200,7 @@ function StopDetailsContent({
             places={mapPlaces}
             region={region}
             showSavedName
-            expandMapRequest={expandRequest}
-            onBack={goBack}
+            onBack={() => { if (!inFlight.current) goBack(); }}
             backLabel={copy.back}
             topInset={insets.top}
             mapAction={<SharePlaceButton place={place} />}
@@ -288,7 +284,7 @@ function StopDetailsContent({
                 variant="raised"
                 size="small"
                 disabled={!region}
-                accessibilityHint={copy.expandMap}
+                accessibilityHint={ongoingCopy.directionsHint}
                 style={[
                   styles.action,
                   { flexGrow: 60, paddingHorizontal: theme.spacing.sm },
@@ -300,7 +296,9 @@ function StopDetailsContent({
                     color={theme.colors.onRaisedAction}
                   />
                 }
-                onPress={() => setExpandRequest((value) => value + 1)}
+                onPress={() => { setRemoveError(false); setMutationError(null); void Linking.openURL(tripDirectionsUrl(stop, trip.destination,
+                  trip.days.find((entry) => entry.date === date)?.transport))
+                  .catch(() => { setRemoveError(true); setMutationError(ongoingCopy.directionsError); }); }}
               >
                 {ongoingCopy.directions}
               </AppButton>
@@ -339,11 +337,16 @@ function StopDetailsContent({
                   />
                 }
                 onPress={() => {
-                  if (canVisit)
+                  if (canVisit && !inFlight.current) {
+                    inFlight.current = true;
+                    setSaving(true);
+                    setRemoveError(false);
+                    setMutationError(null);
                     void updatePlace.mutateAsync({
                       placeId: stop.id,
                       request: { visited: !visited },
-                    }).catch(() => setRemoveError(true));
+                    }).catch(failedMutation).finally(finishMutation);
+                  }
                 }}
               >
                 {copy.visited}
@@ -361,7 +364,7 @@ function StopDetailsContent({
       {editing ? (
         <TripDetailsSheet
           title={copy.editVisit}
-          onClose={() => { if (!saving) setEditing(false); }}
+          onClose={() => { if (!inFlight.current) setEditing(false); }}
           dismissible={!saving}
           topSpacing={theme.spacing.xxl}
           contentKey={stop.id}
@@ -384,7 +387,7 @@ function StopDetailsContent({
           title={copy.stopRemoveTitle}
           hint={date ? copy.stopRemoveDayHint : copy.stopRemovePoolHint}
           onCancel={() => {
-            if (saving) return;
+            if (inFlight.current) return;
             setConfirmRemove(false);
             setRemoveError(false);
           }}

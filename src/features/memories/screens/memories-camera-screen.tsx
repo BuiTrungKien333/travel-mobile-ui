@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import { BottomTabBarHeightContext } from "expo-router/js-tabs";
 import { lazy, Suspense, useContext, useState } from "react";
 import { ActivityIndicator, Platform, View } from "react-native";
+import { AppButton } from "@/components/ui/app-button";
 import { AppText } from "@/components/ui/app-text";
 import { CameraLayout } from "@/features/camera/components/camera-layout";
 import { QuickCaptureNavigation } from "@/features/camera/components/quick-capture-navigation";
@@ -14,6 +15,8 @@ import { MemoryCapturePicker } from "../components/memory-capture-picker";
 import { useMemoriesCopy } from "../i18n/memories-copy";
 import { getMemoryCaptureTarget } from "../utils/memory-albums";
 import { useMemories } from "../hooks/use-memories";
+import { todayCalendarDate } from "@/utils/calendar-date";
+import { MemoryLoadState } from "../components/memory-load-state";
 
 const NativeMemoryCamera = lazy(async () => {
   const { NativeTripCamera } = await import(
@@ -39,8 +42,9 @@ export function MemoriesCameraScreen(params: {
     theme.layout.tabBarHeight +
     Math.max(theme.spacing.lg, insets.bottom + theme.spacing.xs),
   );
-  const { trips, memories } = useMemories();
-  const today = new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+  const library = useMemories();
+  const { trips, memories } = library;
+  const today = todayCalendarDate();
   const [choosing, setChoosing] = useState(false);
   const target =
     params.quick && !params.tripId
@@ -80,9 +84,11 @@ export function MemoriesCameraScreen(params: {
   };
   const available =
     Platform.OS === "web" || !!requireOptionalNativeModule("ExpoCamera");
+  const loadingTarget = (!!params.tripId || !params.quick) && (library.isPending || library.isError);
+  const invalidTarget = !!(params.tripId || params.day || params.stopId) && !target;
   return (
     <>
-      {available ? (
+      {available && !loadingTarget && !invalidTarget ? (
         <Suspense
           fallback={
             <CameraLayout
@@ -110,6 +116,11 @@ export function MemoriesCameraScreen(params: {
         <CameraLayout
           {...props}
           frame={
+            loadingTarget ? <MemoryLoadState loading={library.isPending} error={library.isError} onRetry={() => void library.refetch()} />
+            : invalidTarget ? <View style={{ padding: theme.spacing.lg, gap: theme.spacing.md }}>
+              <AppText accessibilityRole="alert">{cameraCopy.missing}</AppText>
+              <AppButton onPress={() => setChoosing(true)}>{copy.chooseTrip}</AppButton>
+            </View> :
             <View
               style={{
                 flex: 1,

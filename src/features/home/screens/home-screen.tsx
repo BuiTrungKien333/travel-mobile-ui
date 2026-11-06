@@ -11,6 +11,7 @@ import { useMemories } from "@/features/memories/hooks/use-memories";
 import { HomePage, SectionHeading, SurfaceCard } from "../components/home-primitives";
 import { useHomeCopy } from "../i18n/home-copy";
 import { useOngoingCopy } from "../i18n/ongoing-copy";
+import { HomeLiveJourney } from "../components/home-live-journey";
 
 function tripDateRange(startDate: string | null, endDate: string | null, locale: string) {
   if (!startDate || !endDate) return "";
@@ -76,6 +77,7 @@ export function HomeScreen() {
         </SurfaceCard>
       ) : null}
 
+      {currentTrip ? <HomeLiveJourney tripId={currentTrip.id} today={today} /> : null}
       {!tripsQuery.isPending && !tripsQuery.isError && trips.length > 0 ? (
         <SurfaceCard tinted>
           <SectionHeading title={copy.footprint} />

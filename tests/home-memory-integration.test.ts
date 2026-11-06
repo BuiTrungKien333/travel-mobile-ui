@@ -12,6 +12,7 @@ test("Home shows uploaded and local photos and opens each with a valid memory ro
   ];
   const tokens = tripModuleLoader()<typeof import("../src/theme/tokens.ts")>("src/theme/tokens.ts");
   const load = tripModuleLoader({
+    "../components/home-live-journey": { HomeLiveJourney: "HomeLiveJourney" },
     "expo-router": { router: { push: (route: unknown) => routes.push(route) } },
     "expo-image": { Image: "Image" },
     "react-native": { ActivityIndicator: "Spinner", Pressable: "Pressable", View: "View" },

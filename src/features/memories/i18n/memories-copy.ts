@@ -1,6 +1,7 @@
 import { useI18n } from "@/hooks/use-i18n";
 
 const vi = {
+  openAssignedAlbum: "Mở album chuyến đi",
   loading: "Đang tải kỷ niệm…",
   loadError: "Chưa tải được dữ liệu từ máy chủ. Hãy kiểm tra kết nối và thử lại.",
   upload: "Upload ảnh",
@@ -62,6 +63,7 @@ const vi = {
   noteTooLong: "Lời nhắn tối đa 2000 ký tự.",
 };
 const en: typeof vi = {
+  openAssignedAlbum: "Open trip album",
   loading: "Loading memories…",
   loadError: "Couldn't load data from the server. Check your connection and try again.",
   upload: "Upload photo",

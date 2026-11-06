@@ -1,7 +1,12 @@
 import { router } from "expo-router";
+import { usePreventRemove } from "expo-router/react-navigation";
+import { tripDirectionsUrl } from "@/features/home/utils/map-links";
+import { useOngoingCopy } from "@/features/home/i18n/ongoing-copy";
+import { useTripVisit } from "../hooks/use-trip-visit";
+import { reviewOptimization } from "../utils/optimization-review";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Linking, StyleSheet, View } from "react-native";
 import Animated, { useSharedValue } from "react-native-reanimated";
 import { ScreenSafeArea } from "@/components/common/screen-safe-area";
 import { AppButton } from "@/components/ui/app-button";
@@ -48,12 +53,13 @@ import { useTripTimelineScroll } from "../hooks/use-trip-timeline-scroll";
 import { useTripTimelineDrag } from "../hooks/use-trip-timeline-drag";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 import { ApiError } from "@/services/api/api-error";
-import { toSaveItineraryRequest, toTrip, toTripStop } from "../api/trip-adapters";
+import { toTrip } from "../api/trip-adapters";
+import { scheduleMutationRequest } from "../api/save-trip-schedule";
+import { useAddTripPlaces } from "../hooks/use-add-trip-places";
 import { tripApi } from "../api/trip-api";
 import { toUpdateTripDayRequest } from "../api/save-trip-day";
 import { tripQueryKeys } from "../api/trip-query-keys";
 import { confirmDateImpact } from "../utils/confirm-date-impact";
-import { applyTripMutation } from "../utils/trip-mutations";
 import {
   useApplyItineraryOptimizationMutation,
   useOptimizeItineraryMutation,
@@ -61,7 +67,6 @@ import {
   useTripItineraryQuery,
 } from "../api/itinerary-hooks";
 import {
-  useAddTripPlaceMutation,
   useDeleteTripMutation,
   useDeleteTripPlaceMutation,
   useTripPlacesQuery,
@@ -116,11 +121,11 @@ export function TripDetailsScreen({
   const itineraryQuery = useTripItineraryQuery(tripId);
   const { copy } = useTripDetailsCopy();
   const theme = useAppTheme();
-  if (tripQuery.isPending || placesQuery.isPending || itineraryQuery.isPending)
+  if (tripId && ((!tripQuery.data && tripQuery.isPending) || (!placesQuery.data && placesQuery.isPending) || (!itineraryQuery.data && itineraryQuery.isPending)))
     return <ScreenSafeArea style={[styles.fill, { backgroundColor: theme.colors.background }]}>
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}><ActivityIndicator color={theme.colors.primary} /></View>
     </ScreenSafeArea>;
-  if (tripQuery.isError || placesQuery.isError || itineraryQuery.isError)
+  if (tripId && ((!tripQuery.data && tripQuery.isError) || (!placesQuery.data && placesQuery.isError) || (!itineraryQuery.data && itineraryQuery.isError)))
     return <ScreenSafeArea style={[styles.fill, { backgroundColor: theme.colors.background }]}>
       <View style={{ padding: theme.spacing.xl, gap: theme.spacing.lg }}>
         <DetailIconButton name="back" label={copy.back} onPress={backToTrips} />
@@ -172,13 +177,14 @@ function TripDetailsContent({
 }) {
   const theme = useAppTheme();
   const queryClient = useQueryClient();
+  const visit = useTripVisit(trip);
+  const { copy: ongoingCopy } = useOngoingCopy();
   const insets = useScreenInsets();
   const { copy } = useTripDetailsCopy();
-  const placesQuery = useTripPlacesQuery(trip.id);
   const updateTrip = useUpdateTripMutation(trip.id);
   const updateTripDay = useUpdateTripDayMutation(trip.id);
   const itineraryQuery = useTripItineraryQuery(trip.id);
-  const addPlaceMutation = useAddTripPlaceMutation(trip.id);
+  const addPlacesMutation = useAddTripPlaces(trip.id);
   const updatePlaceMutation = useUpdateTripPlaceMutation(trip.id);
   const removePlaceMutation = useDeleteTripPlaceMutation(trip.id);
   const deleteTripMutation = useDeleteTripMutation();
@@ -188,12 +194,16 @@ function TripDetailsContent({
   const [commitError, setCommitError] = useState<string | null>(null);
   const commitInFlight = useRef(false);
   const [committing, setCommitting] = useState(false);
+  usePreventRemove(committing || visit.isPending || applyItineraryOptimizationMutation.isPending, () => undefined);
   const today = todayCalendarDate();
   const panelOpen = useTripPreview((state) => state.panel !== null);
   const memoriesQuery = useMemoriesQuery(trip.id);
-  const [backlog, setBacklog] = useState(() => (trip.unscheduledStops?.length ?? 0) > 0);
+  const [backlog, setBacklog] = useState(() => !selectedDate && !trip.days.some((entry) => entry.stops.length)
+    && (trip.unscheduledStops?.length ?? 0) > 0);
   const [sheet, setSheet] = useState<TripDetailsSheetState | null>(null);
   const [optimizationApplyError, setOptimizationApplyError] = useState<string | null>(null);
+  const optimizeInFlight = useRef(false);
+  const applyInFlight = useRef(false);
   const [editHistory, setEditHistory] = useState(false);
   const [highlight, setHighlight] = useState<{
     date: string;
@@ -201,7 +211,7 @@ function TripDetailsContent({
   } | null>(null);
   const [availableHeight, setAvailableHeight] = useState(0);
   const mapResizeLock = useSharedValue(0);
-  const [mapExpandRequest, setMapExpandRequest] = useState(expandMap ? 1 : 0);
+  const mapExpandRequest = expandMap ? 1 : 0;
   const [planningMapGeometry, setPlanningMapGeometry] =
     useState<PlanningMapGeometry>({
       height: theme.layout.tripMapMinimumHeight,
@@ -256,16 +266,20 @@ function TripDetailsContent({
     : optimizationApplyError ?? undefined;
 
   function openOptimization() {
+    if (optimizeInFlight.current || applyInFlight.current) return;
+    optimizeInFlight.current = true;
     setSheet({ kind: "optimize" });
     setOptimizationApplyError(null);
     applyItineraryOptimizationMutation.reset();
     optimizeItineraryMutation.reset();
-    void optimizeItineraryMutation.mutateAsync().catch(() => undefined);
+    void optimizeItineraryMutation.mutateAsync().catch(() => undefined).finally(() => { optimizeInFlight.current = false; });
   }
 
   function applyOptimization() {
     const result = optimizeItineraryMutation.data;
-    if (!result || applyItineraryOptimizationMutation.isPending) return;
+    if (!result || applyInFlight.current || optimizeInFlight.current || applyItineraryOptimizationMutation.isPending) return;
+    if (!reviewOptimization(result.proposal, trip.days).valid) { setOptimizationApplyError(copy.optimizationInvalid); return; }
+    applyInFlight.current = true;
     setOptimizationApplyError(null);
     void applyItineraryOptimizationMutation.mutateAsync({
       expectedUpdatedAt: result.sourceUpdatedAt,
@@ -280,28 +294,9 @@ function TripDetailsContent({
           ? copy.optimizationConflict
           : copy.optimizationApplyError,
       );
-    });
+    }).finally(() => { applyInFlight.current = false; });
   }
 
-  async function persistSchedule(candidate: Trip) {
-    try {
-      await saveItineraryMutation.mutateAsync(toSaveItineraryRequest(candidate));
-    } catch (error) {
-      if (error instanceof ApiError) throw error;
-      throw new Error("ITINERARY_SAVE_FAILED");
-    }
-  }
-  async function persistPlaceDetails(stops: TripStop[]) {
-    for (const stop of stops) {
-      await updatePlaceMutation.mutateAsync({
-        placeId: stop.id,
-        request: {
-          estimatedDuration: stop.durationMinutes ?? 45,
-          notes: stop.note?.trim() ?? "",
-        },
-      });
-    }
-  }
   const mapHeight = availableHeight
     ? Math.min(
         theme.layout.tripMapPreviewHeight,
@@ -352,12 +347,13 @@ function TripDetailsContent({
     setCommitError(null);
     const perform = async () => {
       if (mutation.kind === "info") {
-        if (trip.serverVersion === undefined) throw new ApiError("INVALID_RESPONSE");
+        const version = mutation.baseVersion ?? trip.serverVersion;
+        if (version === undefined) throw new ApiError("INVALID_RESPONSE");
         const dates = mutation.dateRange;
-        const impact = dates ? await tripApi.previewDates(trip.id, { ...dates, version: trip.serverVersion }) : undefined;
+        const impact = dates ? await tripApi.previewDates(trip.id, { ...dates, version }) : undefined;
         if (impact?.requiresAcknowledgement && !await confirmDateImpact(copy, impact.movedToPoolCount)) return false;
         await updateTrip.mutateAsync({
-          version: trip.serverVersion,
+          version,
           title: mutation.values.title,
           ...(mutation.values.destination && mutation.values.destination !== trip.destination
             ? { destination: { name: mutation.values.destination } } : {}),
@@ -369,57 +365,26 @@ function TripDetailsContent({
           notes: mutation.values.notes ?? null,
         });
       } else if (mutation.kind === "dates") {
-        if (trip.serverVersion === undefined) throw new ApiError("INVALID_RESPONSE");
-        const dates = { startDate: mutation.startDate, endDate: mutation.endDate, version: trip.serverVersion };
+        const version = mutation.baseVersion ?? trip.serverVersion;
+        if (version === undefined) throw new ApiError("INVALID_RESPONSE");
+        const dates = { startDate: mutation.startDate, endDate: mutation.endDate, version };
         const impact = await tripApi.previewDates(trip.id, dates);
         if (impact.requiresAcknowledgement && !await confirmDateImpact(copy, impact.movedToPoolCount)) return false;
         await updateTrip.mutateAsync({ ...dates, acknowledgeDateImpact: impact.requiresAcknowledgement });
       } else if (mutation.kind === "add") {
-        const addedStops: TripStop[] = [];
-        for (const [index, stop] of mutation.stops.entries()) {
-          if (!stop.location) throw new Error("PLACE_COORDINATES_REQUIRED");
-          const saved = await addPlaceMutation.mutateAsync({
-            ...(stop.providerPlaceId ? { providerPlaceId: stop.providerPlaceId } : {}),
-            name: stop.name.vi,
-            latitude: stop.location.latitude,
-            longitude: stop.location.longitude,
-            ...(stop.address?.vi ? { address: stop.address.vi } : {}),
-            category: stop.kind.vi,
-            ...(stop.durationMinutes ? { estimatedDuration: stop.durationMinutes } : {}),
-            ...(stop.note ? { notes: stop.note } : {}),
-            plannedOrder: (placesQuery.data?.length ?? 0) + index,
-          });
-          addedStops.push(toTripStop(saved));
-        }
-        const candidate = applyTripMutation(trip, { ...mutation, stops: addedStops });
-        if (!candidate) throw new Error("INVALID_TRIP_MUTATION");
-        if (mutation.date !== null) await persistSchedule(candidate);
-        else setBacklog(true);
+        await addPlacesMutation.mutateAsync({ stops: mutation.stops, date: mutation.date });
+        if (mutation.date === null) setBacklog(true);
       } else if (mutation.kind === "remove") {
         if (mutation.date === null) {
           await removePlaceMutation.mutateAsync(mutation.stopId);
         } else {
-          const candidate = applyTripMutation(trip, mutation);
-          if (!candidate) throw new Error("INVALID_TRIP_MUTATION");
-          await persistPlaceDetails(
-            candidate.unscheduledStops?.filter((stop) => stop.id === mutation.stopId) ?? [],
-          );
-          await persistSchedule(candidate);
+          await saveItineraryMutation.mutateAsync(scheduleMutationRequest(trip, mutation));
         }
       } else if (mutation.kind === "reorder") {
-        const candidate = applyTripMutation(trip, mutation);
-        if (!candidate) throw new Error("INVALID_TRIP_MUTATION");
-        await persistSchedule(candidate);
+        await saveItineraryMutation.mutateAsync(scheduleMutationRequest(trip, mutation));
       } else if (mutation.kind === "stop") {
         if (mutation.date !== null || mutation.targetDate !== null) {
-          const candidate = applyTripMutation(trip, mutation);
-          if (!candidate) throw new Error("INVALID_TRIP_MUTATION");
-          if (mutation.date !== null && mutation.targetDate === null) {
-            await persistPlaceDetails(
-              candidate.unscheduledStops?.filter((stop) => stop.id === mutation.stopId) ?? [],
-            );
-          }
-          await persistSchedule(candidate);
+          await saveItineraryMutation.mutateAsync(scheduleMutationRequest(trip, mutation));
         } else {
           await updatePlaceMutation.mutateAsync({
             placeId: mutation.stopId,
@@ -506,7 +471,7 @@ function TripDetailsContent({
       trip={trip}
       mode={mode}
       hideTripInfo={mapFirstLayout}
-      onBack={backToTrips}
+      onBack={() => { if (!commitInFlight.current && !applyInFlight.current && !visit.isPending) backToTrips(); }}
       onMenu={() => setSheet({ kind: "menu" })}
     />
   );
@@ -565,11 +530,11 @@ function TripDetailsContent({
             : undefined
         }
         onVisited={
-          mode === "live" && day?.date === today
-            ? () => void updatePlaceMutation.mutateAsync({
-                placeId: item.stop.id,
-                request: { visited: !item.stop.visited },
-              }).catch(() => setCommitError("Không cập nhật được trạng thái địa điểm."))
+          mode === "live" && day?.date === today && !visit.isPending
+            ? () => {
+                setCommitError(null);
+                void visit.setVisited(item.stop.id, today, !item.stop.visited).catch(() => setCommitError(ongoingCopy.visitError));
+              }
             : undefined
         }
       />
@@ -674,7 +639,7 @@ function TripDetailsContent({
               trip={trip}
               mode={mode}
               titleOnly
-              onBack={backToTrips}
+              onBack={() => { if (!commitInFlight.current && !applyInFlight.current && !visit.isPending) backToTrips(); }}
               onMenu={() => setSheet({ kind: "menu" })}
               onEdit={() => setSheet({ kind: "info" })}
               onOpenMap={planningScroll.show}
@@ -870,16 +835,17 @@ function TripDetailsContent({
             canOptimize={canOptimize}
             onOptimize={openOptimization}
             nextStop={isLiveToday && !backlog ? progress.nextStop : undefined}
+            visiting={visit.isPending}
             onDirections={() => {
-              if (progress.nextStop && day)
-                setHighlight({ date: day.date, id: progress.nextStop.id });
-              planningScroll.show();
-              setMapExpandRequest((request) => request + 1);
+              setCommitError(null);
+              if (progress.nextStop && day) void Linking.openURL(tripDirectionsUrl(progress.nextStop, trip.destination, day.transport))
+                .catch(() => setCommitError(ongoingCopy.directionsError));
             }}
             onVisited={() => {
+              setCommitError(null);
               if (isLiveToday && !backlog && progress.nextStop)
-                void updatePlaceMutation.mutateAsync({ placeId: progress.nextStop.id, request: { visited: true } })
-                  .catch(() => setCommitError("Không cập nhật được trạng thái địa điểm."));
+                void visit.setVisited(progress.nextStop.id, today, true)
+                  .catch(() => setCommitError(ongoingCopy.visitError));
             }}
             onJournal={openJournal}
             onInfo={() => setSheet({ kind: "info" })}
@@ -888,6 +854,7 @@ function TripDetailsContent({
       </ScreenSafeArea>
       {sheet ? (
         <TripDetailsPanels
+          key={sheet.kind}
           trip={trip}
           day={backlog ? undefined : day}
           today={today}
