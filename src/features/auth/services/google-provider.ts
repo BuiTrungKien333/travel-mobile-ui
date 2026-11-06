@@ -43,9 +43,13 @@ export async function getGoogleIdToken(
   } catch (error) {
     if (error instanceof ApiError) throw error;
     if (sdk.isErrorWithCode(error)) {
+      if (error.code === sdk.statusCodes.DEVELOPER_ERROR)
+        throw new ApiError("GOOGLE_CONFIG");
       if (error.code === sdk.statusCodes.PLAY_SERVICES_NOT_AVAILABLE)
         throw new ApiError("GOOGLE_PLAY_SERVICES");
       if (error.code === sdk.statusCodes.IN_PROGRESS)
+        throw new ApiError("CANCELLED");
+      if (error.code === sdk.statusCodes.SIGN_IN_CANCELLED)
         throw new ApiError("CANCELLED");
     }
     throw new ApiError("GOOGLE_FAILED");

@@ -4,18 +4,27 @@
 
 ## Chạy dự án
 
-```bash
-npm install
-npm run web
+**Chạy trên điện thoại Android có USB:** làm theo [hướng dẫn clone, cấu hình và cài app thật](docs/DEVICE-SETUP.md). Cần Node.js, JDK, Android SDK, backend đang chạy và điện thoại bật USB debugging.
+
+Các lệnh chính trên Windows/PowerShell, sau khi clone và vào thư mục `travel-mobile-ui`:
+
+```powershell
+npm.cmd ci
+Copy-Item .env.example .env
+# Điền URL backend và key Maps trong .env trước khi build.
+adb devices -l
+npx.cmd expo run:android --device
 ```
 
-Trong chế độ development, ứng dụng mở Home trực tiếp để làm UI, không cần chạy backend. Chọn **Đổi trạng thái** ở cuối Home để xem bốn tình huống. Dữ liệu mẫu dùng ngày cố định **21/10/2026** và chỉ tồn tại trong phiên.
+Chọn điện thoại thật trong danh sách. Những lần sau, nếu chỉ sửa JavaScript/TypeScript/UI:
 
-Chạy Android bằng development build khi đã chuẩn bị Android SDK và thiết bị/emulator:
-
-```bash
-npm run android
+```powershell
+npx.cmd expo start --dev-client --lan
 ```
+
+Máy tính và điện thoại dùng chung mạng Wi-Fi có thể truy cập lẫn nhau. USB phục vụ cài app/debug; URL backend trong `.env` phải truy cập được từ điện thoại. Home, chuyến đi và kỷ niệm dùng backend thật, không dùng dữ liệu preview làm nguồn chính.
+
+Web: sau khi cấu hình `.env` và chạy backend, dùng `npm.cmd run web`.
 
 Build iOS bằng `npm run ios` trên macOS có Xcode. Các module Google Sign-In native cần development build; Expo Go không đủ cho toàn bộ chức năng của dự án.
 
@@ -35,12 +44,13 @@ npx tsc --noEmit --noUnusedLocals --noUnusedParameters
 npm test
 ```
 
-ESLint đã được cấu hình qua `npm run lint`. Đợt rà soát Home ngày 19/10/2026 không chạy lint theo yêu cầu hiện tại của chủ dự án.
+ESLint chạy bằng `npm run lint`. Kết quả kiểm tra và các giới hạn hiện tại được ghi trong [trạng thái dự án](docs/PROJECT-STATUS.md).
 
 ## Tài liệu và tiến độ
 
 - [Bàn giao ngữ cảnh cho agent mới](docs/AGENT-HANDOFF.md) · [Lời nhắn để mở chat mới](docs/NEXT-CHAT-PROMPT.md)
 - [Trạng thái dự án](docs/PROJECT-STATUS.md)
+- [Chạy trên điện thoại thật qua USB](docs/DEVICE-SETUP.md)
 - [Cách xem và cấu trúc Home preview](docs/HOME-PREVIEW.md)
 - [Kết quả rà soát Home](docs/HOME-REVIEW.md)
 - [Review danh sách/tạo chuyến](docs/TRIPS-REVIEW.md) · [Đề xuất chi tiết chuyến đi](docs/TRIP-DETAIL-DESIGN.md)
@@ -48,4 +58,4 @@ ESLint đã được cấu hình qua `npm run lint`. Đợt rà soát Home ngày
 - [Thiết lập Google Sign-In](docs/google-auth.md)
 - [Quy định phát triển](AGENTS.md)
 
-Auth dùng backend thật cả trong development và release. Sao chép `.env.example` thành `.env` và chọn `EXPO_PUBLIC_API_URL` phù hợp với web/iOS simulator, Android emulator hoặc điện thoại thật; khởi động lại Metro sau khi đổi env. Các luồng Home và chuyến đi hiện vẫn dùng dữ liệu preview, độc lập với auth.
+Sao chép `.env.example` thành `.env` và chọn `EXPO_PUBLIC_API_URL` phù hợp với thiết bị; khởi động lại Metro sau khi đổi env. Khi đổi key Maps, package hoặc plugin native, cần prebuild và build/cài lại app theo hướng dẫn thiết bị.
