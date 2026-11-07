@@ -121,8 +121,8 @@ export function TripMapboxView({
       const button = document.createElement("button");
       button.type = "button";
       const badge = document.createElement("span");
-      badge.textContent = String(pin.number);
-      button.setAttribute("aria-label", `${pin.number}. ${pin.name}`);
+      badge.textContent = String(pin.label ?? pin.number);
+      button.setAttribute("aria-label", `${pin.label ?? pin.number}. ${pin.name}`);
       button.setAttribute("aria-pressed", String(pin.id === focusedId));
       Object.assign(button.style, {
         width: `${theme.layout.touchTarget}px`,

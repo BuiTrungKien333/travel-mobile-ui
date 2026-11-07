@@ -181,7 +181,7 @@ export function TripMapboxView({
           >
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`${pin.number}. ${pin.name}`}
+              accessibilityLabel={`${pin.label ?? pin.number}. ${pin.name}`}
               accessibilityState={{ selected: pin.id === focusedId }}
               onPress={() => onSelect(pin.id)}
               style={{
@@ -213,7 +213,7 @@ export function TripMapboxView({
                     fontFamily: theme.typography.fontFamily.semibold,
                   }}
                 >
-                  {pin.number}
+                  {pin.label ?? pin.number}
                 </AppText>
               </View>
             </Pressable>

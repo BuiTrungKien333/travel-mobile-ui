@@ -1,6 +1,8 @@
 # Kế hoạch hợp nhất frontend và backend WeGo
 
-> Cập nhật QA-5 · 07/11/2026: chi tiết địa điểm từ timeline đã nối API; kéo đổi thứ tự/vuốt gỡ tại timeline thật có lưu lịch ngày, rollback khi lỗi và Hoàn tác kiểm tra phiên bản. 45 kiểm tra mobile liên quan đạt; chờ nghiệm thu gesture web/Android. Cấu hình điểm xuất phát, quay lại điểm xuất phát và ghim vẫn chưa nối. Xem các checklist mới nhất trong [QA-ACCEPTANCE-PLAN.md](QA-ACCEPTANCE-PLAN.md); chưa đánh dấu hoàn tất toàn Phase 4/5.
+> Cập nhật QA-5 · Lịch ngày · 07/11/2026: đã nối origin/giờ đi/thời lượng/phương tiện/quay về qua API versioned và Flyway V17; dùng catalog, điểm đã lưu, GPS hoặc nhập tay, không bật Geocoding trả phí. Mapbox tính cả chặng xuất phát/quay về và giờ đến có dữ liệu. Xem [DAY-SCHEDULE-INTEGRATION.md](DAY-SCHEDULE-INTEGRATION.md) cho API, giới hạn và checklist. Ghim, AI, dẫn đường turn-by-turn và nghiệm thu thiết bị vẫn chưa hoàn tất.
+
+> Cập nhật QA-5 · 07/11/2026: chi tiết địa điểm từ timeline đã nối API; kéo đổi thứ tự/vuốt gỡ tại timeline thật có lưu lịch ngày, rollback khi lỗi và Hoàn tác kiểm tra phiên bản. 45 kiểm tra mobile liên quan đạt ở lượt đó; chờ nghiệm thu gesture web/Android. Cấu hình xuất phát/quay lại được bổ sung trong cập nhật lịch ngày phía trên; ghim vẫn chưa nối. Xem các checklist mới nhất trong [QA-ACCEPTANCE-PLAN.md](QA-ACCEPTANCE-PLAN.md); chưa đánh dấu hoàn tất toàn Phase 4/5.
 
 > Cập nhật Home · 07/11/2026: đã triển khai GET `/api/v1/home/dashboard` và nối lại thiết kế các trạng thái, bao gồm PLANNING dùng card Upcoming. Chọn một chuyến theo ưu tiên trạng thái rồi ngày tạo mới nhất; 433 backend/304 mobile tests đạt. Xem [HOME-DASHBOARD-INTEGRATION.md](HOME-DASHBOARD-INTEGRATION.md) cho API, batch nghiệm thu và giới hạn thời tiết/lịch trình/Memory. Chưa gán hoàn tất toàn Phase dashboard hoặc QA-5/QA-6; các đoạn Home deferred phía dưới là lịch sử.
 

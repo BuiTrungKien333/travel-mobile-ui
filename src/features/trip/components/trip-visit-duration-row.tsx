@@ -38,7 +38,7 @@ export function TripVisitDurationRow({
           ? theme.colors.error
           : expanded
             ? theme.colors.primaryText
-            : theme.colors.softActionBorder,
+            : theme.colors.border,
         backgroundColor: theme.colors.surface,
         overflow: "hidden",
       }}
@@ -68,10 +68,10 @@ export function TripVisitDurationRow({
             alignSelf: "stretch",
             gap: theme.spacing.xs,
             paddingHorizontal: theme.spacing.sm,
-            backgroundColor: theme.colors.surfaceTint,
+            backgroundColor: theme.colors.surfaceVariant,
           }}
         >
-          <AppText variant="caption" tone="primary">
+          <AppText variant="label" tone="primary">
             {value || "—"} {copy.minutes}
           </AppText>
           <AppIcon
@@ -122,7 +122,7 @@ export function TripVisitDurationRow({
                     borderWidth: StyleSheet.hairlineWidth,
                     borderColor: selected
                       ? theme.colors.primaryText
-                      : theme.colors.softActionBorder,
+                      : theme.colors.border,
                     backgroundColor: selected
                       ? theme.colors.primaryText
                       : theme.colors.surface,
@@ -130,7 +130,7 @@ export function TripVisitDurationRow({
                   })}
                 >
                   <AppText
-                    variant="caption"
+                    variant="body"
                     style={{
                       color: selected
                         ? theme.colors.surface
@@ -149,6 +149,7 @@ export function TripVisitDurationRow({
           {custom ? (
             <AppInput
               compact
+              labelVariant="label"
               label={copy.dayVisitCustom}
               value={value}
               onChangeText={onChange}
@@ -171,9 +172,6 @@ export function TripVisitDurationRow({
               {error}
             </AppText>
           ) : null}
-          <AppText variant="caption" tone="muted">
-            {copy.dayVisitHint}
-          </AppText>
         </View>
       ) : error ? (
         <AppText

@@ -122,12 +122,14 @@ export function TripTimelineTail({
   empty,
   canEdit,
   onAdd,
+  returnSummary,
 }: {
   trip: Trip;
   day?: TripDay;
   empty: boolean;
   canEdit: boolean;
   onAdd: () => void;
+  returnSummary?: string;
 }) {
   const theme = useAppTheme();
   const { copy } = useTripDetailsCopy();
@@ -149,6 +151,7 @@ export function TripTimelineTail({
         <AppText variant="caption" tone="muted">
           {copy.returnLabel}:{" "}
           {day.startLocation || trip.accommodation || copy.unknownRoute}
+          {returnSummary ? ` · ${returnSummary}` : ""}
         </AppText>
       ) : null}
       {day && canEdit ? (
@@ -203,16 +206,6 @@ export function TripTimelineTail({
             {copy.add}
           </AppText>
         </Pressable>
-      ) : null}
-      {!empty ? (
-        <>
-          <AppText variant="caption" tone="muted">
-            {copy.routeOnly}
-          </AppText>
-          <AppText variant="caption" tone="muted">
-            {copy.routeHint}
-          </AppText>
-        </>
       ) : null}
     </View>
   );

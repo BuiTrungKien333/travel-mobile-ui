@@ -3,6 +3,25 @@ import { z } from "zod";
 const localDate = z.iso.date();
 const localDateTime = z.iso.datetime({ local: true });
 const instant = z.iso.datetime({ offset: true });
+export const daySettingsSchema = z
+  .object({
+    origin: z
+      .object({
+        name: z.string().trim().min(1).max(200),
+        address: z.string().max(500).nullable(),
+        latitude: z.number().min(-90).max(90).nullable(),
+        longitude: z.number().min(-180).max(180).nullable(),
+      })
+      .refine(
+        (origin) => (origin.latitude === null) === (origin.longitude === null),
+      )
+      .nullable(),
+    departureTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d(?::00)?$/),
+    returnToStart: z.boolean(),
+    travelMode: z.enum(["DRIVE", "WALK", "BICYCLE"]),
+  })
+  .refine((value) => !value.returnToStart || value.origin !== null);
+export type DaySettings = z.infer<typeof daySettingsSchema>;
 
 export const itineraryStopSchema = z.object({
   id: z.guid(),
@@ -23,6 +42,7 @@ export const itineraryStopSchema = z.object({
 export const itineraryDaySchema = z.object({
   date: localDate,
   stops: z.array(itineraryStopSchema),
+  settings: daySettingsSchema.nullable().optional(),
 });
 
 export const itineraryResponseSchema = z.object({
@@ -48,8 +68,23 @@ export const saveItineraryDaySchema = z.object({
   expectedTripVersion: z.number().int().nonnegative().safe(),
   expectedUpdatedAt: instant.nullable(),
   stops: z.array(editableStopSchema).max(100),
+  settings: daySettingsSchema.optional(),
 });
 export type SaveItineraryDayRequest = z.infer<typeof saveItineraryDaySchema>;
+export const updateDayScheduleSchema = z.object({
+  expectedTripVersion: z.number().int().nonnegative().safe(),
+  expectedUpdatedAt: instant.nullable(),
+  settings: daySettingsSchema,
+  durations: z
+    .array(
+      z.object({
+        placeId: z.guid(),
+        minutes: z.number().int().min(5).max(480),
+      }),
+    )
+    .max(100),
+});
+export type UpdateDayScheduleRequest = z.infer<typeof updateDayScheduleSchema>;
 
 export const saveItineraryRequestSchema = z.object({
   days: z

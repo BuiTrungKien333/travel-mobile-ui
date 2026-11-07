@@ -6,6 +6,8 @@ import {
   optimizationEnvelopeSchema,
   saveItineraryRequestSchema,
   saveItineraryDaySchema,
+  updateDayScheduleSchema,
+  type UpdateDayScheduleRequest,
   type SaveItineraryDayRequest,
   type ItineraryOptimizationProposal,
   type ItineraryResponse,
@@ -27,6 +29,22 @@ const path = (tripId: string) =>
   `/api/v1/trips/${encodeURIComponent(tripId)}/itinerary`;
 
 export const itineraryApi = {
+  async updateSchedule(
+    tripId: string,
+    date: string,
+    request: UpdateDayScheduleRequest,
+  ): Promise<ItineraryResponse> {
+    const body = updateDayScheduleSchema.safeParse(request);
+    if (!body.success || !isCalendarDate(date))
+      throw new ApiError("INVALID_ITINERARY");
+    const response = await apiClient.put<unknown>(
+      `${path(tripId)}/days/${encodeURIComponent(date)}/schedule`,
+      body.data,
+    );
+    const saved = parse(itineraryEnvelopeSchema, response.data);
+    if (saved.tripId !== tripId) throw new ApiError("INVALID_RESPONSE");
+    return saved;
+  },
   async get(tripId: string, signal?: AbortSignal): Promise<ItineraryResponse> {
     const response = await apiClient.get<unknown>(path(tripId), { signal });
     return parse(itineraryEnvelopeSchema, response.data);

@@ -40,9 +40,7 @@ export function TripStartTimeField({
   }
   return (
     <View style={{ gap: compact ? theme.spacing.xs : theme.spacing.sm }}>
-      <AppText variant={compact ? "caption" : "label"}>
-        {label ?? copy.startTime}
-      </AppText>
+      <AppText variant="label">{label ?? copy.startTime}</AppText>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`${label ?? copy.chooseTime}${value ? `, ${timeLabel}` : ""}`}
@@ -123,13 +121,13 @@ export function TripStartTimeField({
           ) : null}
         </>
       ) : null}
-      {error || !compact ? (
+      {error || hint ? (
         <AppText
           variant="caption"
           tone={error ? "error" : "muted"}
           accessibilityLiveRegion={error ? "polite" : "none"}
         >
-          {error || hint || copy.originTimeHint}
+          {error || hint}
         </AppText>
       ) : null}
     </View>

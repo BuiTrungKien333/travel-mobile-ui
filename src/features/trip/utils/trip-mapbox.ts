@@ -14,6 +14,7 @@ export const tripMapToken = /^pk\.[\w.-]+$/.test(
 export type TripMapPin = PlaceCoordinate & {
   id: string;
   number: number;
+  label?: "S";
   name: string;
 };
 export type TripMapPosition = [number, number];
@@ -81,7 +82,7 @@ export function tripStaticMapUri(
   const markers = pins
     .map(
       (p) =>
-        `pin-s${p.number <= 99 ? `-${p.number}` : ""}+${markerColor}(${p.longitude.toFixed(5)},${p.latitude.toFixed(5)})`,
+        `pin-s${p.label ? "-s" : p.number <= 99 ? `-${p.number}` : ""}+${markerColor}(${p.longitude.toFixed(5)},${p.latitude.toFixed(5)})`,
     )
     .join(",");
   const first = pins[0];

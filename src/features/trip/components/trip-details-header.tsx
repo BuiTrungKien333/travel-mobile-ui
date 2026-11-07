@@ -195,7 +195,11 @@ export function DetailIconButton({
         <GlassBackdrop borderRadius={theme.radius.full} />
         <AppIcon
           name={name}
-          variant={name === "back" || compact ? "light" : undefined}
+          variant={
+            name === "back" || name === "daySchedule" || compact
+              ? "light"
+              : undefined
+          }
           size={compact ? theme.layout.iconSmall : theme.layout.iconMedium}
           color={theme.colors.primaryText}
         />

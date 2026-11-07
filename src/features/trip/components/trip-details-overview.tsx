@@ -103,7 +103,7 @@ export function TripDayTools({
               : travel?.complete &&
                   !trip.accommodation &&
                   (day?.stops.length ?? 0) > 1
-                ? `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(travel.km)} km · ${travel.minutes} ${copy.minutes} · ${copy.estimate}`
+                ? `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(travel.km)} km · ${travel.minutes} ${copy.minutes}`
                 : copy.unknownRoute}
           </AppText>
         </View>
@@ -216,7 +216,20 @@ export function TripDayTools({
               </View>
             </Pressable>
           ) : null}
-          {actions}
+          {actions ? (
+            <View
+              style={{
+                marginLeft: "auto",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "flex-end",
+                flexWrap: "wrap",
+                gap: theme.spacing.xs,
+              }}
+            >
+              {actions}
+            </View>
+          ) : null}
         </View>
       ) : null}
       {editHistory ? (

@@ -1,5 +1,14 @@
 # Tiến độ Travel Mobile UI
 
+### QA-5 · Lịch trình trong ngày · 07/11/2026
+
+- Nối modal lịch ngày với API `PUT /trips/{id}/itinerary/days/{date}/schedule`, thêm snapshot xuất phát, giờ đi, phương tiện và quay về qua Flyway V17. Cấu hình/thời lượng lưu nguyên tử; không đổi các ngày khác. Kiểm tra phiên bản sau khi provider trả về để tránh ghi đè dữ liệu mới.
+- Giữ thiết kế modal, dải ngày và timeline. Tìm từ catalog/điểm đã lưu, GPS foreground bằng `expo-location` đã được duyệt, hoặc nhập tay. Địa chỉ thiếu tọa độ có chú thích rõ; không thêm Geocoding trả phí theo lựa chọn MVP của người dùng.
+- Mapbox hiển thị điểm S, tính chặng xuất phát/quay về, giờ đến theo từng chặng và tối ưu tuyến vòng. Không có dữ liệu tuyến thì để trống giờ chưa tính được, không bịa km/phút. Checklist, API/body và hướng dẫn build trong [DAY-SCHEDULE-INTEGRATION.md](DAY-SCHEDULE-INTEGRATION.md).
+- Chờ nghiệm thu quyền GPS trên thiết bị. Expo Doctor 20/21: còn lệch phiên bản vá của 13 package SDK 57 có sẵn; không nâng cấp ngoài phạm vi.
+- Xác minh: 42 kiểm tra backend liên quan (PostgreSQL Testcontainers/Flyway), 56 kiểm tra mobile, TypeScript strict/no-unused và export web/Android đạt. Bao gồm ca lịch đổi trong lúc chờ provider: không giữ DB transaction khi gọi Mapbox, không ghi đè cấu hình/thời lượng mới. Logic đọc/tối ưu tuyến nằm ở service, controller chỉ nhận request và trả response.
+- Runtime dev: PostgreSQL hiện có giữ dữ liệu/volume; API 18081 health UP, Flyway V17, OpenAPI có endpoint schedule và request không đăng nhập trả 401. Người dùng đã cấu hình token backend; đã khởi động lại và gọi Mapbox Directions thật với hai tọa độ mẫu tại Đà Lạt: driving/walking đều HTTP 200, có một leg và polyline; khoảng cách 875,303 m, thời gian lần lượt 191,513 s và 587,088 s. Đây là kiểm tra provider với tọa độ công khai, chưa thay cho nghiệm thu chuyến thật qua UI/GPS. Không lưu token vào tài liệu hoặc bật Geocoding tính phí.
+
 ### QA-5 · Kéo/vuốt timeline và Hoàn tác · 07/11/2026
 
 - Nối gesture kéo đổi thứ tự và vuốt gỡ từ bản UI vào API lịch ngày có kiểm tra phiên bản. Giữ khung giờ theo vị trí, thời lượng/ghi chú theo địa điểm, không sửa ngày khác hoặc xóa địa điểm khỏi danh mục chuyến.

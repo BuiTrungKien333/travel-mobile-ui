@@ -30,6 +30,7 @@ export type TripDay = {
   date: string;
   stops: TripStop[];
   startLocation?: string;
+  startAddress?: string;
   startCoordinate?: { latitude: number; longitude: number };
   startTime?: string;
   returnToStart?: boolean;

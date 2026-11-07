@@ -8,13 +8,15 @@ const metric = z.number().nonnegative();
 const leg = z.object({ distanceMeters: metric, durationSeconds: metric });
 const route = leg.extend({
   encodedPolyline: z.string().min(1).max(250000),
-  legs: z.array(leg).min(1).max(24),
+  legs: z.array(leg).max(24),
 });
 const result = z.discriminatedUnion("status", [
   z.object({
     status: z.literal("READY"),
     route,
-    placeIds: z.array(z.guid()).min(2).max(25),
+    placeIds: z.array(z.guid()).min(1).max(25),
+    startLeg: leg.nullable().optional(),
+    returnLeg: leg.nullable().optional(),
   }),
   z.object({
     status: z.enum([

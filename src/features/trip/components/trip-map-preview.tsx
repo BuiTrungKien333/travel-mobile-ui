@@ -72,16 +72,6 @@ export function TripMapPreview({
       }}
     >
       {!fitContainer ? <GlassBackdrop borderRadius={theme.radius.lg} /> : null}
-      <View
-        style={{
-          paddingHorizontal: theme.spacing.md,
-          paddingTop: theme.spacing.sm,
-        }}
-      >
-        <AppText variant="caption" tone="primary">
-          {copy.mapPreview} · {copy.tapNode}
-        </AppText>
-      </View>
       <ScrollView
         horizontal
         style={fitContainer ? { flex: 1 } : undefined}

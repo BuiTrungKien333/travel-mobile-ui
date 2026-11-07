@@ -8,6 +8,16 @@ module.exports = ({ config }) => {
     "expo-dev-client",
     ["expo-build-properties", { ios: { enableSceneSupport: true } }],
     "@rnmapbox/maps",
+    [
+      "expo-location",
+      {
+        locationWhenInUsePermission:
+          "WeGo dùng vị trí của bạn để chọn điểm xuất phát cho chuyến đi.",
+        isIosBackgroundLocationEnabled: false,
+        isAndroidBackgroundLocationEnabled: false,
+        isAndroidForegroundServiceEnabled: false,
+      },
+    ],
   ];
 
   if (process.env.EXPO_PUBLIC_NATIVE_MAP_ENABLED === "true") {

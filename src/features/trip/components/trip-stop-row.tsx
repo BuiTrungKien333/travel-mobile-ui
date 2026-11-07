@@ -57,14 +57,14 @@ export function TripStopRow({
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
-  const leg = previous
-    ? preview
+  const leg = preview
+    ? previous
       ? getPreviewLeg(previous, stop, mode)
-      : savedLeg
-    : null;
+      : null
+    : savedLeg;
   const range = visitTimeRange(stop);
   const metadata = [
-    `${stop.durationMinutes ?? 45} ${copy.minutes}`,
+    copy.stayMinutes.replace("{count}", String(stop.durationMinutes ?? 45)),
     stop.quickInfo?.admission?.[locale] ||
       (stop.quickInfo?.closesAt
         ? `${copy.closes} ${stop.quickInfo.closesAt}`
@@ -155,7 +155,7 @@ export function TripStopRow({
           />
           <AppText variant="caption" tone="muted" style={styles.grow}>
             {leg
-              ? `${leg.minutes} ${copy.minutes} · ${new Intl.NumberFormat(locale).format(leg.km)} km · ${copy.estimate}`
+              ? `${leg.minutes} ${copy.minutes} · ${new Intl.NumberFormat(locale).format(leg.km)} km`
               : copy.unknownRoute}
           </AppText>
         </View>

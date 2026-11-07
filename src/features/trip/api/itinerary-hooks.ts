@@ -9,6 +9,8 @@ import type {
   ItineraryOptimizationProposal,
   SaveItineraryRequest,
   SaveItineraryDayRequest,
+  UpdateDayScheduleRequest,
+  ItineraryResponse,
 } from "./itinerary-types";
 
 export function useTripItineraryQuery(tripId: string | undefined) {
@@ -31,6 +33,22 @@ export function useSaveItineraryMutation(tripId: string) {
   });
 }
 export function useSaveItineraryDayMutation(tripId: string) {
+  return useDayWrite<SaveItineraryDayRequest>(tripId, itineraryApi.saveDay);
+}
+export function useUpdateDayScheduleMutation(tripId: string) {
+  return useDayWrite<UpdateDayScheduleRequest>(
+    tripId,
+    itineraryApi.updateSchedule,
+  );
+}
+function useDayWrite<Request>(
+  tripId: string,
+  write: (
+    tripId: string,
+    date: string,
+    request: Request,
+  ) => Promise<ItineraryResponse>,
+) {
   const client = useQueryClient();
   const owner = useProfile().data?.id;
   const key = tripQueryKeys.itinerary(owner, tripId);
@@ -41,10 +59,10 @@ export function useSaveItineraryDayMutation(tripId: string) {
       request,
     }: {
       date: string;
-      request: SaveItineraryDayRequest;
+      request: Request;
     }) => {
       const session = authSession.getVersion();
-      const result = await itineraryApi.saveDay(tripId, date, request);
+      const result = await write(tripId, date, request);
       if (session !== authSession.getVersion()) throw new ApiError("CANCELLED");
       await client.cancelQueries({ queryKey: key });
       if (session !== authSession.getVersion()) throw new ApiError("CANCELLED");

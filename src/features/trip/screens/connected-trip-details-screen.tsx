@@ -21,12 +21,14 @@ import { toTrip, toDayStops } from "../api/trip-adapters";
 import {
   useSaveItineraryDayMutation,
   useTripItineraryQuery,
+  useUpdateDayScheduleMutation,
 } from "../api/itinerary-hooks";
 import type {
   ItineraryResponse,
   SaveItineraryDayRequest,
+  UpdateDayScheduleRequest,
 } from "../api/itinerary-types";
-import type { TripStop } from "@/features/home/types/home-types";
+import type { TripStop, TripDay } from "@/features/home/types/home-types";
 import { ApiError } from "@/services/api/api-error";
 import { ConnectedStopScheduleSheet } from "../components/connected-stop-schedule-sheet";
 import { TripStopRow } from "../components/trip-stop-row";
@@ -46,6 +48,8 @@ import { TripDayMap } from "../components/trip-day-map";
 import { TripDetailsActions } from "../components/trip-details-actions";
 import { ConnectedTripRecap } from "../components/connected-trip-recap";
 import { TripTimelineTail } from "../components/trip-timeline-states";
+import { TripStartNode } from "../components/trip-timeline-states";
+import { ConnectedDayScheduleSheet } from "../components/connected-day-schedule-sheet";
 import { TripOptimizationSheet } from "../components/trip-optimization-preview";
 import { usePlanningMapCollapse } from "../hooks/use-planning-map-collapse";
 import { useTripTimelineScroll } from "../hooks/use-trip-timeline-scroll";
@@ -69,6 +73,7 @@ import {
 } from "../i18n/trip-integration-copy";
 
 type ScheduleEdit =
+  | { kind: "day"; date: string; day: TripDay; routeMode: RouteMode }
   | { kind: "stop"; stop: TripStop; date?: string }
   | { kind: "reorder"; date: string; stops: TripStop[] }
   | { kind: "optimize"; date: string; stops: TripStop[]; route: DayRoute };
@@ -106,6 +111,7 @@ export function ConnectedTripDetailsScreen({
   const places = useTripPlacesQuery(tripId);
   const itinerary = useTripItineraryQuery(tripId);
   const save = useSaveItineraryDayMutation(tripId ?? "");
+  const daySchedule = useUpdateDayScheduleMutation(tripId ?? "");
   const { copy: itineraryCopy, locale } = useItineraryCopy();
   const [editor, setEditor] = useState<ScheduleEditor | null>(null);
   const [saved, setSaved] = useState(false);
@@ -136,7 +142,6 @@ export function ConnectedTripDetailsScreen({
   );
   const [mapExpansion, setMapExpansion] = useState(expandMap ? 1 : 0);
   const [focus, setFocus] = useState<{ date: string; id: string }>();
-  const [routeMode, setRouteMode] = useState<RouteMode>("DRIVE");
   const [modeOpen, setModeOpen] = useState(false);
   const visit = useUpdateTripPlaceMutation(tripId ?? "");
   const visiting = useRef(false);
@@ -156,15 +161,23 @@ export function ConnectedTripDetailsScreen({
   const scheduledEntries = itinerary.data?.days.find(
     (day) => day.date === activeDate,
   )?.stops;
-  const waypointKey = (scheduledEntries ?? [])
-    .map((s) => `${s.placeId}:${s.latitude},${s.longitude}`)
-    .join(";");
+  const storedSettings = itinerary.data?.days.find(
+    (entry) => entry.date === activeDate,
+  )?.settings;
+  const routeMode = storedSettings?.travelMode ?? "DRIVE";
+  const waypointKey =
+    (scheduledEntries ?? [])
+      .map((s) => `${s.placeId}:${s.latitude},${s.longitude}`)
+      .join(";") + JSON.stringify(storedSettings ?? null);
   const routeQuery = useTripDayRoute({
     tripId,
     date: activeDate,
     mode: routeMode,
     waypointKey,
-    enabled: !!read && (scheduledEntries?.length ?? 0) >= 2,
+    enabled:
+      !!read &&
+      ((scheduledEntries?.length ?? 0) >= 2 ||
+        (!!storedSettings?.origin && (scheduledEntries?.length ?? 0) >= 1)),
   });
   const routeResult = routeQuery.data;
   const resolvedRoute =
@@ -191,7 +204,14 @@ export function ConnectedTripDetailsScreen({
     tripVersion: read?.trip.version,
     stops: sourceRows,
     editable:
-      !!activeDate && ready && canEditDay(activeDate) && !editor && !pickerOpen,
+      !!activeDate &&
+      ready &&
+      canEditDay(activeDate) &&
+      !editor &&
+      !pickerOpen &&
+      !daySchedule.isPending &&
+      !modeOpen &&
+      !actionsOpen,
     mutation: save,
     saving,
   });
@@ -253,19 +273,21 @@ export function ConnectedTripDetailsScreen({
   const editableDays = read.trip.days.filter((entry) => canEditDay(entry.date));
   const canManagePlaces =
     read.trip.mode !== "RECAP" && read.trip.mode !== "CANCELLED";
+  const mutationError =
+    editor?.kind === "day" || modeOpen ? daySchedule.error : save.error;
   const isConflict =
-    save.error instanceof ApiError &&
-    ["TRIP_007", "TRIP_008"].includes(save.error.code);
+    mutationError instanceof ApiError &&
+    ["TRIP_006", "TRIP_007", "TRIP_008"].includes(mutationError.code);
   const scheduleError =
-    save.error instanceof ApiError
+    mutationError instanceof ApiError
       ? ({
           TRIP_005: itineraryCopy.invalid,
           INVALID_ITINERARY: itineraryCopy.invalid,
           TRIP_006: itineraryCopy.readOnly,
           TRIP_007: itineraryCopy.membership,
           TRIP_008: itineraryCopy.conflict,
-        }[save.error.code] ?? itineraryCopy.error)
-      : save.error
+        }[mutationError.code] ?? itineraryCopy.error)
+      : mutationError
         ? itineraryCopy.error
         : undefined;
 
@@ -273,6 +295,7 @@ export function ConnectedTripDetailsScreen({
     if (!itinerary.data || saving.current || timelineDrag.draggedId) return;
     timeline.clear();
     save.reset();
+    daySchedule.reset();
     setSaved(false);
     setEditor({
       ...value,
@@ -293,7 +316,9 @@ export function ConnectedTripDetailsScreen({
     if (result.every((entry) => !entry.isError)) {
       timeline.clear();
       save.reset();
+      daySchedule.reset();
       setEditor(null);
+      setModeOpen(false);
     }
   };
   const persistDay = async (targetDate: string, stops: DayStops) => {
@@ -317,6 +342,30 @@ export function ConnectedTripDetailsScreen({
       saving.current = false;
     }
   };
+  const persistSchedule = async (
+    targetDate: string,
+    base: ItineraryResponse,
+    tripVersion: number,
+    draft: Pick<UpdateDayScheduleRequest, "settings" | "durations">,
+  ) => {
+    if (saving.current || isConflict) return;
+    saving.current = true;
+    try {
+      await daySchedule.mutateAsync({
+        date: targetDate,
+        request: {
+          expectedTripVersion: tripVersion,
+          expectedUpdatedAt: base.updatedAt,
+          ...draft,
+        },
+      });
+      setSaved(true);
+      setEditor(null);
+      setModeOpen(false);
+    } finally {
+      saving.current = false;
+    }
+  };
   const mode = {
     PLANNING: "planning",
     LIVE: "live",
@@ -332,7 +381,7 @@ export function ConnectedTripDetailsScreen({
     canEditDay(activeDate) &&
     !!route &&
     rows.length >= 4 &&
-    rows.length <= 12 &&
+    rows.length + (storedSettings?.origin ? 1 : 0) <= 12 &&
     rows.every((stop) => !stop.visited);
   const selectedPin = focus?.date === activeDate ? focus?.id : undefined;
   const total = route
@@ -340,7 +389,7 @@ export function ConnectedTripDetailsScreen({
     : null;
   const status = routeQuery.data?.status;
   const routeMessage =
-    rows.length < 2 || backlog
+    !rows.length || (rows.length < 2 && !storedSettings?.origin) || backlog
       ? null
       : routeQuery.isFetching
         ? itineraryCopy.routeLoading
@@ -519,6 +568,7 @@ export function ConnectedTripDetailsScreen({
                 <TripDayMap
                   key={selectionKey}
                   stops={mapStops}
+                  origin={storedSettings?.origin}
                   polyline={route?.encodedPolyline}
                   focusedId={selectedPin}
                   onSelect={(id) => {
@@ -545,6 +595,13 @@ export function ConnectedTripDetailsScreen({
                   empty={!rows.length}
                   canEdit
                   onAdd={openPlacePicker}
+                  returnSummary={
+                    route &&
+                    routeResult?.status === "READY" &&
+                    routeResult.returnLeg
+                      ? `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(routeResult.returnLeg.distanceMeters / 1000)} km · ${Math.ceil(routeResult.returnLeg.durationSeconds / 60)} ${detailCopy.minutes}`
+                      : undefined
+                  }
                 />
               </View>
             ) : null
@@ -626,8 +683,11 @@ export function ConnectedTripDetailsScreen({
                       }
                       onSheetChange={(sheet) => {
                         if (saving.current || timelineDrag.draggedId) return;
-                        if (sheet.kind === "transport") setModeOpen(true);
-                        else if (sheet.kind === "reorder" && activeDate)
+                        if (sheet.kind === "transport") {
+                          daySchedule.reset();
+                          timeline.clear();
+                          setModeOpen(true);
+                        } else if (sheet.kind === "reorder" && activeDate)
                           openEditor({
                             kind: "reorder",
                             date: activeDate,
@@ -664,6 +724,23 @@ export function ConnectedTripDetailsScreen({
                               }
                             />
                           ) : null}
+                          {activeDate &&
+                          day &&
+                          ready &&
+                          canEditDay(activeDate) ? (
+                            <DetailIconButton
+                              name="daySchedule"
+                              label={detailCopy.daySettings}
+                              onPress={() =>
+                                openEditor({
+                                  kind: "day",
+                                  date: activeDate,
+                                  day,
+                                  routeMode,
+                                })
+                              }
+                            />
+                          ) : null}
                         </>
                       }
                     />
@@ -685,6 +762,23 @@ export function ConnectedTripDetailsScreen({
                     >
                       {itineraryCopy.saved}
                     </AppText>
+                  ) : null}
+                  {day?.startLocation ? (
+                    <TripStartNode
+                      trip={trip}
+                      day={day}
+                      canEdit={ready && !!activeDate && canEditDay(activeDate)}
+                      live={mode === "live"}
+                      onPress={() => {
+                        if (activeDate && ready && canEditDay(activeDate))
+                          openEditor({
+                            kind: "day",
+                            date: activeDate,
+                            day,
+                            routeMode,
+                          });
+                      }}
+                    />
                   ) : null}
                   {timeline.pending ? (
                     <AppText
@@ -732,9 +826,13 @@ export function ConnectedTripDetailsScreen({
             const { stop, index } = item;
             if (activeDate) {
               const leg =
-                route?.legs.length === rows.length - 1
-                  ? route.legs[index - 1]
-                  : undefined;
+                index === 0
+                  ? route && routeResult?.status === "READY"
+                    ? routeResult.startLeg
+                    : undefined
+                  : route?.legs.length === rows.length - 1
+                    ? route.legs[index - 1]
+                    : undefined;
               const entry = timeline.pending
                 ? undefined
                 : scheduledEntries?.[index];
@@ -758,6 +856,7 @@ export function ConnectedTripDetailsScreen({
                     savedLeg={savedLeg}
                     stop={stop}
                     previous={rows[index - 1]}
+                    fromStart={index === 0 && !!day?.startLocation}
                     number={index + 1}
                     last={index === rows.length - 1}
                     mode={routeMode === "DRIVE" ? "car" : "walk"}
@@ -904,6 +1003,27 @@ export function ConnectedTripDetailsScreen({
           }
         />
       ) : null}
+      {editor?.kind === "day" ? (
+        <ConnectedDayScheduleSheet
+          trip={trip}
+          day={editor.day}
+          routeMode={editor.routeMode}
+          pending={daySchedule.isPending}
+          problem={scheduleError}
+          onReload={isConflict ? () => void refreshSchedule() : undefined}
+          onClose={closeEditor}
+          onSave={async (
+            draft: Pick<UpdateDayScheduleRequest, "settings" | "durations">,
+          ) => {
+            await persistSchedule(
+              editor.date,
+              editor.base,
+              editor.tripVersion,
+              draft,
+            );
+          }}
+        />
+      ) : null}
       {editor?.kind === "reorder" ? (
         <TripDetailsSheet
           title={detailCopy.reorder}
@@ -996,16 +1116,57 @@ export function ConnectedTripDetailsScreen({
       {modeOpen ? (
         <TripDetailsSheet
           title={detailCopy.transport}
-          onClose={() => setModeOpen(false)}
+          onClose={() => {
+            if (!saving.current) setModeOpen(false);
+          }}
+          dismissDisabled={daySchedule.isPending}
         >
+          {scheduleError ? (
+            <AppText accessibilityRole="alert" tone="error" variant="caption">
+              {scheduleError}
+            </AppText>
+          ) : null}
+          {isConflict ? (
+            <TextAction
+              label={itineraryCopy.reload}
+              onPress={() => void refreshSchedule()}
+            />
+          ) : null}
           {(["DRIVE", "WALK", "BICYCLE"] as const).map((value) => (
             <AppButton
               key={value}
               variant={routeMode === value ? "soft" : "outline"}
               accessibilityState={{ selected: routeMode === value }}
+              disabled={daySchedule.isPending || isConflict}
               onPress={() => {
-                setRouteMode(value);
-                setModeOpen(false);
+                if (
+                  !activeDate ||
+                  !itinerary.data ||
+                  !canEditDay(activeDate) ||
+                  saving.current
+                )
+                  return;
+                void persistSchedule(
+                  activeDate,
+                  itinerary.data,
+                  read.trip.version,
+                  {
+                    settings: {
+                      origin: storedSettings?.origin ?? null,
+                      departureTime:
+                        storedSettings?.departureTime ??
+                        (rows[0]?.time || "08:30"),
+                      returnToStart: storedSettings?.returnToStart ?? false,
+                      travelMode: value,
+                    },
+                    durations: (scheduledEntries ?? []).map((stop) => ({
+                      placeId: stop.placeId,
+                      minutes: stop.durationMinutes,
+                    })),
+                  },
+                ).catch(() => {
+                  /* The sheet keeps the mutation error and allows retry. */
+                });
               }}
             >
               {itineraryCopy.routeModes[value]}

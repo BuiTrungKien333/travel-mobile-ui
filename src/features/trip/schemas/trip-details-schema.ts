@@ -90,6 +90,10 @@ export function daySettingsSchema(copy: TripDetailsCopy) {
 export function tripStartPointSchema(copy: TripDetailsCopy) {
   return daySettingsSchema(copy)
     .omit({ transport: true })
+    .extend({
+      startAddress: z.string().trim().max(500).optional(),
+      startCoordinate: z.object({ latitude: z.number().min(-90).max(90), longitude: z.number().min(-180).max(180) }).optional(),
+    })
     .superRefine((value, context) => {
       if (value.returnToStart && !value.startLocation) {
         context.addIssue({

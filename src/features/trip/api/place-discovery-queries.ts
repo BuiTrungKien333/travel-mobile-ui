@@ -7,12 +7,13 @@ export function usePlaceDiscovery(
   scope: PlaceScope,
   search: string,
   locale: "vi" | "en",
+  enabled = true,
 ) {
   const owner = useProfile().data?.id;
   const q = useDebouncedValue(search.trim());
   const query = useInfiniteQuery({
     queryKey: placeDiscoveryKeys.list(owner, scope, q, locale),
-    enabled: !!owner,
+    enabled: !!owner && enabled,
     initialPageParam: 0,
     retry: false,
     queryFn: ({ pageParam, signal }) =>

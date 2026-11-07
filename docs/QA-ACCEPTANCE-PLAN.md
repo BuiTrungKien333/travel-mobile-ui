@@ -1,5 +1,11 @@
 # Kế hoạch nghiệm thu theo màn hình sau merge
 
+## QA-5 · Sửa lịch trình trong ngày · 07/11/2026
+
+Đã nối modal 75% màn hình vào API lịch ngày: xuất phát từ điểm trong danh mục/đã lưu, GPS hoặc địa chỉ nhập tay; giờ đi, thời lượng, phương tiện và quay về điểm xuất phát. Có snapshot riêng tư theo ngày, kiểm tra phiên bản, cập nhật bản đồ/tuyến và giờ đến thật khi provider sẵn sàng. Không dùng kết quả Mapbox Geocoding tạm để lưu địa chỉ.
+
+Xem [hướng dẫn nghiệm thu, API và body Postman](DAY-SCHEDULE-INTEGRATION.md). Thử cả reload, đổi ngày, đổi phương tiện, từ chối GPS, mất mạng, sửa ở hai cửa sổ và kéo/gỡ sau khi đã lưu cấu hình. Android cần development build mới có `expo-location` trước khi thử GPS.
+
 ## QA-5 · Kéo và vuốt timeline thật · 07/11/2026
 
 Timeline thật dùng lại gesture và thiết kế preview, lưu qua `PUT /api/v1/trips/{tripId}/itinerary/days/{date}`. Chỉ sửa ngày được backend cho phép: chuyến đang lên kế hoạch, hoặc hôm nay/ngày tới của chuyến đang diễn ra. Không mở chỉnh sửa offline.
@@ -64,7 +70,7 @@ Dùng base URL `http://localhost:18081` và header `Authorization: Bearer <acces
 | POST | `/api/v1/trips/{tripId}/itinerary/days/{date}/route/optimize?mode=DRIVE` | `order`, `originalOrder`, `distanceMeters`, `durationSeconds`. Áp dụng qua PUT theo ngày ở QA-5A. |
 | GET | `/api/v1/journal/memories?tripId={tripId}&date={date}&page=0&size=10` | Nhật ký phân trang theo ngày địa phương, có ghi chú và danh sách media. |
 
-Còn chờ nghiệm thu Mapbox live và thiết bị. Cấu hình điểm xuất phát, quay lại điểm xuất phát, ghim điểm dừng và dẫn đường từng ngã rẽ chưa được nối trong lát này. Kéo/vuốt timeline thật đã được bổ sung ở mục cập nhật QA-5 phía trên.
+Còn chờ nghiệm thu Mapbox live và thiết bị. Ghim điểm dừng và dẫn đường từng ngã rẽ chưa được nối trong lát này. Cấu hình điểm xuất phát/quay lại và kéo/vuốt timeline thật đã được bổ sung ở các mục cập nhật QA-5 phía trên.
 
 ## QA-5A · Xếp lịch thủ công theo ngày
 

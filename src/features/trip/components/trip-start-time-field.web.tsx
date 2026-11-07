@@ -19,6 +19,9 @@ export function TripStartTimeField({
   onChange,
   onBlur,
   error,
+  label,
+  hint,
+  compact = false,
 }: TripStartTimeFieldProps) {
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
@@ -28,7 +31,9 @@ export function TripStartTimeField({
   const selectStyle: CSSProperties = {
     flex: 1,
     minWidth: 0,
-    minHeight: theme.layout.touchTarget,
+    minHeight: compact
+      ? theme.layout.compactTouchTarget
+      : theme.layout.touchTarget,
     padding: theme.spacing.sm,
     border: 0,
     borderRadius: theme.radius.sm,
@@ -40,8 +45,8 @@ export function TripStartTimeField({
     cursor: "pointer",
   };
   return (
-    <View style={{ gap: theme.spacing.sm }}>
-      <AppText variant="label">{copy.startTime}</AppText>
+    <View style={{ gap: compact ? theme.spacing.xs : theme.spacing.sm }}>
+      <AppText variant="label">{label ?? copy.startTime}</AppText>
       <View
         style={{
           flexDirection: "row",
@@ -60,7 +65,7 @@ export function TripStartTimeField({
           color={theme.colors.primaryText}
         />
         <select
-          aria-label={`${copy.startTime}: ${copy.timeHour}`}
+          aria-label={`${label ?? copy.startTime}: ${copy.timeHour}`}
           aria-invalid={!!error}
           value={value ? hour : ""}
           onBlur={onBlur}
@@ -78,7 +83,7 @@ export function TripStartTimeField({
         </select>
         <AppText tone="muted">:</AppText>
         <select
-          aria-label={`${copy.startTime}: ${copy.timeMinute}`}
+          aria-label={`${label ?? copy.startTime}: ${copy.timeMinute}`}
           aria-invalid={!!error}
           value={value ? minute : ""}
           onBlur={onBlur}
@@ -95,13 +100,15 @@ export function TripStartTimeField({
           ))}
         </select>
       </View>
-      <AppText
-        variant="caption"
-        tone={error ? "error" : "muted"}
-        accessibilityLiveRegion={error ? "polite" : "none"}
-      >
-        {error || copy.originTimeHint}
-      </AppText>
+      {error || hint ? (
+        <AppText
+          variant="caption"
+          tone={error ? "error" : "muted"}
+          accessibilityLiveRegion={error ? "polite" : "none"}
+        >
+          {error || hint}
+        </AppText>
+      ) : null}
     </View>
   );
 }

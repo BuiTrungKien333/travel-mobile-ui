@@ -100,11 +100,6 @@ export function TripOptimizationSheet({
                 {integration.reload}
               </AppButton>
             ) : null}
-            {proposal ? (
-              <AppText tone="muted" variant="caption">
-                {integration.optimizeHint}
-              </AppText>
-            ) : null}
           </>
         }
       />
@@ -323,9 +318,6 @@ function TripOptimizationPreview({
           {copy.alreadyGood}
         </AppText>
       ) : null}
-      <AppText variant="caption" tone="muted">
-        {copy.optimizeHint}
-      </AppText>
     </>
   );
 }

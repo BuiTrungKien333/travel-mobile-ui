@@ -11,6 +11,14 @@ const vi = {
   pickSaved: "Xếp địa điểm đã lưu",
   saved: "Đã lưu lịch trình",
   saving: "Đang lưu lịch trình…",
+  originSearchLoading: "Đang tìm địa điểm đã lưu…",
+  originLocationError:
+    "Chưa lấy được vị trí. Kiểm tra GPS và quyền vị trí, hoặc chọn địa điểm hay nhập địa chỉ thủ công.",
+  originSearchEmpty:
+    "Chưa có địa điểm phù hợp trong danh mục. Bạn có thể nhập địa chỉ thủ công hoặc chọn một điểm trong ngày.",
+  originSearchError:
+    "Chưa tải được gợi ý. Bạn vẫn có thể chọn điểm trong ngày hoặc nhập thủ công.",
+  originNoCoordinates: "Chưa có tọa độ để tính tuyến và giờ đến.",
   remove: "Gỡ khỏi ngày",
   removeDayHint:
     "Gỡ địa điểm khỏi ngày đang xem? Lịch của các ngày khác vẫn được giữ.",
@@ -39,8 +47,6 @@ const vi = {
   optimizeLoading: "Đang tìm thứ tự di chuyển tốt hơn…",
   optimizeUnavailable:
     "Chưa có gợi ý tuyến đường. Bạn có thể sắp xếp thủ công.",
-  optimizeHint:
-    "Gợi ý từ Mapbox giữ điểm đầu và cuối. Kiểm tra lại giờ ghé trước khi áp dụng.",
 };
 const en: typeof vi = {
   schedule: "Schedule stop",
@@ -53,6 +59,15 @@ const en: typeof vi = {
   pickSaved: "Schedule a saved place",
   saved: "Itinerary saved",
   saving: "Saving itinerary…",
+  originSearchLoading: "Searching saved places…",
+  originLocationError:
+    "Couldn't get your location. Check GPS and location permission, or choose a place or enter an address manually.",
+  originSearchEmpty:
+    "No matching saved place. Enter an address manually or choose a stop from this day.",
+  originSearchError:
+    "Suggestions are unavailable. Choose a stop from this day or enter an address manually.",
+  originNoCoordinates:
+    "Coordinates are needed to calculate routes and arrivals.",
   remove: "Remove from day",
   removeDayHint:
     "Remove this stop from the selected day? Other days keep their schedules.",
@@ -81,8 +96,6 @@ const en: typeof vi = {
   optimizeLoading: "Finding a better stop order…",
   optimizeUnavailable:
     "No route suggestion is available. You can reorder stops manually.",
-  optimizeHint:
-    "Mapbox keeps the first and last stops. Review visit times before applying.",
 };
 export function useItineraryCopy() {
   const { locale } = useI18n();

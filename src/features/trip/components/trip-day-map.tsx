@@ -15,17 +15,20 @@ import {
 } from "../utils/trip-mapbox";
 import { TripMapboxView } from "./trip-mapbox-view";
 import { TripMapPreview } from "./trip-map-preview";
+import type { DaySettings } from "../api/itinerary-types";
 
 export function TripDayMap({
   stops,
   polyline,
   focusedId,
   onSelect,
+  origin,
 }: {
   stops: TripStop[];
   polyline?: string;
   focusedId?: string;
   onSelect: (id: string) => void;
+  origin?: DaySettings["origin"];
 }) {
   const theme = useAppTheme();
   const { locale } = useTripDetailsCopy();
@@ -33,7 +36,23 @@ export function TripDayMap({
   const [staticOnly, setStaticOnly] = useState(false);
   const [failedImage, setFailedImage] = useState<string>();
   const showStatic = useCallback(() => setStaticOnly(true), []);
-  const pins = useMemo(() => tripMapPins(stops, locale), [stops, locale]);
+  const pins = useMemo(() => {
+    const points = tripMapPins(stops, locale);
+    if (
+      origin?.latitude != null &&
+      origin.longitude != null &&
+      Math.abs(origin.latitude) <= 85.0511
+    )
+      points.unshift({
+        id: "trip-origin",
+        number: 0,
+        label: "S",
+        name: origin.name,
+        latitude: origin.latitude,
+        longitude: origin.longitude,
+      });
+    return points;
+  }, [stops, locale, origin]);
   const path = useMemo(
     () =>
       polyline

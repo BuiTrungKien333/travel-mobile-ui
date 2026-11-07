@@ -61,6 +61,9 @@ export function toTrip(
     ...base,
     days: base.days.map((day) => ({
       ...day,
+      ...daySettings(
+        itinerary?.days.find((entry) => entry.date === day.date)?.settings,
+      ),
       stops: (
         itinerary?.days.find((entry) => entry.date === day.date)?.stops ?? []
       ).map((entry) => {
@@ -87,6 +90,29 @@ export function toTrip(
     unscheduledStops: places
       .filter((place) => !scheduled.has(place.placeId))
       .map(toTripStop),
+  };
+}
+
+function daySettings(settings: ItineraryResponse["days"][number]["settings"]) {
+  if (!settings) return {};
+  return {
+    startLocation: settings.origin?.name,
+    startAddress: settings.origin?.address ?? undefined,
+    startCoordinate:
+      settings.origin?.latitude != null && settings.origin.longitude != null
+        ? {
+            latitude: settings.origin.latitude,
+            longitude: settings.origin.longitude,
+          }
+        : undefined,
+    startTime: settings.departureTime.slice(0, 5),
+    returnToStart: settings.returnToStart,
+    transport:
+      settings.travelMode === "WALK"
+        ? ("walk" as const)
+        : settings.travelMode === "BICYCLE"
+          ? undefined
+          : ("car" as const),
   };
 }
 export function toSaveItineraryRequest(trip: Trip): SaveItineraryRequest {

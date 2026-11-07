@@ -144,6 +144,11 @@ const symbols = {
   flashOn: { ios: "bolt.fill", android: "flash_on", web: "flash_on" },
   flashOff: { ios: "bolt.slash", android: "flash_off", web: "flash_off" },
   tune: { ios: "slider.horizontal.3", android: "tune", web: "tune" },
+  daySchedule: {
+    ios: "calendar",
+    android: "calendar_today",
+    web: "calendar_today",
+  },
   bell: { ios: "bell", android: "notifications", web: "notifications" },
   sparkles: { ios: "sparkles", android: "auto_awesome", web: "auto_awesome" },
   clock: { ios: "clock", android: "schedule", web: "schedule" },
@@ -180,6 +185,7 @@ const navigationAssets = {
   },
 };
 const lightAssets = {
+  daySchedule: require("@/assets/icons/navigation/day-schedule.svg"),
   cameraGallery: require("@/assets/icons/camera/gallery.svg"),
   cameraRotate: require("@/assets/icons/camera/rotate-arrows.svg"),
   cameraTrip: require("@/assets/icons/camera/trip.svg"),
@@ -203,6 +209,7 @@ const lightAssets = {
 };
 function isLightIcon(name: AppIconName): name is keyof typeof lightAssets {
   return (
+    name === "daySchedule" ||
     name === "cameraGallery" ||
     name === "cameraRotate" ||
     name === "cameraTrip" ||
