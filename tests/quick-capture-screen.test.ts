@@ -22,7 +22,12 @@ function fixture(available = true) {
       useState: (value: unknown) => [value, () => {}],
     },
     expo: { requireOptionalNativeModule: () => (available ? {} : null) },
-    "expo-router": { router: { push: (route: unknown) => routes.push(structuredClone(route)) } },
+    "expo-router": {
+      router: {
+        push: (route: unknown) => routes.push(structuredClone(route)),
+        navigate: (route: unknown) => routes.push(route),
+      },
+    },
     "expo-router/js-tabs": { BottomTabBarHeightContext: {} },
     "react-native": {
       Platform: { OS: "android" },
@@ -35,9 +40,6 @@ function fixture(available = true) {
     "@/components/ui/app-text": { AppText: "AppText" },
     "@/features/camera/components/camera-layout": {
       CameraLayout: "CameraLayout",
-    },
-    "@/features/camera/components/quick-capture-navigation": {
-      QuickCaptureNavigation: "QuickCaptureNavigation",
     },
     "../components/memory-capture-picker": {
       MemoryCapturePicker: "MemoryCapturePicker",
@@ -76,7 +78,7 @@ function fixture(available = true) {
   };
 }
 
-test("quick capture uses the light camera layout and trip picker without selecting a trip automatically", () => {
+test("quick capture retains the dark standalone camera, journal capsule and trip picker", () => {
   const f = fixture();
   const camera = f.render({ quick: true });
   assert.equal(camera.props.title, "Chọn chuyến đi");
@@ -85,11 +87,12 @@ test("quick capture uses the light camera layout and trip picker without selecti
   assert.equal(camera.props.requestOnOpen, true);
   assert.equal(camera.props.tripId, undefined);
   assert.equal(typeof camera.props.onSelectTrip, "function");
-  assert.equal(camera.props.hideJournal, true);
-  assert.ok(
-    camera.props.embeddedBottomInset && camera.props.embeddedBottomInset > 0,
-  );
-  assert.ok(React.isValidElement(camera.props.bottomNavigation));
+  assert.equal(camera.props.hideJournal, undefined);
+  assert.equal(camera.props.journalLabel, "Xem sau");
+  assert.equal(camera.props.embeddedBottomInset, undefined);
+  assert.equal(camera.props.bottomNavigation, undefined);
+  camera.props.onDetails();
+  assert.deepEqual(f.routes, ["/tabs/trips"]);
 });
 
 test("choosing a trip in quick capture sends photos to the chosen trip and day", () => {
@@ -105,6 +108,40 @@ test("choosing a trip in quick capture sends photos to the chosen trip and day",
   assert.equal(camera.props.date, f.today);
   assert.equal(camera.props.stopId, undefined);
   assert.notEqual(camera.props.title, "Chọn chuyến đi");
+  assert.equal(camera.props.journalLabel, "Lịch sử");
+  camera.props.onJournal();
+  assert.deepEqual(f.routes, ["/memories/history"]);
+});
+
+test("Saved for later counts only local unassigned photos even when trip metadata is unavailable", () => {
+  const f = fixture();
+  const local = { capturedAt: "2026-11-07T03:00:00Z", deviceSaved: false };
+  f.store.setState({
+    memories: [
+      {
+        id: "local-unassigned",
+        photo: "file:///unassigned.jpg",
+        text: "",
+        destination: "",
+        local,
+      },
+      {
+        id: "local-assigned",
+        tripId: "trip-not-loaded",
+        photo: "file:///assigned.jpg",
+        text: "",
+        destination: "",
+        local,
+      },
+      {
+        id: "remote-unassigned",
+        photo: "https://example.com/photo.jpg",
+        text: "",
+        destination: "",
+      },
+    ],
+  });
+  assert.equal(f.render({ quick: true }).props.count, 1);
 });
 
 test("selected camera counts only that trip's photos and opens its details", () => {
@@ -148,10 +185,10 @@ test("trip camera mode retains its selected trip, history link and existing tab 
   assert.equal(camera.props.bottomNavigation, undefined);
 });
 
-test("older app builds keep the new quick layout and show a camera update notice", () => {
+test("older app builds keep the dark camera layout and show a camera update notice", () => {
   const camera = fixture(false).render({ quick: true });
   assert.equal(camera.type, "CameraLayout");
   assert.equal(camera.props.title, "Chọn chuyến đi");
-  assert.equal(camera.props.hideJournal, true);
-  assert.ok(React.isValidElement(camera.props.bottomNavigation));
+  assert.equal(camera.props.hideJournal, undefined);
+  assert.equal(camera.props.bottomNavigation, undefined);
 });

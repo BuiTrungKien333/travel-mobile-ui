@@ -6,11 +6,9 @@ import { ActivityIndicator, Platform, View } from "react-native";
 import { AppButton } from "@/components/ui/app-button";
 import { AppText } from "@/components/ui/app-text";
 import { CameraLayout } from "@/features/camera/components/camera-layout";
-import { QuickCaptureNavigation } from "@/features/camera/components/quick-capture-navigation";
 import { useCameraCopy } from "@/features/camera/i18n/camera-copy";
 import { getTripTitle } from "@/features/trip/utils/trip-formatters";
 import { useAppTheme } from "@/hooks/use-app-theme";
-import { useScreenInsets } from "@/hooks/use-screen-insets";
 import { MemoryCapturePicker } from "../components/memory-capture-picker";
 import { useMemoriesCopy } from "../i18n/memories-copy";
 import { getMemoryCaptureTarget } from "../utils/memory-albums";
@@ -34,13 +32,6 @@ export function MemoriesCameraScreen(params: {
   const { copy, locale } = useMemoriesCopy();
   const { copy: cameraCopy } = useCameraCopy();
   const bottomInset = useContext(BottomTabBarHeightContext);
-  const insets = useScreenInsets();
-  const [navigationHeight, setNavigationHeight] = useState(
-    theme.layout.tabBarCameraRise +
-      theme.spacing.xs +
-      theme.layout.tabBarHeight +
-      Math.max(theme.spacing.lg, insets.bottom + theme.spacing.xs),
-  );
   const library = useMemories();
   const { trips, memories } = library;
   const today = todayCalendarDate();
@@ -60,22 +51,10 @@ export function MemoriesCameraScreen(params: {
           (item) => item.tripId === target.trip.id && !!item.photo,
         ).length
       : params.quick
-        ? memories.filter(
-            (item) =>
-              !item.tripId || !trips.some((trip) => trip.id === item.tripId),
-          ).length
+        ? memories.filter((item) => !!item.local && !item.tripId).length
         : memories.filter((item) => !!item.photo).length,
-    embeddedBottomInset: params.quick
-      ? navigationHeight
-      : (bottomInset ?? undefined),
-    hideJournal: params.quick,
-    bottomNavigation: params.quick ? (
-      <QuickCaptureNavigation
-        onHeightChange={setNavigationHeight}
-        animationEnabled={!choosing}
-      />
-    ) : undefined,
-    journalLabel: params.quick ? cameraCopy.later : copy.history,
+    embeddedBottomInset: params.quick ? undefined : (bottomInset ?? undefined),
+    journalLabel: params.quick && !target ? cameraCopy.later : copy.history,
     onSelectTrip: () => setChoosing(true),
     onBack: () =>
       router.canGoBack() ? router.back() : router.navigate("/tabs"),
@@ -86,10 +65,11 @@ export function MemoriesCameraScreen(params: {
             pathname: "/trip/[tripId]",
             params: { tripId: target.trip.id, day: target.day.date },
           })
-      : history,
-    onJournal: params.quick
-      ? () => router.push("/memories/saved-later")
-      : history,
+      : () => router.navigate("/tabs/trips"),
+    onJournal:
+      params.quick && !target
+        ? () => router.push("/memories/saved-later")
+        : history,
   };
   const available =
     Platform.OS === "web" || !!requireOptionalNativeModule("ExpoCamera");
@@ -138,7 +118,10 @@ export function MemoriesCameraScreen(params: {
               <View
                 style={{ padding: theme.spacing.lg, gap: theme.spacing.md }}
               >
-                <AppText accessibilityRole="alert">
+                <AppText
+                  accessibilityRole="alert"
+                  style={{ color: theme.colors.photoViewerText }}
+                >
                   {cameraCopy.missing}
                 </AppText>
                 <AppButton onPress={() => setChoosing(true)}>

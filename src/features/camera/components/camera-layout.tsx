@@ -78,10 +78,8 @@ export function CameraLayout({
   const theme = useAppTheme();
   const focused = useIsFocused();
   const embedded = embeddedBottomInset !== undefined;
-  const textColor = embedded ? theme.colors.text : theme.colors.photoViewerText;
-  const mutedColor = embedded
-    ? theme.colors.textSecondary
-    : theme.colors.photoViewerMuted;
+  const textColor = theme.colors.photoViewerText;
+  const mutedColor = theme.colors.photoViewerMuted;
   const { copy } = useCameraCopy();
   const insets = useScreenInsets();
   const { width } = useWindowDimensions();
@@ -102,14 +100,10 @@ export function CameraLayout({
       edges={embedded ? ["top", "left", "right"] : undefined}
       style={{
         flex: 1,
-        backgroundColor: embedded
-          ? theme.colors.background
-          : theme.colors.photoViewerBackdrop,
+        backgroundColor: theme.colors.photoViewerBackdrop,
       }}
     >
-      {focused ? (
-        <StatusBar style={embedded && !theme.dark ? "dark" : "light"} />
-      ) : null}
+      {focused ? <StatusBar style="light" /> : null}
       <View
         style={{
           width: "100%",
@@ -145,14 +139,11 @@ export function CameraLayout({
             alignItems: "center",
             flexDirection: "row",
             justifyContent: "center",
-            backgroundColor: embedded ? theme.colors.surfaceTint : undefined,
             gap: theme.spacing.sm,
             opacity: pressed ? theme.motion.pressOpacity : 1,
           })}
         >
-          {!embedded ? (
-            <GlassBackdrop variant="camera" borderRadius={theme.radius.full} />
-          ) : null}
+          <GlassBackdrop variant="camera" borderRadius={theme.radius.full} />
           <View style={{ flexShrink: 1, alignItems: "center" }}>
             <AppText
               numberOfLines={2}
@@ -166,18 +157,13 @@ export function CameraLayout({
             >
               {title}
             </AppText>
-            {subtitle ? (
-              <AppText variant="caption" style={{ color: mutedColor }}>
-                {subtitle}
-              </AppText>
-            ) : null}
           </View>
           {onSelectTrip ? (
             <AppIcon
               name="chevron"
               variant="light"
               size={theme.layout.iconSmall}
-              color={theme.colors.primaryText}
+              color={mutedColor}
             />
           ) : null}
         </Pressable>
@@ -288,11 +274,7 @@ export function CameraLayout({
             accessibilityLiveRegion="polite"
             variant="caption"
             style={{
-              color: error
-                ? embedded
-                  ? theme.colors.error
-                  : theme.colors.photoViewerDanger
-                : mutedColor,
+              color: error ? theme.colors.photoViewerDanger : mutedColor,
               textAlign: "center",
               maxWidth: size,
             }}
@@ -322,20 +304,7 @@ export function CameraLayout({
                 overflow: "hidden",
               }}
             >
-              {embedded ? (
-                <View
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    backgroundColor: theme.colors.surfaceTint,
-                  }}
-                />
-              ) : (
-                <GlassBackdrop
-                  variant="camera"
-                  borderRadius={theme.radius.lg}
-                />
-              )}
+              <GlassBackdrop variant="camera" borderRadius={theme.radius.lg} />
               <View
                 style={{
                   minWidth: theme.spacing.xl,
@@ -343,9 +312,7 @@ export function CameraLayout({
                   paddingHorizontal: theme.spacing.xs,
                   paddingVertical: theme.spacing.xxs,
                   borderRadius: theme.radius.md,
-                  backgroundColor: embedded
-                    ? theme.colors.primary
-                    : theme.colors.cameraMemoryBadge,
+                  backgroundColor: theme.colors.cameraMemoryBadge,
                   alignItems: "center",
                   justifyContent: "center",
                 }}
@@ -353,9 +320,7 @@ export function CameraLayout({
                 <AppText
                   variant="caption"
                   style={{
-                    color: embedded
-                      ? theme.colors.onPrimary
-                      : theme.colors.photoViewerBackdrop,
+                    color: theme.colors.photoViewerBackdrop,
                   }}
                 >
                   {count}

@@ -39,10 +39,7 @@ export function SavedLaterScreen() {
   const [assignedTripId, setAssignedTripId] = useState<string | null>(null);
   usePreventRemove(busy, () => undefined);
   const [error, setError] = useState("");
-  const photos = memories.filter(
-    (memory) =>
-      !memory.tripId || !trips.some((trip) => trip.id === memory.tripId),
-  );
+  const photos = memories.filter((memory) => !!memory.local && !memory.tripId);
   return (
     <MemoryPage
       title={copy.later}

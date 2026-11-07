@@ -2,6 +2,14 @@
 
 Cập nhật: 07/11/2026. Đây là đợt nghiệm thu lưu ảnh đầu tiên của QA-6, chưa phải xác nhận toàn bộ Camera/Memory sẵn sàng production. Giữ giao diện camera, album và trình xem ảnh hiện có.
 
+## Quyết định Xem sau — chỉ lưu trên thiết bị
+
+Theo lựa chọn của người dùng: ảnh chưa gắn chuyến chỉ được lưu trên thiết bị, chưa tạo memory hoặc upload lên cloud. Native dùng thư mục document riêng của app và metadata lưu bền; web dùng IndexedDB. Khi đã cấp quyền, camera có thể lưu thêm bản vào thư viện thiết bị. Đóng/mở app hoặc reload không tự xóa ảnh. Các nháp được phân biệt theo tài khoản.
+
+Chỉ khi bấm Đưa vào chuyến đi và xác nhận chuyến/ngày mới lưu liên kết cục bộ rồi upload. Nếu upload lỗi, vẫn giữ bản cục bộ trong album chuyến và cho thử lại; không xóa ảnh sau một lần gửi thất bại. Xem sau và số đếm của Camera chỉ gồm ảnh local chưa có tripId, không coi thiếu dữ liệu chuyến từ server là ảnh chưa gắn chuyến.
+
+Giới hạn cần truyền đạt đúng: bản trong ứng dụng có thể mất khi gỡ app/xóa dữ liệu; trên web có thể mất khi xóa dữ liệu site/đổi origin hoặc trình duyệt dọn storage. Bản đã xuất ra thư viện máy giúp người dùng giữ ảnh độc lập với app. Không hứa đồng bộ đa thiết bị cho ảnh Xem sau. Đề xuất upload ảnh chưa gắn chuyến lên cloud trước đây không được áp dụng.
+
 ## Phần đã nối và sửa
 
 - Camera lưu bản riêng trong ứng dụng trước, rồi tạo metadata và upload vào kỷ niệm thuộc chuyến đã chọn. Từ chối lưu thêm vào thư viện máy vẫn có thể lưu bản riêng và upload. Quick capture chưa chọn chuyến được giữ ở Xem sau, chưa tự upload.

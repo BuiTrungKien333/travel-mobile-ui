@@ -1,5 +1,9 @@
 # Tiến độ Travel Mobile UI
 
+### Quyết định Xem sau · 07/11/2026
+
+Ảnh chưa gắn chuyến chỉ lưu trên thiết bị; chỉ đồng bộ khi người dùng đưa vào chuyến. Giữ bản local khi upload lỗi. Đã làm rõ thông báo VI/EN và thống nhất bộ lọc/số đếm Xem sau chỉ nhận local chưa có tripId. Không triển khai cloud cho ảnh chưa gắn chuyến. Quy tắc lưu, giới hạn storage và checklist ở [QA6-MEMORY-CAPTURE.md](QA6-MEMORY-CAPTURE.md).
+
 ### QA-6A · Camera và lưu kỷ niệm · 07/11/2026
 
 - Sửa lệch contract sau merge: backend có version memory, PATCH ghi chú, GET giới hạn ảnh và create key/fingerprint; Flyway V18 thêm index/metadata upload. Retry create/upload không tạo bản ghi/asset khác cho cùng yêu cầu/nội dung. Không nhận URL media tùy ý trong JSON tạo memory.

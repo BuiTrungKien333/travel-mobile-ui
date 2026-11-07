@@ -1,5 +1,7 @@
 # Kế hoạch hợp nhất frontend và backend WeGo
 
+> Quyết định Xem sau · 07/11/2026: ảnh chưa gắn chuyến chỉ lưu trên thiết bị; xác nhận đưa vào chuyến rồi mới đồng bộ. Không triển khai upload unassigned memory lên cloud. Giữ bản local nếu upload lỗi. Chi tiết và giới hạn lưu trữ trong [QA-6A](QA6-MEMORY-CAPTURE.md).
+
 > Cập nhật QA-6A · 07/11/2026: đồng bộ Camera/Memory với backend (create key, media hash, version/PATCH note, limits, kiểm ảnh thật, ownership, múi giờ). Lưu metadata và upload retry an toàn theo [hướng dẫn nghiệm thu/API](QA6-MEMORY-CAPTURE.md), không giữ DB transaction khi gọi Cloudinary. 51 ca backend và 33 ca mobile liên quan đạt; TypeScript/export web+Android đạt. Chưa kết luận hoàn tất Phase 6: còn nghiệm thu thiết bị/provider thật, private delivery, dọn asset xóa và pagination thư viện.
 
 > Cập nhật QA-5 · Lịch ngày · 07/11/2026: đã nối origin/giờ đi/thời lượng/phương tiện/quay về qua API versioned và Flyway V17; dùng catalog, điểm đã lưu, GPS hoặc nhập tay, không bật Geocoding trả phí. Mapbox tính cả chặng xuất phát/quay về và giờ đến có dữ liệu. Xem [DAY-SCHEDULE-INTEGRATION.md](DAY-SCHEDULE-INTEGRATION.md) cho API, giới hạn và checklist. Ghim, AI, dẫn đường turn-by-turn và nghiệm thu thiết bị vẫn chưa hoàn tất.

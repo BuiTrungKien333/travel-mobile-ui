@@ -16,7 +16,7 @@ const vi = {
   noteConflict:
     "Lời nhắn đã thay đổi trên thiết bị khác. Hãy hủy chỉnh sửa và mở lại để xem bản mới.",
   later: "Xem sau",
-  laterHint: "Chụp trước, sắp xếp sau. Ảnh ở đây chưa thuộc chuyến đi nào.",
+  laterHint: "Ảnh chỉ lưu trên thiết bị này. Đưa vào chuyến đi để đồng bộ.",
   laterEmpty: "Chưa có ảnh để xem sau",
   laterEmptyHint:
     "Chụp nhanh một khoảnh khắc rồi quay lại đây để chọn chuyến đi và địa điểm.",
@@ -83,8 +83,7 @@ const en: typeof vi = {
   noteConflict:
     "This note changed on another device. Cancel editing and reopen it to see the latest version.",
   later: "Saved for later",
-  laterHint:
-    "Capture now, organize later. These photos don't belong to a trip yet.",
+  laterHint: "Photos stay on this device. Add them to a trip to sync.",
   laterEmpty: "No photos saved for later",
   laterEmptyHint:
     "Capture a quick moment, then return here to choose its trip and place.",

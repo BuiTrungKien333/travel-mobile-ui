@@ -86,7 +86,7 @@ export function MemoriesHistoryScreen({
               leadingIcon={<AppIcon name="cameraGallery" variant="light" />}
               onPress={() => router.push("/memories/saved-later")}
             >
-              {`${copy.later} · ${memories.filter((memory) => !memory.tripId || !trips.some((trip) => trip.id === memory.tripId)).length}`}
+              {`${copy.later} · ${memories.filter((memory) => !!memory.local && !memory.tripId).length}`}
             </AppButton>
             <AppText tone="muted" style={{ marginBottom: theme.spacing.sm }}>
               {copy.historyHint}
