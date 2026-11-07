@@ -10,6 +10,7 @@ type TextVariant =
   | "heading"
   | "title"
   | "subheading"
+  | "sectionTitle"
   | "label"
   | "link";
 
@@ -56,6 +57,11 @@ export function AppText({
       fontFamily: theme.typography.fontFamily.semibold,
       fontSize: theme.typography.fontSize.lg,
       lineHeight: theme.typography.lineHeight.lg,
+    },
+    sectionTitle: {
+      fontFamily: theme.typography.fontFamily.semibold,
+      fontSize: theme.typography.fontSize.md,
+      lineHeight: theme.typography.lineHeight.md,
     },
     label: {
       fontFamily: theme.typography.fontFamily.medium,

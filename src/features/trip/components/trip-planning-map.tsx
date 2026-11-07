@@ -255,6 +255,10 @@ export function TripPlanningMap({
           accessibilityState={{ expanded }}
           onPress={toggle}
           style={({ pressed }) => ({
+            position: "absolute",
+            bottom: 0,
+            alignSelf: "center",
+            width: theme.layout.touchTarget * 2,
             minHeight: theme.layout.compactTouchTarget,
             paddingVertical: theme.spacing.xs,
             alignItems: "center",
@@ -268,8 +272,7 @@ export function TripPlanningMap({
               width: theme.layout.sheetDragHandleWidth + theme.spacing.sm,
               height: theme.layout.sheetDragHandleHeight,
               borderRadius: theme.radius.full,
-              backgroundColor: theme.colors.border,
-              transform: [{ translateY: theme.spacing.xs }],
+              backgroundColor: theme.colors.borderStrong,
             }}
           />
         </Pressable>

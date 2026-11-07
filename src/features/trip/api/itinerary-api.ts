@@ -1,9 +1,12 @@
 import { ApiError } from "@/services/api/api-error";
 import { apiClient } from "@/services/api/client";
+import { isCalendarDate } from "@/utils/calendar-date";
 import {
   itineraryEnvelopeSchema,
   optimizationEnvelopeSchema,
   saveItineraryRequestSchema,
+  saveItineraryDaySchema,
+  type SaveItineraryDayRequest,
   type ItineraryOptimizationProposal,
   type ItineraryResponse,
   type SaveItineraryRequest,
@@ -36,6 +39,22 @@ export const itineraryApi = {
     if (!body.success) throw new ApiError("INVALID_ITINERARY");
     const response = await apiClient.put<unknown>(path(tripId), body.data);
     return parse(itineraryEnvelopeSchema, response.data);
+  },
+  async saveDay(
+    tripId: string,
+    date: string,
+    request: SaveItineraryDayRequest,
+  ): Promise<ItineraryResponse> {
+    const body = saveItineraryDaySchema.safeParse(request);
+    if (!body.success || !isCalendarDate(date))
+      throw new ApiError("INVALID_ITINERARY");
+    const response = await apiClient.put<unknown>(
+      `${path(tripId)}/days/${encodeURIComponent(date)}`,
+      body.data,
+    );
+    const saved = parse(itineraryEnvelopeSchema, response.data);
+    if (saved.tripId !== tripId) throw new ApiError("INVALID_RESPONSE");
+    return saved;
   },
   async optimize(
     tripId: string,

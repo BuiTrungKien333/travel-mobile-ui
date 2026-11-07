@@ -26,6 +26,67 @@ const tripPlaceId = "20000000-0000-4000-8000-000000000001";
 const itemId = "30000000-0000-4000-8000-000000000001";
 const instant = "2026-11-02T00:00:00Z";
 
+test("day save sends only one day's stops and both revisions", async () => {
+  const calls: { path: string; payload: unknown }[] = [];
+  const load = tripModuleLoader({
+    "@/services/api/api-error": { ApiError },
+    "@/services/api/client": {
+      apiClient: {
+        put: async (path: string, payload: unknown) => {
+          calls.push({ path, payload });
+          return {
+            data: {
+              success: true,
+              data: {
+                id: null,
+                tripId: trip.id,
+                name: "Main",
+                status: "DRAFT",
+                days: [],
+                updatedAt: null,
+              },
+            },
+          };
+        },
+      },
+    },
+  });
+  const { itineraryApi } = load<
+    typeof import("../src/features/trip/api/itinerary-api.ts")
+  >("src/features/trip/api/itinerary-api.ts");
+  const date = trip.days[0].date;
+  const input = {
+    expectedTripVersion: trip.version,
+    expectedUpdatedAt: instant,
+    stops: [
+      {
+        placeId,
+        sequence: 0,
+        arrivalTime: `${date}T09:30:00`,
+        durationMinutes: 45,
+        note: "Meet here",
+      },
+    ],
+  };
+  assert.equal(
+    (await itineraryApi.saveDay(trip.id, date, input)).tripId,
+    trip.id,
+  );
+  assert.equal(
+    calls[0].path,
+    `/api/v1/trips/${trip.id}/itinerary/days/${date}`,
+  );
+  assert.equal(JSON.stringify(calls[0].payload), JSON.stringify(input));
+  await assert.rejects(itineraryApi.saveDay(trip.id, "2026-11-31", input), {
+    code: "INVALID_ITINERARY",
+  });
+  await assert.rejects(
+    itineraryApi.saveDay(trip.id, date, { ...input, expectedTripVersion: -1 }),
+    { code: "INVALID_ITINERARY" },
+  );
+  assert.equal(calls.length, 1);
+});
+
 test("Optional maps config preserves camera, OAuth, development build and scene plugins", () => {
   const names = [
     "EXPO_PUBLIC_NATIVE_MAP_ENABLED",

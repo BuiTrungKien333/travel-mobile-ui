@@ -23,7 +23,7 @@ export function TripMapPreview({
   selectedId?: string;
   startLabel: string;
   onSelect: (stop: TripStop) => void;
-  onStart: () => void;
+  onStart?: () => void;
   fitContainer?: boolean;
   showStart?: boolean;
 }) {
@@ -104,7 +104,7 @@ export function TripMapPreview({
             accessibilityLabel={`${node.label}. ${node.name}`}
             accessibilityHint={copy.jumpStop}
             accessibilityState={{ selected: node.id === selectedId }}
-            onPress={() => (node.stop ? onSelect(node.stop) : onStart())}
+            onPress={() => (node.stop ? onSelect(node.stop) : onStart?.())}
             style={({ pressed }) => ({
               position: "absolute",
               left: node.x - theme.layout.touchTarget / 2,

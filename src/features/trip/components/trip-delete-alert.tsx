@@ -83,9 +83,9 @@ export function TripDeleteAlert({
         >
           <View style={{ padding: theme.spacing.xl, gap: theme.spacing.md }}>
             <AppText
-              variant="label"
+              accessibilityRole="header"
+              variant="sectionTitle"
               tone="primary"
-              style={{ fontSize: theme.typography.fontSize.md }}
             >
               {title ?? copy.deleteTitle}
             </AppText>

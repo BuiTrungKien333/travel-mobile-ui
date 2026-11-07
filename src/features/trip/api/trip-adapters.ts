@@ -47,20 +47,25 @@ export function toTrip(
       ...day,
       stops: (
         itinerary?.days.find((entry) => entry.date === day.date)?.stops ?? []
-      ).flatMap((entry) => {
-        const stop = byPlaceId.get(entry.placeId);
-        if (!stop) return [];
+      ).map((entry) => {
+        const stop = byPlaceId.get(entry.placeId) ?? {
+          id: entry.id,
+          placeId: entry.placeId,
+          name: { vi: entry.name, en: entry.name },
+          kind: { vi: entry.category ?? "", en: entry.category ?? "" },
+          address: entry.address
+            ? { vi: entry.address, en: entry.address }
+            : undefined,
+        };
         scheduled.add(entry.placeId);
-        return [
-          {
-            ...stop,
-            itineraryItemId: entry.id,
-            time: entry.arrivalTime?.slice(11, 16) ?? "",
-            durationMinutes: entry.durationMinutes,
-            note: entry.note ?? stop.note,
-            plannedOrder: entry.sequence,
-          },
-        ];
+        return {
+          ...stop,
+          itineraryItemId: entry.id,
+          time: entry.arrivalTime?.slice(11, 16) ?? "",
+          durationMinutes: entry.durationMinutes,
+          note: entry.note ?? undefined,
+          plannedOrder: entry.sequence,
+        };
       }),
     })),
     unscheduledStops: places

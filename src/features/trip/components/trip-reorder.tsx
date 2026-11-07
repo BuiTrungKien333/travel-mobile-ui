@@ -18,9 +18,11 @@ import { TripStopDragFrame } from "./trip-stop-interactions";
 export function TripReorder({
   stops,
   onApply,
+  pending = false,
 }: {
   stops: TripStop[];
   onApply: (ids: string[]) => void;
+  pending?: boolean;
 }) {
   const [order, setOrder] = useState(stops);
   const theme = useAppTheme();
@@ -82,7 +84,7 @@ export function TripReorder({
       />
       <AppButton
         variant="gradient"
-        disabled={!changed || drag.draggedId !== null}
+        disabled={pending || !changed || drag.draggedId !== null}
         onPress={() => onApply(order.map((stop) => stop.id))}
       >
         {copy.apply}

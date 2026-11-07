@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { StyleSheet, View } from "react-native";
 import { GlassBackdrop } from "@/components/common/glass-backdrop";
 import { AppIcon } from "@/components/ui/app-icon";
@@ -15,20 +15,37 @@ import {
 } from "../hooks/use-trip-timeline-drag";
 import { TripDetailsSheet } from "./trip-details-sheet";
 import { TripReorderList } from "./trip-reorder";
+import { useItineraryCopy } from "../i18n/itinerary-copy";
+
+type RouteComparison = {
+  before: { km: number; minutes: number };
+  after: { km: number; minutes: number };
+  savedKm: number;
+  savedMinutes: number;
+};
 
 export function TripOptimizationSheet({
   day,
   onApply,
   onClose,
+  proposal,
+  busy = false,
+  problem,
+  onReload,
 }: {
   day?: TripDay;
   onApply: (ids: string[]) => void;
   onClose: () => void;
+  proposal?: { order: string[]; comparison: RouteComparison };
+  busy?: boolean;
+  problem?: string;
+  onReload?: () => void;
 }) {
   const theme = useAppTheme();
   const { copy } = useTripDetailsCopy();
-  const [order, setOrder] = useState(() =>
-    day ? suggestedDayOrder(day) : null,
+  const { copy: integration } = useItineraryCopy();
+  const [order, setOrder] = useState(
+    () => proposal?.order ?? (day ? suggestedDayOrder(day) : null),
   );
   const byId = new Map(day?.stops.map((stop) => [stop.id, stop]));
   const stops = (order ?? []).flatMap((id) => {
@@ -49,12 +66,14 @@ export function TripOptimizationSheet({
     <TripDetailsSheet
       title={copy.optimizeTitle}
       onClose={onClose}
+      dismissDisabled={busy}
       heightRatio={theme.layout.tripOptimizationSheetHeightRatio}
       scrollEnabled={!dragging}
       footer={
         <AppButton
           variant="gradient"
-          disabled={!changed || dragging}
+          loading={busy}
+          disabled={!changed || dragging || !!onReload}
           onPress={() => {
             if (order && changed && !dragging) onApply(order);
           }}
@@ -68,6 +87,26 @@ export function TripOptimizationSheet({
         order={order}
         stops={stops}
         drag={drag}
+        proposal={proposal}
+        notice={
+          <>
+            {problem ? (
+              <AppText accessibilityRole="alert" tone="error">
+                {problem}
+              </AppText>
+            ) : null}
+            {onReload ? (
+              <AppButton size="small" variant="outline" onPress={onReload}>
+                {integration.reload}
+              </AppButton>
+            ) : null}
+            {proposal ? (
+              <AppText tone="muted" variant="caption">
+                {integration.optimizeHint}
+              </AppText>
+            ) : null}
+          </>
+        }
       />
     </TripDetailsSheet>
   );
@@ -78,18 +117,26 @@ function TripOptimizationPreview({
   order,
   stops,
   drag,
+  proposal,
+  notice,
 }: {
   day?: TripDay;
   order: string[] | null;
   stops: TripDay["stops"];
   drag: TripTimelineDrag;
+  proposal?: { order: string[]; comparison: RouteComparison };
+  notice: ReactNode;
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
   if (!day || !order)
     return <AppText tone="muted">{copy.noOptimization}</AppText>;
   const changed = day.stops.some((stop, index) => stop.id !== order[index]);
-  const comparison = getOptimizationComparison(day, order);
+  const comparison = proposal
+    ? order.every((id, index) => id === proposal.order[index])
+      ? proposal.comparison
+      : null
+    : getOptimizationComparison(day, order);
   const format = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 });
   const distanceTextStyle = {
     fontSize: theme.typography.fontSize.lg,
@@ -119,6 +166,7 @@ function TripOptimizationPreview({
   ];
   return (
     <>
+      {notice}
       <View
         style={[
           styles.row,

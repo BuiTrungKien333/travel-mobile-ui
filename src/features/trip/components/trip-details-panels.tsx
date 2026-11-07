@@ -140,7 +140,7 @@ export function TripDetailsPanels({
               <TripEditForm trip={trip} today={today} onCommit={commit} />
             ) : (
               <>
-                <AppText variant="heading">
+                <AppText accessibilityRole="header" variant="sectionTitle">
                   {getTripTitle(trip, locale)}
                 </AppText>
                 <AppText>

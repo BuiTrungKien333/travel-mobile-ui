@@ -1,5 +1,65 @@
 # Kế hoạch nghiệm thu theo màn hình sau merge
 
+## QA-5B · Chi tiết chuyến đi và Mapbox · 07/11/2026
+
+Màn hình thật dùng trạng thái và ngày đánh giá từ API chi tiết chuyến đi. Sắp khởi hành dùng lịch trình theo ngày, Chờ xếp lịch và đề xuất tối ưu có bước xem trước. Đang diễn ra dùng trạng thái đã ghé đã lưu, nút Chỉ đường mở rộng bản đồ và nút chụp dẫn vào luồng camera hiện có. Đã kết thúc ưu tiên ảnh và ghi chú theo ngày, xem album và chia sẻ lịch trình.
+
+### Bật bản đồ
+
+1. Đặt `EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN=pk.…` trong `travel-mobile-ui/.env` để tải bản đồ tương tác và ảnh tĩnh.
+2. Đặt `MAPBOX_ACCESS_TOKEN` trong `travel-system/backend/.env`, sau đó khởi động lại backend. Token này dùng cho Directions và Optimization. Tìm địa chỉ ngoài catalog vẫn theo cấu hình QA-4 riêng.
+3. Web khởi động lại bằng `npx expo start --web --port 8082`. Android dùng `npx expo prebuild --platform android` rồi `npx expo run:android` với emulator đang mở. iOS dùng development build mới trên macOS hoặc EAS.
+
+Bản mobile cũ và trình duyệt thiếu WebGL dùng ảnh Mapbox khi có token. Khi ảnh lỗi hoặc thiếu token, màn hình dùng sơ đồ điểm dừng từ lịch đã lưu. Ảnh tĩnh hỗ trợ ghim và đường đi khi URL nằm trong giới hạn của Mapbox. [RNMapbox trên Expo](https://rnmapbox.github.io/docs/install) · [Static Images API](https://docs.mapbox.com/api/maps/static-images/)
+
+### Kiểm tra trên giao diện
+
+| Ca | Thao tác | Kết quả mong đợi |
+| --- | --- | --- |
+| D01 | Mở chuyến sắp đi có nhiều ngày và ít nhất hai điểm đã xếp cùng ngày | Đổi ngày đổi ghim, tuyến, timeline. Kéo tay nắm mở rộng, cuộn timeline thu bản đồ. Chạm ghim tương tác đưa tới đúng điểm. |
+| D02 | Đổi Ô tô sang Đi bộ hoặc Xe đạp | Đường đi, quãng đường và thời gian từng chặng cập nhật theo phương tiện. Ngày thiếu tọa độ vẫn đọc được lịch. |
+| D03 | Chọn ngày chưa ghé điểm nào có 4–12 điểm có tọa độ, trượt Tối ưu | Xem trước thứ tự và so sánh quãng đường, thời gian. Kéo đổi đề xuất sẽ ẩn số so sánh cũ. Lưu mới đổi lịch, giữ các khung giờ theo vị trí và giữ thời lượng/ghi chú của từng điểm. |
+| D04 | Mở chuyến đang diễn ra có lịch hôm nay, bấm Chỉ đường rồi Đã ghé | Bản đồ mở rộng tới ghim. Sau khi lưu, dòng đã ghé có dấu tích và Home dùng điểm tiếp theo. Mở lại vẫn giữ trạng thái. |
+| D05 | Mở chuyến đã kết thúc có ảnh/ghi chú ở nhiều ngày | Đổi ngày lọc kỷ niệm theo giờ Việt Nam. Album có phân trang, mở được ảnh, lịch chỉ đọc. |
+| D06 | Dùng build cũ với token hoặc tắt kết nối | Build cũ tải ảnh tĩnh. Khi cả bản đồ và ảnh lỗi, sơ đồ vẫn hiển thị và không mất timeline. |
+
+### API cho Postman
+
+Dùng base URL `http://localhost:18081` và header `Authorization: Bearer <accessToken>` của chủ chuyến. Ba request sau không có body.
+
+| Method | Path | Dữ liệu chính |
+| --- | --- | --- |
+| GET | `/api/v1/trips/{tripId}/itinerary/days/{date}/route?mode=DRIVE` | `status`, `placeIds` theo thứ tự lịch và `route` gồm mét, giây, polyline, từng chặng khi `READY`. |
+| POST | `/api/v1/trips/{tripId}/itinerary/days/{date}/route/optimize?mode=DRIVE` | `order`, `originalOrder`, `distanceMeters`, `durationSeconds`. Áp dụng qua PUT theo ngày ở QA-5A. |
+| GET | `/api/v1/journal/memories?tripId={tripId}&date={date}&page=0&size=10` | Nhật ký phân trang theo ngày địa phương, có ghi chú và danh sách media. |
+
+Còn chờ nghiệm thu Mapbox live và thiết bị. Cấu hình điểm xuất phát, quay lại điểm xuất phát, ghim điểm dừng, kéo hoặc vuốt trực tiếp ở timeline thật và dẫn đường từng ngã rẽ chưa được nối trong lát này.
+
+## QA-5A · Xếp lịch thủ công theo ngày
+
+Đã nối chi tiết chuyến với lịch trình thật. Với chuyến có ngày đi, thêm hai địa điểm rồi vào **Chờ xếp lịch → Xếp vào lịch**. Chọn ngày, giờ đến, thời lượng và ghi chú, sau đó lưu. Kiểm tra điểm xuất hiện đúng ngày và vẫn còn sau khi mở lại. Xếp hai điểm trong cùng ngày để thử **Sắp xếp**. Mở một điểm và dùng **Gỡ khỏi ngày** để kiểm tra nó trở về Chờ xếp lịch nếu không còn ở ngày khác. Các ngày khác giữ nguyên. Với chuyến đang diễn ra, kiểm tra Home cập nhật điểm đến tiếp theo theo thứ tự mới.
+
+- `GET /api/v1/trips/{tripId}/itinerary` trả lịch trình và `data.updatedAt`. `GET /api/v1/trips/{tripId}` trả `data.trip.version`. Dùng Bearer token của chủ chuyến.
+- `PUT /api/v1/trips/{tripId}/itinerary/days/{date}` thay danh sách điểm của ngày đó. `date` theo `YYYY-MM-DD`, `arrivalTime` là giờ địa phương, `sequence` bắt đầu từ 0 và `placeId` lấy từ `GET /api/v1/trips/{tripId}/places`. Dùng `expectedUpdatedAt: null` nếu chưa có lịch trình. Nếu đã có, dùng đúng `updatedAt` từ lần đọc/lưu gần nhất. `stops: []` gỡ toàn bộ lịch trong ngày và giữ các địa điểm trong chuyến.
+
+```json
+{
+  "expectedTripVersion": 0,
+  "expectedUpdatedAt": null,
+  "stops": [
+    {
+      "placeId": "<UUID của địa điểm đã lưu trong chuyến>",
+      "sequence": 0,
+      "arrivalTime": "2026-11-10T09:30:00",
+      "durationMinutes": 45,
+      "note": "Ghé trước giờ đông khách"
+    }
+  ]
+}
+```
+
+Nếu mở cùng một lịch ở hai thiết bị, lưu ở thiết bị A rồi lưu bản cũ ở B. B nhận `409 TRIP_008`, giữ dữ liệu đang nhập và có thao tác tải lại. Chuyến đã kết thúc/hủy và ngày đã qua của chuyến đang đi chỉ xem. QA-5A chờ xác nhận trên thiết bị. Cài đặt xuất phát, bản đồ thật và tối ưu lộ trình nằm ngoài lát tích hợp này.
+
 > Mới nhất · 07/11/2026: người dùng ưu tiên nối Home trước QA-5. Đã hoàn tất triển khai lựa chọn server toàn tài khoản + tái sử dụng UI Home; đang chờ người dùng kiểm tra [batch Home](HOME-DASHBOARD-INTEGRATION.md#batch-kiểm-tra-ui). Backend 433/433, mobile 304/304 và TS/diff đạt. QA-4 catalog nội bộ đã được người dùng test xong; QA-5 itinerary và QA-6 Camera/Memory vẫn chưa nghiệm thu. Không dùng dữ liệu fixture để thay phần tích hợp còn thiếu.
 
 > Phản hồi mới: người dùng đã test xong QA-4 gợi ý/tìm/thêm địa điểm nội bộ và yêu cầu bước tiếp theo. Ghi nhận hoàn tất vòng test UI trong phạm vi này; chưa mở rộng nghiệm thu sang Mapbox live, địa chỉ ngoài catalog hoặc độ chính xác tọa độ. Bước đề xuất tiếp theo: QA-5A lịch trình thủ công từng ngày (Chờ xếp lịch → chọn ngày → giờ/thời lượng/ghi chú → đổi thứ tự/gỡ khỏi ngày → lưu và mở lại). Giữ thiết kế timeline hiện có; tối ưu/AI và Mapbox SDK xử lý sau theo phạm vi đã thống nhất.

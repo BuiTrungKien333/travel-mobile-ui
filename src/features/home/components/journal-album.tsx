@@ -27,15 +27,20 @@ export function JournalAlbum({
   variant = "today",
   title,
   onDeletePhoto,
+  showAllPhotos = false,
 }: {
   memories: Memory[];
-  onOpen: () => void;
+  onOpen?: () => void;
   onCapture?: () => void;
   variant?: "today" | "recent";
   title?: string;
   onDeletePhoto?: (memory: Memory) => Promise<void>;
+  showAllPhotos?: boolean;
 }) {
   const theme = useAppTheme();
+  const photos = showAllPhotos
+    ? memories
+    : memories.slice(0, JOURNAL_PREVIEW_LIMIT);
   const { copy } = useOngoingCopy();
   const [selection, setSelection] = useState<PhotoSelection | null>(null);
   const [activePhotoId, setActivePhotoId] = useState<string | null>(null);
@@ -59,33 +64,26 @@ export function JournalAlbum({
       <View style={[homeStyles.row, { gap: theme.spacing.sm }]}>
         <AppText
           accessibilityRole="header"
-          variant="label"
-          style={[
-            homeStyles.grow,
-            {
-              fontSize: theme.typography.fontSize.md,
-              lineHeight: theme.typography.lineHeight.md,
-              fontFamily: theme.typography.fontFamily.semibold,
-            },
-          ]}
+          variant="sectionTitle"
+          style={homeStyles.grow}
         >
           {title ?? (variant === "recent" ? copy.recentJournal : copy.journal)}
         </AppText>
-        <TextAction
-          label={variant === "recent" ? copy.allMemories : copy.allJournal}
-          onPress={onOpen}
-        />
+        {onOpen ? (
+          <TextAction
+            label={variant === "recent" ? copy.allMemories : copy.allJournal}
+            onPress={onOpen}
+          />
+        ) : null}
       </View>
       {memories.length ? (
         <View style={{ gap: theme.spacing.xs }}>
           {Array.from(
             {
-              length: Math.ceil(
-                Math.min(memories.length, JOURNAL_PREVIEW_LIMIT) / 2,
-              ),
+              length: Math.ceil(photos.length / 2),
             },
             (_, row) => {
-              const pair = memories.slice(row * 2, row * 2 + 2);
+              const pair = photos.slice(row * 2, row * 2 + 2);
               return (
                 <View
                   key={pair[0].id}
@@ -136,7 +134,7 @@ export function JournalAlbum({
       {selection ? (
         <JournalPhotoViewer
           key={selection.id}
-          memories={memories.slice(0, JOURNAL_PREVIEW_LIMIT)}
+          memories={photos}
           selection={selection}
           getSelection={getSelection}
           onActiveChange={setActivePhotoId}

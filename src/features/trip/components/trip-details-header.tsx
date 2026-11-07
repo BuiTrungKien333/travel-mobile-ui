@@ -68,18 +68,7 @@ export function TripDetailsHeader({
             justifyContent: titleOnly ? "center" : undefined,
           }}
         >
-          <AppText
-            accessibilityRole="header"
-            variant="label"
-            style={
-              titleOnly
-                ? {
-                    fontSize: theme.typography.fontSize.md,
-                    lineHeight: theme.typography.lineHeight.md,
-                  }
-                : undefined
-            }
-          >
+          <AppText accessibilityRole="header" variant="sectionTitle">
             {getTripTitle(trip, locale)}
           </AppText>
           {!titleOnly ? (

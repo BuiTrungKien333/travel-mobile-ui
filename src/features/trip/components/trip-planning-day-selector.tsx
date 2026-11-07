@@ -124,10 +124,7 @@ export function TripPlanningDaySelector({
                 paddingHorizontal: theme.spacing.sm,
               }}
             >
-              <AppText
-                variant="caption"
-                style={{ fontFamily: theme.typography.fontFamily.medium }}
-              >
+              <AppText variant="label">
                 {item.kind === "day"
                   ? `${copy.day} ${item.index + 1}`
                   : copy.pool}

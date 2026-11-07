@@ -26,6 +26,7 @@ export function TripStopRow({
   visited,
   next,
   mode,
+  legIcon,
   onOpen,
   onVisited,
   number,
@@ -34,12 +35,15 @@ export function TripStopRow({
   last,
   drag,
   onRemove,
+  preview = true,
+  savedLeg,
 }: {
   stop: TripStop;
   previous?: TripStop;
   visited: boolean;
   next: boolean;
   mode: TravelMode;
+  legIcon?: "route";
   onOpen: () => void;
   onVisited?: () => void;
   number: number;
@@ -48,10 +52,16 @@ export function TripStopRow({
   last: boolean;
   drag?: TripTimelineDrag;
   onRemove?: () => void;
+  preview?: boolean;
+  savedLeg?: { km: number; minutes: number };
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
-  const leg = previous ? getPreviewLeg(previous, stop, mode) : null;
+  const leg = previous
+    ? preview
+      ? getPreviewLeg(previous, stop, mode)
+      : savedLeg
+    : null;
   const range = visitTimeRange(stop);
   const metadata = [
     `${stop.durationMinutes ?? 45} ${copy.minutes}`,
@@ -139,7 +149,7 @@ export function TripStopRow({
             />
           </View>
           <AppIcon
-            name={mode}
+            name={legIcon ?? mode}
             size={theme.layout.iconSmall}
             color={theme.colors.textSecondary}
           />
@@ -272,17 +282,19 @@ export function TripStopRow({
                 ]}
               >
                 <View style={[styles.connector, { gap: theme.spacing.sm }]}>
-                  <Image
-                    source={getStopImage(stop.id)}
-                    contentFit="cover"
-                    cachePolicy="memory-disk"
-                    accessible={false}
-                    style={{
-                      width: theme.layout.sampleStopImageSize,
-                      height: theme.layout.sampleStopImageSize,
-                      borderRadius: theme.radius.sm,
-                    }}
-                  />
+                  {preview ? (
+                    <Image
+                      source={getStopImage(stop.id)}
+                      contentFit="cover"
+                      cachePolicy="memory-disk"
+                      accessible={false}
+                      style={{
+                        width: theme.layout.sampleStopImageSize,
+                        height: theme.layout.sampleStopImageSize,
+                        borderRadius: theme.radius.sm,
+                      }}
+                    />
+                  ) : null}
                   <View style={[styles.grow, { gap: theme.spacing.xs }]}>
                     <View
                       style={[

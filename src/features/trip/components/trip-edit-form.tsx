@@ -107,10 +107,7 @@ export function TripEditForm({
           <AppText variant="caption" tone="muted">
             {formCopy.destination}
           </AppText>
-          <AppText
-            variant="label"
-            style={{ fontSize: theme.typography.fontSize.sm }}
-          >
+          <AppText variant="label">
             {destination || formCopy.chooseDestination}
           </AppText>
           <AppText variant="caption" tone="muted">

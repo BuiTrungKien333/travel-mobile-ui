@@ -1,5 +1,18 @@
 # Tiến độ Travel Mobile UI
 
+### QA-5B · Chi tiết chuyến đi và Mapbox · 07/11/2026
+
+- Nối giao diện chi tiết Sắp khởi hành, Đang diễn ra và Đã kết thúc với dữ liệu chuyến, lịch, thời tiết, điểm đã ghé và nhật ký theo ngày. Tái sử dụng map pane, dải ngày, timeline và sheet tối ưu.
+- Bản đồ tương tác Mapbox trên web và native development build mới. Bản cũ có ảnh tĩnh dự phòng, thiếu tọa độ hoặc cấu hình vẫn hiển thị dữ liệu lịch đã lưu.
+- Backend kiểm quyền chủ chuyến và ngày, gọi Directions/Optimization bên ngoài truy vấn dữ liệu. Gợi ý thứ tự cần người dùng áp dụng bằng API có kiểm tra phiên bản lịch trình.
+- Backend 33/33 ca liên quan, mobile 311/311, TypeScript strict và export bundle web/Android đạt. Backend dev 18081 đã đăng ký ba API, health 200, route thiếu token phiên 401 và CORS cho web 8082 đạt.
+- Kiểm tra và cấu hình trong [QA-5B](QA-ACCEPTANCE-PLAN.md#qa-5b--chi-tiết-chuyến-đi-và-mapbox--07112026). Token Mapbox và kiểm tra thực tế trên Android/iOS còn chờ. Expo Doctor đạt 20/21 kiểm tra, còn lệch các phiên bản vá SDK 57.
+
+### QA-5A · Xếp lịch thủ công theo ngày · 07/11/2026
+
+- Đã nối lịch theo ngày và nhóm Chờ xếp lịch ở chi tiết chuyến. Có chọn ngày, giờ đến, thời lượng, ghi chú, đổi thứ tự và gỡ khỏi ngày. Home làm mới điểm đến tiếp theo khi lịch thay đổi.
+- API lưu từng ngày kiểm tra quyền, ngày hợp lệ, Place thuộc chuyến và phiên bản hiện tại. Giữ ID các điểm còn lại, lịch ngày khác và các địa điểm đã lưu. Hướng dẫn UI và body mẫu trong [kế hoạch nghiệm thu](QA-ACCEPTANCE-PLAN.md#qa-5a--xếp-lịch-thủ-công-theo-ngày).
+
 ### Thời tiết chuyến đi · 07/11/2026
 
 - Home và chi tiết chuyến đã nối modal Liquid Glass vào `GET /api/v1/trips/{tripId}/weather`. Chuyến sắp đi có chọn ngày, dự báo theo giờ và gợi ý chuẩn bị. Chuyến đang đi thêm nhiệt độ hiện tại và cảm giác như. Giữ cache 10 phút theo tài khoản/chuyến/ngày và làm mới khi thay đổi dữ liệu chuyến.

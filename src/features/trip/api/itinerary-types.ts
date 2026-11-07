@@ -36,22 +36,27 @@ export const itineraryResponseSchema = z.object({
 export type ItineraryResponse = z.infer<typeof itineraryResponseSchema>;
 export type ItineraryStopResponse = z.infer<typeof itineraryStopSchema>;
 
+const editableStopSchema = z.object({
+  placeId: z.guid(),
+  sequence: z.number().int().nonnegative(),
+  arrivalTime: localDateTime.nullable(),
+  durationMinutes: z.number().int().min(1).max(1440),
+  note: z.string().max(2000).nullable(),
+});
+
+export const saveItineraryDaySchema = z.object({
+  expectedTripVersion: z.number().int().nonnegative().safe(),
+  expectedUpdatedAt: instant.nullable(),
+  stops: z.array(editableStopSchema).max(100),
+});
+export type SaveItineraryDayRequest = z.infer<typeof saveItineraryDaySchema>;
+
 export const saveItineraryRequestSchema = z.object({
   days: z
     .array(
       z.object({
         date: localDate,
-        stops: z
-          .array(
-            z.object({
-              placeId: z.guid(),
-              sequence: z.number().int().nonnegative(),
-              arrivalTime: localDateTime.nullable(),
-              durationMinutes: z.number().int().min(1).max(1440),
-              note: z.string().max(2000).nullable(),
-            }),
-          )
-          .max(100),
+        stops: z.array(editableStopSchema).max(100),
       }),
     )
     .max(90),

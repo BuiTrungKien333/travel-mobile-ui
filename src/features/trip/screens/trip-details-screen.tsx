@@ -440,7 +440,7 @@ function TripDetailsContent({
         <View
           style={{ gap: theme.spacing.xs, paddingBottom: theme.spacing.lg }}
         >
-          <AppText variant="label">
+          <AppText accessibilityRole="header" variant="sectionTitle">
             {copy.pool} ({unscheduled.length})
           </AppText>
           <AppText variant="caption" tone="muted">
@@ -459,7 +459,8 @@ function TripDetailsContent({
           ) : null}
           {mode === "recap" ? (
             <AppText
-              variant="label"
+              accessibilityRole="header"
+              variant="sectionTitle"
               style={{ paddingBottom: theme.spacing.md }}
             >
               {copy.itinerary}

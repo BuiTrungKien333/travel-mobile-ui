@@ -63,15 +63,35 @@ export function useAddTripPlaceMutation(tripId: string) {
 }
 export function useUpdateTripPlaceMutation(tripId: string) {
   const client = useQueryClient();
+  const owner = useProfile().data?.id;
   return useMutation({
-    mutationFn: ({
+    retry: false,
+    mutationFn: async ({
       placeId,
       request,
     }: {
       placeId: string;
       request: UpdateTripPlaceRequest;
-    }) => tripPlacesApi.updatePlace(tripId, placeId, request),
-    onSuccess: () => client.invalidateQueries({ queryKey: tripQueryKeys.root }),
+    }) => {
+      const version = authSession.getVersion();
+      const response = await tripPlacesApi.updatePlace(
+        tripId,
+        placeId,
+        request,
+      );
+      if (version !== authSession.getVersion()) throw new ApiError("CANCELLED");
+      return response;
+    },
+    onSuccess: () =>
+      Promise.all([
+        client.invalidateQueries({
+          queryKey: tripQueryKeys.places(owner, tripId),
+        }),
+        client.invalidateQueries({ queryKey: tripQueryKeys.dashboard(owner) }),
+        client.invalidateQueries({
+          queryKey: weatherQueryKeys.forTrip(owner, tripId),
+        }),
+      ]),
   });
 }
 export function useDeleteTripPlaceMutation(tripId: string) {

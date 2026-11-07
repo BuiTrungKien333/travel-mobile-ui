@@ -12,18 +12,24 @@ import { formatTripDates, getTripTitle } from "../utils/trip-formatters";
 export function TripRecapContent({
   memories,
   onJournal,
+  onDeletePhoto,
+  showAllPhotos,
 }: {
   memories: Memory[];
-  onJournal: () => void;
+  onJournal?: () => void;
+  onDeletePhoto?: (memory: Memory) => Promise<void>;
+  showAllPhotos?: boolean;
 }) {
   const theme = useAppTheme();
   const { copy } = useTripDetailsCopy();
   return (
     <View style={{ gap: theme.spacing.md, paddingBottom: theme.spacing.lg }}>
-      {memories.length ? (
+      {memories.some((memory) => !!memory.photo) ? (
         <JournalAlbum
-          memories={memories}
+          memories={memories.filter((memory) => !!memory.photo)}
           onOpen={onJournal}
+          onDeletePhoto={onDeletePhoto}
+          showAllPhotos={showAllPhotos}
           variant="recent"
           title={copy.dayMemories}
         />
@@ -42,9 +48,7 @@ export function TripRecapContent({
             <AppText variant="caption" tone="primary">
               {memory.time ?? "—"}
             </AppText>
-            <AppText variant="caption" style={{ flex: 1 }}>
-              {memory.text}
-            </AppText>
+            <AppText style={{ flex: 1 }}>{memory.text}</AppText>
           </View>
         ))}
     </View>

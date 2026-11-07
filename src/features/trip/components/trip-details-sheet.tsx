@@ -174,7 +174,7 @@ export function TripDetailsSheet({
                   <View style={styles.heading}>
                     <AppText
                       accessibilityRole="header"
-                      variant="label"
+                      variant="sectionTitle"
                       style={styles.grow}
                     >
                       {title}

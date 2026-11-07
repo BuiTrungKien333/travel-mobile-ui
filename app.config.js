@@ -7,6 +7,7 @@ module.exports = ({ config }) => {
     ...(config.plugins ?? []),
     "expo-dev-client",
     ["expo-build-properties", { ios: { enableSceneSupport: true } }],
+    "@rnmapbox/maps",
   ];
 
   if (process.env.EXPO_PUBLIC_NATIVE_MAP_ENABLED === "true") {
@@ -51,6 +52,11 @@ module.exports = ({ config }) => {
     },
     ios: {
       ...config.ios,
+      infoPlist: {
+        ...config.ios?.infoPlist,
+        NSLocationWhenInUseUsageDescription:
+          "WeGo uses your location to show where you are on your trip map.",
+      },
       ...(iosBundleId ? { bundleIdentifier: iosBundleId } : {}),
     },
   };

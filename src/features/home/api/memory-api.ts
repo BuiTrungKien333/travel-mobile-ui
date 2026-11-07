@@ -24,13 +24,20 @@ function parse<T>(
 export type LocalPhoto = { uri: string; fileName: string; mimeType: string };
 
 export const memoryApi = {
-  async list(page = 0, size = 50, tripId?: string, signal?: AbortSignal) {
+  async list(
+    page = 0,
+    size = 50,
+    tripId?: string,
+    signal?: AbortSignal,
+    date?: string,
+  ) {
     const response = await apiClient.get<unknown>("/api/v1/journal/memories", {
       params: {
         page,
         size,
         sort: "experiencedAt,desc",
         ...(tripId ? { tripId } : {}),
+        ...(date ? { date } : {}),
       },
       signal,
     });
