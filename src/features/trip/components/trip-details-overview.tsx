@@ -1,4 +1,5 @@
 import { FlatList, Pressable, StyleSheet, View } from "react-native";
+import type { ReactNode } from "react";
 import { GlassBackdrop } from "@/components/common/glass-backdrop";
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
@@ -20,6 +21,10 @@ export function TripDayTools({
   showWeather = true,
   reorderAtEnd = false,
   showOptimize = false,
+  routeSummary,
+  transportLabel,
+  transportIcon,
+  actions,
 }: {
   trip: Trip;
   day?: TripDay;
@@ -30,10 +35,14 @@ export function TripDayTools({
   showWeather?: boolean;
   reorderAtEnd?: boolean;
   showOptimize?: boolean;
+  routeSummary?: string | null;
+  transportLabel?: string;
+  transportIcon?: "car" | "walk" | "route";
+  actions?: ReactNode;
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
-  const travel = day ? getDayTravel(day) : null;
+  const travel = routeSummary === undefined && day ? getDayTravel(day) : null;
   const forecast = getTripForecast(trip, day?.date);
   const currentWeather =
     ongoingWeatherSnapshot.tripId === trip.id &&
@@ -55,7 +64,7 @@ export function TripDayTools({
         })}
       >
         <AppText
-          variant="caption"
+          variant="link"
           tone="primary"
           style={{ fontFamily: theme.typography.fontFamily.semibold }}
         >
@@ -89,11 +98,13 @@ export function TripDayTools({
             {!reorderAtEnd ? reorderLink : null}
           </View>
           <AppText variant="caption" tone="muted">
-            {travel?.complete &&
-            !trip.accommodation &&
-            (day?.stops.length ?? 0) > 1
-              ? `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(travel.km)} km · ${travel.minutes} ${copy.minutes} · ${copy.estimate}`
-              : copy.unknownRoute}
+            {routeSummary !== undefined
+              ? routeSummary || copy.unknownRoute
+              : travel?.complete &&
+                  !trip.accommodation &&
+                  (day?.stops.length ?? 0) > 1
+                ? `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(travel.km)} km · ${travel.minutes} ${copy.minutes} · ${copy.estimate}`
+                : copy.unknownRoute}
           </AppText>
         </View>
         {showOptimize && day && day.stops.length > 1 ? (
@@ -164,44 +175,49 @@ export function TripDayTools({
           </Pressable>
         ) : null}
       </View>
-      {canEdit && day ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`${copy.transport}: ${copy[day.transport ?? "car"]}`}
-          onPress={() => setSheet({ kind: "transport" })}
-          style={({ pressed }) => ({
-            alignSelf: "flex-start",
-            minHeight: theme.layout.compactTouchTarget,
-            justifyContent: "center",
-            opacity: pressed ? theme.motion.pressOpacity : 1,
-          })}
-        >
-          <View
-            style={[
-              styles.inline,
-              {
-                gap: theme.spacing.xs,
-                paddingHorizontal: theme.spacing.md,
-                paddingVertical: theme.spacing.xs,
-                borderRadius: theme.radius.full,
-                borderWidth: StyleSheet.hairlineWidth,
-                borderColor: theme.colors.softActionBorder,
-                backgroundColor: theme.colors.surfaceTint,
-              },
-            ]}
-          >
-            <AppIcon
-              name={day.transport ?? "car"}
-              size={theme.layout.iconSmall}
-            />
-            <AppText variant="caption" tone="primary">
-              {copy[day.transport ?? "car"]}
-            </AppText>
-            <View style={{ transform: [{ rotate: "90deg" }] }}>
-              <AppIcon name="chevron" size={theme.layout.iconSmall} />
-            </View>
-          </View>
-        </Pressable>
+      {(canEdit && day) || actions ? (
+        <View style={[styles.inline, { gap: theme.spacing.md }]}>
+          {canEdit && day ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`${copy.transport}: ${transportLabel ?? copy[day.transport ?? "car"]}`}
+              onPress={() => setSheet({ kind: "transport" })}
+              style={({ pressed }) => ({
+                alignSelf: "flex-start",
+                minHeight: theme.layout.compactTouchTarget,
+                justifyContent: "center",
+                opacity: pressed ? theme.motion.pressOpacity : 1,
+              })}
+            >
+              <View
+                style={[
+                  styles.inline,
+                  {
+                    gap: theme.spacing.xs,
+                    paddingHorizontal: theme.spacing.md,
+                    paddingVertical: theme.spacing.xs,
+                    borderRadius: theme.radius.full,
+                    borderWidth: StyleSheet.hairlineWidth,
+                    borderColor: theme.colors.softActionBorder,
+                    backgroundColor: theme.colors.surfaceTint,
+                  },
+                ]}
+              >
+                <AppIcon
+                  name={transportIcon ?? day.transport ?? "car"}
+                  size={theme.layout.iconSmall}
+                />
+                <AppText variant="caption" tone="primary">
+                  {transportLabel ?? copy[day.transport ?? "car"]}
+                </AppText>
+                <View style={{ transform: [{ rotate: "90deg" }] }}>
+                  <AppIcon name="chevron" size={theme.layout.iconSmall} />
+                </View>
+              </View>
+            </Pressable>
+          ) : null}
+          {actions}
+        </View>
       ) : null}
       {editHistory ? (
         <AppText variant="caption" tone="muted">
@@ -212,18 +228,14 @@ export function TripDayTools({
   );
 }
 
-type DateTab = { key: string; date?: string; index: number };
+type DateTab = { key: string; date: string; index: number };
 export function TripDaySelector({
   trip,
   selectedDate,
-  backlog,
-  backlogCount,
   onSelect,
 }: {
   trip: Trip;
   selectedDate?: string;
-  backlog: boolean;
-  backlogCount: number;
   onSelect: (date: string | null) => void;
 }) {
   const theme = useAppTheme();
@@ -234,7 +246,6 @@ export function TripDaySelector({
       date: day.date,
       index,
     })),
-    { key: "backlog", index: trip.days.length },
   ];
   const width = theme.layout.tripDateTabWidth + theme.spacing.sm;
   return (
@@ -242,14 +253,10 @@ export function TripDaySelector({
       horizontal
       data={data}
       style={{ flexGrow: 0 }}
-      initialScrollIndex={
-        backlog
-          ? data.length - 1
-          : Math.max(
-              0,
-              trip.days.findIndex((day) => day.date === selectedDate),
-            )
-      }
+      initialScrollIndex={Math.max(
+        0,
+        trip.days.findIndex((day) => day.date === selectedDate),
+      )}
       getItemLayout={(_, index) => ({
         length: width,
         offset: width * index,
@@ -262,19 +269,13 @@ export function TripDaySelector({
         paddingVertical: theme.spacing.sm,
       }}
       renderItem={({ item }) => {
-        const selected = item.date
-          ? !backlog && item.date === selectedDate
-          : backlog;
+        const selected = item.date === selectedDate;
         return (
           <Pressable
             accessibilityRole="tab"
             accessibilityState={{ selected }}
-            accessibilityLabel={
-              item.date
-                ? `${copy.day} ${item.index + 1}, ${item.date}`
-                : `${copy.pool} (${backlogCount})`
-            }
-            onPress={() => onSelect(item.date ?? null)}
+            accessibilityLabel={`${copy.day} ${item.index + 1}, ${item.date}`}
+            onPress={() => onSelect(item.date)}
             style={({ pressed }) => ({
               width: theme.layout.tripDateTabWidth,
               minHeight: theme.layout.touchTarget,
@@ -296,16 +297,14 @@ export function TripDaySelector({
               tone={selected ? "primary" : "default"}
               style={{ fontFamily: theme.typography.fontFamily.medium }}
             >
-              {item.date ? `${copy.day} ${item.index + 1}` : copy.pool}
+              {`${copy.day} ${item.index + 1}`}
             </AppText>
             <AppText variant="caption" tone="muted">
-              {item.date
-                ? new Intl.DateTimeFormat(locale, {
-                    day: "2-digit",
-                    month: "2-digit",
-                    timeZone: "UTC",
-                  }).format(new Date(`${item.date}T12:00:00Z`))
-                : `(${backlogCount})`}
+              {new Intl.DateTimeFormat(locale, {
+                day: "2-digit",
+                month: "2-digit",
+                timeZone: "UTC",
+              }).format(new Date(`${item.date}T12:00:00Z`))}
             </AppText>
           </Pressable>
         );

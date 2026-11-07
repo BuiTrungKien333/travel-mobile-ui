@@ -120,16 +120,12 @@ export function TripTimelineTail({
   trip,
   day,
   empty,
-  backlogCount,
-  onBacklog,
   canEdit,
   onAdd,
 }: {
   trip: Trip;
   day?: TripDay;
   empty: boolean;
-  backlogCount: number;
-  onBacklog: () => void;
   canEdit: boolean;
   onAdd: () => void;
 }) {
@@ -146,11 +142,6 @@ export function TripTimelineTail({
             <AppText variant="caption" tone="muted">
               {copy.emptyHint}
             </AppText>
-          ) : null}
-          {backlogCount ? (
-            <AppButton size="small" variant="soft" onPress={onBacklog}>
-              {copy.pool} ({backlogCount})
-            </AppButton>
           ) : null}
         </View>
       ) : null}

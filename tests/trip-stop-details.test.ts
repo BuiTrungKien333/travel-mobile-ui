@@ -24,7 +24,7 @@ function call(value: unknown, ...args: unknown[]) {
   if (typeof value === "function") return value(...args);
 }
 
-function harness(scenario: "ongoing" | "upcoming" = "ongoing") {
+function harness(scenario: "ongoing" | "upcoming" = "ongoing", preview = true) {
   const store = loadHomePreview().createPreviewStore();
   store.getState().changeScenario(scenario);
   const tokens = tripModuleLoader()<typeof import("../src/theme/tokens.ts")>(
@@ -34,6 +34,10 @@ function harness(scenario: "ongoing" | "upcoming" = "ongoing") {
   let cursor = 0;
   let backs = 0;
   const load = tripModuleLoader({
+    "@/constants/development": { UI_PREVIEW_ENABLED: preview },
+    "./connected-trip-stop-details-screen": {
+      ConnectedTripStopDetailsScreen: "ConnectedTripStopDetailsScreen",
+    },
     react: {
       useState: (initial: unknown) => {
         const index = cursor++;
@@ -112,11 +116,21 @@ function harness(scenario: "ongoing" | "upcoming" = "ongoing") {
   };
   function render(input = props) {
     cursor = 0;
-    const root = node(TripStopDetailsScreen(input));
-    return typeof root.type === "function" ? node(root.type(root.props)) : root;
+    let root = node(TripStopDetailsScreen(input));
+    while (typeof root.type === "function") root = node(root.type(root.props));
+    return root;
   }
   return { store, render, props, backs: () => backs };
 }
+
+test("the real place detail entry point delegates route identity to the connected screen", () => {
+  const h = harness("ongoing", false);
+  const root = h.render();
+  assert.equal(root.type, "ConnectedTripStopDetailsScreen");
+  assert.equal(root.props.tripId, h.props.tripId);
+  assert.equal(root.props.stopId, h.props.stopId);
+  assert.equal(root.props.day, h.props.day);
+});
 
 test("timeline place details expands its own map and toggles the shared visit state", () => {
   const h = harness();

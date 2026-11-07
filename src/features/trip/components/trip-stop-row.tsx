@@ -282,19 +282,17 @@ export function TripStopRow({
                 ]}
               >
                 <View style={[styles.connector, { gap: theme.spacing.sm }]}>
-                  {preview ? (
-                    <Image
-                      source={getStopImage(stop.id)}
-                      contentFit="cover"
-                      cachePolicy="memory-disk"
-                      accessible={false}
-                      style={{
-                        width: theme.layout.sampleStopImageSize,
-                        height: theme.layout.sampleStopImageSize,
-                        borderRadius: theme.radius.sm,
-                      }}
-                    />
-                  ) : null}
+                  <Image
+                    source={getStopImage(stop.placeId ?? stop.id)}
+                    contentFit="cover"
+                    cachePolicy="memory-disk"
+                    accessible={false}
+                    style={{
+                      width: theme.layout.sampleStopImageSize,
+                      height: theme.layout.sampleStopImageSize,
+                      borderRadius: theme.radius.sm,
+                    }}
+                  />
                   <View style={[styles.grow, { gap: theme.spacing.xs }]}>
                     <View
                       style={[

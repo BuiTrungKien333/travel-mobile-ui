@@ -21,12 +21,14 @@ const sampleCovers = [
 
 export function getTripCoverImage(trip: Trip): ImageSource | string | number {
   if (trip.coverImage) return trip.coverImage;
+  return getSampleImage(trip.id);
+}
 
-  // Distribute by trip ID so the choice survives re-renders, edits and reloads
-  // without storing another copy of server data or changing the trip's cover.
+// Keep the selection stable while scrolling, editing, and reloading.
+export function getSampleImage(id: string): ImageSource | number {
   let hash = 2166136261;
-  for (let index = 0; index < trip.id.length; index++) {
-    hash = Math.imul(hash ^ trip.id.charCodeAt(index), 16777619);
+  for (let index = 0; index < id.length; index++) {
+    hash = Math.imul(hash ^ id.charCodeAt(index), 16777619);
   }
   return sampleCovers[(hash >>> 0) % sampleCovers.length];
 }

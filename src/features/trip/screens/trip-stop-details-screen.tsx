@@ -1,4 +1,6 @@
 import { router } from "expo-router";
+import { UI_PREVIEW_ENABLED } from "@/constants/development";
+import { ConnectedTripStopDetailsScreen } from "./connected-trip-stop-details-screen";
 import { useState } from "react";
 import { KeyboardAvoidingView, Platform, StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -35,6 +37,22 @@ function goBack() {
 }
 
 export function TripStopDetailsScreen({
+  tripId,
+  stopId,
+  day,
+}: {
+  tripId?: string;
+  stopId?: string;
+  day?: string;
+}) {
+  return UI_PREVIEW_ENABLED ? (
+    <PreviewTripStopDetailsScreen tripId={tripId} stopId={stopId} day={day} />
+  ) : (
+    <ConnectedTripStopDetailsScreen tripId={tripId} stopId={stopId} day={day} />
+  );
+}
+
+function PreviewTripStopDetailsScreen({
   tripId,
   stopId,
   day,

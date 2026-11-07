@@ -26,6 +26,7 @@ export const tripPlacesApi = {
   async addPlaces(
     tripId: string,
     placeIds: string[],
+    date?: string,
   ): Promise<TripPlaceResponse[]> {
     if (
       !placeIds.length ||
@@ -38,7 +39,7 @@ export const tripPlacesApi = {
       throw new ApiError("INVALID_PLACE");
     const response = await apiClient.post<unknown>(
       `${base}/${encodeURIComponent(tripId)}/places/batch`,
-      { placeIds },
+      { placeIds, ...(date ? { date } : {}) },
     );
     return parse(tripPlacesEnvelopeSchema, response.data);
   },

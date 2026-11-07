@@ -24,13 +24,13 @@ export function useTripPlacesQuery(tripId: string | undefined) {
     },
   });
 }
-export function useAddTripPlacesMutation(tripId: string) {
+export function useAddTripPlacesMutation(tripId: string, date?: string) {
   const owner = useProfile().data?.id;
   const client = useQueryClient();
   return useMutation({
     mutationFn: async (placeIds: string[]) => {
       const version = authSession.getVersion();
-      const result = await tripPlacesApi.addPlaces(tripId, placeIds);
+      const result = await tripPlacesApi.addPlaces(tripId, placeIds, date);
       if (version !== authSession.getVersion()) throw new ApiError("CANCELLED");
       return result;
     },
@@ -39,6 +39,9 @@ export function useAddTripPlacesMutation(tripId: string) {
       await Promise.all([
         client.invalidateQueries({
           queryKey: tripQueryKeys.places(owner, tripId),
+        }),
+        client.invalidateQueries({
+          queryKey: tripQueryKeys.itinerary(owner, tripId),
         }),
         client.invalidateQueries({
           queryKey: tripQueryKeys.detail(owner, tripId),

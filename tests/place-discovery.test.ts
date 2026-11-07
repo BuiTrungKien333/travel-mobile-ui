@@ -155,6 +155,14 @@ test("batch client uses one atomic request and rejects duplicate or preview IDs 
   ])
     await assert.rejects(tripPlacesApi.addPlaces(id, ids));
   assert.equal(requests.length, 1);
+  await tripPlacesApi.addPlaces(id, [province], "2026-11-20");
+  assert.equal(
+    JSON.stringify(requests[1]),
+    JSON.stringify({
+      url: `/api/v1/trips/${id}/places/batch`,
+      body: { placeIds: [province], date: "2026-11-20" },
+    }),
+  );
 });
 
 type Element = { type: unknown; props: Record<string, unknown> };
@@ -266,9 +274,12 @@ function pickerHarness() {
   };
   const render = (
     initialSelected?: import("../src/features/home/types/home-types.ts").TripStop[],
+    targetDay?: { date: string; dayNumber: number },
   ) => {
     cursor = 0;
-    return nodes(ConnectedPlacePickerScreen({ ...props, initialSelected }));
+    return nodes(
+      ConnectedPlacePickerScreen({ ...props, initialSelected, targetDay }),
+    );
   };
   const row = (tree: Element[]) => {
     const list = tree.find((n) => n.type === "FlatList")!;
@@ -289,6 +300,25 @@ function pickerHarness() {
 }
 const event = (node: Element, name: string) =>
   (node.props[name] as () => void)();
+
+test("day-scoped picker shows the selected day and confirms adding directly to it", () => {
+  const h = pickerHarness();
+  const day = { date: "2026-11-20", dayNumber: 2 };
+  let tree = h.render(undefined, day);
+  event(h.row(tree), "onToggle");
+  tree = h.render(undefined, day);
+  const labels = JSON.stringify(
+    tree
+      .filter((node) => node.type === "AppText")
+      .map((node) => node.props.children),
+  );
+  assert.match(labels, /Ngày 2, 20\/11/);
+  assert.doesNotMatch(labels, /chưa xếp lịch/i);
+  assert.equal(
+    tree.filter((node) => node.type === "AppButton").at(-1)?.props.children,
+    "Thêm 1 điểm vào ngày 2",
+  );
+});
 
 test("picker retains selection after an error and locks double submit/back while saving", async () => {
   const h = pickerHarness();

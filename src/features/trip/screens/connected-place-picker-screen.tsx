@@ -38,12 +38,14 @@ export function ConnectedPlacePickerScreen({
   initialSelected = [],
   onApply,
   onClose,
+  targetDay,
 }: {
   destination: string;
   scope: PlaceScope;
   initialSelected?: TripStop[];
   onApply: (stops: TripStop[]) => Promise<void> | void;
   onClose: () => void;
+  targetDay?: { date: string; dayNumber: number };
 }) {
   const theme = useAppTheme();
   const insets = useScreenInsets();
@@ -193,7 +195,10 @@ export function ConnectedPlacePickerScreen({
                 }}
               >
                 <AppText variant="label" tone="primary">
-                  {destination} · {copy.pool}
+                  {destination} ·{" "}
+                  {targetDay
+                    ? `${copy.day} ${targetDay.dayNumber}, ${targetDay.date.slice(8)}/${targetDay.date.slice(5, 7)}`
+                    : copy.pool}
                 </AppText>
                 <AppInput
                   label={copy.search}
@@ -342,9 +347,11 @@ export function ConnectedPlacePickerScreen({
                 {copy.selectionLimit}
               </AppText>
             ) : null}
-            <AppText variant="caption" tone="muted">
-              {copy.unscheduledHint}
-            </AppText>
+            {!targetDay ? (
+              <AppText variant="caption" tone="muted">
+                {copy.unscheduledHint}
+              </AppText>
+            ) : null}
             {focus ? (
               <AppButton
                 disabled={!detail.data || (!checked(focus) && limited)}
@@ -362,7 +369,13 @@ export function ConnectedPlacePickerScreen({
                 loading={saving}
                 disabled={!canApply}
                 onPress={() => void apply()}
-              >{`${copy.saveSelection} (${selected.length})`}</AppButton>
+              >
+                {targetDay
+                  ? copy.addDay
+                      .replace("{count}", String(selected.length))
+                      .replace("{day}", String(targetDay.dayNumber))
+                  : `${copy.saveSelection} (${selected.length})`}
+              </AppButton>
             )}
           </View>
         </KeyboardAvoidingView>

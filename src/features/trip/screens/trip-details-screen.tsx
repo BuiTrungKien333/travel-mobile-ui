@@ -544,8 +544,6 @@ function TripDetailsContent({
             <TripPlanningDaySelector
               trip={trip}
               selectedDate={day?.date}
-              backlog={backlog}
-              backlogCount={unscheduled.length}
               onSelect={selectDate}
               onAddDay={mode === "planning" ? addDay : undefined}
               addDayDisabled={tripDuration(trip) >= tripFormLimits.days}
@@ -601,8 +599,6 @@ function TripDetailsContent({
               <TripDaySelector
                 trip={trip}
                 selectedDate={day?.date}
-                backlog={backlog}
-                backlogCount={unscheduled.length}
                 onSelect={selectDate}
               />
             </View>
@@ -709,8 +705,6 @@ function TripDetailsContent({
                         day={day}
                         canEdit={canEdit}
                         empty={!timedStops.length}
-                        backlogCount={unscheduled.length}
-                        onBacklog={() => selectDate(null)}
                         onAdd={() => day && openPlacePicker(day.date)}
                       />
                     </View>

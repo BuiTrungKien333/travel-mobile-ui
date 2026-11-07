@@ -114,6 +114,34 @@ test("Live summary opens the shared optimizer for a day with multiple stops", ()
   );
 });
 
+test("connected day tools display the saved route summary and chosen transport", () => {
+  const opened: string[] = [];
+  const props = {
+    trip,
+    day: trip.days[0],
+    today: "2026-10-21",
+    canEdit: true,
+    editHistory: false,
+    showWeather: false,
+    routeSummary: "12,4 km · 45 phút",
+    transportLabel: "Đi bộ",
+    transportIcon: "walk" as const,
+    onSheetChange: (sheet: { kind: string }) => opened.push(sheet.kind),
+  };
+  const tools = TripDayTools(props);
+  assert.match(text(tools), /12,4 km · 45 phút/);
+  const transport = elements(tools).find((item) =>
+    item.accessibilityLabel?.endsWith(": Đi bộ"),
+  );
+  assert.ok(transport);
+  transport.onPress?.();
+  assert.deepEqual(opened, ["transport"]);
+  assert.doesNotMatch(
+    text(TripDayTools({ ...props, routeSummary: null })),
+    /12,4 km/,
+  );
+});
+
 test("Live timeline check-in is a separate marker control without opening details or adding a large button", () => {
   let visits = 0;
   let opened = 0;

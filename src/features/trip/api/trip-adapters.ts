@@ -5,8 +5,24 @@ import {
   saveItineraryRequestSchema,
   type ItineraryResponse,
   type SaveItineraryRequest,
+  type SaveItineraryDayRequest,
 } from "./itinerary-types";
 import type { TripPlaceResponse } from "./trip-types";
+
+export function toDayStops(
+  base: ItineraryResponse,
+  date: string,
+): SaveItineraryDayRequest["stops"] {
+  return (base.days.find((day) => day.date === date)?.stops ?? []).map(
+    (stop) => ({
+      placeId: stop.placeId,
+      sequence: stop.sequence,
+      arrivalTime: stop.arrivalTime,
+      durationMinutes: stop.durationMinutes,
+      note: stop.note,
+    }),
+  );
+}
 
 export function toTripStop(value: TripPlaceResponse): TripStop {
   const place = value.place;

@@ -95,37 +95,39 @@ export function TripVisitCard({
           {range?.nextDay ? ` · ${copy.visitNextDay}` : ""}
         </AppText>
       </View>
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          gap: theme.spacing.sm,
-          paddingTop: theme.spacing.sm,
-          borderTopWidth: StyleSheet.hairlineWidth,
-          borderTopColor: theme.colors.softActionBorder,
-        }}
-      >
-        <AppIcon
-          name="pin"
-          variant="light"
-          size={theme.layout.iconSmall}
-          color={theme.colors.primaryText}
-        />
-        <AppText variant="caption" style={{ flex: 1 }}>
-          {copy.visitPin}
-        </AppText>
-        <Switch
-          accessibilityLabel={copy.visitPin}
-          disabled={!onPin}
-          value={stop.pinned ?? false}
-          onValueChange={onPin}
-          trackColor={{
-            false: theme.colors.border,
-            true: theme.colors.primaryText,
+      {onPin || stop.pinned ? (
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: theme.spacing.sm,
+            paddingTop: theme.spacing.sm,
+            borderTopWidth: StyleSheet.hairlineWidth,
+            borderTopColor: theme.colors.softActionBorder,
           }}
-          thumbColor={theme.colors.surface}
-        />
-      </View>
+        >
+          <AppIcon
+            name="pin"
+            variant="light"
+            size={theme.layout.iconSmall}
+            color={theme.colors.primaryText}
+          />
+          <AppText variant="caption" style={{ flex: 1 }}>
+            {copy.visitPin}
+          </AppText>
+          <Switch
+            accessibilityLabel={copy.visitPin}
+            disabled={!onPin}
+            value={stop.pinned ?? false}
+            onValueChange={onPin}
+            trackColor={{
+              false: theme.colors.border,
+              true: theme.colors.primaryText,
+            }}
+            thumbColor={theme.colors.surface}
+          />
+        </View>
+      ) : null}
       {stop.note ? (
         <AppText variant="caption" tone="muted">
           {stop.note}

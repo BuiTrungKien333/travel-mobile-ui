@@ -120,12 +120,28 @@ export function TripMapboxView({
     const markers = pins.map((pin) => {
       const button = document.createElement("button");
       button.type = "button";
-      button.textContent = String(pin.number);
+      const badge = document.createElement("span");
+      badge.textContent = String(pin.number);
       button.setAttribute("aria-label", `${pin.number}. ${pin.name}`);
       button.setAttribute("aria-pressed", String(pin.id === focusedId));
       Object.assign(button.style, {
         width: `${theme.layout.touchTarget}px`,
         height: `${theme.layout.touchTarget}px`,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "0",
+        border: "0",
+        background: "transparent",
+        cursor: "pointer",
+      });
+      Object.assign(badge.style, {
+        width: `${theme.layout.tripMapMarkerSize}px`,
+        height: `${theme.layout.tripMapMarkerSize}px`,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        boxSizing: "border-box",
         borderRadius: "50%",
         border: `2px solid ${theme.colors.onHero}`,
         color: theme.colors.onHero,
@@ -133,9 +149,11 @@ export function TripMapboxView({
           pin.id === focusedId
             ? theme.colors.primaryText
             : theme.colors.heroSurface,
-        cursor: "pointer",
         fontFamily: theme.typography.fontFamily.semibold,
+        fontSize: `${theme.typography.fontSize.xs}px`,
+        lineHeight: `${theme.typography.lineHeight.xs}px`,
       });
+      button.appendChild(badge);
       button.addEventListener("click", (event) => {
         event.stopPropagation();
         select(pin.id);

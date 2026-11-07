@@ -1,5 +1,36 @@
 # Kế hoạch nghiệm thu theo màn hình sau merge
 
+## QA-5 · Kéo và vuốt timeline thật · 07/11/2026
+
+Timeline thật dùng lại gesture và thiết kế preview, lưu qua `PUT /api/v1/trips/{tripId}/itinerary/days/{date}`. Chỉ sửa ngày được backend cho phép: chuyến đang lên kế hoạch, hoặc hôm nay/ngày tới của chuyến đang diễn ra. Không mở chỉnh sửa offline.
+
+1. Trong một ngày có ít nhất ba điểm, giữ một thẻ rồi kéo lên/xuống và thả. Thứ tự, ghim số trên bản đồ và timeline cập nhật; tải lại vẫn giữ. Giờ đến giữ theo vị trí, thời lượng/ghi chú đi theo địa điểm. Ngày khác không thay đổi.
+2. Vuốt một thẻ sang trái rồi bấm thùng rác. Chỉ gỡ lần ghé trong ngày đang xem. Bấm **Hoàn tác** để khôi phục; tải lại kiểm tra. Vuốt thông báo sang một bên hoặc bấm đóng để bỏ đề xuất hoàn tác.
+3. Tắt mạng rồi kéo hoặc gỡ: hiển thị lỗi ở đáy, trả timeline về dữ liệu đã lưu và cho thử lại. Khi đang lưu, không gửi thao tác ghi thứ hai hoặc đổi ngày. Không tự lưu offline.
+4. Mở cùng chuyến ở hai cửa sổ. Sau khi A lưu, thử kéo ở B với dữ liệu cũ; B báo xung đột và yêu cầu tải lại. Thử cả trường hợp A sửa sau khi B đã lưu nhưng trước lúc B bấm Hoàn tác: không ghi đè lịch mới.
+5. Đổi ngày/mở form sửa rồi kiểm tra thông báo Hoàn tác cũ đã đóng. Chuyến kết thúc, chuyến hủy và ngày quá khứ của chuyến đang diễn ra không có vuốt gỡ/kéo sắp xếp.
+6. Thử trên Android: cuộn bình thường không kích hoạt kéo, giữ rồi kéo không mở chi tiết, vuốt ngang không mở chi tiết; TalkBack có hành động Di chuyển lên/xuống và Gỡ khỏi ngày.
+
+Kiểm tra tự động: 45 ca mobile liên quan đạt, gồm 6 ca mới về lưu thứ tự/metadata, rollback, retry, phiên bản và Hoàn tác. Chờ nghiệm thu gesture trực tiếp trên thiết bị; không coi bundle Android là kiểm thử thao tác native.
+
+## QA-5 · Chi tiết địa điểm từ timeline
+
+Chạm địa điểm trong một ngày để mở màn hình chi tiết theo thiết kế cũ. Bản đồ dùng Mapbox, tọa độ và địa chỉ từ API. Card Lịch trình của bạn hiển thị đúng chuyến, ngày, giờ và thời lượng đã lưu. Nút sửa mở modal riêng.
+
+1. Sửa giờ đến, thời lượng và ghi chú, lưu rồi quay lại timeline. Mở lại và tải lại trang để kiểm tra dữ liệu. Các điểm khác trong ngày giữ nguyên.
+2. Với chuyến đang diễn ra, thử Đã ghé và bỏ đánh dấu, rồi quay về Home kiểm tra trạng thái. Nút Chỉ đường mở rộng bản đồ tại điểm đang xem.
+3. Bấm Gỡ khỏi lịch, thử hủy trước, sau đó xác nhận. Chỉ gỡ lần ghé trong ngày đang xem. Các ngày khác và các địa điểm khác giữ nguyên.
+4. Mở cùng lịch ở hai cửa sổ, sửa ở cửa sổ A rồi lưu form cũ ở B. B nhận lỗi phiên bản, giữ form và yêu cầu tải lại.
+5. Mở chuyến đã kết thúc hoặc hủy để kiểm tra chế độ chỉ đọc. Thử mất mạng khi tải hoặc lưu, kiểm tra lỗi và thao tác thử lại.
+
+Giờ mở cửa và giá vé dùng API chi tiết địa điểm. Tiện ích và giới thiệu chưa có dữ liệu được ghi rõ. Ảnh thiếu dùng bộ ảnh trong assets/images/examples, có chú thích ảnh mẫu trong album. Ghim địa điểm chưa có API lưu nên không hiển thị công tắc thao tác ở luồng thật. Chờ nghiệm thu giao diện và gesture trên thiết bị.
+
+## Thêm địa điểm trực tiếp vào ngày đang chọn
+
+Trong chi tiết chuyến đi, chọn Ngày 1 rồi bấm Thêm địa điểm. Màn hình chọn điểm hiển thị đúng ngày và nút “Thêm N điểm vào ngày 1”. Sau khi lưu, các điểm xuất hiện cuối timeline Ngày 1 và giữ nguyên sau khi tải lại. Các ngày khác giữ nguyên. Điểm mới có thời lượng mặc định 45 phút và chưa đặt giờ đến.
+
+API `POST /api/v1/trips/{tripId}/places/batch` nhận thêm field `date` theo `YYYY-MM-DD`, ví dụ `{"placeIds":["<placeId>"],"date":"2026-11-20"}`. Địa điểm trong chuyến và lịch ngày được lưu trong cùng transaction. Gửi lại cùng request giữ một điểm cho mỗi địa điểm trong ngày. Nếu ngày ngoài chuyến hoặc là ngày quá khứ của chuyến đang đi, toàn bộ lần thêm bị hủy và UI giữ lựa chọn để người dùng xử lý.
+
 ## QA-5B · Chi tiết chuyến đi và Mapbox · 07/11/2026
 
 Màn hình thật dùng trạng thái và ngày đánh giá từ API chi tiết chuyến đi. Sắp khởi hành dùng lịch trình theo ngày, Chờ xếp lịch và đề xuất tối ưu có bước xem trước. Đang diễn ra dùng trạng thái đã ghé đã lưu, nút Chỉ đường mở rộng bản đồ và nút chụp dẫn vào luồng camera hiện có. Đã kết thúc ưu tiên ảnh và ghi chú theo ngày, xem album và chia sẻ lịch trình.
@@ -33,7 +64,7 @@ Dùng base URL `http://localhost:18081` và header `Authorization: Bearer <acces
 | POST | `/api/v1/trips/{tripId}/itinerary/days/{date}/route/optimize?mode=DRIVE` | `order`, `originalOrder`, `distanceMeters`, `durationSeconds`. Áp dụng qua PUT theo ngày ở QA-5A. |
 | GET | `/api/v1/journal/memories?tripId={tripId}&date={date}&page=0&size=10` | Nhật ký phân trang theo ngày địa phương, có ghi chú và danh sách media. |
 
-Còn chờ nghiệm thu Mapbox live và thiết bị. Cấu hình điểm xuất phát, quay lại điểm xuất phát, ghim điểm dừng, kéo hoặc vuốt trực tiếp ở timeline thật và dẫn đường từng ngã rẽ chưa được nối trong lát này.
+Còn chờ nghiệm thu Mapbox live và thiết bị. Cấu hình điểm xuất phát, quay lại điểm xuất phát, ghim điểm dừng và dẫn đường từng ngã rẽ chưa được nối trong lát này. Kéo/vuốt timeline thật đã được bổ sung ở mục cập nhật QA-5 phía trên.
 
 ## QA-5A · Xếp lịch thủ công theo ngày
 

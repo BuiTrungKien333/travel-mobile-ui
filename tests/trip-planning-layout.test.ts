@@ -131,8 +131,6 @@ test("actual date items show day and abbreviated weekday/date; plus appends rath
       days: [{ date: "2026-10-24", stops: [] }],
     },
     selectedDate: "2026-10-24",
-    backlog: false,
-    backlogCount: 0,
     addDayDisabled: false,
     onSelect: (date) => {
       selected = date;
@@ -162,8 +160,6 @@ test("actual date items show day and abbreviated weekday/date; plus appends rath
       days: [{ date: "2026-10-24", stops: [] }],
     },
     selectedDate: "2026-10-24",
-    backlog: false,
-    backlogCount: 0,
     addDayDisabled: false,
     onSelect: () => {},
   });
@@ -172,7 +168,11 @@ test("actual date items show day and abbreviated weekday/date; plus appends rath
     live.props.data.some((item) => item.kind === "add"),
     false,
   );
-  assert.equal(live.props.data.at(-1)?.kind, "backlog");
+  assert.equal(live.props.data.at(-1)?.kind, "day");
+  assert.equal(
+    node.props.data.some((item) => item.kind === "backlog"),
+    false,
+  );
   assert.equal(
     live.props.getItemLayout(null, live.props.data.length - 1).length,
     tokens.layout.tripPlanningDateTabWidth,

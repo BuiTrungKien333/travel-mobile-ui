@@ -1,4 +1,4 @@
-import { Image } from "expo-image";
+import { Image, type ImageSource } from "expo-image";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
@@ -6,14 +6,23 @@ import type { TripStop } from "@/features/home/types/home-types";
 import { getPlaceEditorialPreview } from "../data/place-editorial-preview";
 import { usePlaceSearchCopy } from "../i18n/place-search-copy";
 
-export function PlaceClassification({ place }: { place: TripStop }) {
+export function PlaceClassification({
+  place,
+  category,
+  openingStatus,
+}: {
+  place: TripStop;
+  category?: string;
+  openingStatus?: "OPEN" | "CLOSED" | "UNKNOWN";
+}) {
   const theme = useAppTheme();
   const { copy, locale } = usePlaceSearchCopy();
   const { entry } = getPlaceEditorialPreview(place);
   return (
     <View style={{ gap: theme.spacing.xs, marginTop: theme.spacing.xs }}>
       <AppText variant="caption" tone="primary">
-        {entry?.category[locale] ??
+        {category ??
+          entry?.category[locale] ??
           (place.locationType === "address"
             ? copy.privateAddress
             : copy.unclassified)}
@@ -22,18 +31,24 @@ export function PlaceClassification({ place }: { place: TripStop }) {
         variant="caption"
         style={{
           color:
-            entry?.state === "closed"
+            openingStatus === "CLOSED" || entry?.state === "closed"
               ? theme.colors.warning
-              : entry
+              : openingStatus === "OPEN" || entry
                 ? theme.colors.success
                 : theme.colors.textSecondary,
         }}
       >
-        {entry
-          ? entry.state === "open"
-            ? copy.openPreview
-            : copy.closedPreview
-          : copy.openingUnknown}
+        {openingStatus !== undefined
+          ? openingStatus === "OPEN"
+            ? copy.openNow
+            : openingStatus === "CLOSED"
+              ? copy.closedNow
+              : copy.openingUnknown
+          : entry
+            ? entry.state === "open"
+              ? copy.openPreview
+              : copy.closedPreview
+            : copy.openingUnknown}
       </AppText>
     </View>
   );
@@ -91,10 +106,17 @@ export function PlaceAmenities({ place }: { place: TripStop }) {
   );
 }
 
-export function PlaceIntroduction({ place }: { place: TripStop }) {
+export function PlaceIntroduction({
+  place,
+  samplePhotos,
+}: {
+  place: TripStop;
+  samplePhotos?: (ImageSource | string | number)[];
+}) {
   const theme = useAppTheme();
   const { copy, locale } = usePlaceSearchCopy();
-  const { entry, photos } = getPlaceEditorialPreview(place);
+  const { entry, photos: previewPhotos } = getPlaceEditorialPreview(place);
+  const photos = samplePhotos ?? previewPhotos;
   return (
     <View style={{ gap: theme.spacing.md }}>
       <AppText variant="label">{copy.introduction}</AppText>

@@ -35,7 +35,7 @@ export function TripBacklogRow({
       })}
     >
       <Image
-        source={getStopImage(stop.id)}
+        source={getStopImage(stop.placeId ?? stop.id)}
         contentFit="cover"
         cachePolicy="memory-disk"
         accessible={false}

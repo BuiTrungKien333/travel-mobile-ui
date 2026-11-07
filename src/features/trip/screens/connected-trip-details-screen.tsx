@@ -1,11 +1,14 @@
 import { router } from "expo-router";
 import { useMemo, useRef, useState } from "react";
 import { Modal, View } from "react-native";
+import { TextAction } from "@/features/home/components/home-primitives";
+import { TripDayTools } from "../components/trip-details-overview";
 import Animated, { useSharedValue } from "react-native-reanimated";
 import { ScreenSafeArea } from "@/components/common/screen-safe-area";
 import { AppText } from "@/components/ui/app-text";
 import { AppButton } from "@/components/ui/app-button";
 import { useAppTheme } from "@/hooks/use-app-theme";
+import { useScreenInsets } from "@/hooks/use-screen-insets";
 import { useTripQuery } from "../api/trip-queries";
 import {
   useAddTripPlacesMutation,
@@ -14,7 +17,7 @@ import {
 } from "../api/trip-hooks";
 import { ConnectedPlacePickerScreen } from "./connected-place-picker-screen";
 import { usePlaceSearchCopy } from "../i18n/place-search-copy";
-import { toTrip } from "../api/trip-adapters";
+import { toTrip, toDayStops } from "../api/trip-adapters";
 import {
   useSaveItineraryDayMutation,
   useTripItineraryQuery,
@@ -27,6 +30,7 @@ import type { TripStop } from "@/features/home/types/home-types";
 import { ApiError } from "@/services/api/api-error";
 import { ConnectedStopScheduleSheet } from "../components/connected-stop-schedule-sheet";
 import { TripStopRow } from "../components/trip-stop-row";
+import { TripBacklogRow } from "../components/trip-backlog-row";
 import { TripDetailsSheet } from "../components/trip-details-sheet";
 import { TripReorder } from "../components/trip-reorder";
 import { useItineraryCopy } from "../i18n/itinerary-copy";
@@ -45,6 +49,10 @@ import { TripTimelineTail } from "../components/trip-timeline-states";
 import { TripOptimizationSheet } from "../components/trip-optimization-preview";
 import { usePlanningMapCollapse } from "../hooks/use-planning-map-collapse";
 import { useTripTimelineScroll } from "../hooks/use-trip-timeline-scroll";
+import { useTripTimelineDrag } from "../hooks/use-trip-timeline-drag";
+import { useConnectedTimelineActions } from "../hooks/use-connected-timeline-actions";
+import { TripUndoNotice } from "../components/trip-undo-notice";
+import { reorderDayStops } from "../utils/itinerary-day-order";
 import {
   useTripDayRoute,
   useOptimizeDayRoute,
@@ -59,9 +67,6 @@ import {
   tripApiErrorMessage,
   useTripIntegrationCopy,
 } from "../i18n/trip-integration-copy";
-
-import { TripWeatherModal } from "@/features/home/components/connected-trip-weather";
-import { useLiveWeatherCopy } from "@/features/weather/i18n/weather-copy";
 
 type ScheduleEdit =
   | { kind: "stop"; stop: TripStop; date?: string }
@@ -79,18 +84,6 @@ type Row =
 type DayStops = SaveItineraryDayRequest["stops"];
 const NO_STOPS: TripStop[] = [];
 
-function toDayStops(base: ItineraryResponse, date: string): DayStops {
-  return (base.days.find((day) => day.date === date)?.stops ?? []).map(
-    (stop) => ({
-      placeId: stop.placeId,
-      sequence: stop.sequence,
-      arrivalTime: stop.arrivalTime,
-      durationMinutes: stop.durationMinutes,
-      note: stop.note,
-    }),
-  );
-}
-
 function back() {
   if (router.canGoBack()) router.back();
   else router.replace("/tabs/trips");
@@ -106,6 +99,7 @@ export function ConnectedTripDetailsScreen({
   expandMap?: boolean;
 }) {
   const theme = useAppTheme();
+  const insets = useScreenInsets();
   const { copy } = useTripIntegrationCopy();
   const { copy: detailCopy } = useTripDetailsCopy();
   const query = useTripQuery(tripId);
@@ -116,10 +110,12 @@ export function ConnectedTripDetailsScreen({
   const [editor, setEditor] = useState<ScheduleEditor | null>(null);
   const [saved, setSaved] = useState(false);
   const saving = useRef(false);
-  const addPlaces = useAddTripPlacesMutation(tripId ?? "");
+  const [pickerDay, setPickerDay] = useState<{
+    date: string;
+    dayNumber: number;
+  }>();
+  const addPlaces = useAddTripPlacesMutation(tripId ?? "", pickerDay?.date);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [weatherOpen, setWeatherOpen] = useState(false);
-  const { copy: weatherCopy } = useLiveWeatherCopy();
   const { copy: placeCopy } = usePlaceSearchCopy();
   const [date, setDate] = useState<string | null | undefined>(selectedDate);
   const [viewport, setViewport] = useState(0);
@@ -171,7 +167,7 @@ export function ConnectedTripDetailsScreen({
     enabled: !!read && (scheduledEntries?.length ?? 0) >= 2,
   });
   const routeResult = routeQuery.data;
-  const route =
+  const resolvedRoute =
     routeResult?.status === "READY" &&
     routeResult.placeIds.length === scheduledEntries?.length &&
     routeResult.placeIds.every(
@@ -180,6 +176,34 @@ export function ConnectedTripDetailsScreen({
       ? routeResult.route
       : undefined;
   const selectionKey = `${tripId ?? ""}:${activeDate ?? "pool"}`;
+  const pool = trip?.unscheduledStops ?? NO_STOPS;
+  const day = trip?.days.find((entry) => entry.date === activeDate);
+  const sourceRows = backlog ? pool : (day?.stops ?? NO_STOPS);
+  const ready =
+    !!itinerary.data && !!places.data && !itinerary.isError && !places.isError;
+  const canEditDay = (dayDate: string) =>
+    read?.trip.mode === "PLANNING" ||
+    (read?.trip.mode === "LIVE" && dayDate >= read.context.evaluatedDate);
+  const timeline = useConnectedTimelineActions({
+    selectionKey,
+    date: activeDate,
+    itinerary: itinerary.data,
+    tripVersion: read?.trip.version,
+    stops: sourceRows,
+    editable:
+      !!activeDate && ready && canEditDay(activeDate) && !editor && !pickerOpen,
+    mutation: save,
+    saving,
+  });
+  const rows = timeline.stops;
+  const timelineDrag = useTripTimelineDrag({
+    stops: rows,
+    selectionKey,
+    onReorder: timeline.reorder,
+    onDragStart: timeline.begin,
+    onDragEnd: timeline.end,
+  });
+  const route = timeline.pending ? undefined : resolvedRoute;
   const { list, jump, onScrollToIndexFailed } = useTripTimelineScroll<Row>(
     selectionKey,
     selectorHeight,
@@ -222,21 +246,13 @@ export function ConnectedTripDetailsScreen({
         </View>
       </ScreenSafeArea>
     );
-  const pool = trip.unscheduledStops ?? NO_STOPS;
-  const day = trip.days.find((entry) => entry.date === activeDate);
-  const rows = backlog ? pool : (day?.stops ?? NO_STOPS);
   const nextStop =
     read.trip.mode === "LIVE" && activeDate === read.context.evaluatedDate
       ? rows.find((stop) => !stop.visited)?.id
       : undefined;
-  const canEditDay = (dayDate: string) =>
-    read.trip.mode === "PLANNING" ||
-    (read.trip.mode === "LIVE" && dayDate >= read.context.evaluatedDate);
   const editableDays = read.trip.days.filter((entry) => canEditDay(entry.date));
   const canManagePlaces =
     read.trip.mode !== "RECAP" && read.trip.mode !== "CANCELLED";
-  const ready =
-    !!itinerary.data && !!places.data && !itinerary.isError && !places.isError;
   const isConflict =
     save.error instanceof ApiError &&
     ["TRIP_007", "TRIP_008"].includes(save.error.code);
@@ -254,7 +270,8 @@ export function ConnectedTripDetailsScreen({
         : undefined;
 
   const openEditor = (value: ScheduleEdit) => {
-    if (!itinerary.data) return;
+    if (!itinerary.data || saving.current || timelineDrag.draggedId) return;
+    timeline.clear();
     save.reset();
     setSaved(false);
     setEditor({
@@ -267,12 +284,14 @@ export function ConnectedTripDetailsScreen({
     if (!saving.current && !optimizing.current) setEditor(null);
   };
   const refreshSchedule = async () => {
+    if (saving.current || timelineDrag.draggedId) return;
     const result = await Promise.all([
       itinerary.refetch(),
       places.refetch(),
       query.refetch(),
     ]);
     if (result.every((entry) => !entry.isError)) {
+      timeline.clear();
       save.reset();
       setEditor(null);
     }
@@ -335,8 +354,26 @@ export function ConnectedTripDetailsScreen({
                 ? itineraryCopy.routeUnavailable
                 : null;
   const selectDate = (nextDate: string | null) => {
+    if (saving.current || timelineDrag.draggedId) return;
+    timeline.clear();
+    save.reset();
+    setSaved(false);
     setFocus(undefined);
     setDate(nextDate);
+  };
+  const openPlacePicker = () => {
+    if (saving.current || timelineDrag.draggedId) return;
+    timeline.clear();
+    setPickerDay(
+      activeDate
+        ? {
+            date: activeDate,
+            dayNumber:
+              trip.days.findIndex((entry) => entry.date === activeDate) + 1,
+          }
+        : undefined,
+    );
+    setPickerOpen(true);
   };
   const showJournal = () => setJournalDate(activeDate ?? defaultDate);
   const openDirections = () => {
@@ -346,7 +383,14 @@ export function ConnectedTripDetailsScreen({
     setMapExpansion((value) => value + 1);
   };
   const markVisited = async () => {
-    if (!next?.placeId || !next.tripPlaceId || visiting.current) return;
+    if (
+      !next?.placeId ||
+      !next.tripPlaceId ||
+      visiting.current ||
+      saving.current ||
+      timelineDrag.draggedId
+    )
+      return;
     visiting.current = true;
     try {
       await visit.mutateAsync({
@@ -360,7 +404,15 @@ export function ConnectedTripDetailsScreen({
     }
   };
   const requestOptimization = async () => {
-    if (!canOptimize || !activeDate || !route || optimizing.current) return;
+    if (
+      !canOptimize ||
+      !activeDate ||
+      !route ||
+      optimizing.current ||
+      saving.current ||
+      timelineDrag.draggedId
+    )
+      return;
     optimizing.current = true;
     optimize.reset();
     openEditor({ kind: "optimize", date: activeDate, stops: rows, route });
@@ -380,15 +432,14 @@ export function ConnectedTripDetailsScreen({
     const placeById = new Map(
       edit.stops.map((stop) => [stop.id, stop.placeId]),
     );
-    const byPlace = new Map(stops.map((stop) => [stop.placeId, stop]));
-    const ordered = ids.flatMap((id, index) => {
-      const placeId = placeById.get(id);
-      const stop = placeId ? byPlace.get(placeId) : undefined;
-      return stop
-        ? [{ ...stop, arrivalTime: stops[index]?.arrivalTime ?? null }]
-        : [];
-    });
-    if (ordered.length === stops.length && new Set(ids).size === stops.length)
+    const ordered = reorderDayStops(
+      stops,
+      ids.flatMap((id) => {
+        const placeId = placeById.get(id);
+        return placeId ? [placeId] : [];
+      }),
+    );
+    if (ordered && ids.length === stops.length)
       void persistDay(edit.date, ordered);
   };
   const listRows: Row[] = [
@@ -400,6 +451,11 @@ export function ConnectedTripDetailsScreen({
         )
       : []),
   ];
+  const openActions = () => {
+    if (saving.current || timelineDrag.draggedId) return;
+    timeline.clear();
+    setActionsOpen(true);
+  };
   const header = (
     <TripDetailsHeader
       trip={trip}
@@ -407,7 +463,7 @@ export function ConnectedTripDetailsScreen({
       today={read.context.evaluatedDate}
       hideTripInfo={mode === "planning" || mode === "live"}
       onBack={back}
-      onMenu={() => setActionsOpen(true)}
+      onMenu={openActions}
     />
   );
   return (
@@ -427,6 +483,17 @@ export function ConnectedTripDetailsScreen({
           scrollEventThrottle={16}
           onScrollToIndexFailed={onScrollToIndexFailed}
           stickyHeaderIndices={[1]}
+          scrollEnabled={!timelineDrag.draggedId}
+          removeClippedSubviews={timelineDrag.draggedId ? false : undefined}
+          CellRendererComponentStyle={({ item }) => ({
+            zIndex:
+              item.kind === "days"
+                ? 2
+                : item.kind === "stop" &&
+                    timelineDrag.draggedId === item.stop.id
+                  ? 1
+                  : 0,
+          })}
           refreshing={places.isRefetching || itinerary.isRefetching}
           onRefresh={() => {
             void refreshSchedule();
@@ -476,10 +543,8 @@ export function ConnectedTripDetailsScreen({
                   trip={trip}
                   day={day}
                   empty={!rows.length}
-                  backlogCount={pool.length}
-                  onBacklog={() => selectDate(null)}
                   canEdit
-                  onAdd={() => setPickerOpen(true)}
+                  onAdd={openPlacePicker}
                 />
               </View>
             ) : null
@@ -500,7 +565,7 @@ export function ConnectedTripDetailsScreen({
                       today={read.context.evaluatedDate}
                       titleOnly
                       onBack={back}
-                      onEdit={() => setActionsOpen(true)}
+                      onEdit={openActions}
                       onOpenMap={mapScroll.show}
                     />
                   ) : null}
@@ -512,12 +577,6 @@ export function ConnectedTripDetailsScreen({
                     <TripPlanningDaySelector
                       trip={trip}
                       selectedDate={activeDate}
-                      backlog={backlog}
-                      backlogCount={
-                        ready
-                          ? pool.length
-                          : read.trip.readiness.unscheduledCount
-                      }
                       onSelect={selectDate}
                       addDayDisabled
                     />
@@ -537,114 +596,83 @@ export function ConnectedTripDetailsScreen({
                       onJournal={showJournal}
                     />
                   ) : null}
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      flexWrap: "wrap",
-                      gap: theme.spacing.sm,
-                    }}
-                  >
-                    <AppText
-                      accessibilityRole="header"
-                      variant="sectionTitle"
-                      style={{ flex: 1 }}
-                    >
-                      {backlog
-                        ? detailCopy.pool
-                        : `${rows.length} ${detailCopy.places}`}
+                  {backlog ? (
+                    <AppText accessibilityRole="header" variant="sectionTitle">
+                      {detailCopy.pool} ({rows.length})
                     </AppText>
-                    {!backlog && rows.length > 1 ? (
-                      <AppButton
-                        size="small"
-                        variant="soft"
-                        onPress={() => setModeOpen(true)}
-                      >
-                        {itineraryCopy.routeModes[routeMode]}
-                      </AppButton>
-                    ) : null}
-                    {activeDate &&
-                    canEditDay(activeDate) &&
-                    rows.length > 1 &&
-                    ready ? (
-                      <AppButton
-                        size="small"
-                        variant="outline"
-                        onPress={() =>
+                  ) : (
+                    <TripDayTools
+                      trip={trip}
+                      day={day}
+                      today={read.context.evaluatedDate}
+                      canEdit={
+                        !!activeDate &&
+                        ready &&
+                        canEditDay(activeDate) &&
+                        !save.isPending
+                      }
+                      editHistory={false}
+                      showWeather={false}
+                      reorderAtEnd={mode === "planning"}
+                      showOptimize={mode === "live" && canOptimize}
+                      routeSummary={total ?? routeMessage ?? null}
+                      transportLabel={itineraryCopy.routeModes[routeMode]}
+                      transportIcon={
+                        routeMode === "DRIVE"
+                          ? "car"
+                          : routeMode === "WALK"
+                            ? "walk"
+                            : "route"
+                      }
+                      onSheetChange={(sheet) => {
+                        if (saving.current || timelineDrag.draggedId) return;
+                        if (sheet.kind === "transport") setModeOpen(true);
+                        else if (sheet.kind === "reorder" && activeDate)
                           openEditor({
                             kind: "reorder",
                             date: activeDate,
                             stops: rows,
-                          })
-                        }
-                      >
-                        {detailCopy.reorder}
-                      </AppButton>
-                    ) : null}
-                    {mode === "live" && canOptimize ? (
-                      <DetailIconButton
-                        compact
-                        name="sparkles"
-                        label={detailCopy.optimize}
-                        onPress={() => void requestOptimization()}
-                      />
-                    ) : null}
-                  </View>
-                  {total ? (
-                    <AppText variant="caption" tone="muted">
-                      {total} · Mapbox
-                    </AppText>
-                  ) : null}
-                  {routeMessage ? (
-                    <AppText variant="caption" tone="muted">
-                      {routeMessage}
-                    </AppText>
-                  ) : null}
-                  {routeQuery.isError ? (
-                    <AppButton
-                      size="small"
-                      variant="outline"
-                      onPress={() => void routeQuery.refetch()}
-                    >
-                      {copy.retry}
-                    </AppButton>
-                  ) : null}
-                  {(mode === "planning" || mode === "live") && activeDate ? (
-                    <AppButton
-                      size="small"
-                      variant="outline"
-                      onPress={() => setWeatherOpen(true)}
-                    >
-                      {weatherCopy.title}
-                    </AppButton>
-                  ) : null}
-                  {mode === "live" &&
-                  tripId &&
-                  activeDate &&
-                  activeDate === today &&
-                  ready ? (
-                    <AppButton
-                      size="small"
-                      variant="outline"
-                      onPress={() =>
-                        router.push({
-                          pathname: "/memories/quick-capture",
-                          params: {
-                            tripId,
-                            day: activeDate,
-                            stopId: next?.tripPlaceId ?? "",
-                          },
-                        })
+                          });
+                        else if (sheet.kind === "optimize")
+                          void requestOptimization();
+                      }}
+                      actions={
+                        <>
+                          {routeQuery.isError ? (
+                            <TextAction
+                              label={copy.retry}
+                              onPress={() => void routeQuery.refetch()}
+                            />
+                          ) : null}
+                          {mode === "live" &&
+                          tripId &&
+                          activeDate === today &&
+                          ready ? (
+                            <DetailIconButton
+                              compact
+                              name="camera"
+                              label={itineraryCopy.capture}
+                              onPress={() =>
+                                router.push({
+                                  pathname: "/memories/quick-capture",
+                                  params: {
+                                    tripId,
+                                    day: activeDate,
+                                    stopId: next?.tripPlaceId ?? "",
+                                  },
+                                })
+                              }
+                            />
+                          ) : null}
+                        </>
                       }
-                    >
-                      {itineraryCopy.capture}
-                    </AppButton>
-                  ) : null}
+                    />
+                  )}
                   {backlog && canManagePlaces ? (
                     <AppButton
                       size="small"
                       variant="outline"
-                      onPress={() => setPickerOpen(true)}
+                      onPress={openPlacePicker}
                     >
                       {placeCopy.title}
                     </AppButton>
@@ -656,6 +684,15 @@ export function ConnectedTripDetailsScreen({
                       tone="primary"
                     >
                       {itineraryCopy.saved}
+                    </AppText>
+                  ) : null}
+                  {timeline.pending ? (
+                    <AppText
+                      accessibilityLiveRegion="polite"
+                      variant="caption"
+                      tone="muted"
+                    >
+                      {itineraryCopy.saving}
                     </AppText>
                   ) : null}
                   {visit.isError ? (
@@ -698,7 +735,9 @@ export function ConnectedTripDetailsScreen({
                 route?.legs.length === rows.length - 1
                   ? route.legs[index - 1]
                   : undefined;
-              const entry = scheduledEntries?.[index];
+              const entry = timeline.pending
+                ? undefined
+                : scheduledEntries?.[index];
               const savedLeg = leg
                 ? {
                     km: leg.distanceMeters / 1000,
@@ -726,44 +765,77 @@ export function ConnectedTripDetailsScreen({
                     visited={!!stop.visited}
                     next={stop.id === nextStop}
                     highlighted={selectedPin === stop.id}
-                    onOpen={() =>
-                      openEditor({ kind: "stop", date: activeDate, stop })
+                    drag={timeline.canInteract ? timelineDrag : undefined}
+                    onRemove={
+                      timeline.canInteract
+                        ? () => timeline.remove(stop.id)
+                        : undefined
                     }
+                    onOpen={() => {
+                      if (saving.current) return;
+                      timeline.clear();
+                      router.push({
+                        pathname: "/trip/place-details",
+                        params: {
+                          tripId: trip.id,
+                          day: activeDate,
+                          stopId: stop.itineraryItemId ?? stop.id,
+                        },
+                      });
+                    }}
                   />
                 </View>
               );
             }
             return (
-              <View
-                style={{
-                  marginHorizontal: theme.spacing.lg,
-                  marginBottom: theme.spacing.sm,
-                  padding: theme.spacing.md,
-                  gap: theme.spacing.xs,
-                  backgroundColor: theme.colors.surface,
-                  borderWidth: 1,
-                  borderColor: theme.colors.border,
-                  borderRadius: theme.radius.md,
-                }}
-              >
-                <AppText variant="label">{stop.name[locale]}</AppText>
-                <AppText variant="caption" tone="muted">
-                  {stop.address?.[locale] ?? placeCopy.addressUnavailable}
-                </AppText>
-                {editableDays.length ? (
-                  <AppButton
-                    size="small"
-                    variant="soft"
-                    onPress={() => openEditor({ kind: "stop", stop })}
-                  >
-                    {itineraryCopy.schedule}
-                  </AppButton>
-                ) : null}
+              <View style={{ paddingHorizontal: theme.spacing.lg }}>
+                <TripBacklogRow
+                  stop={stop}
+                  canEdit={ready && editableDays.length > 0}
+                  onPress={() => openEditor({ kind: "stop", stop })}
+                />
               </View>
             );
           }}
         />
       </View>
+      {timeline.canUndo || (timeline.hasFailure && scheduleError) ? (
+        <View
+          style={{
+            paddingBottom:
+              mode === "planning" && !canOptimize ? insets.bottom : 0,
+          }}
+        >
+          {timeline.canUndo ? (
+            <TripUndoNotice
+              key={selectionKey + (itinerary.data?.updatedAt ?? "")}
+              message={itineraryCopy.saved}
+              onUndo={timeline.undo}
+              onDismiss={timeline.clear}
+            />
+          ) : (
+            <View
+              style={{
+                paddingHorizontal: theme.spacing.lg,
+                paddingVertical: theme.spacing.sm,
+                gap: theme.spacing.xs,
+              }}
+            >
+              <AppText accessibilityRole="alert" variant="caption" tone="error">
+                {scheduleError}
+              </AppText>
+              <TextAction
+                label={timeline.canRetry ? copy.retry : itineraryCopy.reload}
+                onPress={
+                  timeline.canRetry
+                    ? timeline.retry
+                    : () => void refreshSchedule()
+                }
+              />
+            </View>
+          )}
+        </View>
+      ) : null}
       {(mode === "live" || mode === "recap") && !defaultDate ? null : (
         <TripDetailsActions
           trip={trip}
@@ -776,7 +848,7 @@ export function ConnectedTripDetailsScreen({
           onVisited={() => void markVisited()}
           visitPending={visit.isPending}
           onJournal={showJournal}
-          onInfo={() => setActionsOpen(true)}
+          onInfo={openActions}
         />
       )}
       {editor?.kind === "stop" ? (
@@ -949,14 +1021,6 @@ export function ConnectedTripDetailsScreen({
           <ConnectedTripRecap tripId={trip.id} date={journalDate} />
         </TripDetailsSheet>
       ) : null}
-      {weatherOpen ? (
-        <TripWeatherModal
-          tripId={trip.id}
-          destination={trip.destination}
-          date={activeDate ?? undefined}
-          onClose={() => setWeatherOpen(false)}
-        />
-      ) : null}
       {pickerOpen ? (
         <Modal
           visible
@@ -969,6 +1033,7 @@ export function ConnectedTripDetailsScreen({
           <ConnectedPlacePickerScreen
             destination={trip.destination}
             scope={{ tripId: read.trip.id }}
+            targetDay={pickerDay}
             onClose={() => {
               if (!addPlaces.isPending) setPickerOpen(false);
             }}

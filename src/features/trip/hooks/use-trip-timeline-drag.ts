@@ -8,10 +8,14 @@ export function useTripTimelineDrag({
   stops,
   selectionKey,
   onReorder,
+  onDragStart,
+  onDragEnd,
 }: {
   stops: TripStop[];
   selectionKey: string;
   onReorder: (ids: string[]) => void;
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
 }) {
   const theme = useAppTheme();
   const slots = useSharedValue<TimelineSlot[]>([]);
@@ -43,6 +47,7 @@ export function useTripTimelineDrag({
     active.set(null);
     offset.set(0);
     setDraggedId(null);
+    onDragEnd?.();
   }
   function finish(id: string, to: number) {
     const ids = moveTimelineStop(stops, id, to);
@@ -64,7 +69,10 @@ export function useTripTimelineDrag({
     offset,
     openSwipe,
     draggedId,
-    begin: setDraggedId,
+    begin: (id: string) => {
+      onDragStart?.();
+      setDraggedId(id);
+    },
     reset,
     finish,
     measure,

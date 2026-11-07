@@ -189,18 +189,33 @@ export function TripMapboxView({
                 height: theme.layout.touchTarget,
                 alignItems: "center",
                 justifyContent: "center",
-                borderRadius: theme.radius.full,
-                backgroundColor:
-                  pin.id === focusedId
-                    ? theme.colors.primaryText
-                    : theme.colors.heroSurface,
-                borderWidth: 2,
-                borderColor: theme.colors.onHero,
               }}
             >
-              <AppText variant="label" style={{ color: theme.colors.onHero }}>
-                {pin.number}
-              </AppText>
+              <View
+                style={{
+                  width: theme.layout.tripMapMarkerSize,
+                  height: theme.layout.tripMapMarkerSize,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: theme.radius.full,
+                  backgroundColor:
+                    pin.id === focusedId
+                      ? theme.colors.primaryText
+                      : theme.colors.heroSurface,
+                  borderWidth: 2,
+                  borderColor: theme.colors.onHero,
+                }}
+              >
+                <AppText
+                  variant="caption"
+                  style={{
+                    color: theme.colors.onHero,
+                    fontFamily: theme.typography.fontFamily.semibold,
+                  }}
+                >
+                  {pin.number}
+                </AppText>
+              </View>
             </Pressable>
           </MarkerView>
         ))}

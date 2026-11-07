@@ -351,7 +351,7 @@
     "/trips/{tripId}/places/batch": {
       "post": {
         "operationId": "addStoredTripPlaces",
-        "summary": "Atomic retryable addition of stored Place UUIDs",
+        "summary": "Atomic retryable addition of stored Place UUIDs, optionally scheduled into a trip day",
         "parameters": [
           {
             "name": "tripId",
@@ -383,6 +383,12 @@
                     "minItems": 1,
                     "maxItems": 50,
                     "uniqueItems": true
+                  },
+                  "date": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true,
+                    "description": "When supplied, append selected places to this editable trip day in the same transaction."
                   }
                 }
               }

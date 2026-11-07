@@ -7,21 +7,17 @@ import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 
 type DateItem =
   | { key: string; kind: "day"; date: string; index: number }
-  | { key: "backlog" | "add"; kind: "backlog" | "add" };
+  | { key: "add"; kind: "add" };
 
 export function TripPlanningDaySelector({
   trip,
   selectedDate,
-  backlog,
-  backlogCount,
   onSelect,
   onAddDay,
   addDayDisabled,
 }: {
   trip: Trip;
   selectedDate?: string;
-  backlog: boolean;
-  backlogCount: number;
   onSelect: (date: string | null) => void;
   onAddDay?: () => void;
   addDayDisabled: boolean;
@@ -39,15 +35,12 @@ export function TripPlanningDaySelector({
         index,
       }),
     ),
-    { key: "backlog", kind: "backlog" },
     ...(onAddDay ? [{ key: "add", kind: "add" } as const] : []),
   ];
-  const current = backlog
-    ? trip.days.length
-    : Math.max(
-        0,
-        trip.days.findIndex((day) => day.date === selectedDate),
-      );
+  const current = Math.max(
+    0,
+    trip.days.findIndex((day) => day.date === selectedDate),
+  );
   return (
     <FlatList
       horizontal
@@ -88,22 +81,14 @@ export function TripPlanningDaySelector({
               />
             </Pressable>
           );
-        const selected =
-          item.kind === "day"
-            ? !backlog && item.date === selectedDate
-            : backlog;
-        const date =
-          item.kind === "day" ? new Date(`${item.date}T12:00:00Z`) : null;
+        const selected = item.date === selectedDate;
+        const date = new Date(`${item.date}T12:00:00Z`);
         return (
           <Pressable
             accessibilityRole="tab"
             accessibilityState={{ selected }}
-            accessibilityLabel={
-              item.kind === "day"
-                ? `${copy.day} ${item.index + 1}, ${new Intl.DateTimeFormat(locale, { dateStyle: "full", timeZone: "UTC" }).format(new Date(`${item.date}T12:00:00Z`))}`
-                : `${copy.pool} (${backlogCount})`
-            }
-            onPress={() => onSelect(item.kind === "day" ? item.date : null)}
+            accessibilityLabel={`${copy.day} ${item.index + 1}, ${new Intl.DateTimeFormat(locale, { dateStyle: "full", timeZone: "UTC" }).format(date)}`}
+            onPress={() => onSelect(item.date)}
             style={({ pressed }) => ({
               width,
               minHeight: theme.layout.touchTarget,
@@ -125,14 +110,10 @@ export function TripPlanningDaySelector({
               }}
             >
               <AppText variant="label">
-                {item.kind === "day"
-                  ? `${copy.day} ${item.index + 1}`
-                  : copy.pool}
+                {`${copy.day} ${item.index + 1}`}
               </AppText>
               <AppText variant="caption" tone="muted">
-                {date
-                  ? `${copy.shortWeekdays[date.getUTCDay()]}, ${String(date.getUTCDate()).padStart(2, "0")}/${String(date.getUTCMonth() + 1).padStart(2, "0")}`
-                  : `(${backlogCount})`}
+                {`${copy.shortWeekdays[date.getUTCDay()]}, ${String(date.getUTCDate()).padStart(2, "0")}/${String(date.getUTCMonth() + 1).padStart(2, "0")}`}
               </AppText>
             </View>
           </Pressable>

@@ -1,5 +1,18 @@
 # Tiến độ Travel Mobile UI
 
+### QA-5 · Kéo/vuốt timeline và Hoàn tác · 07/11/2026
+
+- Nối gesture kéo đổi thứ tự và vuốt gỡ từ bản UI vào API lịch ngày có kiểm tra phiên bản. Giữ khung giờ theo vị trí, thời lượng/ghi chú theo địa điểm, không sửa ngày khác hoặc xóa địa điểm khỏi danh mục chuyến.
+- Có phản hồi ngay trong lúc lưu; lỗi trả lại dữ liệu query, cho thử lại. Hoàn tác dùng phiên bản sau lần lưu thành công, không ghi đè lịch mới từ cửa sổ khác. Chặn ghi lặp và khóa gesture ở ngày chỉ đọc.
+- 45 kiểm tra mobile liên quan, TypeScript strict/no-unused và export web/Android đạt. Checklist nghiệm thu web/Android ở đầu [kế hoạch QA](QA-ACCEPTANCE-PLAN.md); chờ người dùng thử gesture thực tế. Không đổi backend hoặc thêm dependency trong lượt này.
+
+### QA-5 · Chi tiết địa điểm từ timeline · 07/11/2026
+
+- Luồng thật mở màn hình chi tiết địa điểm khi chạm timeline, tái sử dụng bố cục bản đồ kéo mở rộng, địa chỉ, thông tin địa điểm và card lịch ghé. Form sửa giờ, thời lượng và ghi chú nằm trong modal riêng.
+- Dùng API lịch ngày có kiểm tra phiên bản để lưu và gỡ lần ghé trong ngày. Đánh dấu đã ghé dùng Place UUID, cập nhật dữ liệu Home và timeline qua cache hiện có.
+- Chuyến kết thúc hoặc hủy giữ chế độ chỉ đọc. Metadata chưa có được ghi rõ, ảnh mẫu chỉ dùng để minh họa, ghim địa điểm còn chờ API.
+- Checklist mới ở đầu [kế hoạch nghiệm thu](QA-ACCEPTANCE-PLAN.md). Chờ người dùng kiểm tra Android/web.
+
 ### QA-5B · Chi tiết chuyến đi và Mapbox · 07/11/2026
 
 - Nối giao diện chi tiết Sắp khởi hành, Đang diễn ra và Đã kết thúc với dữ liệu chuyến, lịch, thời tiết, điểm đã ghé và nhật ký theo ngày. Tái sử dụng map pane, dải ngày, timeline và sheet tối ưu.

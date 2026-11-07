@@ -97,6 +97,7 @@ export const layout = {
   nextTripIconSize: 64,
   sampleStopImageSize: 64,
   sampleStopNumberSize: 24,
+  tripMapMarkerSize: 28,
   compactTextActionPaddingVertical: 10,
   weatherArtworkSize: 40,
   ongoingHeaderWeatherArtworkSize: 24,

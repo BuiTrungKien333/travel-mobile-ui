@@ -10,7 +10,10 @@ const vi = {
   noTripDates: "Chọn ngày bắt đầu và kết thúc để xếp lịch cho chuyến đi.",
   pickSaved: "Xếp địa điểm đã lưu",
   saved: "Đã lưu lịch trình",
+  saving: "Đang lưu lịch trình…",
   remove: "Gỡ khỏi ngày",
+  removeDayHint:
+    "Gỡ địa điểm khỏi ngày đang xem? Lịch của các ngày khác vẫn được giữ.",
   removeHint:
     "Địa điểm sẽ trở về Chờ xếp lịch nếu không còn nằm ở ngày nào khác.",
   reload: "Bỏ bản chỉnh sửa và tải lại",
@@ -49,7 +52,10 @@ const en: typeof vi = {
   noTripDates: "Set a start and end date to schedule stops for this trip.",
   pickSaved: "Schedule a saved place",
   saved: "Itinerary saved",
+  saving: "Saving itinerary…",
   remove: "Remove from day",
+  removeDayHint:
+    "Remove this stop from the selected day? Other days keep their schedules.",
   removeHint: "The place returns to Unscheduled if it is not on another day.",
   reload: "Discard edits and reload",
   conflict:

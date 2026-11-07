@@ -7,6 +7,7 @@ import type {
   TravelMode,
 } from "@/features/home/types/home-types";
 import { homeImages } from "@/features/home/data/home-mocks";
+import { getSampleImage } from "../utils/trip-images";
 
 const stopImages: Record<string, ImageSource | number> = {
   lake: homeImages.xuanHuongLake,
@@ -17,7 +18,7 @@ const stopImages: Record<string, ImageSource | number> = {
   "flower-garden": homeImages.dalatFlowerGarden,
 };
 export function getStopImage(id: string) {
-  return stopImages[id] ?? homeImages.forest;
+  return stopImages[id] ?? getSampleImage(id);
 }
 
 // Explicit UI fixture pairs, never presented as live directions or measured travel times.

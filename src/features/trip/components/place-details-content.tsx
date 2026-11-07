@@ -32,6 +32,7 @@ export function PlaceDetailsContent({
   afterInfo,
   mapAction,
   suppliedDetails,
+  mapContent,
 }: {
   place: TripStop;
   places: TripStop[];
@@ -53,6 +54,7 @@ export function PlaceDetailsContent({
     hours?: string;
     admission?: LocalizedText;
   };
+  mapContent?: ReactNode;
 }) {
   const theme = useAppTheme();
   const { copy, locale } = usePlaceSearchCopy();
@@ -107,7 +109,7 @@ export function PlaceDetailsContent({
       style={styles.fill}
       onLayout={(event) => setAvailableHeight(event.nativeEvent.layout.height)}
     >
-      {region ? (
+      {region || mapContent ? (
         <TripPlanningMap
           header={header}
           viewportHeight={availableHeight}
@@ -117,15 +119,35 @@ export function PlaceDetailsContent({
           overlayHeader
           expandRequest={expandMapRequest}
           mapContent={
-            <PlaceSearchMap
-              places={places}
-              region={region}
-              focused={place}
-              custom={false}
-              fitContainer
-              controlsTop={headerTopSpacing}
-              extraControl={mapAction}
-            />
+            mapContent ? (
+              <View style={styles.fill}>
+                {mapContent}
+                {mapAction ? (
+                  <View
+                    style={{
+                      position: "absolute",
+                      right: theme.spacing.sm,
+                      top:
+                        headerTopSpacing +
+                        theme.layout.touchTarget +
+                        theme.spacing.xs,
+                    }}
+                  >
+                    {mapAction}
+                  </View>
+                ) : null}
+              </View>
+            ) : region ? (
+              <PlaceSearchMap
+                places={places}
+                region={region}
+                focused={place}
+                custom={false}
+                fitContainer
+                controlsTop={headerTopSpacing}
+                extraControl={mapAction}
+              />
+            ) : null
           }
         />
       ) : (
@@ -147,13 +169,7 @@ export function PlaceDetailsContent({
           ]}
         >
           <View style={[styles.fill, { gap: theme.spacing.xs }]}>
-            <AppText
-              accessibilityRole="header"
-              variant="heading"
-              style={{
-                fontSize: theme.typography.fontSize.lg,
-              }}
-            >
+            <AppText accessibilityRole="header" variant="sectionTitle">
               {isAddress && !showSavedName
                 ? copy.selectedLocation
                 : place.name[locale]}
