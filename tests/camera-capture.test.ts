@@ -177,6 +177,9 @@ test("camera releases inactive previews and opens the gallery directly from the 
   const appState = { currentState: "active" };
   const nativeLoad = tripModuleLoader({
     "@/constants/development": { UI_PREVIEW_ENABLED: false },
+    "@/features/auth/services/auth-session": {
+      authSession: { getVersion: () => 1 },
+    },
     "@/features/memories/hooks/use-memories": {
       useMemoryTrips: () => ({ trips: store.getState().trips }),
       useMemoryActions: () => ({ upload: { isPending: false } }),

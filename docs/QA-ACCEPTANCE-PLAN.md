@@ -1,5 +1,9 @@
 # Kế hoạch nghiệm thu theo màn hình sau merge
 
+## QA-6A · Chụp/chọn ảnh → lưu kỷ niệm · 07/11/2026
+
+Đã đồng bộ contract Camera/Memory/Media, chống trùng khi retry, kiểm tra nội dung ảnh, quyền sở hữu, version ghi chú và múi giờ Việt Nam. Giữ UI hiện có. Xem [checklist UI và URL/body Postman](QA6-MEMORY-CAPTURE.md). Bắt đầu nghiệm thu ảnh đơn, Quick capture/Xem sau, mất mạng/retry, reload và đổi tài khoản; chưa đánh dấu toàn QA-6 hoàn tất. Private delivery, dọn file khi xóa và thư viện lớn còn ở đợt sau.
+
 ## QA-5 · Sửa lịch trình trong ngày · 07/11/2026
 
 Đã nối modal 75% màn hình vào API lịch ngày: xuất phát từ điểm trong danh mục/đã lưu, GPS hoặc địa chỉ nhập tay; giờ đi, thời lượng, phương tiện và quay về điểm xuất phát. Có snapshot riêng tư theo ngày, kiểm tra phiên bản, cập nhật bản đồ/tuyến và giờ đến thật khi provider sẵn sàng. Không dùng kết quả Mapbox Geocoding tạm để lưu địa chỉ.

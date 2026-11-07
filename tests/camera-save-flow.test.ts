@@ -15,6 +15,8 @@ function cameraFixture(quick = false) {
   let refCursor = 0;
   let deviceFails = false;
   let uploadFails = false;
+  let sessionVersion = 1;
+  let changeAccountOnExport = false;
   const events: string[] = [];
   const records: LocalMemory[] = [];
   const tokens = tripModuleLoader()<typeof import("../src/theme/tokens.ts")>(
@@ -47,12 +49,16 @@ function cameraFixture(quick = false) {
       assert.ok(memory);
       if (memory.local.deviceSaved) return;
       events.push("device");
+      if (changeAccountOnExport) sessionVersion++;
       if (deviceFails) throw new Error("Device save failed");
       records[0] = { ...memory, local: { ...memory.local, deviceSaved: true } };
     },
   };
   const load = tripModuleLoader({
     "@/constants/development": { UI_PREVIEW_ENABLED: false },
+    "@/features/auth/services/auth-session": {
+      authSession: { getVersion: () => sessionVersion },
+    },
     react: {
       useState: (initial: unknown) => {
         const index = stateCursor++;
@@ -176,6 +182,9 @@ function cameraFixture(quick = false) {
     setUploadFailure: (value: boolean) => {
       uploadFails = value;
     },
+    changeAccountOnExport: () => {
+      changeAccountOnExport = true;
+    },
   };
 }
 
@@ -194,6 +203,17 @@ test("quick capture without a trip saves on device and never uploads", async () 
   await flush();
   assert.deepEqual(f.events, ["save", "device"]);
   assert.equal(f.records[0].tripId, undefined);
+});
+
+test("changing account while exporting a capture cannot upload it under the new session", async () => {
+  const f = cameraFixture();
+  f.changeAccountOnExport();
+  f.render().props.onCapture();
+  await flush();
+  assert.deepEqual(f.events, ["save", "device"]);
+  assert.equal(f.records.length, 1);
+  assert.equal(f.records[0].local.userId, userId);
+  assert.equal(f.render().props.pending, true);
 });
 
 test("gallery denial keeps the private copy and permits upload without claiming a library copy", async () => {

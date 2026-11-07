@@ -9,7 +9,11 @@ import {
 import type { HomeScenario, Memory, Trip } from "../types/home-types";
 import type { PreviewState } from "../types/preview-state";
 import { dayDistance } from "../utils/select-home";
-import { todayCalendarDate, isCalendarDate } from "@/utils/calendar-date";
+import {
+  todayCalendarDate,
+  isCalendarDate,
+  travelClockTime,
+} from "@/utils/calendar-date";
 import { tripFormLimits } from "../../trip/constants/trip-form";
 import { applyTripMutation } from "@/features/trip/utils/trip-mutations";
 import { localMemorySchema } from "@/features/memories/schemas/local-memory-schema";
@@ -105,14 +109,8 @@ export function createPreviewStore() {
         id: `local-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`,
         destination: trip?.destination ?? "",
         text: "",
-        date:
-          day?.date ??
-          `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`,
-        time: new Intl.DateTimeFormat("en-GB", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        }).format(now),
+        date: day?.date ?? todayCalendarDate(now),
+        time: travelClockTime(now),
         tripId: trip?.id,
         place: day?.stops.find((item) => item.id === stopId)?.name,
         local: { ...local, capturedAt: now.toISOString(), deviceSaved: false },
@@ -202,8 +200,7 @@ export function createPreviewStore() {
           ...memory.local,
           placeId:
             remoteTrip && values.stopId
-              ? (day.stops.find((stop) => stop.id === values.stopId)?.placeId ??
-                values.stopId)
+              ? day.stops.find((stop) => stop.id === values.stopId)?.placeId
               : undefined,
         },
       };

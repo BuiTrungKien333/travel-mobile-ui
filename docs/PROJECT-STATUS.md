@@ -1,5 +1,13 @@
 # Tiến độ Travel Mobile UI
 
+### QA-6A · Camera và lưu kỷ niệm · 07/11/2026
+
+- Sửa lệch contract sau merge: backend có version memory, PATCH ghi chú, GET giới hạn ảnh và create key/fingerprint; Flyway V18 thêm index/metadata upload. Retry create/upload không tạo bản ghi/asset khác cho cùng yêu cầu/nội dung. Không nhận URL media tùy ý trong JSON tạo memory.
+- Kiểm tra MIME/header ảnh thật và giới hạn byte/pixel/cạnh. Provider upload nằm ngoài DB transaction; finalization kiểm tra lại quyền và memory chưa xóa. Pagination memory lấy ID trước, media sau, giới hạn 50/trang.
+- Frontend giữ giao diện, sửa ngày/giờ theo Việt Nam, bỏ fallback nhầm Place ID, ẩn nháp không thuộc tài khoản và chặn upload khi đổi phiên trong lúc export ảnh.
+- Xác minh: 51 ca backend liên quan đạt với PostgreSQL 17/Flyway và mock đúng biên Cloudinary; 33 ca mobile liên quan, TypeScript strict/no-unused và export web/Android đạt. Đây chưa phải nghiệm thu camera native hay Cloudinary thật. Checklist/API và giới hạn còn lại trong [QA6-MEMORY-CAPTURE.md](QA6-MEMORY-CAPTURE.md); private delivery, dọn asset khi xóa và pagination UI vẫn chưa hoàn tất.
+- Đã khởi động lại backend dev 18081: health UP, Flyway V18 thành công, OpenAPI có create/PATCH memory và GET upload limits. Giữ PostgreSQL/data hiện có. Ba biến Cloudinary có giá trị trong cấu hình dev; chưa xác minh upload với tài khoản provider thật hoặc thao tác native.
+
 ### QA-5 · Lịch trình trong ngày · 07/11/2026
 
 - Nối modal lịch ngày với API `PUT /trips/{id}/itinerary/days/{date}/schedule`, thêm snapshot xuất phát, giờ đi, phương tiện và quay về qua Flyway V17. Cấu hình/thời lượng lưu nguyên tử; không đổi các ngày khác. Kiểm tra phiên bản sau khi provider trả về để tránh ghi đè dữ liệu mới.

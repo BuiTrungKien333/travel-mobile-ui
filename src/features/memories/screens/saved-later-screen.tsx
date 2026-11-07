@@ -19,6 +19,7 @@ import {
 import { useMemoriesCopy } from "../i18n/memories-copy";
 import { useMemories, useMemoryActions } from "../hooks/use-memories";
 import { MemoryLoadState } from "../components/memory-load-state";
+import { travelDateTime } from "@/utils/calendar-date";
 
 export function SavedLaterScreen() {
   const theme = useAppTheme();
@@ -192,8 +193,9 @@ export function SavedLaterScreen() {
               setError(copy.assignmentError);
               return;
             }
-            const timestamp = new Date(
-              `${selection.day}T${memory.time ?? "00:00"}:00`,
+            const timestamp = travelDateTime(
+              selection.day,
+              memory.time ?? "00:00",
             ).getTime();
             if (!Number.isFinite(timestamp) || timestamp > Date.now()) {
               Alert.alert(cameraCopy.futureDate);

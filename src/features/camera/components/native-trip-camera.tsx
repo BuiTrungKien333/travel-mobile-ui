@@ -40,6 +40,7 @@ import {
 } from "@/features/memories/hooks/use-memories";
 import { useProfile } from "@/features/auth/hooks/use-auth";
 import { ApiError } from "@/services/api/api-error";
+import { authSession } from "@/features/auth/services/auth-session";
 
 const CAMERA_READY_TIMEOUT_MS = 15000;
 
@@ -116,6 +117,7 @@ export function NativeTripCamera(
   const { trips } = useMemoryTrips();
   const profile = useProfile();
   const { upload } = useMemoryActions();
+  const operationSession = useRef<number | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const active = foreground && focused && !panelOpen && !props.suspended;
   useEffect(() => {
@@ -173,6 +175,7 @@ export function NativeTripCamera(
   async function run(task: () => Promise<void>) {
     if (operation.current) return;
     operation.current = true;
+    operationSession.current = authSession.getVersion();
     setBusy(true);
     setError("");
     setWarning("");
@@ -209,6 +212,11 @@ export function NativeTripCamera(
     height?: number;
     mimeType?: string;
   }) {
+    const assertSession = () => {
+      if (operationSession.current !== authSession.getVersion())
+        throw new ApiError("CANCELLED");
+    };
+    assertSession();
     const existing = photo.id
       ? memories.find((item) => item.id === photo.id)
       : undefined;
@@ -229,14 +237,14 @@ export function NativeTripCamera(
           mimeType: photo.mimeType,
           placeId:
             !props.quick && props.stopId
-              ? (trips
+              ? trips
                   .find((trip) => trip.id === props.tripId)
                   ?.days.flatMap((day) => day.stops)
-                  .find((stop) => stop.id === props.stopId)?.placeId ??
-                props.stopId)
+                  .find((stop) => stop.id === props.stopId)?.placeId
               : undefined,
         },
       }));
+    assertSession();
     if (!memory.photo || typeof memory.photo !== "string")
       throw new Error("Photo unavailable");
     let exported = memory.local?.deviceSaved ?? false;
@@ -254,6 +262,7 @@ export function NativeTripCamera(
       setDeviceSaved(exported);
       setPending({ uri: memory.photo, id: memory.id, deviceSaved: exported });
     }
+    assertSession();
     if (!UI_PREVIEW_ENABLED && !props.quick && memory.tripId) {
       await upload.mutateAsync({
         memory: {

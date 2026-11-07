@@ -1,5 +1,6 @@
 import type { Memory, Trip } from "@/features/home/types/home-types";
 import type { ServerMemory } from "../api/memory-api";
+import { todayCalendarDate, travelClockTime } from "@/utils/calendar-date";
 
 export function mergeMemories(
   remote: readonly ServerMemory[],
@@ -13,7 +14,7 @@ export function mergeMemories(
       .flatMap((day) => day.stops)
       .find((stop) => (stop.placeId ?? stop.id) === memory.placeId)?.name;
     const experienced = new Date(memory.experiencedAt);
-    const date = `${experienced.getFullYear()}-${String(experienced.getMonth() + 1).padStart(2, "0")}-${String(experienced.getDate()).padStart(2, "0")}`;
+    const date = todayCalendarDate(experienced);
     return [...memory.media]
       .sort((a, b) => a.displayOrder - b.displayOrder)
       .map((media) => ({
@@ -23,7 +24,7 @@ export function mergeMemories(
         tripId: memory.tripId ?? undefined,
         destination: trip?.destination ?? "",
         date,
-        time: `${String(experienced.getHours()).padStart(2, "0")}:${String(experienced.getMinutes()).padStart(2, "0")}`,
+        time: travelClockTime(experienced),
         place,
         remote: {
           memoryId: memory.id,
@@ -35,7 +36,7 @@ export function mergeMemories(
   const drafts = local.filter(
     (memory) =>
       memory.local &&
-      (!memory.local.userId || memory.local.userId === userId) &&
+      memory.local.userId === userId &&
       !remote.some(
         (item) => item.id === memory.local?.serverId && item.media.length > 0,
       ),

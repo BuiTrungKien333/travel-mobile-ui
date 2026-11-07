@@ -83,6 +83,7 @@ export const memoryApi = {
       {
         params: { tripId: memory.tripId, memoryId: memory.id },
         timeout: 60000,
+        headers: { "Content-Type": undefined },
       },
     );
     return parse(uploadedMediaEnvelopeSchema, response.data);

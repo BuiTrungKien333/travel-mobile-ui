@@ -7,6 +7,7 @@ import {
 } from "../api/memory-api";
 import type { LocalMemory } from "../schemas/local-memory-schema";
 import { createRequestId } from "@/utils/create-request-id";
+import { travelDateTime } from "@/utils/calendar-date";
 const IMAGE_MIME_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 
 export async function photoFormData(
@@ -88,7 +89,7 @@ async function performUpload(
   if (memory.local.userId && memory.local.userId !== userId)
     throw new ApiError("CANCELLED");
   if (!memory.tripId) throw new ApiError("TRIP_001");
-  const experiencedAt = new Date(`${memory.date}T${memory.time}:00`);
+  const experiencedAt = travelDateTime(memory.date, memory.time);
   if (
     !Number.isFinite(experiencedAt.getTime()) ||
     experiencedAt.getTime() > Date.now()
