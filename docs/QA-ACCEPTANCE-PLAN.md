@@ -1,5 +1,9 @@
 # Kế hoạch nghiệm thu theo màn hình sau merge
 
+## QA-6A · Xem sau → xem ảnh → gán chuyến → đồng bộ
+
+Đã nối Xem sau vào core xem ảnh Home; ảnh local mở không đợi API danh sách chuyến/kỷ niệm. Gán chuyến lưu snapshot trước, upload sau. Mất mạng/đọc xác nhận thất bại giữ ảnh trong Chờ đồng bộ và có retry sau khi mở lại app. 54 ca mobile, TypeScript và export web/Android đạt; thử trực tiếp pinch/double-tap/vuốt/kéo đóng, quyền thư viện, mất mạng/reload và đổi tài khoản theo [checklist QA-6A](QA6-MEMORY-CAPTURE.md). Không coi export là nghiệm thu native hoặc provider thật.
+
 ## QA-6A · Chụp/chọn ảnh → lưu kỷ niệm · 07/11/2026
 
 Đã đồng bộ contract Camera/Memory/Media, chống trùng khi retry, kiểm tra nội dung ảnh, quyền sở hữu, version ghi chú và múi giờ Việt Nam. Giữ UI hiện có. Xem [checklist UI và URL/body Postman](QA6-MEMORY-CAPTURE.md). Bắt đầu nghiệm thu ảnh đơn, Quick capture/Xem sau, mất mạng/retry, reload và đổi tài khoản; chưa đánh dấu toàn QA-6 hoàn tất. Private delivery, dọn file khi xóa và thư viện lớn còn ở đợt sau.

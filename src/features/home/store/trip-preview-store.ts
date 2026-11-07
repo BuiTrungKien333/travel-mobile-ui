@@ -172,6 +172,12 @@ export function createPreviewStore() {
       const memory = localMemorySchema.parse(
         get().memories.find((item) => item.id === id),
       );
+      if (
+        memory.tripId ||
+        memory.local.clientRequestId ||
+        memory.local.serverId
+      )
+        throw new Error("Photo is already assigned; retry its existing upload");
       const trip =
         remoteTrip ??
         get().trips.find(
@@ -212,6 +218,7 @@ export function createPreviewStore() {
           item.id === id ? updated : item,
         ),
       }));
+      return updated;
     },
     panel: null,
     openPanel: (panel) => set({ panel }),

@@ -12,6 +12,24 @@ Giới hạn cần truyền đạt đúng: bản trong ứng dụng có thể m�
 
 ## Phần đã nối và sửa
 
+### Hoàn thiện Xem sau và core xem ảnh · 07/11/2026
+
+- Xem sau đọc danh sách ảnh local của tài khoản hiện tại, không đợi API danh sách chuyến/kỷ niệm để mở ảnh. Bộ chọn chuyến chỉ tải dữ liệu khi người dùng mở chọn nơi lưu. Không tự upload ảnh chưa có chuyến.
+- Tái sử dụng `JournalPhotoViewer`, `usePhotoViewerMotion` và thumbnail đo vị trí từ Home; tách thumbnail và hook quản lý gallery để dùng chung. Giữ pinch/double-tap zoom, vuốt ảnh, tap ẩn/hiện toolbar, kéo đóng và chuyển cảnh trở về thumbnail. Giữ danh sách ảnh ổn định trong một phiên xem khi query/background thay đổi; đọc lại vị trí thumbnail trước khi đóng. Thuật toán gesture/physics không bị viết lại.
+- Xác nhận chuyến/ngày lưu snapshot local trước rồi upload đúng snapshot đó, gồm Place ID thật khi có. Không dựng payload thứ hai từ dữ liệu cũ. Ảnh đã gắn chuyến hoặc có request/server ID không được gán lại trong Xem sau để tránh làm lệch request đang retry.
+- Ảnh chưa upload thành công nằm trong nhóm **Chờ đồng bộ vào chuyến** ngay trên màn Xem sau, có nút thử đồng bộ lại, mở album và tiến độ upload. Mở lại app vẫn nhận từ storage, không tự upload khi có mạng trở lại. Chỉ rời nhóm chờ sau khi GET detail xác nhận server có media và đã ghi trạng thái local thành công.
+- Lưu vào thư viện máy từ toolbar dùng hành động export local hiện có để ghi nhận `deviceSaved`; chia sẻ và xóa tiếp tục dùng core/hook cũ. Xóa local chỉ thực hiện sau bước xác nhận của viewer; việc dọn asset cloud vẫn thuộc phần nghiệm thu sau.
+
+Kiểm tra lượt này: **54 ca mobile liên quan đạt**, TypeScript strict/no-unused và export web/Android đạt. Chưa thay thế nghiệm thu gesture trên thiết bị hoặc upload Cloudinary thật.
+
+Checklist bổ sung:
+
+1. Chụp hai ảnh chưa chọn chuyến, mở Xem sau khi tắt mạng. Chạm thumbnail, pinch/double-tap zoom, vuốt qua ảnh, tap ẩn/hiện toolbar, kéo xuống đóng. Ảnh thu về thumbnail tương ứng; màn Home dùng cùng core vẫn hoạt động. Lưu ảnh vào thư viện từ toolbar rồi quay lại: không tiếp tục nhắc chưa lưu thư viện.
+2. Chọn **Đưa vào chuyến đi**, chọn chuyến/ngày/địa điểm. Hủy bộ chọn không đổi ảnh hoặc gọi upload. Xác nhận thì lưu local trước; không lấy TripPlace ID thay Place ID.
+3. Tắt mạng rồi xác nhận gán chuyến: ảnh còn trong Chờ đồng bộ, vẫn xem/zoom được. Đóng/mở app rồi vào Xem sau: ảnh vẫn còn cùng liên kết. Bật mạng và bấm Thử đồng bộ lại; không gán lại hoặc tạo memory mới. Bấm nhanh hai lần chỉ gửi một thao tác từ màn hình.
+4. Khi thành công, ảnh rời nhóm chờ; bấm Mở album chuyến đi xem đúng album. Reload kiểm tra ảnh trên server. Thử mất phản hồi sau upload: không đánh dấu đồng bộ nếu chưa xác nhận được media, retry đọc lại rồi hoàn tất.
+5. Đăng xuất A/đăng nhập B không thấy local A. Thử đổi phiên khi đang lưu liên kết hoặc upload: dừng bước tiếp theo, không ghi nhận thành công dưới tài khoản khác. Không xóa nháp của A.
+
 - Camera lưu bản riêng trong ứng dụng trước, rồi tạo metadata và upload vào kỷ niệm thuộc chuyến đã chọn. Từ chối lưu thêm vào thư viện máy vẫn có thể lưu bản riêng và upload. Quick capture chưa chọn chuyến được giữ ở Xem sau, chưa tự upload.
 - Frontend gửi `clientRequestId` ổn định, lưu ID server vào nháp trước bước upload. Backend dùng unique key theo tài khoản và fingerprint nội dung: gửi lại cùng yêu cầu trả cùng bản ghi; dùng lại key cho nội dung khác hoặc bản ghi đã xóa trả 409 `MEMORY_004`. Client cũ không gửi key vẫn được hỗ trợ nhưng không có bảo đảm chống trùng bước tạo metadata.
 - Upload cùng nội dung vào cùng memory trả cùng media ID. Tên asset Cloudinary ổn định theo memory/nội dung, `overwrite=false`, tránh tạo asset khác khi mất phản hồi. Sau khi provider trả về, DB kiểm tra lại quyền/bản ghi còn tồn tại và chỉ khóa memory trong bước ghi ngắn. Không giữ transaction DB trong lúc upload.

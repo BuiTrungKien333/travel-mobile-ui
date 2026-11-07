@@ -22,6 +22,18 @@ import { localMemorySchema } from "../schemas/local-memory-schema";
 import { uploadLocalMemory } from "../services/upload-photo";
 import { mergeMemories } from "../utils/server-memories";
 
+/** Local photos remain readable independently of trip/media requests. */
+export function useLocalMemories() {
+  const profile = useProfile();
+  const local = useTripPreview((state) => state.memories);
+  return local.filter(
+    (memory) =>
+      memory.local &&
+      (UI_PREVIEW_ENABLED ||
+        (!!profile.data && memory.local.userId === profile.data.id)),
+  );
+}
+
 export function useMemoryTrips() {
   const profile = useProfile();
   const localTrips = useTripPreview((state) => state.trips);

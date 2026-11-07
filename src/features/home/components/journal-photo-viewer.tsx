@@ -47,6 +47,7 @@ export function JournalPhotoViewer({
   onActiveChange,
   onClose,
   onDelete,
+  onSave,
 }: {
   memories: Memory[];
   selection: PhotoSelection;
@@ -54,6 +55,7 @@ export function JournalPhotoViewer({
   onActiveChange: (id: string) => void;
   onClose: () => void;
   onDelete: (id: string) => void | Promise<void>;
+  onSave?: (memory: Memory) => void | Promise<void>;
 }) {
   const theme = useAppTheme();
   const insets = useScreenInsets();
@@ -81,7 +83,7 @@ export function JournalPhotoViewer({
   const [photoStates, setPhotoStates] = useState<
     Record<string, "loaded" | "failed">
   >({});
-  const currentSelection = selections[memory.id];
+  const currentSelection = getSelection(memory.id) ?? selections[memory.id];
   const info = photoInfo[memory.id] ?? currentSelection;
   const [controls, setControls] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -184,7 +186,8 @@ export function JournalPhotoViewer({
           height: theme.layout.touchTarget,
         });
       } else {
-        await saveJournalPhoto(info.uri);
+        if (onSave) await onSave(memory);
+        else await saveJournalPhoto(info.uri);
         if (active.current)
           setNotice({
             text: Platform.OS === "web" ? copy.downloaded : copy.saved,

@@ -129,8 +129,10 @@ async function performUpload(
   if (!draft.local.uploaded && current.media.length === 0)
     await memoryApi.upload(serverId, memory.tripId, body, onProgress);
   assertSession();
-  await persist({ ...draft, local: { ...draft.local, uploaded: true } });
   const result = await memoryApi.detail(serverId);
+  assertSession();
+  if (!result.media.length) throw new ApiError("INVALID_RESPONSE");
+  await persist({ ...draft, local: { ...draft.local, uploaded: true } });
   assertSession();
   return result;
 }

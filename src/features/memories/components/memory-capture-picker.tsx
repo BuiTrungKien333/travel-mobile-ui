@@ -13,13 +13,17 @@ import { useMemoryTrips } from "../hooks/use-memories";
 import { MemoryLoadState } from "./memory-load-state";
 import { getMemoryCaptureDays } from "../utils/memory-albums";
 import { todayCalendarDate } from "@/utils/calendar-date";
+import type { Trip } from "@/features/home/types/home-types";
 
 export function MemoryCapturePicker({
   onClose,
   onSelect,
 }: {
   onClose: () => void;
-  onSelect: (params: { tripId: string; day: string; stopId: string }) => void;
+  onSelect: (
+    params: { tripId: string; day: string; stopId: string },
+    trip: Trip,
+  ) => void;
 }) {
   const theme = useAppTheme();
   const reducedMotion = useReducedMotion();
@@ -92,11 +96,14 @@ export function MemoryCapturePicker({
                 <Pressable
                   accessibilityRole="button"
                   onPress={() =>
-                    onSelect({
-                      tripId: trip.id,
-                      day: item.day,
-                      stopId: item.stopId,
-                    })
+                    onSelect(
+                      {
+                        tripId: trip.id,
+                        day: item.day,
+                        stopId: item.stopId,
+                      },
+                      trip,
+                    )
                   }
                   style={({ pressed }) => ({
                     padding: theme.spacing.lg,

@@ -1,5 +1,11 @@
 # Tiến độ Travel Mobile UI
 
+### QA-6A · Xem sau, gallery và thử đồng bộ · 07/11/2026
+
+- Xem sau dùng ảnh local theo tài khoản, mở ảnh không phụ thuộc API danh sách chuyến/kỷ niệm. Tái sử dụng core `JournalPhotoViewer`/motion và thumbnail có chuyển cảnh từ Home; không thay thuật toán zoom/vuốt. Tách thumbnail và trạng thái gallery dùng chung để giữ đồng nhất.
+- Gán chuyến lưu local trước rồi upload chính snapshot đã lưu. Không dựng Place ID từ membership ID; ngăn gán lại ảnh đã có liên kết/request/server ID. Lỗi giữ ảnh trong Chờ đồng bộ, có retry/progress/mở album và khôi phục sau reload. Chỉ đánh dấu uploaded sau khi đọc xác nhận có media trên server.
+- 54 ca mobile liên quan, TypeScript strict/no-unused, export web/Android và diff check đạt. Chờ nghiệm thu gesture Android, thao tác mất mạng/reload và Cloudinary thật. Không sửa backend/dependency; chưa hoàn tất toàn QA-6. Checklist mới trong [QA6-MEMORY-CAPTURE.md](QA6-MEMORY-CAPTURE.md).
+
 ### Quyết định Xem sau · 07/11/2026
 
 Ảnh chưa gắn chuyến chỉ lưu trên thiết bị; chỉ đồng bộ khi người dùng đưa vào chuyến. Giữ bản local khi upload lỗi. Đã làm rõ thông báo VI/EN và thống nhất bộ lọc/số đếm Xem sau chỉ nhận local chưa có tripId. Không triển khai cloud cho ảnh chưa gắn chuyến. Quy tắc lưu, giới hạn storage và checklist ở [QA6-MEMORY-CAPTURE.md](QA6-MEMORY-CAPTURE.md).

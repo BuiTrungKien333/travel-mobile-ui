@@ -9,13 +9,19 @@ const vi = {
   uploadError:
     "Chưa upload được ảnh. Bản ảnh vẫn được giữ trong ứng dụng; bạn có thể thử lại.",
   assignedUploadError:
-    "Ảnh đã được thêm vào chuyến đi nhưng chưa upload được. Mở album chuyến đi và chạm Upload ảnh khi bạn muốn thử lại.",
+    "Ảnh đã gắn chuyến và vẫn được giữ trên thiết bị. Bạn có thể thử đồng bộ lại.",
   syncingTrip: "Đang lưu chuyến đi…",
   tripSyncError:
     "Chưa lưu được chuyến đi lên máy chủ. Hãy kiểm tra kết nối và ngày đi rồi chạm lại để thử.",
   noteConflict:
     "Lời nhắn đã thay đổi trên thiết bị khác. Hãy hủy chỉnh sửa và mở lại để xem bản mới.",
   later: "Xem sau",
+  localOnly: "Chỉ lưu trên thiết bị",
+  pendingUploadTitle: "Chờ đồng bộ vào chuyến",
+  pendingUploadHint:
+    "Ảnh vẫn ở trên máy. Bạn có thể xem lại hoặc thử đồng bộ khi có mạng.",
+  pendingUpload: "Đã gắn chuyến · Chưa đồng bộ",
+  retryUpload: "Thử đồng bộ lại",
   laterHint: "Ảnh chỉ lưu trên thiết bị này. Đưa vào chuyến đi để đồng bộ.",
   laterEmpty: "Chưa có ảnh để xem sau",
   laterEmptyHint:
@@ -76,13 +82,19 @@ const en: typeof vi = {
   uploadError:
     "Couldn't upload. Your photo is still kept in the app; you can retry.",
   assignedUploadError:
-    "Your photo is in the trip album but couldn't be uploaded. Open the album and tap Upload photo when you want to retry.",
+    "Your photo is assigned to the trip and still kept on this device. You can retry syncing.",
   syncingTrip: "Saving trip…",
   tripSyncError:
     "Couldn't save this trip to the server. Check your connection and trip dates, then tap it to retry.",
   noteConflict:
     "This note changed on another device. Cancel editing and reopen it to see the latest version.",
   later: "Saved for later",
+  localOnly: "On this device only",
+  pendingUploadTitle: "Waiting to sync to a trip",
+  pendingUploadHint:
+    "Your photos are still on this device. View them or retry syncing when online.",
+  pendingUpload: "Added to a trip · Not synced",
+  retryUpload: "Retry sync",
   laterHint: "Photos stay on this device. Add them to a trip to sync.",
   laterEmpty: "No photos saved for later",
   laterEmptyHint:

@@ -3,6 +3,54 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { tripModuleLoader } from "./helpers/load-trip-module.ts";
 
+test("local gallery reads only the current account without calling remote trip or memory queries", () => {
+  let owner: string | undefined = "A";
+  const records = [
+    { id: "a", local: { userId: "A" } },
+    { id: "b", local: { userId: "B" } },
+    { id: "legacy", local: {} },
+    { id: "remote" },
+  ];
+  const load = tripModuleLoader({
+    "@/constants/development": { UI_PREVIEW_ENABLED: false },
+    "@tanstack/react-query": {
+      useQuery: () => {
+        throw new Error("No remote dependency");
+      },
+    },
+    "@/features/auth/services/auth-session": { authSession: {} },
+    "@/features/auth/hooks/use-auth": {
+      useProfile: () => ({ data: owner ? { id: owner } : undefined }),
+    },
+    "@/features/home/providers/trip-preview-provider": {
+      useTripPreview: (
+        select: (state: { memories: typeof records }) => unknown,
+      ) => select({ memories: records }),
+    },
+    "../api/memory-api": {},
+    "../api/memory-trips-api": {},
+    "../services/upload-photo": {},
+  });
+  const { useLocalMemories } = load<
+    typeof import("../src/features/memories/hooks/use-memories.ts")
+  >("src/features/memories/hooks/use-memories.ts");
+  assert.equal(
+    useLocalMemories()
+      .map((item) => item.id)
+      .join(),
+    "a",
+  );
+  owner = "B";
+  assert.equal(
+    useLocalMemories()
+      .map((item) => item.id)
+      .join(),
+    "b",
+  );
+  owner = undefined;
+  assert.equal(useLocalMemories().length, 0);
+});
+
 test("memory choices read all Trip pages using the current paginated API", async () => {
   const spec = JSON.parse(
     readFileSync(

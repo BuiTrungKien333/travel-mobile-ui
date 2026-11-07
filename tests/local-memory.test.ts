@@ -79,17 +79,28 @@ test("quick capture needs no trip and survives hydration and scenario changes be
   );
   await restored.getState().markLocalPhotoSaved(memory.id);
   assert.equal(f.copies(), 1);
-  await restored.getState().assignLocalPhoto(memory.id, {
-    tripId: "past-dalat",
-    day: "2026-09-18",
-    stopId: "square",
-  });
+  const savedAssignment = await restored
+    .getState()
+    .assignLocalPhoto(memory.id, {
+      tripId: "past-dalat",
+      day: "2026-09-18",
+      stopId: "square",
+    });
   const assigned = restored
     .getState()
     .memories.find((item) => item.id === memory.id);
   assert.equal(assigned?.tripId, "past-dalat");
   assert.equal(assigned?.place?.vi, "Quảng trường Lâm Viên");
   assert.equal(assigned?.local?.deviceSaved, true);
+  assert.equal(savedAssignment.tripId, assigned?.tripId);
+  assert.equal(f.records.get(memory.id), savedAssignment);
+  await assert.rejects(
+    restored.getState().assignLocalPhoto(memory.id, {
+      tripId: "past-dalat",
+      day: "2026-09-18",
+      stopId: "square",
+    }),
+  );
   await restored.getState().updateMemoryNote(memory.id, "A lasting moment");
   const reopened = f.createPreviewStore();
   await reopened.getState().loadLocalPhotos();

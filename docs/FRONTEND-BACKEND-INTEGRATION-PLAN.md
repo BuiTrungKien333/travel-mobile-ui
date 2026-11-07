@@ -1,5 +1,7 @@
 # Kế hoạch hợp nhất frontend và backend WeGo
 
+> QA-6A · Xem sau · 07/11/2026: tái sử dụng core xem ảnh Home, đọc local độc lập với API album/chuyến, gán chuyến lưu trước rồi đồng bộ. Ảnh lỗi ở Chờ đồng bộ có retry/progress/mở album và khôi phục sau reload; chỉ đánh dấu uploaded sau khi server xác nhận media. 54 ca mobile, TypeScript/export web+Android đạt. Chờ nghiệm thu native/provider thật; chưa hoàn tất Phase 6. Xem [QA-6A](QA6-MEMORY-CAPTURE.md).
+
 > Quyết định Xem sau · 07/11/2026: ảnh chưa gắn chuyến chỉ lưu trên thiết bị; xác nhận đưa vào chuyến rồi mới đồng bộ. Không triển khai upload unassigned memory lên cloud. Giữ bản local nếu upload lỗi. Chi tiết và giới hạn lưu trữ trong [QA-6A](QA6-MEMORY-CAPTURE.md).
 
 > Cập nhật QA-6A · 07/11/2026: đồng bộ Camera/Memory với backend (create key, media hash, version/PATCH note, limits, kiểm ảnh thật, ownership, múi giờ). Lưu metadata và upload retry an toàn theo [hướng dẫn nghiệm thu/API](QA6-MEMORY-CAPTURE.md), không giữ DB transaction khi gọi Cloudinary. 51 ca backend và 33 ca mobile liên quan đạt; TypeScript/export web+Android đạt. Chưa kết luận hoàn tất Phase 6: còn nghiệm thu thiết bị/provider thật, private delivery, dọn asset xóa và pagination thư viện.

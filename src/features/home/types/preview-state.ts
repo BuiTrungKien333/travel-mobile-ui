@@ -45,7 +45,7 @@ export type PreviewState = {
     id: string,
     values: { tripId: string; day: string; stopId: string },
     remoteTrip?: Trip,
-  ) => Promise<void>;
+  ) => Promise<LocalMemory>;
   today: string;
   panel: PreviewPanel | JourneyPanel | null;
   openPanel: (panel: PreviewPanel | JourneyPanel) => void;
