@@ -99,6 +99,9 @@ function harness() {
       TripCompletionCard: "TripCompletionCard",
     },
     "../components/footprint-card": { FootprintCard: "FootprintCard" },
+    "@/features/trip/components/trip-recap-card": {
+      TripRecapCard: "TripRecapCard",
+    },
     "../components/journal-album": { JournalAlbum: "JournalAlbum" },
     "../components/travel-weather-dashboard": {
       TravelWeatherDashboard: "TravelWeatherDashboard",
@@ -162,6 +165,20 @@ test("all server states reuse the Home dashboards, never the trip list", () => {
   assert.equal(nodes(h.render(), "JourneyInvitationCard").length, 1);
   assert.equal(nodes(h.render(), "UpcomingTripCard").length, 0);
   assert.equal(nodes(h.render(), "FootprintCard")[0].props.visitedPlaces, 0);
+  const recap = nodes(h.render(), "TripRecapCard")[0];
+  assert.equal(
+    recap.props.memoryCount,
+    h.query.data.selectedTrip?.trip.memoryCount,
+  );
+  assert.equal(
+    recap.props.stopCount,
+    h.query.data.selectedTrip?.trip.stopCount,
+  );
+  (recap.props.onOpen as () => void)();
+  assert.deepEqual(h.routes.at(-1), {
+    pathname: "/trip/[tripId]",
+    params: { tripId: h.query.data.selectedTrip?.trip.id },
+  });
 });
 
 test("live Home camera keeps the just-visited membership and opens the selected trip album", () => {

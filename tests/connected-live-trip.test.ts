@@ -29,7 +29,7 @@ const stop = (id: string, visited = false): TripStop => ({
   visited,
   location: { latitude: 11.94, longitude: 108.44 },
 });
-function fixture(legacy = false, visitedPair = false) {
+function fixture(legacy = false, visitedPair = false, recap = false) {
   const a = stop("a", true),
     b = stop("b"),
     pool = stop("pool");
@@ -51,7 +51,10 @@ function fixture(legacy = false, visitedPair = false) {
   const read = {
     trip: {
       id: "trip",
-      mode: "LIVE",
+      mode: recap ? "RECAP" : "LIVE",
+      dayCount: 1,
+      stopCount: scheduledStops.length,
+      memoryCount: recap ? 7 : 0,
       version: 3,
       days: [{ date, dayNumber: 1 }],
       title: "Đà Lạt",
@@ -265,6 +268,7 @@ function fixture(legacy = false, visitedPair = false) {
     "../components/trip-day-map": ["TripDayMap"],
     "../components/trip-details-actions": ["TripDetailsActions"],
     "../components/connected-trip-recap": ["ConnectedTripRecap"],
+    "../components/trip-recap-card": ["TripRecapCard"],
     "../components/trip-timeline-states": ["TripTimelineTail", "TripStartNode"],
     "../components/connected-day-schedule-sheet": ["ConnectedDayScheduleSheet"],
     "../components/trip-optimization-preview": ["TripOptimizationSheet"],
@@ -313,6 +317,29 @@ function fixture(legacy = false, visitedPair = false) {
     },
   };
 }
+
+test("completed details reuse the map and dates with API counts, daily memories and a read-only timeline", () => {
+  const f = fixture(false, false, true);
+  const { tree, rendered } = f.rows();
+  assert.equal(nodes(tree, "TripPlanningMap")[0].props.overlayHeader, true);
+  const recap = nodes(rendered, "TripRecapCard")[0];
+  assert.equal(recap.props.memoryCount, 7);
+  assert.equal(recap.props.stopCount, 2);
+  const journal = nodes(rendered, "ConnectedTripRecap")[0];
+  assert.equal(journal.props.tripId, "trip");
+  assert.equal(journal.props.date, date);
+  assert.equal(journal.props.destination, "Đà Lạt");
+  assert.equal(nodes(rendered, "TripDayTools").length, 0);
+  assert.equal(nodes(tree, "TripTimelineTail").length, 0);
+  const stops = nodes(rendered, "TripStopRow");
+  assert.equal(stops.length, 2);
+  for (const stop of stops) {
+    assert.equal(stop.props.onVisited, undefined);
+    assert.equal(stop.props.drag, undefined);
+    assert.equal(stop.props.onRemove, undefined);
+  }
+  assert.equal(nodes(tree, "TripDetailsActions")[0].props.mode, "recap");
+});
 
 test("live detail can optimize B/D from C without a full historical route and applies the visited snapshot", async () => {
   const f = fixture(false, true);

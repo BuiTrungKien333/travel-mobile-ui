@@ -3,6 +3,7 @@ import { Share, View } from "react-native";
 import { AppButton } from "@/components/ui/app-button";
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
+import { JourneyCard } from "@/features/home/components/journey-card";
 import { JournalAlbum } from "@/features/home/components/journal-album";
 import type { Memory, Trip } from "@/features/home/types/home-types";
 import { useAppTheme } from "@/hooks/use-app-theme";
@@ -33,23 +34,40 @@ export function TripRecapContent({
           variant="recent"
           title={copy.dayMemories}
         />
-      ) : (
-        <AppText variant="caption" tone="muted">
-          {copy.noDayMemories}
-        </AppText>
-      )}
+      ) : !memories.some((memory) => memory.text.trim()) ? (
+        <JourneyCard>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: theme.spacing.sm,
+            }}
+          >
+            <AppIcon name="memories" size={theme.layout.iconMedium} />
+            <AppText variant="body" tone="muted" style={{ flex: 1 }}>
+              {copy.noDayMemories}
+            </AppText>
+          </View>
+        </JourneyCard>
+      ) : null}
       {memories
         .filter((memory) => memory.text)
         .map((memory) => (
-          <View
-            key={memory.id}
-            style={{ flexDirection: "row", gap: theme.spacing.md }}
-          >
-            <AppText variant="caption" tone="primary">
-              {memory.time ?? "—"}
-            </AppText>
-            <AppText style={{ flex: 1 }}>{memory.text}</AppText>
-          </View>
+          <JourneyCard key={memory.id}>
+            <View
+              style={{
+                flexDirection: "row",
+                gap: theme.spacing.sm,
+                alignItems: "center",
+              }}
+            >
+              <AppIcon name="clock" size={theme.layout.iconSmall} />
+              <AppText variant="caption" tone="primary">
+                {memory.time ?? "—"}
+              </AppText>
+            </View>
+            <AppText variant="body">{memory.text}</AppText>
+          </JourneyCard>
         ))}
     </View>
   );
@@ -84,7 +102,6 @@ export function ShareTripButton({ trip }: { trip: Trip }) {
   return (
     <View>
       <AppButton
-        size="small"
         variant="soft"
         loading={sharing}
         onPress={share}

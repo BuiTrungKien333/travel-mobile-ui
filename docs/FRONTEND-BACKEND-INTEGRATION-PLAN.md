@@ -1,6 +1,14 @@
 # Kế hoạch hợp nhất frontend và backend WeGo
 
 
+### QA · Home và chi tiết chuyến đã hoàn thành · 08/11/2026
+
+- Đối chiếu commit `fe9473b`, giữ card mời chuyến mới/dấu ấn/kỷ niệm trên Home, bổ sung lối mở đúng chuyến hoàn thành với tổng số thật. Chi tiết RECAP dùng map/dải ngày đồng nhất, tổng kết + album/ghi chú từng ngày và timeline chỉ đọc.
+- Tái sử dụng API dashboard/trip/itinerary/memory/media hiện có; không thêm API/DB schema. Xóa ảnh và làm mới màn hình cập nhật lại tổng số; không chèn ảnh mock vào nhật ký thật. 49 ca backend, 30 ca mobile liên quan đạt.
+- Hướng dẫn API/checklist: [COMPLETED-TRIP-QA.md](COMPLETED-TRIP-QA.md). Chờ người dùng nghiệm thu web/Android; không đổi nghiệp vụ phân quyền hoặc luồng lập kế hoạch.
+
+
+
 ### QA-5 · Tối ưu phần chưa ghé · 08/11/2026
 
 - Đã nối đề xuất/lưu nhóm đã ghé lên đầu theo thứ tự cũ, giữ giờ/thời lượng/ID; lấy điểm cuối nhóm làm mốc và chỉ tối ưu phần chưa ghé. Ví dụ ABCD đã ghé A/C → ACBD hoặc ACDB. Preview không ghi DB.

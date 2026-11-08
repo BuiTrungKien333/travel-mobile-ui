@@ -17,6 +17,7 @@ export function TripPlanningDaySelector({
   onAddDay,
   addDayDisabled,
   backlogCount = trip.unscheduledStops?.length ?? 0,
+  showBacklog = true,
 }: {
   trip: Trip;
   selectedDate?: string;
@@ -24,6 +25,7 @@ export function TripPlanningDaySelector({
   onAddDay?: () => void;
   addDayDisabled: boolean;
   backlogCount?: number;
+  showBacklog?: boolean;
 }) {
   const theme = useAppTheme();
   const { fontScale } = useWindowDimensions();
@@ -38,7 +40,7 @@ export function TripPlanningDaySelector({
         index,
       }),
     ),
-    { key: "backlog", kind: "backlog" },
+    ...(showBacklog ? [{ key: "backlog", kind: "backlog" } as const] : []),
     ...(onAddDay ? [{ key: "add", kind: "add" } as const] : []),
   ];
   const current = Math.max(

@@ -19,6 +19,7 @@ import { JourneyInvitationCard } from "../components/journey-invitation-card";
 import { TripCompletionCard } from "../components/trip-completion-card";
 import { FootprintCard } from "../components/footprint-card";
 import { JournalAlbum } from "../components/journal-album";
+import { TripRecapCard } from "@/features/trip/components/trip-recap-card";
 import { TravelWeatherDashboard } from "../components/travel-weather-dashboard";
 import {
   TripWeatherModal,
@@ -184,8 +185,12 @@ export function ConnectedHomeScreen() {
             accessibilityRole="header"
             variant="title"
             style={{
-              fontSize: theme.typography.fontSize.xl,
-              lineHeight: theme.typography.lineHeight.xl,
+              fontSize: preparing
+                ? theme.typography.fontSize.xl
+                : theme.typography.fontSize.lg,
+              lineHeight: preparing
+                ? theme.typography.lineHeight.xl
+                : theme.typography.lineHeight.lg,
             }}
           >
             {copy.greeting}
@@ -232,7 +237,18 @@ export function ConnectedHomeScreen() {
             ) : null}
           </>
         ) : (
-          <JourneyInvitationCard variant="returning" />
+          <>
+            <JourneyInvitationCard variant="returning" />
+            <TripRecapCard
+              key={trip.id}
+              trip={trip}
+              dayCount={read.trip.dayCount}
+              stopCount={read.trip.stopCount}
+              memoryCount={read.trip.memoryCount}
+              showCover
+              onOpen={plan}
+            />
+          </>
         )}
         {data.footprint.hasHistory || !preparing ? (
           <FootprintCard

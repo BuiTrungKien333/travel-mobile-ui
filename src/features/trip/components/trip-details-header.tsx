@@ -123,7 +123,7 @@ export function TripDetailsHeader({
           ) : null}
         </View>
       ) : null}
-      {onEdit && onOpenMap ? (
+      {onOpenMap ? (
         <View
           style={{
             flexDirection: "row",
@@ -131,12 +131,21 @@ export function TripDetailsHeader({
             marginRight: -theme.spacing.sm,
           }}
         >
-          <DetailIconButton
-            compact
-            name="edit"
-            label={copy.edit}
-            onPress={onEdit}
-          />
+          {onEdit ? (
+            <DetailIconButton
+              compact
+              name="edit"
+              label={copy.edit}
+              onPress={onEdit}
+            />
+          ) : onMenu ? (
+            <DetailIconButton
+              compact
+              name="more"
+              label={copy.menu}
+              onPress={onMenu}
+            />
+          ) : null}
           <DetailIconButton
             compact
             name="map"

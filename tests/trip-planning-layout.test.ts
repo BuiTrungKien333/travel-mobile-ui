@@ -169,6 +169,21 @@ test("actual date items show day and abbreviated weekday/date; plus appends rath
     false,
   );
   assert.equal(live.props.data.at(-1)?.kind, "backlog");
+  const recap = TripPlanningDaySelector({
+    trip: {
+      id: "recap",
+      destination: "Đà Lạt",
+      status: "completed",
+      days: [{ date: "2026-10-24", stops: [] }],
+    },
+    selectedDate: "2026-10-24",
+    addDayDisabled: true,
+    showBacklog: false,
+    onSelect() {},
+  });
+  assert.ok(isValidElement<ListProps>(recap));
+  assert.equal(recap.props.data.length, 1);
+  assert.equal(recap.props.data[0].kind, "day");
   assert.equal(
     node.props.data.some((item) => item.kind === "backlog"),
     true,

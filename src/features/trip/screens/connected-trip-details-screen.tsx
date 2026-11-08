@@ -47,6 +47,7 @@ import {
 import { TripDayMap } from "../components/trip-day-map";
 import { TripDetailsActions } from "../components/trip-details-actions";
 import { ConnectedTripRecap } from "../components/connected-trip-recap";
+import { TripRecapCard } from "../components/trip-recap-card";
 import { TripTimelineTail } from "../components/trip-timeline-states";
 import { TripStartNode } from "../components/trip-timeline-states";
 import { ConnectedDayScheduleSheet } from "../components/connected-day-schedule-sheet";
@@ -606,7 +607,7 @@ export function ConnectedTripDetailsScreen({
       trip={trip}
       mode={mode}
       today={read.context.evaluatedDate}
-      hideTripInfo={mode === "planning" || mode === "live"}
+      hideTripInfo={mode !== "cancelled"}
       onBack={back}
       onMenu={openActions}
     />
@@ -659,7 +660,7 @@ export function ConnectedTripDetailsScreen({
               collapsedByScroll={mapScroll.hidden}
               showStart={false}
               showLocationControl={false}
-              overlayHeader={mode === "planning" || mode === "live"}
+              overlayHeader={mode !== "cancelled"}
               mapContent={
                 <TripDayMap
                   key={selectionKey}
@@ -718,7 +719,16 @@ export function ConnectedTripDetailsScreen({
                       today={read.context.evaluatedDate}
                       titleOnly
                       onBack={back}
-                      onEdit={openActions}
+                      onEdit={
+                        mode === "recap" || mode === "cancelled"
+                          ? undefined
+                          : openActions
+                      }
+                      onMenu={
+                        mode === "recap" || mode === "cancelled"
+                          ? openActions
+                          : undefined
+                      }
                       onOpenMap={mapScroll.show}
                     />
                   ) : null}
@@ -730,6 +740,7 @@ export function ConnectedTripDetailsScreen({
                     <TripPlanningDaySelector
                       trip={trip}
                       backlogCount={pool.length}
+                      showBacklog={mode !== "recap" || pool.length > 0}
                       selectedDate={activeDate}
                       onSelect={selectDate}
                       addDayDisabled
@@ -742,11 +753,22 @@ export function ConnectedTripDetailsScreen({
                 <View
                   style={{ gap: theme.spacing.sm, padding: theme.spacing.lg }}
                 >
+                  {mode === "recap" ? (
+                    <TripRecapCard
+                      key={trip.id}
+                      trip={trip}
+                      dayCount={read.trip.dayCount}
+                      stopCount={read.trip.stopCount}
+                      memoryCount={read.trip.memoryCount}
+                    />
+                  ) : null}
                   {mode === "recap" && activeDate ? (
                     <ConnectedTripRecap
                       key={selectionKey}
                       tripId={trip.id}
                       date={activeDate}
+                      destination={trip.destination}
+                      refreshVersion={itinerary.dataUpdatedAt}
                       onJournal={showJournal}
                     />
                   ) : null}
@@ -754,6 +776,24 @@ export function ConnectedTripDetailsScreen({
                     <AppText accessibilityRole="header" variant="sectionTitle">
                       {detailCopy.pool} ({rows.length})
                     </AppText>
+                  ) : mode === "recap" ? (
+                    <View
+                      style={{
+                        gap: theme.spacing.xs,
+                        paddingBottom: theme.spacing.md,
+                      }}
+                    >
+                      <AppText
+                        variant="sectionTitle"
+                        accessibilityRole="header"
+                      >
+                        {detailCopy.recapTimeline}
+                      </AppText>
+                      <AppText variant="caption" tone="muted">
+                        {rows.length} {detailCopy.places}
+                        {total ? ` · ${total}` : ""}
+                      </AppText>
+                    </View>
                   ) : (
                     <TripDayTools
                       trip={trip}
@@ -1054,8 +1094,8 @@ export function ConnectedTripDetailsScreen({
           )}
         </View>
       ) : null}
-      {backlog ||
-      ((mode === "live" || mode === "recap") && !defaultDate) ? null : (
+      {(backlog && mode !== "recap") ||
+      (mode === "live" && !defaultDate) ? null : (
         <TripDetailsActions
           trip={trip}
           mode={mode}
@@ -1071,7 +1111,15 @@ export function ConnectedTripDetailsScreen({
             completion.isPending ||
             !!timelineDrag.draggedId
           }
-          onJournal={showJournal}
+          onJournal={
+            mode === "recap"
+              ? () =>
+                  router.push({
+                    pathname: "/memories/[tripId]",
+                    params: { tripId: trip.id },
+                  })
+              : showJournal
+          }
           onInfo={openActions}
         />
       )}
@@ -1326,7 +1374,11 @@ export function ConnectedTripDetailsScreen({
           title={detailCopy.dayMemories}
           onClose={() => setJournalDate(undefined)}
         >
-          <ConnectedTripRecap tripId={trip.id} date={journalDate} />
+          <ConnectedTripRecap
+            tripId={trip.id}
+            date={journalDate}
+            destination={trip.destination}
+          />
         </TripDetailsSheet>
       ) : null}
       {pickerOpen ? (

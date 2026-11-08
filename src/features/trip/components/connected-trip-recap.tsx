@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppButton } from "@/components/ui/app-button";
@@ -19,10 +19,14 @@ export function ConnectedTripRecap({
   tripId,
   date,
   onJournal,
+  destination = "",
+  refreshVersion,
 }: {
   tripId: string;
   date: string;
   onJournal?: () => void;
+  destination?: string;
+  refreshVersion?: number;
 }) {
   const theme = useAppTheme();
   const owner = useProfile().data?.id;
@@ -38,6 +42,18 @@ export function ConnectedTripRecap({
     retry: false,
     queryFn: ({ signal }) => memoryApi.list(page, 10, tripId, signal, date),
   });
+  const previousRefresh = useRef(refreshVersion);
+  const refetch = query.refetch;
+  useEffect(() => {
+    if (previousRefresh.current === refreshVersion) return;
+    previousRefresh.current = refreshVersion;
+    void refetch();
+  }, [refreshVersion, refetch]);
+  const totalPages = query.data?.totalPages;
+  useEffect(() => {
+    if (totalPages !== undefined && page >= totalPages && page > 0)
+      setPage(Math.max(0, totalPages - 1));
+  }, [page, totalPages]);
   const time = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Asia/Ho_Chi_Minh",
     hour: "2-digit",
@@ -51,7 +67,7 @@ export function ConnectedTripRecap({
     const meta = {
       date,
       tripId,
-      destination: "",
+      destination,
       time: time.format(new Date(m.experiencedAt)),
     };
     return photos.length
@@ -66,12 +82,16 @@ export function ConnectedTripRecap({
 
   if (query.isPending)
     return (
-      <AppText accessibilityLiveRegion="polite">{copy.memoriesLoading}</AppText>
+      <AppText variant="body" accessibilityLiveRegion="polite">
+        {copy.memoriesLoading}
+      </AppText>
     );
   if (query.isError)
     return (
       <View style={{ gap: theme.spacing.sm }}>
-        <AppText accessibilityRole="alert">{copy.memoriesError}</AppText>
+        <AppText variant="body" accessibilityRole="alert">
+          {copy.memoriesError}
+        </AppText>
         <AppButton
           size="small"
           variant="outline"
@@ -99,6 +119,10 @@ export function ConnectedTripRecap({
             client.invalidateQueries({
               queryKey: tripQueryKeys.dashboard(owner),
             }),
+            client.invalidateQueries({
+              queryKey: tripQueryKeys.detail(owner, tripId),
+            }),
+            client.invalidateQueries({ queryKey: tripQueryKeys.list(owner) }),
           ]);
         }}
       />
