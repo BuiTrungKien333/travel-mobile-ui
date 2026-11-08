@@ -9,6 +9,7 @@ import { useAppTheme } from "@/hooks/use-app-theme";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 import { getDayTravel, getTripForecast } from "../data/trip-details-preview";
 import type { TripDetailsSheetState } from "../types/trip-details-types";
+import { TripLiveDayTools } from "./trip-live-day-tools";
 
 /** Summary includes scheduled visits only; origin legs aren't invented. */
 export function TripDayTools({
@@ -21,7 +22,10 @@ export function TripDayTools({
   showWeather = true,
   reorderAtEnd = false,
   showOptimize = false,
+  liveLayout = false,
   routeSummary,
+  routeMetrics,
+  onEditDay,
   transportLabel,
   transportIcon,
   actions,
@@ -35,7 +39,10 @@ export function TripDayTools({
   showWeather?: boolean;
   reorderAtEnd?: boolean;
   showOptimize?: boolean;
+  liveLayout?: boolean;
   routeSummary?: string | null;
+  routeMetrics?: { km: number; minutes: number };
+  onEditDay?: () => void;
   transportLabel?: string;
   transportIcon?: "car" | "walk" | "route";
   actions?: ReactNode;
@@ -48,6 +55,27 @@ export function TripDayTools({
     ongoingWeatherSnapshot.tripId === trip.id &&
     ongoingWeatherSnapshot.date === day?.date &&
     day?.date === today;
+  if (liveLayout) {
+    return (
+      <TripLiveDayTools
+        day={day}
+        canEdit={canEdit}
+        canOptimize={showOptimize && (day?.stops.length ?? 0) > 1}
+        routeSummary={routeSummary ?? copy.unknownRoute}
+        routeMetrics={
+          routeMetrics ??
+          (travel?.complete && !trip.accommodation
+            ? { km: travel.km, minutes: travel.minutes }
+            : undefined)
+        }
+        transportLabel={transportLabel}
+        transportIcon={transportIcon}
+        onSheetChange={setSheet}
+        onEditDay={onEditDay}
+        actions={actions}
+      />
+    );
+  }
   const reorderLink =
     canEdit && day && day.stops.length > 1 ? (
       <Pressable
@@ -66,7 +94,9 @@ export function TripDayTools({
         <AppText
           variant="link"
           tone="primary"
-          style={{ fontFamily: theme.typography.fontFamily.semibold }}
+          style={{
+            fontFamily: theme.typography.fontFamily.semibold,
+          }}
         >
           {copy.reorder}
         </AppText>
@@ -92,12 +122,12 @@ export function TripDayTools({
       >
         <View style={styles.grow}>
           <View style={[styles.inline, { gap: theme.spacing.md }]}>
-            <AppText variant="label">
+            <AppText variant="sectionTitle">
               {day?.stops.length ?? 0} {copy.places}
             </AppText>
             {!reorderAtEnd ? reorderLink : null}
           </View>
-          <AppText variant="caption" tone="muted">
+          <AppText variant="body" tone="muted">
             {routeSummary !== undefined
               ? routeSummary || copy.unknownRoute
               : travel?.complete &&
@@ -107,74 +137,111 @@ export function TripDayTools({
                 : copy.unknownRoute}
           </AppText>
         </View>
-        {showOptimize && day && day.stops.length > 1 ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={copy.optimize}
-            onPress={() => setSheet({ kind: "optimize" })}
-            style={({ pressed }) => ({
-              width: theme.layout.compactTouchTarget,
-              height: theme.layout.compactTouchTarget,
+        <View
+          style={[
+            styles.inline,
+            {
+              gap: theme.spacing.sm,
+              flexDirection: "row",
+              flexShrink: 0,
+              flexWrap: "nowrap",
+              marginLeft: "auto",
+            },
+          ]}
+        >
+          <View
+            style={{
+              flexDirection: "row",
               alignItems: "center",
-              justifyContent: "center",
-              borderRadius: theme.radius.full,
-              backgroundColor: theme.colors.glassGlow,
-              boxShadow: [
-                { ...theme.elevation.glass, color: theme.colors.glassShadow },
-                {
-                  ...theme.elevation.raisedActionHighlight,
-                  color: theme.colors.glassInset,
-                },
-              ],
-              opacity: pressed ? theme.motion.pressOpacity : 1,
-            })}
+              gap: theme.spacing.sm,
+            }}
           >
-            <GlassBackdrop borderRadius={theme.radius.full} />
-            <AppIcon
-              name="sparkles"
-              variant="light"
-              size={theme.layout.iconMedium}
-              color={theme.colors.primaryText}
-            />
-          </Pressable>
-        ) : reorderAtEnd ? (
-          reorderLink
-        ) : showWeather ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={copy.weather}
-            onPress={() => setSheet({ kind: "weather" })}
-            style={({ pressed }) => [
-              styles.inline,
-              {
-                gap: theme.spacing.xs,
-                minHeight: theme.layout.compactTouchTarget,
-                paddingHorizontal: theme.spacing.sm,
-                borderRadius: theme.radius.full,
-                backgroundColor: theme.colors.weatherGlassSurface,
-                opacity: pressed ? theme.motion.pressOpacity : 1,
-              },
-            ]}
-          >
-            <AppIcon
-              name={
-                currentWeather
-                  ? ongoingWeatherSnapshot.condition
-                  : (forecast?.condition ?? "cloud")
-              }
-              size={theme.layout.iconMedium}
-            />
-            <AppText variant="caption" tone="primary">
-              {currentWeather
-                ? `${ongoingWeatherSnapshot.temperature}°`
-                : forecast
-                  ? `${forecast.temperature}°`
-                  : copy.weather}
-            </AppText>
-            <AppIcon name="chevron" size={theme.layout.iconSmall} />
-          </Pressable>
-        ) : null}
+            {showOptimize && day && day.stops.length > 1 ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={copy.optimize}
+                onPress={() => setSheet({ kind: "optimize" })}
+                style={({ pressed }) => ({
+                  width: theme.layout.compactTouchTarget,
+                  height: theme.layout.compactTouchTarget,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: theme.radius.full,
+                  backgroundColor: theme.colors.glassGlow,
+                  boxShadow: [
+                    {
+                      ...theme.elevation.glass,
+                      color: theme.colors.glassShadow,
+                    },
+                    {
+                      ...theme.elevation.raisedActionHighlight,
+                      color: theme.colors.glassInset,
+                    },
+                  ],
+                  opacity: pressed ? theme.motion.pressOpacity : 1,
+                })}
+              >
+                <GlassBackdrop borderRadius={theme.radius.full} />
+                <AppIcon
+                  name="sparkles"
+                  variant="light"
+                  size={theme.layout.iconMedium}
+                  color={theme.colors.primaryText}
+                />
+              </Pressable>
+            ) : reorderAtEnd ? (
+              reorderLink
+            ) : showWeather ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={copy.weather}
+                onPress={() => setSheet({ kind: "weather" })}
+                style={({ pressed }) => [
+                  styles.inline,
+                  {
+                    gap: theme.spacing.xs,
+                    minHeight: theme.layout.compactTouchTarget,
+                    paddingHorizontal: theme.spacing.sm,
+                    borderRadius: theme.radius.full,
+                    backgroundColor: theme.colors.weatherGlassSurface,
+                    opacity: pressed ? theme.motion.pressOpacity : 1,
+                  },
+                ]}
+              >
+                <AppIcon
+                  name={
+                    currentWeather
+                      ? ongoingWeatherSnapshot.condition
+                      : (forecast?.condition ?? "cloud")
+                  }
+                  size={theme.layout.iconMedium}
+                />
+                <AppText variant="caption" tone="primary">
+                  {currentWeather
+                    ? `${ongoingWeatherSnapshot.temperature}°`
+                    : forecast
+                      ? `${forecast.temperature}°`
+                      : copy.weather}
+                </AppText>
+                <AppIcon name="chevron" size={theme.layout.iconSmall} />
+              </Pressable>
+            ) : null}
+          </View>
+        </View>
       </View>
+      {day && day.stops.length > 0 ? (
+        <AppText
+          variant="caption"
+          tone="muted"
+          accessibilityLiveRegion="polite"
+        >
+          {!day.startTime
+            ? copy.timelineChooseDeparture
+            : day.stops.some((stop) => !stop.time)
+              ? copy.timelineIncomplete
+              : copy.estimatedTimeline}
+        </AppText>
+      ) : null}
       {(canEdit && day) || actions ? (
         <View style={[styles.inline, { gap: theme.spacing.md }]}>
           {canEdit && day ? (

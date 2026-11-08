@@ -10,18 +10,23 @@ type Props = {
   accessibilityLabel?: string;
   "aria-checked"?: boolean;
   name?: string;
+  disabled?: boolean;
   onPress?: () => void;
 };
 function elements(node: unknown): Props[] {
   if (Array.isArray(node)) return node.flatMap(elements);
   if (typeof node === "function") return elements(node(() => {}));
   if (!isValidElement<Props>(node)) return [];
+  if (typeof node.type === "function")
+    return elements((node.type as (props: Props) => unknown)(node.props));
   return [node.props, ...elements(node.props.children)];
 }
 function text(node: unknown): string {
   if (typeof node === "string" || typeof node === "number") return String(node);
   if (typeof node === "function") return text(node(() => {}));
   if (Array.isArray(node)) return node.map(text).join(" ");
+  if (isValidElement<Props>(node) && typeof node.type === "function")
+    return text((node.type as (props: Props) => unknown)(node.props));
   return isValidElement<Props>(node) ? text(node.props.children) : "";
 }
 const tokens = tripModuleLoader()<typeof import("../src/theme/tokens.ts")>(
@@ -81,6 +86,44 @@ const trip: Trip = {
   status: "planned",
   days: [{ date: "2026-10-21", stops: [stop] }],
 };
+
+test("live toolbar labels retain transport, optimization, reorder and day edit actions", () => {
+  const opened: string[] = [];
+  const props = {
+    trip,
+    day: { ...trip.days[0], stops: [stop, { ...stop, id: "museum" }] },
+    today: "2026-10-21",
+    canEdit: true,
+    editHistory: false,
+    liveLayout: true,
+    showOptimize: true,
+    routeMetrics: { km: 30.5, minutes: 87 },
+    transportLabel: "Ô tô",
+    onSheetChange: (sheet: { kind: string }) => opened.push(sheet.kind),
+    onEditDay: () => opened.push("day"),
+  };
+  const tree = TripDayTools(props);
+  assert.match(text(tree), /30,5 km \(87 phút\)/);
+  const buttons = elements(tree).filter(
+    (item) => item.accessibilityRole === "button",
+  );
+  for (const label of [
+    "Phương tiện: Ô tô",
+    "Tối ưu lộ trình",
+    "Sắp xếp",
+    "Sửa lịch trình trong ngày",
+  ]) {
+    const action = buttons.find((item) => item.accessibilityLabel === label);
+    assert.ok(action, label);
+    assert.equal(action.disabled, false);
+    action.onPress?.();
+  }
+  assert.deepEqual(opened, ["transport", "optimize", "reorder", "day"]);
+  const disabled = elements(
+    TripDayTools({ ...props, canEdit: false, showOptimize: false }),
+  ).filter((item) => item.accessibilityRole === "button");
+  assert.ok(disabled.every((item) => item.disabled));
+});
 
 test("Live summary opens the shared optimizer for a day with multiple stops", () => {
   const opened: string[] = [];

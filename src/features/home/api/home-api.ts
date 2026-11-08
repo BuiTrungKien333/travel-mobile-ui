@@ -3,6 +3,7 @@ import { apiClient } from "@/services/api/client";
 import { ApiError } from "@/services/api/api-error";
 import { tripReadSchema } from "@/features/trip/api/trip-contract";
 import type { Memory, TripStop } from "../types/home-types";
+import { nextTravelDayRefreshDelay } from "@/utils/calendar-date";
 
 const count = z.number().int().nonnegative().safe();
 const photoSchema = z.object({
@@ -68,13 +69,7 @@ export const homeDashboardSchema = z
 export type HomeDashboard = z.infer<typeof homeDashboardSchema>;
 /** Re-evaluate at Vietnam midnight without polling or using the device's calendar. */
 export function nextHomeRefreshDelay(context: HomeDashboard["context"]) {
-  return Math.max(
-    1000,
-    Date.parse(`${context.evaluatedDate}T00:00:00+07:00`) +
-      86_400_000 -
-      Date.parse(context.serverTime) +
-      250,
-  );
+  return nextTravelDayRefreshDelay(context);
 }
 export const homeApi = {
   async get(signal?: AbortSignal) {

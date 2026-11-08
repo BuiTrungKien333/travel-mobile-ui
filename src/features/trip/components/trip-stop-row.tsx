@@ -37,6 +37,7 @@ export function TripStopRow({
   onRemove,
   preview = true,
   savedLeg,
+  visitDisabled = false,
 }: {
   stop: TripStop;
   previous?: TripStop;
@@ -54,6 +55,7 @@ export function TripStopRow({
   onRemove?: () => void;
   preview?: boolean;
   savedLeg?: { km: number; minutes: number };
+  visitDisabled?: boolean;
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
@@ -175,7 +177,8 @@ export function TripStopRow({
             <Pressable
               accessibilityRole="checkbox"
               accessibilityLabel={`${visited ? copy.unvisit : copy.markVisited}: ${stop.name[locale]}`}
-              accessibilityState={{ checked: visited }}
+              accessibilityState={{ checked: visited, disabled: visitDisabled }}
+              disabled={visitDisabled}
               aria-checked={visited}
               onPress={onVisited}
               style={({ pressed }) => ({
@@ -301,7 +304,7 @@ export function TripStopRow({
                       ]}
                     >
                       <AppText
-                        variant="caption"
+                        variant="label"
                         tone="primary"
                         style={{
                           fontFamily: theme.typography.fontFamily.medium,
@@ -327,7 +330,9 @@ export function TripStopRow({
                         <AppIcon name="pin" size={theme.layout.iconSmall} />
                       ) : null}
                     </View>
-                    <AppText variant="label">{stop.name[locale]}</AppText>
+                    <AppText variant="sectionTitle">
+                      {stop.name[locale]}
+                    </AppText>
                     <AppText variant="caption" tone="muted">
                       {metadata}
                     </AppText>

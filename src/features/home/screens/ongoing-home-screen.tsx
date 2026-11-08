@@ -1,6 +1,6 @@
 import { JournalAlbum } from "../components/journal-album";
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Image } from "expo-image";
 import { View } from "react-native";
 import { AppText } from "@/components/ui/app-text";
@@ -14,6 +14,10 @@ import { useOngoingCopy } from "../i18n/ongoing-copy";
 import { useTripPreview } from "../providers/trip-preview-provider";
 import type { Memory, Trip, TripStop } from "../types/home-types";
 import { getDayProgress } from "../utils/day-progress";
+import {
+  getTripCoverImage,
+  getSampleImage,
+} from "@/features/trip/utils/trip-images";
 export function OngoingHomeScreen({
   trip,
   dayIndex,
@@ -32,7 +36,7 @@ export function OngoingHomeScreen({
     onWeather: () => void;
     onPlan: () => void;
     onJournal: () => void;
-    onCamera: () => void;
+    onCamera: (stop?: TripStop) => void;
     onDeletePhoto: (memory: Memory) => Promise<void>;
     error?: string;
     onRefresh: () => void;
@@ -49,6 +53,8 @@ export function OngoingHomeScreen({
     `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100" preserveAspectRatio="none"><defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="${theme.colors.surfaceTint}"/><stop offset="1" stop-color="${theme.colors.background}"/></linearGradient></defs><rect width="100" height="100" fill="url(#sky)"/></svg>`,
   )}`;
   const [checkedInStop, setCheckedInStop] = useState<TripStop | null>(null);
+  const visiting = useRef(false);
+  const [coverFailed, setCoverFailed] = useState(false);
   const promptDuration = theme.motion.checkInPromptDuration;
   useEffect(() => {
     if (!checkedInStop) return;
@@ -103,8 +109,14 @@ export function OngoingHomeScreen({
       : openPanel({ kind: "plan", tripId: trip.id, dayIndex });
   const handleVisit = async (id: string, value: boolean) => {
     if (runtime) {
-      if (runtime.nextStop && (await runtime.onVisit(runtime.nextStop)))
-        setCheckedInStop(runtime.nextStop);
+      if (visiting.current || runtime.busy || !runtime.nextStop) return;
+      visiting.current = true;
+      const stop = runtime.nextStop;
+      try {
+        if (await runtime.onVisit(stop)) setCheckedInStop(stop);
+      } finally {
+        visiting.current = false;
+      }
       return;
     }
     setVisited(trip.id, today, id, value);
@@ -146,6 +158,21 @@ export function OngoingHomeScreen({
         />
         <NextStopCard
           key={progress.nextStop?.id ?? "finished"}
+          cover={
+            <Image
+              accessible={false}
+              source={
+                coverFailed ? getSampleImage(trip.id) : getTripCoverImage(trip)
+              }
+              onError={() => setCoverFailed(true)}
+              contentFit="cover"
+              cachePolicy="memory-disk"
+              style={{
+                width: "100%",
+                height: theme.layout.upcomingHeroImageHeight,
+              }}
+            />
+          }
           stop={progress.nextStop}
           onDirections={() =>
             router.push({
@@ -177,7 +204,7 @@ export function OngoingHomeScreen({
           stop={checkedInStop}
           onCapture={() => {
             if (runtime) {
-              runtime.onCamera();
+              runtime.onCamera(checkedInStop);
               setCheckedInStop(null);
               return;
             }

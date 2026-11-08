@@ -332,12 +332,14 @@ export function JourneySheet({
   children,
   glass = false,
   hideHeader = false,
+  restrained = false,
 }: {
   title: string;
   onClose: () => void;
   children: ReactNode;
   glass?: boolean;
   hideHeader?: boolean;
+  restrained?: boolean;
 }) {
   const theme = useAppTheme();
   const { copy } = useOngoingCopy();
@@ -424,13 +426,16 @@ export function JourneySheet({
                 height: glass
                   ? windowHeight * theme.layout.weatherSheetHeightRatio
                   : undefined,
-                backgroundColor: glass
-                  ? theme.colors.weatherGlassSurface
-                  : theme.colors.background,
+                backgroundColor:
+                  glass && !restrained
+                    ? theme.colors.weatherGlassSurface
+                    : theme.colors.background,
                 borderTopLeftRadius: theme.radius.xl,
                 borderTopRightRadius: theme.radius.xl,
                 borderWidth: glass ? StyleSheet.hairlineWidth : 0,
-                borderColor: theme.colors.glassClockBorder,
+                borderColor: restrained
+                  ? theme.colors.border
+                  : theme.colors.glassClockBorder,
                 boxShadow: glass
                   ? [
                       {
@@ -442,7 +447,7 @@ export function JourneySheet({
               },
             ]}
           >
-            {glass ? <WeatherAtmosphere /> : null}
+            {glass && !restrained ? <WeatherAtmosphere /> : null}
             <GestureDetector gesture={dragGesture}>
               <View collapsable={false}>
                 {glass ? (

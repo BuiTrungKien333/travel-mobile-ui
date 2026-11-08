@@ -52,6 +52,7 @@ export function useHomeActions() {
           queryKey: weatherQueryKeys.forTrip(owner, tripId),
         }),
         client.invalidateQueries({ queryKey: tripQueryKeys.dashboard(owner) }),
+        client.invalidateQueries({ queryKey: tripQueryKeys.list(owner) }),
         client.invalidateQueries({
           queryKey: tripQueryKeys.detail(owner, tripId),
         }),

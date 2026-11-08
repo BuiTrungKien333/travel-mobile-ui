@@ -70,6 +70,12 @@ const vi = {
   minutes: "phút",
   places: "điểm dừng",
   unknownRoute: "Chưa tính lộ trình",
+  estimatedTimeline: "Lịch trình dự kiến",
+  timelineChooseDeparture: "Chọn giờ xuất phát để tính lịch trình dự kiến.",
+  timelineIncomplete:
+    "Một số giờ đến chưa tính được do thiếu dữ liệu di chuyển.",
+  departureAtFirstStop:
+    "Chưa chọn nơi xuất phát: giờ này là giờ bắt đầu tại điểm đầu tiên.",
   car: "Ô tô",
   motorcycle: "Xe máy",
   walk: "Đi bộ",
@@ -207,6 +213,10 @@ const vi = {
   cloud: "Nhiều mây",
   rain: "Mưa rào",
   optimize: "Tối ưu lộ trình",
+  optimizeShort: "Tối ưu",
+  remainingOptimizationHint:
+    "So sánh phần hành trình còn lại. Giữ nguyên điểm đã ghé; giờ dự kiến còn lại được tính khi áp dụng.",
+  editScheduleShort: "Sửa",
   slideOptimize: "Trượt để tối ưu lộ trình",
   slideOptimizeHint: "Kéo nút sang phải đến cuối thanh để mở tối ưu lộ trình.",
   optimizeTitle: "Xem trước thứ tự gợi ý",
@@ -303,6 +313,13 @@ const en: typeof vi = {
   minutes: "min",
   places: "stops",
   unknownRoute: "Route not calculated",
+  estimatedTimeline: "Estimated itinerary",
+  timelineChooseDeparture:
+    "Choose a departure time to calculate your itinerary.",
+  timelineIncomplete:
+    "Some arrival times need travel data before they can be calculated.",
+  departureAtFirstStop:
+    "Without a starting location, this is the start time at your first stop.",
   car: "Car",
   motorcycle: "Motorbike",
   walk: "Walking",
@@ -445,6 +462,10 @@ const en: typeof vi = {
   cloud: "Cloudy",
   rain: "Showers",
   optimize: "Optimize route",
+  optimizeShort: "Optimize",
+  remainingOptimizationHint:
+    "Comparing the remaining route. Visited stops stay unchanged; upcoming times are calculated when applied.",
+  editScheduleShort: "Edit",
   slideOptimize: "Slide to optimize route",
   slideOptimizeHint:
     "Drag the button to the right end to open route optimization.",

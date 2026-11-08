@@ -32,6 +32,7 @@ export const layout = {
   tripPlanningMapCollapsedRatio: 0.35,
   tripPlanningMapExpandedRatio: 0.8,
   tripPlanningDateTabWidth: 96,
+  tripLiveToolbarMaxWidth: 288,
   tripPlanningDateIndicatorHeight: 3,
   tripPlanningMapAutoHideDistance: 48,
   tripTimelineEstimatedRowHeight: 160,

@@ -19,6 +19,7 @@ export function ConnectedDayScheduleSheet({
   day,
   routeMode,
   pending,
+  preserveVisited = false,
   problem,
   onReload,
   onClose,
@@ -28,6 +29,7 @@ export function ConnectedDayScheduleSheet({
   day: TripDay;
   routeMode: RouteMode;
   pending: boolean;
+  preserveVisited?: boolean;
   problem?: string;
   onReload?: () => void;
   onClose: () => void;
@@ -83,6 +85,7 @@ export function ConnectedDayScheduleSheet({
           trip={trip}
           day={day}
           pending={pending}
+          preserveVisited={preserveVisited}
           integration={{
             matches: candidates,
             onSearch: setSearch,

@@ -471,10 +471,16 @@ function TripDetailsContent({
               trip={trip}
               day={timedDay}
               today={today}
-              canEdit={canEdit && (mode === "planning" || editHistory)}
+              canEdit={canEdit}
               editHistory={editHistory}
               showWeather={false}
               showOptimize={mode === "live" && canOptimize}
+              liveLayout={mode === "live"}
+              onEditDay={
+                mode === "live" && canEdit && timedDay
+                  ? () => setSheet({ kind: "day" })
+                  : undefined
+              }
               reorderAtEnd={mode === "planning"}
               onSheetChange={setSheet}
             />
@@ -543,7 +549,8 @@ function TripDetailsContent({
           >
             <TripPlanningDaySelector
               trip={trip}
-              selectedDate={day?.date}
+              selectedDate={backlog ? undefined : day?.date}
+              backlogCount={unscheduled.length}
               onSelect={selectDate}
               onAddDay={mode === "planning" ? addDay : undefined}
               addDayDisabled={tripDuration(trip) >= tripFormLimits.days}

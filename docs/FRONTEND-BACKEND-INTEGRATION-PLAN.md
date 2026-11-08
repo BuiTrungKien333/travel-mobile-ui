@@ -1,5 +1,26 @@
 # Kế hoạch hợp nhất frontend và backend WeGo
 
+
+### QA-5 · Tối ưu phần chưa ghé · 08/11/2026
+
+- Đã nối đề xuất/lưu nhóm đã ghé lên đầu theo thứ tự cũ, giữ giờ/thời lượng/ID; lấy điểm cuối nhóm làm mốc và chỉ tối ưu phần chưa ghé. Ví dụ ABCD đã ghé A/C → ACBD hoặc ACDB. Preview không ghi DB.
+- Dùng Mapbox Matrix + Held–Karp sẵn có để không ép giữ điểm cuối; luồng chưa ghé điểm nào giữ API tối ưu cũ. Modal so sánh phần còn lại, khóa kéo nhóm đã ghé và cập nhật timeline sau Áp dụng.
+- Lưu lịch kiểm tra revision và snapshot visited, từ chối ghi đè khi check-in thay đổi. Provider I/O ngoài transaction; không đổi schema/dependency. Hướng dẫn và giới hạn chi phí: [REMAINING-ROUTE-OPTIMIZATION-QA.md](REMAINING-ROUTE-OPTIMIZATION-QA.md). Chờ nghiệm thu Android/web.
+
+
+
+### QA-5 · Timeline dự kiến tự động · 07/11/2026
+
+- Sửa sau nghiệm thu: dùng giờ điểm đầu làm mốc khi chưa có settings; tự hoàn thiện lịch cũ còn thiếu giờ khi route sẵn sàng, không yêu cầu người dùng nhập lại giờ xuất phát.
+
+- Đã dùng chung backend tính giờ theo giờ xuất phát + Directions + thời lượng ghé (mặc định 45 phút; giữ giá trị người dùng nhập). Thêm/gỡ/đổi thứ tự/đổi thời lượng tự tính lại khi ngày đã có settings; ghi chú đơn thuần không gọi provider.
+- Live hôm nay bảo toàn điểm đã ghé. Route I/O ngoài transaction, batch thêm và lịch tính commit nguyên tử, kiểm tra revision trước ghi; giữ ngày khác và dữ liệu cũ. Route không sẵn sàng không bịa giờ đến.
+- Mobile giữ UI hiện có, thêm nhãn lịch dự kiến/trạng thái chưa đủ dữ liệu, lựa chọn nhanh 45/60 phút và khóa thời lượng đã ghé. Chọn giờ không bắt buộc chọn nơi xuất phát.
+- API, quy tắc và checklist nghiệm thu: [ESTIMATED-TIMELINE-QA.md](ESTIMATED-TIMELINE-QA.md). Đã kiểm tra tự động; nghiệm thu UI web/Android còn chờ người dùng.
+
+
+> QA-5C · 07/11/2026: rà lại LIVE trên Home/chi tiết, nối tick timeline và focus/mở rộng map, sửa camera sau check-in và cover backend; dùng ảnh local fallback ổn định. Khôi phục Chưa xếp lịch (N) để xử lý điểm giữ lại sau đổi ngày. 65 ca backend/66 mobile liên quan, TypeScript/export web+Android đạt. [LIVE-TRIP-QA.md](LIVE-TRIP-QA.md) là checklist mới nhất; chờ nghiệm thu thiết bị, chưa triển khai turn-by-turn hoặc visited per-visit.
+
 > QA-6A · Xem sau · 07/11/2026: tái sử dụng core xem ảnh Home, đọc local độc lập với API album/chuyến, gán chuyến lưu trước rồi đồng bộ. Ảnh lỗi ở Chờ đồng bộ có retry/progress/mở album và khôi phục sau reload; chỉ đánh dấu uploaded sau khi server xác nhận media. 54 ca mobile, TypeScript/export web+Android đạt. Chờ nghiệm thu native/provider thật; chưa hoàn tất Phase 6. Xem [QA-6A](QA6-MEMORY-CAPTURE.md).
 
 > Quyết định Xem sau · 07/11/2026: ảnh chưa gắn chuyến chỉ lưu trên thiết bị; xác nhận đưa vào chuyến rồi mới đồng bộ. Không triển khai upload unassigned memory lên cloud. Giữ bản local nếu upload lỗi. Chi tiết và giới hạn lưu trữ trong [QA-6A](QA6-MEMORY-CAPTURE.md).

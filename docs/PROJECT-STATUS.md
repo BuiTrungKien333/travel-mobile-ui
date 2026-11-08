@@ -1,5 +1,31 @@
 # Tiến độ Travel Mobile UI
 
+
+### QA-5 · Tối ưu phần chưa ghé · 08/11/2026
+
+- Đã nối đề xuất/lưu nhóm đã ghé lên đầu theo thứ tự cũ, giữ giờ/thời lượng/ID; lấy điểm cuối nhóm làm mốc và chỉ tối ưu phần chưa ghé. Ví dụ ABCD đã ghé A/C → ACBD hoặc ACDB. Preview không ghi DB.
+- Dùng Mapbox Matrix + Held–Karp sẵn có để không ép giữ điểm cuối; luồng chưa ghé điểm nào giữ API tối ưu cũ. Modal so sánh phần còn lại, khóa kéo nhóm đã ghé và cập nhật timeline sau Áp dụng.
+- Lưu lịch kiểm tra revision và snapshot visited, từ chối ghi đè khi check-in thay đổi. Provider I/O ngoài transaction; không đổi schema/dependency. Hướng dẫn và giới hạn chi phí: [REMAINING-ROUTE-OPTIMIZATION-QA.md](REMAINING-ROUTE-OPTIMIZATION-QA.md). Chờ nghiệm thu Android/web.
+
+
+
+### QA-5 · Timeline dự kiến tự động · 07/11/2026
+
+- Sửa sau nghiệm thu: dùng giờ điểm đầu làm mốc khi chưa có settings; tự hoàn thiện lịch cũ còn thiếu giờ khi route sẵn sàng, không yêu cầu người dùng nhập lại giờ xuất phát.
+
+- Đã dùng chung backend tính giờ theo giờ xuất phát + Directions + thời lượng ghé (mặc định 45 phút; giữ giá trị người dùng nhập). Thêm/gỡ/đổi thứ tự/đổi thời lượng tự tính lại khi ngày đã có settings; ghi chú đơn thuần không gọi provider.
+- Live hôm nay bảo toàn điểm đã ghé. Route I/O ngoài transaction, batch thêm và lịch tính commit nguyên tử, kiểm tra revision trước ghi; giữ ngày khác và dữ liệu cũ. Route không sẵn sàng không bịa giờ đến.
+- Mobile giữ UI hiện có, thêm nhãn lịch dự kiến/trạng thái chưa đủ dữ liệu, lựa chọn nhanh 45/60 phút và khóa thời lượng đã ghé. Chọn giờ không bắt buộc chọn nơi xuất phát.
+- API, quy tắc và checklist nghiệm thu: [ESTIMATED-TIMELINE-QA.md](ESTIMATED-TIMELINE-QA.md). Đã kiểm tra tự động; nghiệm thu UI web/Android còn chờ người dùng.
+
+
+### QA-5C · Live Trip và khôi phục Chưa xếp lịch · 07/11/2026
+
+- Giữ bố cục LIVE từ UI cũ: logo/header thời tiết ở Home, map 35%/80% + timeline và thanh hành động ở chi tiết. Thêm ảnh bìa local khi thiếu/ảnh lỗi và thumbnail điểm đến cho ID thật. Sửa backend đang bỏ giá trị cover_image khi trả list/detail/Home.
+- Nối tick/bỏ tick tại node timeline, gửi Place UUID, khóa khi đang ghi và refresh Home/list/detail/lịch. Chỉ đường mở rộng/focus bản đồ; prompt chụp ảnh giữ đúng điểm vừa ghé; album LIVE đúng chuyến. Thêm refetch ở mốc nửa đêm theo context server.
+- Đưa lại tab Chưa xếp lịch ở cuối dải ngày, có số lượng và sheet xếp vào ngày hợp lệ. Dùng membership giữ sau sửa ngày, không tạo lại địa điểm. 65 ca backend và 66 ca mobile liên quan, TypeScript/export web+Android đạt. Checklist/API/giới hạn trong [LIVE-TRIP-QA.md](LIVE-TRIP-QA.md); chờ nghiệm thu thiết bị. Trạng thái visited hiện vẫn cấp địa điểm trong chuyến.
+- Backend dev đã khởi động lại tại 18081, health UP; OpenAPI có Home và cập nhật địa điểm, gọi Home thiếu token trả 401. Không reset database hoặc thêm dependency.
+
 ### QA-6A · Xem sau, gallery và thử đồng bộ · 07/11/2026
 
 - Xem sau dùng ảnh local theo tài khoản, mở ảnh không phụ thuộc API danh sách chuyến/kỷ niệm. Tái sử dụng core `JournalPhotoViewer`/motion và thumbnail có chuyển cảnh từ Home; không thay thuật toán zoom/vuốt. Tách thumbnail và trạng thái gallery dùng chung để giữ đồng nhất.

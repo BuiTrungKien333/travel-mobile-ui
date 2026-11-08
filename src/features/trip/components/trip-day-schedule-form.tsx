@@ -39,12 +39,14 @@ export function TripDayScheduleForm({
   integration,
   onSave,
   pending = false,
+  preserveVisited = false,
 }: {
   trip: Trip;
   day: TripDay;
   onCommit?: (mutation: TripMutation) => boolean;
   onSave?: (draft: DayScheduleDraft) => Promise<void>;
   pending?: boolean;
+  preserveVisited?: boolean;
   integration?: {
     matches: TripStop[];
     onSearch: (query: string) => void;
@@ -76,7 +78,7 @@ export function TripDayScheduleForm({
   } = useForm<z.input<typeof schema>, unknown, z.output<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: {
-      startLocation: day.startLocation || trip.accommodation || "",
+      startLocation: day.startLocation ?? "",
       startAddress: day.startAddress,
       startCoordinate: day.startCoordinate,
       startTime: day.startTime ?? "08:30",
@@ -537,6 +539,15 @@ export function TripDayScheduleForm({
             />
           )}
         />
+        {!location ? (
+          <AppText
+            variant="caption"
+            tone="muted"
+            style={{ marginTop: theme.spacing.xs }}
+          >
+            {copy.departureAtFirstStop}
+          </AppText>
+        ) : null}
       </View>
       <View style={{ gap: theme.spacing.sm, marginTop: theme.spacing.sm }}>
         <View
@@ -567,6 +578,7 @@ export function TripDayScheduleForm({
               render={({ field, fieldState }) => (
                 <TripVisitDurationRow
                   stop={stop}
+                  disabled={pending || (preserveVisited && !!stop.visited)}
                   value={field.value}
                   onChange={field.onChange}
                   onBlur={field.onBlur}

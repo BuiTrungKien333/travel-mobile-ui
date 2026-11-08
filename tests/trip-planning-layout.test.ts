@@ -168,11 +168,18 @@ test("actual date items show day and abbreviated weekday/date; plus appends rath
     live.props.data.some((item) => item.kind === "add"),
     false,
   );
-  assert.equal(live.props.data.at(-1)?.kind, "day");
+  assert.equal(live.props.data.at(-1)?.kind, "backlog");
   assert.equal(
     node.props.data.some((item) => item.kind === "backlog"),
-    false,
+    true,
   );
+  const backlogItem = node.props.data.find((item) => item.kind === "backlog");
+  assert.ok(backlogItem);
+  const backlogTab = node.props.renderItem({ item: backlogItem });
+  assert.ok(isValidElement<Props>(backlogTab));
+  backlogTab.props.onPress?.();
+  assert.equal(selected, null);
+  assert.equal(added, 1);
   assert.equal(
     live.props.getItemLayout(null, live.props.data.length - 1).length,
     tokens.layout.tripPlanningDateTabWidth,

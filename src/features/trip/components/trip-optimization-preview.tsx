@@ -36,7 +36,11 @@ export function TripOptimizationSheet({
   day?: TripDay;
   onApply: (ids: string[]) => void;
   onClose: () => void;
-  proposal?: { order: string[]; comparison: RouteComparison };
+  proposal?: {
+    order: string[];
+    comparison: RouteComparison;
+    lockedPrefixIds?: string[];
+  };
   busy?: boolean;
   problem?: string;
   onReload?: () => void;
@@ -50,7 +54,14 @@ export function TripOptimizationSheet({
   const byId = new Map(day?.stops.map((stop) => [stop.id, stop]));
   const stops = (order ?? []).flatMap((id) => {
     const stop = byId.get(id);
-    return stop ? [stop] : [];
+    return stop
+      ? [
+          {
+            ...stop,
+            pinned: stop.pinned || proposal?.lockedPrefixIds?.includes(stop.id),
+          },
+        ]
+      : [];
   });
   const drag = useTripTimelineDrag({
     stops,
@@ -58,6 +69,9 @@ export function TripOptimizationSheet({
     onReorder: setOrder,
   });
   const dragging = drag.draggedId !== null;
+  const prefixValid = !proposal?.lockedPrefixIds?.some(
+    (id, index) => order?.[index] !== id,
+  );
   const changed =
     !!day &&
     !!order &&
@@ -73,9 +87,9 @@ export function TripOptimizationSheet({
         <AppButton
           variant="gradient"
           loading={busy}
-          disabled={!changed || dragging || !!onReload}
+          disabled={!changed || !prefixValid || dragging || !!onReload}
           onPress={() => {
-            if (order && changed && !dragging) onApply(order);
+            if (order && changed && prefixValid && !dragging) onApply(order);
           }}
         >
           {copy.apply}
@@ -119,7 +133,11 @@ function TripOptimizationPreview({
   order: string[] | null;
   stops: TripDay["stops"];
   drag: TripTimelineDrag;
-  proposal?: { order: string[]; comparison: RouteComparison };
+  proposal?: {
+    order: string[];
+    comparison: RouteComparison;
+    lockedPrefixIds?: string[];
+  };
   notice: ReactNode;
 }) {
   const theme = useAppTheme();
@@ -162,6 +180,11 @@ function TripOptimizationPreview({
   return (
     <>
       {notice}
+      {proposal?.lockedPrefixIds?.length ? (
+        <AppText variant="caption" tone="muted">
+          {copy.remainingOptimizationHint}
+        </AppText>
+      ) : null}
       <View
         style={[
           styles.row,
@@ -235,7 +258,11 @@ function TripOptimizationPreview({
               >
                 <TripReorderList
                   stops={stops}
-                  slotTimes={day.stops.map((stop) => stop.time)}
+                  slotTimes={
+                    proposal?.lockedPrefixIds?.length
+                      ? stops.map((stop) => (stop.visited ? stop.time : "—"))
+                      : day.stops.map((stop) => stop.time)
+                  }
                   drag={drag}
                   variant="compact"
                 />
@@ -286,12 +313,20 @@ function TripOptimizationPreview({
                           : theme.colors.glassInset,
                       }}
                     >
-                      <AppText
-                        variant="caption"
-                        tone={section.suggested ? "primary" : "muted"}
-                      >
-                        {index + 1}
-                      </AppText>
+                      {stop.visited ? (
+                        <AppIcon
+                          name="check"
+                          size={theme.layout.iconSmall}
+                          color={theme.colors.success}
+                        />
+                      ) : (
+                        <AppText
+                          variant="caption"
+                          tone={section.suggested ? "primary" : "muted"}
+                        >
+                          {index + 1}
+                        </AppText>
+                      )}
                     </View>
                     <AppText style={{ flex: 1 }}>{stop.name[locale]}</AppText>
                     {stop.pinned ? (

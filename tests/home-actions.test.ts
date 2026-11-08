@@ -65,10 +65,11 @@ test("Home visit persists the Place UUID and refreshes only the affected account
   try {
     const home = tripQueryKeys.dashboard("owner");
     const places = tripQueryKeys.places("owner", "trip");
+    const list = tripQueryKeys.list("owner");
     const foreign = tripQueryKeys.dashboard("other");
     const unrelated = tripQueryKeys.places("owner", "another-trip");
     const memories = memoryQueryKeys.list("owner");
-    for (const key of [home, places, foreign, unrelated, memories])
+    for (const key of [home, places, list, foreign, unrelated, memories])
       h.client.setQueryData(key, {});
     const input = { tripId: "trip", placeId: "place" };
     await h.actions.visit.mutationFn(input);
@@ -76,7 +77,7 @@ test("Home visit persists the Place UUID and refreshes only the affected account
     assert.deepEqual(JSON.parse(JSON.stringify(h.calls)), [
       ["trip", "place", { visited: true }],
     ]);
-    for (const key of [home, places])
+    for (const key of [home, places, list])
       assert.equal(h.client.getQueryState(key)?.isInvalidated, true);
     for (const key of [foreign, unrelated, memories])
       assert.equal(h.client.getQueryState(key)?.isInvalidated, false);

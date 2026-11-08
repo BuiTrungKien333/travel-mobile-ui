@@ -69,6 +69,7 @@ export const saveItineraryDaySchema = z.object({
   expectedUpdatedAt: instant.nullable(),
   stops: z.array(editableStopSchema).max(100),
   settings: daySettingsSchema.optional(),
+  expectedVisitedPlaceIds: z.array(z.guid()).max(100).optional(),
 });
 export type SaveItineraryDayRequest = z.infer<typeof saveItineraryDaySchema>;
 export const updateDayScheduleSchema = z.object({

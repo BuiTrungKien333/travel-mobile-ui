@@ -33,3 +33,17 @@ export function travelDateTime(date: string, time: string): Date {
     return new Date(NaN);
   return new Date(`${date}T${time}:00+07:00`);
 }
+
+/** Schedule one refresh at Vietnam midnight from the server's calendar snapshot. */
+export function nextTravelDayRefreshDelay(context: {
+  evaluatedDate: string;
+  serverTime: string;
+}) {
+  return Math.max(
+    1000,
+    Date.parse(`${context.evaluatedDate}T00:00:00+07:00`) +
+      86_400_000 -
+      Date.parse(context.serverTime) +
+      250,
+  );
+}

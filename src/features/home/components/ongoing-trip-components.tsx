@@ -1,10 +1,11 @@
 import { Image } from "expo-image";
+import type { ReactNode } from "react";
 import { StyleSheet, View } from "react-native";
 import { AppButton } from "@/components/ui/app-button";
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
-import { captureSamples } from "../data/ongoing-preview";
+import { getStopImage } from "@/features/trip/data/trip-details-preview";
 import { useOngoingCopy } from "../i18n/ongoing-copy";
 import type { TripStop } from "../types/home-types";
 import { homeStyles } from "./home-primitives";
@@ -17,6 +18,7 @@ export function NextStopCard({
   onVisited,
   onJournal,
   onPlan,
+  cover,
   busy = false,
 }: {
   stop?: TripStop;
@@ -25,14 +27,15 @@ export function NextStopCard({
   onVisited: () => void;
   onJournal: () => void;
   onPlan: () => void;
+  cover?: ReactNode;
   busy?: boolean;
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useOngoingCopy();
-  const photo = captureSamples.find((sample) => sample.id === stop?.id)?.photo;
+  const photo = stop ? getStopImage(stop.placeId ?? stop.id) : undefined;
   if (!stop)
     return (
-      <JourneyCard>
+      <JourneyCard cover={cover}>
         <AppIcon
           name={hasStops ? "flag" : "route"}
           size={theme.layout.iconLarge}
@@ -53,7 +56,7 @@ export function NextStopCard({
       </JourneyCard>
     );
   return (
-    <JourneyCard>
+    <JourneyCard cover={cover}>
       <View style={[homeStyles.row, { gap: theme.spacing.sm }]}>
         <AppText
           variant="caption"
@@ -96,7 +99,7 @@ export function NextStopCard({
             {stop.kind[locale]}
           </AppText>
         </View>
-        {photo ? (
+        {photo && !cover ? (
           <Image
             accessible={false}
             source={photo}

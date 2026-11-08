@@ -7,6 +7,7 @@ import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 
 type DateItem =
   | { key: string; kind: "day"; date: string; index: number }
+  | { key: "backlog"; kind: "backlog" }
   | { key: "add"; kind: "add" };
 
 export function TripPlanningDaySelector({
@@ -15,12 +16,14 @@ export function TripPlanningDaySelector({
   onSelect,
   onAddDay,
   addDayDisabled,
+  backlogCount = trip.unscheduledStops?.length ?? 0,
 }: {
   trip: Trip;
   selectedDate?: string;
   onSelect: (date: string | null) => void;
   onAddDay?: () => void;
   addDayDisabled: boolean;
+  backlogCount?: number;
 }) {
   const theme = useAppTheme();
   const { fontScale } = useWindowDimensions();
@@ -35,11 +38,14 @@ export function TripPlanningDaySelector({
         index,
       }),
     ),
+    { key: "backlog", kind: "backlog" },
     ...(onAddDay ? [{ key: "add", kind: "add" } as const] : []),
   ];
   const current = Math.max(
     0,
-    trip.days.findIndex((day) => day.date === selectedDate),
+    selectedDate
+      ? trip.days.findIndex((day) => day.date === selectedDate)
+      : trip.days.length,
   );
   return (
     <FlatList
@@ -81,6 +87,41 @@ export function TripPlanningDaySelector({
               />
             </Pressable>
           );
+        if (item.kind === "backlog") {
+          const selected = selectedDate === undefined;
+          return (
+            <Pressable
+              accessibilityRole="tab"
+              accessibilityLabel={`${copy.pool} (${backlogCount})`}
+              accessibilityState={{ selected }}
+              onPress={() => onSelect(null)}
+              style={({ pressed }) => ({
+                width,
+                minHeight: theme.layout.touchTarget,
+                paddingVertical: theme.spacing.sm,
+                alignItems: "center",
+                justifyContent: "center",
+                gap: theme.spacing.xs,
+                borderBottomWidth: theme.layout.tripPlanningDateIndicatorHeight,
+                borderBottomColor: selected
+                  ? theme.colors.primary
+                  : "transparent",
+                opacity: pressed ? theme.motion.pressOpacity : 1,
+              })}
+            >
+              <AppText
+                variant="label"
+                numberOfLines={2}
+                style={{ textAlign: "center" }}
+              >
+                {copy.pool}
+              </AppText>
+              <AppText variant="caption" tone="muted">
+                {backlogCount}
+              </AppText>
+            </Pressable>
+          );
+        }
         const selected = item.date === selectedDate;
         const date = new Date(`${item.date}T12:00:00Z`);
         return (

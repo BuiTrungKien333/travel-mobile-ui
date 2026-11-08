@@ -186,14 +186,14 @@ export function OngoingTripHeader({
             tone="primary"
             style={{
               fontFamily: theme.typography.fontFamily.semibold,
-              fontSize: theme.typography.fontSize.compactAction,
-              lineHeight: theme.typography.lineHeight.compactAction,
+              fontSize: theme.typography.fontSize.md,
+              lineHeight: theme.typography.lineHeight.md,
             }}
           >
             {copy.detailsShort}
           </AppText>
           <View style={styles.externalArrow}>
-            <AppIcon name="arrow" size={theme.layout.iconSmall} />
+            <AppIcon name="arrow" size={theme.layout.iconMedium} />
           </View>
         </Pressable>
       </View>

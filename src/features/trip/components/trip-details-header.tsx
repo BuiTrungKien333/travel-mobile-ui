@@ -68,12 +68,12 @@ export function TripDetailsHeader({
             justifyContent: titleOnly ? "center" : undefined,
           }}
         >
-          <AppText accessibilityRole="header" variant="sectionTitle">
+          <AppText accessibilityRole="header" variant="subheading">
             {getTripTitle(trip, locale)}
           </AppText>
           {!titleOnly ? (
             <>
-              <AppText variant="caption" tone="muted">
+              <AppText variant="body" tone="muted">
                 {formatTripDates(trip, locale)}
                 {days > 0
                   ? ` · ${days} ${days === 1 ? copy.day.toLowerCase() : copy.daysUnit}`
@@ -157,12 +157,14 @@ export function DetailIconButton({
   onPress,
   accessibilityState,
   compact = false,
+  variant = "glass",
 }: {
   name: AppIconName;
   label: string;
   onPress: () => void;
   accessibilityState?: AccessibilityState;
   compact?: boolean;
+  variant?: "glass" | "outline";
 }) {
   const theme = useAppTheme();
   const surfaceSize = compact
@@ -190,9 +192,13 @@ export function DetailIconButton({
           borderRadius: theme.radius.full,
           alignItems: "center",
           justifyContent: "center",
+          borderWidth: variant === "outline" ? StyleSheet.hairlineWidth : 0,
+          borderColor: variant === "outline" ? theme.colors.border : undefined,
         }}
       >
-        <GlassBackdrop borderRadius={theme.radius.full} />
+        {variant === "glass" ? (
+          <GlassBackdrop borderRadius={theme.radius.full} />
+        ) : null}
         <AppIcon
           name={name}
           variant={

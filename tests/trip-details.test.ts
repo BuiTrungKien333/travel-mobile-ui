@@ -49,6 +49,31 @@ test("departure picker preserves local 24-hour times without a timezone shift", 
   }
 });
 
+test("estimated day schedule requires a departure time but does not require an origin", () => {
+  const schema = tripDayScheduleSchema(copy);
+  const draft = {
+    startLocation: "",
+    startTime: "08:00",
+    returnToStart: false,
+    durations: [{ stopId: "first", minutes: "45" }],
+  };
+  const result = schema.safeParse(draft);
+  assert.equal(result.success, true);
+  if (result.success) assert.equal(result.data.durations[0].minutes, 45);
+  assert.equal(schema.safeParse({ ...draft, startTime: "" }).success, false);
+  assert.equal(
+    schema.safeParse({ ...draft, returnToStart: true }).success,
+    false,
+  );
+  assert.equal(
+    schema.safeParse({
+      ...draft,
+      durations: [{ stopId: "first", minutes: "60" }],
+    }).success,
+    true,
+  );
+});
+
 test("departure picker opens empty or malformed values at a valid default", () => {
   const { timePickerDate, timePickerValue } = load<
     typeof import("../src/features/trip/utils/time-picker-value.ts")

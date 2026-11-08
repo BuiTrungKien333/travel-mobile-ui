@@ -241,7 +241,9 @@ function ReorderRow({
           accessibilityLabel={`${number}. ${stop.name[locale]}`}
           accessibilityHint={
             stop.pinned
-              ? copy.pinnedHint
+              ? stop.visited
+                ? copy.visited
+                : copy.pinnedHint
               : compact
                 ? copy.optimizationDragHint
                 : copy.reorderHint
@@ -290,9 +292,17 @@ function ReorderRow({
               justifyContent: "center",
             }}
           >
-            <AppText variant="label" tone="primary">
-              {number}
-            </AppText>
+            {stop.visited ? (
+              <AppIcon
+                name="check"
+                size={theme.layout.iconSmall}
+                color={theme.colors.success}
+              />
+            ) : (
+              <AppText variant="label" tone="primary">
+                {number}
+              </AppText>
+            )}
           </View>
         </View>
       </GestureDetector>
@@ -313,7 +323,11 @@ function ReorderRow({
           <AppText variant="caption" tone="muted">
             {time || copy.noTime}
           </AppText>
-          {stop.pinned ? (
+          {stop.visited ? (
+            <AppText variant="caption" tone="muted">
+              {copy.visited}
+            </AppText>
+          ) : stop.pinned ? (
             <View
               accessible
               accessibilityLabel={copy.pinned}

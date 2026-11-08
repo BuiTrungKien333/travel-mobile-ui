@@ -12,11 +12,13 @@ import type {
   CreateTripPayload,
   UpdateTripPayload,
   DatePreviewRequest,
+  TripReadDto,
 } from "./trip-contract";
 import { memoryQueryKeys } from "@/features/home/api/memory-query-keys";
 import { weatherQueryKeys } from "@/features/weather/api/weather-query-keys";
 
 import { tripQueryKeys } from "./trip-query-keys";
+import { nextTravelDayRefreshDelay } from "@/utils/calendar-date";
 export { tripQueryKeys } from "./trip-query-keys";
 
 export function useTripsQuery() {
@@ -32,8 +34,12 @@ export function useTripsQuery() {
 }
 export function useTripQuery(id: string | undefined) {
   const owner = useProfile().data?.id;
-  return useQuery({
+  return useQuery<TripReadDto>({
     queryKey: tripQueryKeys.detail(owner, id),
+    refetchInterval: (query) =>
+      query.state.data
+        ? nextTravelDayRefreshDelay(query.state.data.context)
+        : false,
     enabled: !!owner && !!id,
     queryFn: ({ signal }) => {
       if (!id) throw new Error("Missing trip id");

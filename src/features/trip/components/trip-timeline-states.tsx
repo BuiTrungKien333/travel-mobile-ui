@@ -64,13 +64,11 @@ export function TripStartNode({
       </View>
       <View style={{ flex: 1, minWidth: 0 }}>
         {start.time || !live ? (
-          <AppText variant="caption" tone="primary">
+          <AppText variant="label" tone="primary">
             {start.time || copy.noTime}
           </AppText>
         ) : null}
-        <AppText variant="caption">
-          {start.location || copy.chooseStart}
-        </AppText>
+        <AppText variant="body">{start.location || copy.chooseStart}</AppText>
       </View>
       <AppIcon
         name={canEdit ? "edit" : "info"}
@@ -104,7 +102,7 @@ export function TripTimelineEmpty({
         name={backlog ? "check" : "calendar"}
         size={theme.layout.iconLarge}
       />
-      <AppText variant="caption" tone="muted">
+      <AppText variant="body" tone="muted">
         {backlog ? copy.poolEmpty : copy.noDates}
       </AppText>
       {canSetDates ? (

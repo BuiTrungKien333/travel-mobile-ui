@@ -35,6 +35,7 @@ const primitives = {
 };
 function harness() {
   let refreshes = 0;
+  const routes: unknown[] = [];
   const query = {
     data: undefined as HomeDashboard | undefined,
     isSuccess: false,
@@ -48,7 +49,12 @@ function harness() {
   const load = tripModuleLoader({
     "react/jsx-runtime": { jsx: element, jsxs: element },
     react: { useState: () => [false, () => {}] },
-    "expo-router": { router: { push: () => {}, navigate: () => {} } },
+    "expo-router": {
+      router: {
+        push: (route: unknown) => routes.push(structuredClone(route)),
+        navigate: (route: unknown) => routes.push(structuredClone(route)),
+      },
+    },
     "@/services/api/client": { apiClient: {} },
     "@/features/weather/api/weather-queries": {
       useTripWeather: () => ({
@@ -130,6 +136,7 @@ function harness() {
   >("src/features/home/screens/new-user-home-screen.tsx");
   return {
     query,
+    routes,
     render: ConnectedHomeScreen,
     NewUserHomeScreen,
     refreshes: () => refreshes,
@@ -155,6 +162,26 @@ test("all server states reuse the Home dashboards, never the trip list", () => {
   assert.equal(nodes(h.render(), "JourneyInvitationCard").length, 1);
   assert.equal(nodes(h.render(), "UpcomingTripCard").length, 0);
   assert.equal(nodes(h.render(), "FootprintCard")[0].props.visitedPlaces, 0);
+});
+
+test("live Home camera keeps the just-visited membership and opens the selected trip album", () => {
+  const h = harness();
+  h.query.data = homeFixture("LIVE");
+  const live = nodes(h.render(), "OngoingHomeScreen")[0];
+  const runtime = live.props.runtime as {
+    onCamera: (stop?: { id: string; tripPlaceId: string }) => void;
+    onJournal: () => void;
+  };
+  runtime.onCamera({ id: "membership", tripPlaceId: "membership" });
+  runtime.onJournal();
+  const camera = h.routes[0] as {
+    params: { tripId: string; day: string; stopId: string };
+  };
+  assert.equal(camera.params.stopId, "membership");
+  assert.equal(camera.params.day, "2026-11-07");
+  const album = h.routes[1] as { pathname: string; params: { tripId: string } };
+  assert.equal(album.pathname, "/memories/[tripId]");
+  assert.equal(album.params.tripId, camera.params.tripId);
 });
 
 test("confirmed NEW reuses onboarding without an account-wide preview notice", () => {

@@ -215,6 +215,7 @@ test("connected day sheet reuses the existing form and converts membership IDs i
     day,
     routeMode: "WALK",
     pending: false,
+    preserveVisited: true,
     onClose: () => {},
     onSave: async (value) => {
       saved = value;
@@ -224,6 +225,7 @@ test("connected day sheet reuses the existing form and converts membership IDs i
     (element) => element.type === "TripDayScheduleForm",
   );
   assert.ok(form?.props.onSave);
+  assert.equal(form.props.preserveVisited, true);
   await form.props.onSave({
     startLocation: "My stay",
     startAddress: "Private address",
@@ -240,6 +242,24 @@ test("connected day sheet reuses the existing form and converts membership IDs i
   assert.deepEqual(await form.props.integration.currentPosition(), {
     id: "gps",
   });
+  await form.props.onSave({
+    startLocation: "",
+    startTime: "08:00",
+    returnToStart: false,
+    durations: [{ stopId: "membership", minutes: 45 }],
+  });
+  assert.equal(
+    JSON.stringify(saved),
+    JSON.stringify({
+      settings: {
+        origin: null,
+        departureTime: "08:00",
+        returnToStart: false,
+        travelMode: "WALK",
+      },
+      durations: [{ placeId, minutes: 45 }],
+    }),
+  );
 });
 
 test("current position requests only foreground permission and never reads location after denial", async () => {

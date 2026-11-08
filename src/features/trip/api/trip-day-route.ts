@@ -30,12 +30,39 @@ const result = z.discriminatedUnion("status", [
   }),
 ]);
 const envelope = z.object({ success: z.literal(true), data: result });
-const proposal = z.object({
-  order: z.array(z.guid()).min(4).max(12),
-  originalOrder: z.array(z.guid()).min(4).max(12),
-  distanceMeters: metric,
-  durationSeconds: metric,
-});
+const proposal = z
+  .object({
+    order: z.array(z.guid()).min(1).max(100),
+    originalOrder: z.array(z.guid()).min(1).max(100),
+    distanceMeters: metric,
+    durationSeconds: metric,
+    visitedOrder: z.array(z.guid()).max(100).default([]),
+    originalDistanceMeters: metric.nullable().optional(),
+    originalDurationSeconds: metric.nullable().optional(),
+  })
+  .superRefine((value, context) => {
+    const ids = new Set(value.order);
+    const visited = new Set(value.visitedOrder);
+    if (
+      ids.size !== value.order.length ||
+      value.originalOrder.length !== value.order.length ||
+      new Set(value.originalOrder).size !== ids.size ||
+      value.originalOrder.some((id) => !ids.has(id)) ||
+      visited.size !== value.visitedOrder.length ||
+      value.visitedOrder.some((id, index) => value.order[index] !== id) ||
+      value.originalOrder
+        .filter((id) => visited.has(id))
+        .some((id, index) => value.visitedOrder[index] !== id) ||
+      (value.visitedOrder.length > 0 &&
+        (value.originalDistanceMeters == null ||
+          value.originalDurationSeconds == null))
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Invalid optimization partition",
+      });
+    }
+  });
 const proposalEnvelope = z.object({ success: z.literal(true), data: proposal });
 export type DayRoute = z.infer<typeof route>;
 export type DayRouteProposal = z.infer<typeof proposal>;

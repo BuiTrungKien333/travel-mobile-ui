@@ -7,7 +7,7 @@ import { useAppTheme } from "@/hooks/use-app-theme";
 import type { TripStop } from "@/features/home/types/home-types";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 
-const presets = ["30", "60", "90"];
+const presets = ["30", "45", "60"];
 
 export function TripVisitDurationRow({
   stop,
@@ -17,6 +17,7 @@ export function TripVisitDurationRow({
   expanded,
   onToggle,
   error,
+  disabled = false,
 }: {
   stop: TripStop;
   value: string;
@@ -25,6 +26,7 @@ export function TripVisitDurationRow({
   expanded: boolean;
   onToggle: () => void;
   error?: string;
+  disabled?: boolean;
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
@@ -46,7 +48,8 @@ export function TripVisitDurationRow({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`${stop.name[locale]}, ${value || "—"} ${copy.minutes}`}
-        accessibilityState={{ expanded }}
+        accessibilityState={{ expanded: !disabled && expanded, disabled }}
+        disabled={disabled}
         onPress={onToggle}
         style={({ pressed }) => ({
           flexDirection: "row",
@@ -81,7 +84,7 @@ export function TripVisitDurationRow({
           />
         </View>
       </Pressable>
-      {expanded ? (
+      {expanded && !disabled ? (
         <View
           style={{
             padding: theme.spacing.sm,

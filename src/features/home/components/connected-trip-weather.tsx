@@ -134,7 +134,12 @@ export function TripWeatherModal({
               ? copy.flexible
               : copy.clear;
   return (
-    <JourneySheet title={copy.title} onClose={onClose} glass>
+    <JourneySheet
+      title={copy.title}
+      onClose={onClose}
+      glass
+      restrained={!!date}
+    >
       <WeatherQueryStatus query={query} />
       {data &&
       selected &&
@@ -151,6 +156,7 @@ export function TripWeatherModal({
             />
           ) : null}
           <TravelWeatherDetails
+            restrained={!!date}
             weather={{
               temperature: Math.round(representative.temperature),
               condition: weatherIcon(representative.condition),

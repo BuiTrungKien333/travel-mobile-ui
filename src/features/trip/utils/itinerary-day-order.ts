@@ -6,12 +6,14 @@ type DayStops = SaveItineraryDayRequest["stops"];
 export function reorderDayStops(
   stops: DayStops,
   placeIds: string[],
+  visitedPlaceIds?: readonly string[],
 ): DayStops | null {
   if (
     placeIds.length !== stops.length ||
     new Set(placeIds).size !== stops.length
   )
     return null;
+  if (visitedPlaceIds?.some((id, index) => placeIds[index] !== id)) return null;
   const byPlace = new Map(stops.map((stop) => [stop.placeId, stop]));
   const ordered: DayStops = [];
   for (const [sequence, id] of placeIds.entries()) {
@@ -20,7 +22,9 @@ export function reorderDayStops(
     ordered.push({
       ...stop,
       sequence,
-      arrivalTime: stops[sequence].arrivalTime,
+      arrivalTime: visitedPlaceIds
+        ? stop.arrivalTime
+        : stops[sequence].arrivalTime,
     });
   }
   return ordered;

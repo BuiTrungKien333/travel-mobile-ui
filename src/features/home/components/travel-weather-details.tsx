@@ -19,6 +19,7 @@ export function TravelWeatherDetails({
   context,
   advice,
   footnote,
+  restrained = false,
 }: {
   weather: {
     temperature: number;
@@ -35,6 +36,7 @@ export function TravelWeatherDetails({
     items: readonly { icon: AppIconName; text: string }[];
   };
   footnote: string;
+  restrained?: boolean;
 }) {
   const theme = useAppTheme();
   const { colors, spacing, radius, typography, layout } = theme;
@@ -55,20 +57,30 @@ export function TravelWeatherDetails({
             padding: spacing.md,
             gap: spacing.xs,
             borderRadius: radius.lg,
-            backgroundColor: colors.weatherGlassSurface,
+            backgroundColor: restrained
+              ? colors.surface
+              : colors.weatherGlassSurface,
             borderWidth: StyleSheet.hairlineWidth,
-            borderColor: colors.glassClockBorder,
-            boxShadow: [
-              { ...theme.elevation.glass, color: colors.weatherDepthShadow },
-              {
-                ...theme.elevation.raisedActionHighlight,
-                color: colors.glassClockBorder,
-              },
-            ],
+            borderColor: restrained ? colors.border : colors.glassClockBorder,
+            boxShadow: restrained
+              ? undefined
+              : [
+                  {
+                    ...theme.elevation.glass,
+                    color: colors.weatherDepthShadow,
+                  },
+                  {
+                    ...theme.elevation.raisedActionHighlight,
+                    color: colors.glassClockBorder,
+                  },
+                ],
           },
         ]}
       >
-        <TripGlassBackdrop borderRadius={radius.lg} variant="weather" />
+        <TripGlassBackdrop
+          borderRadius={radius.lg}
+          variant={restrained ? "default" : "weather"}
+        />
         {context ? (
           <AppText variant="caption" tone="muted">
             {context}
@@ -90,13 +102,15 @@ export function TravelWeatherDetails({
                   width: layout.weatherHeroArtworkSize,
                   height: spacing.lg,
                   borderRadius: radius.full,
-                  backgroundColor: colors.glassGlow,
-                  boxShadow: [
-                    {
-                      ...theme.elevation.glass,
-                      color: colors.weatherDepthShadow,
-                    },
-                  ],
+                  backgroundColor: restrained ? undefined : colors.glassGlow,
+                  boxShadow: restrained
+                    ? undefined
+                    : [
+                        {
+                          ...theme.elevation.glass,
+                          color: colors.weatherDepthShadow,
+                        },
+                      ],
                 },
               ]}
             />
@@ -159,19 +173,35 @@ export function TravelWeatherDetails({
                     paddingVertical: spacing.md,
                     gap: spacing.xs,
                     borderRadius: radius.lg,
-                    backgroundColor: rainy
-                      ? colors.weatherRainSurface
-                      : colors.weatherGlassSurface,
+                    backgroundColor: restrained
+                      ? rainy
+                        ? colors.surfaceTint
+                        : colors.surfaceVariant
+                      : rainy
+                        ? colors.weatherRainSurface
+                        : colors.weatherGlassSurface,
                     borderWidth: StyleSheet.hairlineWidth,
-                    borderColor: colors.glassClockBorder,
-                    boxShadow: [
-                      { ...theme.elevation.glass, color: colors.glassShadow },
-                    ],
+                    borderColor: restrained
+                      ? colors.border
+                      : colors.glassClockBorder,
+                    boxShadow: restrained
+                      ? undefined
+                      : [
+                          {
+                            ...theme.elevation.glass,
+                            color: colors.glassShadow,
+                          },
+                        ],
                   },
                 ]}
               >
-                <TripGlassBackdrop borderRadius={radius.lg} variant="weather" />
-                {rainy ? (
+                {!restrained ? (
+                  <TripGlassBackdrop
+                    borderRadius={radius.lg}
+                    variant="weather"
+                  />
+                ) : null}
+                {rainy && !restrained ? (
                   <View
                     aria-hidden
                     pointerEvents="none"
@@ -224,24 +254,36 @@ export function TravelWeatherDetails({
             gap: spacing.md,
             borderRadius: radius.lg,
             borderWidth: StyleSheet.hairlineWidth,
-            borderColor: colors.glassClockBorder,
-            boxShadow: [
-              { ...theme.elevation.glass, color: colors.glassShadow },
-              {
-                ...theme.elevation.raisedActionHighlight,
-                color: colors.glassClockBorder,
-              },
-            ],
+            borderColor: restrained
+              ? colors.softActionBorder
+              : colors.glassClockBorder,
+            backgroundColor: restrained ? colors.surface : undefined,
+            boxShadow: restrained
+              ? undefined
+              : [
+                  { ...theme.elevation.glass, color: colors.glassShadow },
+                  {
+                    ...theme.elevation.raisedActionHighlight,
+                    color: colors.glassClockBorder,
+                  },
+                ],
           },
         ]}
       >
-        <TripGlassBackdrop borderRadius={radius.lg} variant="weather" />
+        <TripGlassBackdrop
+          borderRadius={radius.lg}
+          variant={restrained ? "default" : "weather"}
+        />
         <View
           pointerEvents="none"
           aria-hidden
           style={[
             StyleSheet.absoluteFill,
-            { backgroundColor: colors.weatherAmberGlass },
+            {
+              backgroundColor: restrained
+                ? undefined
+                : colors.weatherAmberGlass,
+            },
           ]}
         />
         <View style={[homeStyles.row, { gap: spacing.md }]}>
@@ -253,15 +295,21 @@ export function TravelWeatherDetails({
                 width: layout.weatherArtworkSize,
                 height: layout.weatherArtworkSize,
                 borderRadius: radius.md,
-                backgroundColor: colors.glassInset,
+                backgroundColor: restrained
+                  ? colors.surfaceTint
+                  : colors.glassInset,
                 borderWidth: StyleSheet.hairlineWidth,
-                borderColor: colors.glassClockBorder,
-                boxShadow: [
-                  {
-                    ...theme.elevation.glass,
-                    color: colors.weatherAmberBorder,
-                  },
-                ],
+                borderColor: restrained
+                  ? colors.softActionBorder
+                  : colors.glassClockBorder,
+                boxShadow: restrained
+                  ? undefined
+                  : [
+                      {
+                        ...theme.elevation.glass,
+                        color: colors.weatherAmberBorder,
+                      },
+                    ],
               },
               umbrellaMotion,
             ]}
@@ -269,7 +317,9 @@ export function TravelWeatherDetails({
             <AppIcon
               name={advice.icon}
               size={layout.iconLarge}
-              color={colors.weatherUmbrellaAccent}
+              color={
+                restrained ? colors.primaryText : colors.weatherUmbrellaAccent
+              }
             />
           </Animated.View>
           <View style={[homeStyles.grow, { gap: spacing.xs }]}>
@@ -285,10 +335,17 @@ export function TravelWeatherDetails({
               <AppIcon
                 name="sparkles"
                 size={spacing.md}
-                color={colors.weatherUmbrellaAccent}
+                color={
+                  restrained ? colors.primaryText : colors.weatherUmbrellaAccent
+                }
               />
             </View>
-            <AppText variant="label" style={{ color: colors.weatherRainText }}>
+            <AppText
+              variant="body"
+              style={{
+                color: restrained ? colors.text : colors.weatherRainText,
+              }}
+            >
               {advice.summary}
             </AppText>
           </View>
@@ -308,9 +365,13 @@ export function TravelWeatherDetails({
                   paddingHorizontal: spacing.sm,
                   gap: spacing.xs,
                   borderRadius: radius.md,
-                  backgroundColor: colors.glassInset,
+                  backgroundColor: restrained
+                    ? colors.surfaceVariant
+                    : colors.glassInset,
                   borderWidth: StyleSheet.hairlineWidth,
-                  borderColor: colors.glassClockBorder,
+                  borderColor: restrained
+                    ? colors.border
+                    : colors.glassClockBorder,
                 },
               ]}
             >

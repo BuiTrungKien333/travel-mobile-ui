@@ -92,7 +92,12 @@ export function tripStartPointSchema(copy: TripDetailsCopy) {
     .omit({ transport: true })
     .extend({
       startAddress: z.string().trim().max(500).optional(),
-      startCoordinate: z.object({ latitude: z.number().min(-90).max(90), longitude: z.number().min(-180).max(180) }).optional(),
+      startCoordinate: z
+        .object({
+          latitude: z.number().min(-90).max(90),
+          longitude: z.number().min(-180).max(180),
+        })
+        .optional(),
     })
     .superRefine((value, context) => {
       if (value.returnToStart && !value.startLocation) {
@@ -106,21 +111,31 @@ export function tripStartPointSchema(copy: TripDetailsCopy) {
 }
 
 export function tripDayScheduleSchema(copy: TripDetailsCopy) {
-  return tripStartPointSchema(copy).and(
-    z.object({
-      durations: z.array(
-        z.object({
-          stopId: z.string().min(1),
-          minutes: z
-            .string()
-            .regex(/^\d+$/, copy.invalidDuration)
-            .transform(Number)
-            .refine(
-              (value) => value >= 5 && value <= 480,
-              copy.invalidDuration,
-            ),
-        }),
-      ),
-    }),
-  );
+  return tripStartPointSchema(copy)
+    .and(
+      z.object({
+        durations: z.array(
+          z.object({
+            stopId: z.string().min(1),
+            minutes: z
+              .string()
+              .regex(/^\d+$/, copy.invalidDuration)
+              .transform(Number)
+              .refine(
+                (value) => value >= 5 && value <= 480,
+                copy.invalidDuration,
+              ),
+          }),
+        ),
+      }),
+    )
+    .superRefine((value, context) => {
+      if (!clockPattern.test(value.startTime)) {
+        context.addIssue({
+          code: "custom",
+          path: ["startTime"],
+          message: copy.invalidTime,
+        });
+      }
+    });
 }

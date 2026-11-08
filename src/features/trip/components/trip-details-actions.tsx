@@ -68,7 +68,7 @@ export function TripDetailsActions({
               size="small"
               style={{ paddingHorizontal: theme.spacing.sm }}
               accessibilityHint={copy.expandMap}
-              disabled={!canDirect}
+              disabled={!canDirect || visitPending}
               onPress={onDirections}
               leadingIcon={
                 <AppIcon
@@ -96,6 +96,7 @@ export function TripDetailsActions({
             ]}
             leadingIcon={<AppIcon name="check" size={theme.layout.iconSmall} />}
             onPress={onVisited}
+            disabled={visitPending}
             loading={visitPending}
           >
             {copy.visited}

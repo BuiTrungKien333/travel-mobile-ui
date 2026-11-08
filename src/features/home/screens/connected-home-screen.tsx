@@ -29,7 +29,7 @@ import { weatherDays, weatherIcon } from "@/features/weather/api/weather-api";
 import { useLiveWeatherCopy } from "@/features/weather/i18n/weather-copy";
 import { useTripPreview } from "../providers/trip-preview-provider";
 import { useHomeCopy } from "../i18n/home-copy";
-import type { Memory } from "../types/home-types";
+import type { Memory, TripStop } from "../types/home-types";
 import { NewUserHomeScreen } from "./new-user-home-screen";
 import { OngoingHomeScreen } from "./ongoing-home-screen";
 
@@ -101,10 +101,19 @@ export function ConnectedHomeScreen() {
   const plan = () =>
     router.push({ pathname: "/trip/[tripId]", params: { tripId: trip.id } });
   const journal = () => router.push("/tabs/memories");
-  const camera = () =>
+  const tripJournal = () =>
+    router.push({
+      pathname: "/memories/[tripId]",
+      params: { tripId: trip.id },
+    });
+  const camera = (stop?: TripStop) =>
     router.navigate({
       pathname: "/trip/camera",
-      params: { tripId: trip.id, day: data.context.evaluatedDate },
+      params: {
+        tripId: trip.id,
+        day: data.context.evaluatedDate,
+        stopId: stop?.tripPlaceId ?? stop?.id ?? "",
+      },
     });
   const remove = async (memory: Memory) => {
     if (memory.local) await memoryActions.remove.mutateAsync(memory);
@@ -145,7 +154,7 @@ export function ConnectedHomeScreen() {
                 }
               : undefined,
             onPlan: plan,
-            onJournal: journal,
+            onJournal: tripJournal,
             onCamera: camera,
             onDeletePhoto: remove,
             onVisit: async (stop) => {
