@@ -46,7 +46,7 @@ export function PhotoViewerToolbar({
   onClose: () => void;
   onShare: () => void;
   onSave: () => void;
-  onDelete: () => void;
+  onDelete?: () => void;
   onInfo: () => void;
 }) {
   const theme = useAppTheme();
@@ -170,13 +170,15 @@ export function PhotoViewerToolbar({
               loading={busy === "save"}
               surface="none"
             />
-            <PhotoIconButton
-              icon="trash"
-              label={copy.remove}
-              onPress={onDelete}
-              disabled={disabled}
-              surface="none"
-            />
+            {onDelete ? (
+              <PhotoIconButton
+                icon="trash"
+                label={copy.remove}
+                onPress={onDelete}
+                disabled={disabled}
+                surface="none"
+              />
+            ) : null}
           </View>
           <PhotoIconButton
             icon="info"

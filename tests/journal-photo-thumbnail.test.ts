@@ -60,7 +60,7 @@ test("shared thumbnail opens the existing viewer only with real image dimensions
   const { JournalPhotoThumbnail } = load<
     typeof import("../src/features/home/components/journal-photo-thumbnail.tsx")
   >("src/features/home/components/journal-photo-thumbnail.tsx");
-  function render(hidden = false) {
+  function render(hidden = false, grid = false) {
     stateCursor = 0;
     refCursor = 0;
     return JournalPhotoThumbnail({
@@ -72,6 +72,8 @@ test("shared thumbnail opens the existing viewer only with real image dimensions
       },
       hidden,
       standalone: true,
+      variant: grid ? "grid" : "framed",
+      thumbnailSource: grid ? "file:///thumbnail.jpg" : undefined,
       onOpen: (value) => {
         opened = value;
       },
@@ -106,4 +108,21 @@ test("shared thumbnail opens the existing viewer only with real image dimensions
   const hiddenStyle = render(true).props.style({ pressed: false });
   assert.equal(hiddenStyle[1].opacity, 0);
   assert.equal(find(tree, "View")?.props.style[1].aspectRatio, 1);
+  const grid = render(false, true);
+  const gridStyle = grid.props.style({ pressed: false })[1];
+  assert.equal(gridStyle.borderWidth, 0);
+  assert.equal(gridStyle.boxShadow, undefined);
+  const thumbnail = find(grid, "Image");
+  assert.ok(thumbnail);
+  assert.equal(thumbnail.props.source, "file:///thumbnail.jpg");
+  (thumbnail.props.onLoad as (event: unknown) => void)({
+    source: { url: "file:///thumbnail.jpg", width: 640, height: 480 },
+  });
+  render(false, true);
+  assert.equal(read?.()?.uri, "file:///photo.jpg");
+  (thumbnail.props.onError as () => void)();
+  assert.equal(
+    find(render(false, true), "Image")?.props.source,
+    "file:///photo.jpg",
+  );
 });

@@ -48,6 +48,7 @@ export function JournalPhotoViewer({
   onClose,
   onDelete,
   onSave,
+  canDelete,
 }: {
   memories: Memory[];
   selection: PhotoSelection;
@@ -56,6 +57,7 @@ export function JournalPhotoViewer({
   onClose: () => void;
   onDelete: (id: string) => void | Promise<void>;
   onSave?: (memory: Memory) => void | Promise<void>;
+  canDelete?: (memory: Memory) => boolean;
 }) {
   const theme = useAppTheme();
   const insets = useScreenInsets();
@@ -479,7 +481,11 @@ export function JournalPhotoViewer({
             onClose={motion.close}
             onShare={() => void handleAction("share")}
             onSave={() => void handleAction("save")}
-            onDelete={() => setConfirming(true)}
+            onDelete={
+              !canDelete || canDelete(memory)
+                ? () => setConfirming(true)
+                : undefined
+            }
           />
           {showInfo ? (
             <PhotoInfoPanel

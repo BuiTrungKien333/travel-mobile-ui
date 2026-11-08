@@ -23,14 +23,17 @@ export function useJournalPhotoGallery() {
     (id: string) => readers.current.get(id)?.() ?? null,
     [],
   );
-  function openPhoto(selection: PhotoSelection, memories: Memory[]) {
-    setActivePhotoId(selection.id);
-    setOpened({ selection, memories: [...memories] });
-  }
-  function closePhoto() {
+  const openPhoto = useCallback(
+    (selection: PhotoSelection, memories: Memory[]) => {
+      setActivePhotoId(selection.id);
+      setOpened({ selection, memories: [...memories] });
+    },
+    [],
+  );
+  const closePhoto = useCallback(() => {
     setOpened(null);
     setActivePhotoId(null);
-  }
+  }, []);
   return {
     opened,
     activePhotoId,

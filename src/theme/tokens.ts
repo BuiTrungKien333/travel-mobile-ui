@@ -22,6 +22,10 @@ export const radius = {
 } as const;
 
 export const layout = {
+  memoryGridGap: 1,
+  memoryAlbumAspectRatio: 1.6,
+  memorySamplePhotoCount: 6,
+  savedLaterThumbnailSize: 88,
   memoryTripCoverAspectRatio: 4 / 5,
   memoryTripColumns: 3,
   memoryPhotoColumns: 3,

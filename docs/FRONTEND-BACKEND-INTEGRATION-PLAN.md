@@ -1,5 +1,10 @@
 # Kế hoạch hợp nhất frontend và backend WeGo
 
+### QA-6 · Refactor thư viện Ảnh / Album · 08/11/2026
+
+- Đã dùng chung dữ liệu thật cho lưới 3 cột và album một cột, giữ core xem ảnh và Xem sau. Ảnh mẫu chỉ là lớp hiển thị cho chuyến trống; không ảnh hưởng số đếm/DB.
+- Tối ưu thumbnail/cache/ảo hóa và đọc summary chuyến không kèm membership. API metadata vẫn đọc các trang hiện có; API phân trang theo nhóm + số đếm tổng hợp chưa triển khai. Hướng dẫn: [MEMORY-LIBRARY-UI.md](MEMORY-LIBRARY-UI.md).
+
 ### Kết thúc chuyến đi chủ động · 08/11/2026
 
 - Đã thêm API xác nhận kết thúc LIVE, giữ lịch sử và ngày dự kiến, chống ghi đè bằng version; frontend có hành động menu và lời nhắc khi ghé hết điểm toàn chuyến. Không tự hoàn thành theo số check-in.

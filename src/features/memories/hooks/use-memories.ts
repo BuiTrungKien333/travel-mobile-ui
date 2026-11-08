@@ -1,4 +1,5 @@
 import { UI_PREVIEW_ENABLED } from "@/constants/development";
+import { useMemo } from "react";
 import {
   onlineManager,
   useMutation,
@@ -34,12 +35,15 @@ export function useLocalMemories() {
   );
 }
 
-export function useMemoryTrips() {
+export function useMemoryTrips(includePlaces = true) {
   const profile = useProfile();
   const localTrips = useTripPreview((state) => state.trips);
   const query = useQuery({
-    queryKey: memoryQueryKeys.trips(profile.data?.id ?? ""),
-    queryFn: ({ signal }) => loadMemoryTrips(signal),
+    queryKey: [
+      ...memoryQueryKeys.trips(profile.data?.id ?? ""),
+      includePlaces ? "places" : "summaries",
+    ],
+    queryFn: ({ signal }) => loadMemoryTrips(signal, includePlaces),
     enabled: !UI_PREVIEW_ENABLED && !!profile.data,
   });
   const isError = profile.isError || query.isError;
@@ -54,23 +58,27 @@ export function useMemoryTrips() {
   };
 }
 
-export function useMemories() {
+export function useMemories(includePlaces = true) {
   const profile = useProfile();
   const local = useTripPreview((state) => state.memories);
-  const tripsQuery = useMemoryTrips();
+  const tripsQuery = useMemoryTrips(includePlaces);
   const query = useQuery({
     queryKey: memoryQueryKeys.list(profile.data?.id ?? ""),
     queryFn: ({ signal }) => memoryApi.list(signal),
     enabled: !UI_PREVIEW_ENABLED && !!profile.data,
   });
-  const memories = UI_PREVIEW_ENABLED
-    ? local
-    : mergeMemories(
-        query.data ?? [],
-        local,
-        tripsQuery.trips,
-        profile.data?.id,
-      );
+  const memories = useMemo(
+    () =>
+      UI_PREVIEW_ENABLED
+        ? local
+        : mergeMemories(
+            query.data ?? [],
+            local,
+            tripsQuery.trips,
+            profile.data?.id,
+          ),
+    [query.data, local, tripsQuery.trips, profile.data?.id],
+  );
   const isError = query.isError || tripsQuery.isError;
   return {
     ...query,

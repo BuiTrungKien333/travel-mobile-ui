@@ -1,5 +1,16 @@
 # Tiến độ Travel Mobile UI
 
+### Tối ưu ảnh mẫu dùng chung · 08/11/2026
+
+- Dùng duy nhất 14 WebP nhẹ trong `assets/images/examples/thumbnails` cho ảnh mẫu toàn ứng dụng qua helper hiện có. Xóa bộ 14 ảnh mẫu cũ ở thư mục cha theo yêu cầu; dung lượng giảm khoảng 29,1 MB xuống 0,93 MB. Hash chọn ảnh vẫn ổn định. Ảnh mẫu tối đa 768px, không thay đổi ảnh thật từ máy chủ/thiết bị.
+
+### Kỷ niệm · Hai chế độ Ảnh / Album · 08/11/2026
+
+- Refactor thư viện thành pill switcher kính, lưới ảnh 3 cột/khe 1px theo chuyến và album card một cột có tiêu đề phủ ảnh + capsule số lượng. Giữ Xem sau bằng icon nhỏ; album và lưới dùng lại core viewer zoom/vuốt/chuyển cảnh.
+- Chuyến trống dùng ảnh mẫu local của repo, không ghi dữ liệu hoặc cộng số ảnh. Bổ sung thumbnail WebP nhẹ, cache/CDN resize, virtualized rows; bỏ request membership không cần thiết ở thư viện. Không đổi API/DB/dependency.
+- Chi tiết, giới hạn metadata và checklist nghiệm thu: [MEMORY-LIBRARY-UI.md](MEMORY-LIBRARY-UI.md). Chờ kiểm tra trực quan web/Android.
+- Kiểm tra: 57 ca liên quan đạt, TypeScript strict/no-unused đạt; 14 thumbnail đã kiểm tra kích thước/tỉ lệ. Công cụ CUA không khởi tạo được nên chưa nghiệm thu trực quan hoặc benchmark thiết bị.
+
 ### Kết thúc chuyến đi chủ động · 08/11/2026
 
 - Thêm API `POST /trips/{tripId}/complete`, kiểm tra owner/LIVE/version, khóa transaction và hỗ trợ gửi lặp. Không đổi schema, ngày hay lịch sử ghé/kỷ niệm.

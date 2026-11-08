@@ -39,7 +39,8 @@ export function MemoryIconButton({
         alignItems: "center",
         justifyContent: "center",
         borderRadius: theme.radius.full,
-        backgroundColor: theme.colors.surfaceTint,
+        backgroundColor:
+          icon === "back" ? "transparent" : theme.colors.surfaceTint,
         opacity: disabled || pressed ? theme.motion.pressOpacity : 1,
       })}
     >
@@ -71,8 +72,10 @@ export function MemoryPage({
         style={[
           styles.header,
           {
-            gap: theme.spacing.md,
+            gap: theme.spacing.sm,
             padding: theme.spacing.lg,
+            paddingTop: theme.spacing.xl,
+            marginBottom: theme.spacing.sm,
             maxWidth: theme.layout.contentMaxWidth,
           },
         ]}
@@ -88,8 +91,8 @@ export function MemoryPage({
                 : router.replace("/tabs/memories"))
           }
         />
-        <View style={styles.flex}>
-          <AppText accessibilityRole="header" variant="heading">
+        <View style={[styles.flex, { gap: theme.spacing.xs }]}>
+          <AppText accessibilityRole="header" variant="subheading">
             {title}
           </AppText>
           {subtitle ? (
