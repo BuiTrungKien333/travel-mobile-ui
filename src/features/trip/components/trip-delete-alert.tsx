@@ -5,6 +5,7 @@ import {
   Pressable,
   StyleSheet,
   View,
+  type ColorValue,
 } from "react-native";
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
@@ -22,6 +23,7 @@ export function TripDeleteAlert({
   confirmLabel,
   cancelLabel,
   destructive = true,
+  confirmBorderColor,
 }: {
   onCancel: () => void;
   onConfirm: () => void;
@@ -32,6 +34,7 @@ export function TripDeleteAlert({
   confirmLabel?: string;
   cancelLabel?: string;
   destructive?: boolean;
+  confirmBorderColor?: ColorValue;
 }) {
   const theme = useAppTheme();
   const insets = useScreenInsets();
@@ -142,9 +145,11 @@ export function TripDeleteAlert({
                 justifyContent: "center",
                 borderRadius: theme.radius.md,
                 borderWidth: StyleSheet.hairlineWidth,
-                borderColor: destructive
-                  ? theme.colors.error
-                  : theme.colors.softActionBorder,
+                borderColor:
+                  confirmBorderColor ??
+                  (destructive
+                    ? theme.colors.error
+                    : theme.colors.softActionBorder),
                 outlineColor: destructive
                   ? theme.colors.error
                   : theme.colors.focus,

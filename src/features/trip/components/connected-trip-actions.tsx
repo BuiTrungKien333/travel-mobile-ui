@@ -27,6 +27,8 @@ import type { TripMutation } from "../types/trip-details-types";
 import { TripDetailsSheet } from "./trip-details-sheet";
 import { TripEditForm } from "./trip-edit-form";
 import { TripDeleteAlert } from "./trip-delete-alert";
+import { TripCompletionAction } from "./trip-completion-action";
+import { useTripCompletionCopy } from "../i18n/trip-completion-copy";
 
 export function ConnectedTripActions({
   read,
@@ -42,7 +44,10 @@ export function ConnectedTripActions({
   const theme = useAppTheme();
   const { copy: detailCopy } = useTripDetailsCopy();
   const { copy } = useTripIntegrationCopy();
-  const [sheet, setSheet] = useState<"menu" | "edit" | "delete">("menu");
+  const completionCopy = useTripCompletionCopy();
+  const [sheet, setSheet] = useState<"menu" | "edit" | "delete" | "complete">(
+    "menu",
+  );
   const [version, setVersion] = useState(read.trip.version);
   const [formSession, setFormSession] = useState(0);
   const [error, setError] = useState<unknown>(null);
@@ -120,6 +125,16 @@ export function ConnectedTripActions({
     }
   }
   const errorMessage = error ? tripApiErrorMessage(error, copy) : undefined;
+  if (sheet === "complete")
+    return (
+      <TripCompletionAction
+        read={read}
+        confirmationOnly
+        onReload={onReload}
+        onCompleted={onClose}
+        onCancel={() => setSheet("menu")}
+      />
+    );
   if (sheet === "delete")
     return (
       <TripDeleteAlert
@@ -151,6 +166,17 @@ export function ConnectedTripActions({
       >
         {sheet === "menu" ? (
           <>
+            {read.trip.mode === "LIVE" ? (
+              <AppButton
+                variant="outline"
+                leadingIcon={
+                  <AppIcon name="close" size={theme.layout.iconSmall} />
+                }
+                onPress={() => setSheet("complete")}
+              >
+                {completionCopy.action}
+              </AppButton>
+            ) : null}
             <AppButton
               variant="outline"
               leadingIcon={

@@ -68,6 +68,8 @@ import {
 import { tripMapPins } from "../utils/trip-mapbox";
 import { TripPlanningDaySelector } from "../components/trip-planning-day-selector";
 import { ConnectedTripActions } from "../components/connected-trip-actions";
+import { TripCompletionAction } from "../components/trip-completion-action";
+import { hasVisitedAllTripPlaces } from "../utils/trip-completion";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 import {
   tripApiErrorMessage,
@@ -689,7 +691,7 @@ export function ConnectedTripDetailsScreen({
                 <TripTimelineTail
                   trip={trip}
                   day={day}
-                  empty={!rows.length}
+                  empty={false}
                   canEdit
                   onAdd={openPlacePicker}
                   returnSummary={
@@ -753,6 +755,17 @@ export function ConnectedTripDetailsScreen({
                 <View
                   style={{ gap: theme.spacing.sm, padding: theme.spacing.lg }}
                 >
+                  {hasVisitedAllTripPlaces(read, places.data) &&
+                  !visit.isPending ? (
+                    <TripCompletionAction
+                      read={read}
+                      allVisited
+                      onReload={async () => {
+                        const result = await query.refetch();
+                        return result.isError ? undefined : result.data;
+                      }}
+                    />
+                  ) : null}
                   {mode === "recap" ? (
                     <TripRecapCard
                       key={trip.id}
@@ -807,9 +820,8 @@ export function ConnectedTripDetailsScreen({
                       }
                       editHistory={false}
                       showWeather={false}
-                      reorderAtEnd={mode === "planning"}
-                      showOptimize={mode === "live" && canOptimize}
-                      liveLayout={mode === "live"}
+                      showOptimize={canOptimize}
+                      compactLayout={mode === "live" || mode === "planning"}
                       routeMetrics={
                         route
                           ? {
@@ -859,24 +871,6 @@ export function ConnectedTripDetailsScreen({
                             <TextAction
                               label={copy.retry}
                               onPress={() => void routeQuery.refetch()}
-                            />
-                          ) : null}
-                          {activeDate &&
-                          mode !== "live" &&
-                          day &&
-                          ready &&
-                          canEditDay(activeDate) ? (
-                            <DetailIconButton
-                              name="daySchedule"
-                              label={detailCopy.daySettings}
-                              onPress={() =>
-                                openEditor({
-                                  kind: "day",
-                                  date: activeDate,
-                                  day,
-                                  routeMode,
-                                })
-                              }
                             />
                           ) : null}
                         </>
@@ -1060,8 +1054,7 @@ export function ConnectedTripDetailsScreen({
       ((timeline.hasFailure || completion.isError) && scheduleError) ? (
         <View
           style={{
-            paddingBottom:
-              mode === "planning" && !canOptimize ? insets.bottom : 0,
+            paddingBottom: mode === "planning" ? insets.bottom : 0,
           }}
         >
           {timeline.canUndo ? (
@@ -1094,7 +1087,8 @@ export function ConnectedTripDetailsScreen({
           )}
         </View>
       ) : null}
-      {(backlog && mode !== "recap") ||
+      {mode === "planning" ||
+      (backlog && mode !== "recap") ||
       (mode === "live" && !defaultDate) ? null : (
         <TripDetailsActions
           trip={trip}

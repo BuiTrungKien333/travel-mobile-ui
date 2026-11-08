@@ -9,7 +9,7 @@ import { useAppTheme } from "@/hooks/use-app-theme";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 import { getDayTravel, getTripForecast } from "../data/trip-details-preview";
 import type { TripDetailsSheetState } from "../types/trip-details-types";
-import { TripLiveDayTools } from "./trip-live-day-tools";
+import { TripDayToolbar } from "./trip-day-toolbar";
 
 /** Summary includes scheduled visits only; origin legs aren't invented. */
 export function TripDayTools({
@@ -22,7 +22,7 @@ export function TripDayTools({
   showWeather = true,
   reorderAtEnd = false,
   showOptimize = false,
-  liveLayout = false,
+  compactLayout = false,
   routeSummary,
   routeMetrics,
   onEditDay,
@@ -39,7 +39,7 @@ export function TripDayTools({
   showWeather?: boolean;
   reorderAtEnd?: boolean;
   showOptimize?: boolean;
-  liveLayout?: boolean;
+  compactLayout?: boolean;
   routeSummary?: string | null;
   routeMetrics?: { km: number; minutes: number };
   onEditDay?: () => void;
@@ -55,9 +55,9 @@ export function TripDayTools({
     ongoingWeatherSnapshot.tripId === trip.id &&
     ongoingWeatherSnapshot.date === day?.date &&
     day?.date === today;
-  if (liveLayout) {
+  if (compactLayout) {
     return (
-      <TripLiveDayTools
+      <TripDayToolbar
         day={day}
         canEdit={canEdit}
         canOptimize={showOptimize && (day?.stops.length ?? 0) > 1}

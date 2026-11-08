@@ -474,14 +474,13 @@ function TripDetailsContent({
               canEdit={canEdit}
               editHistory={editHistory}
               showWeather={false}
-              showOptimize={mode === "live" && canOptimize}
-              liveLayout={mode === "live"}
+              showOptimize={canOptimize}
+              compactLayout={mode === "live" || mode === "planning"}
               onEditDay={
-                mode === "live" && canEdit && timedDay
+                (mode === "live" || mode === "planning") && canEdit && timedDay
                   ? () => setSheet({ kind: "day" })
                   : undefined
               }
-              reorderAtEnd={mode === "planning"}
               onSheetChange={setSheet}
             />
           ) : null}
@@ -683,7 +682,7 @@ function TripDetailsContent({
                   padding: mapFirstLayout ? 0 : theme.spacing.lg,
                   paddingBottom:
                     theme.spacing.xxl +
-                    (mode === "planning" && !canOptimize ? insets.bottom : 0),
+                    (mode === "planning" ? insets.bottom : 0),
                   minHeight:
                     mapFirstLayout && showMap
                       ? availableHeight + planningMapGeometry.height
@@ -733,25 +732,27 @@ function TripDetailsContent({
               }}
             />
           ) : null}
-          <TripDetailsActions
-            trip={trip}
-            mode={mode}
-            canOptimize={canOptimize}
-            onOptimize={() => setSheet({ kind: "optimize" })}
-            nextStop={isLiveToday && !backlog ? progress.nextStop : undefined}
-            onDirections={() => {
-              if (progress.nextStop && day)
-                setHighlight({ date: day.date, id: progress.nextStop.id });
-              planningScroll.show();
-              setMapExpandRequest((request) => request + 1);
-            }}
-            onVisited={() => {
-              if (isLiveToday && !backlog && progress.nextStop)
-                setVisited(trip.id, today, progress.nextStop.id, true);
-            }}
-            onJournal={openJournal}
-            onInfo={() => setSheet({ kind: "info" })}
-          />
+          {mode !== "planning" ? (
+            <TripDetailsActions
+              trip={trip}
+              mode={mode}
+              canOptimize={canOptimize}
+              onOptimize={() => setSheet({ kind: "optimize" })}
+              nextStop={isLiveToday && !backlog ? progress.nextStop : undefined}
+              onDirections={() => {
+                if (progress.nextStop && day)
+                  setHighlight({ date: day.date, id: progress.nextStop.id });
+                planningScroll.show();
+                setMapExpandRequest((request) => request + 1);
+              }}
+              onVisited={() => {
+                if (isLiveToday && !backlog && progress.nextStop)
+                  setVisited(trip.id, today, progress.nextStop.id, true);
+              }}
+              onJournal={openJournal}
+              onInfo={() => setSheet({ kind: "info" })}
+            />
+          ) : null}
         </View>
       </ScreenSafeArea>
       {sheet ? (

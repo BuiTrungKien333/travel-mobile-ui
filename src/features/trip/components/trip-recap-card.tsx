@@ -29,8 +29,19 @@ export function TripRecapCard({
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
   const [failed, setFailed] = useState(false);
+  const dates =
+    trip.startDate && trip.endDate
+      ? trip.startDate === trip.endDate
+        ? new Intl.DateTimeFormat(locale === "vi" ? "vi-VN" : "en-GB", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+            timeZone: "UTC",
+          }).format(new Date(`${trip.startDate}T12:00:00Z`))
+        : formatTripDates(trip, locale)
+      : undefined;
   return (
-    <JourneyCard>
+    <JourneyCard variant="neutral">
       <View
         style={{
           flexDirection: "row",
@@ -58,10 +69,15 @@ export function TripRecapCard({
               flexDirection: "row",
               gap: theme.spacing.xs,
               alignItems: "center",
+              alignSelf: "flex-start",
+              paddingHorizontal: theme.spacing.sm,
+              paddingVertical: theme.spacing.xs,
+              borderRadius: theme.radius.sm,
+              backgroundColor: theme.colors.surfaceTint,
             }}
           >
             <AppIcon
-              name="flag"
+              name="tick"
               size={theme.layout.iconSmall}
               color={theme.colors.primaryText}
             />
@@ -75,45 +91,67 @@ export function TripRecapCard({
           </View>
           <AppText
             accessibilityRole="header"
-            variant={showCover ? "sectionTitle" : "subheading"}
+            variant="sectionTitle"
+            style={{
+              fontSize: theme.typography.fontSize.lg,
+              lineHeight: theme.typography.lineHeight.lg,
+              marginTop: theme.spacing.xs,
+            }}
           >
             {getTripTitle(trip, locale)}
           </AppText>
-          {trip.startDate && trip.endDate ? (
-            <AppText variant="caption" tone="muted">
-              {formatTripDates(trip, locale)}
-            </AppText>
+          {dates ? (
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: theme.spacing.xs,
+              }}
+            >
+              <AppIcon
+                name="calendar"
+                size={theme.layout.iconSmall}
+                color={theme.colors.textSecondary}
+              />
+              <AppText variant="caption" tone="muted" style={{ flexShrink: 1 }}>
+                {dates}
+              </AppText>
+            </View>
           ) : null}
         </View>
       </View>
       <View
         style={{
           flexDirection: "row",
-          borderTopWidth: StyleSheet.hairlineWidth,
-          borderTopColor: theme.colors.border,
-          paddingTop: theme.spacing.md,
+          gap: theme.spacing.sm,
         }}
       >
         {[
           { value: dayCount, label: copy.daysUnit },
           { value: stopCount, label: copy.places },
           { value: memoryCount, label: copy.recapMemoriesUnit },
-        ].map(({ value, label }, index) => (
+        ].map(({ value, label }) => (
           <View
             key={label}
             style={{
               flex: 1,
               minWidth: 0,
               alignItems: "center",
-              gap: theme.spacing.xxs,
-              borderLeftWidth: index ? StyleSheet.hairlineWidth : 0,
-              borderLeftColor: theme.colors.border,
+              gap: theme.spacing.xs,
+              paddingVertical: theme.spacing.md,
+              paddingHorizontal: theme.spacing.xs,
+              borderRadius: theme.radius.sm,
+              backgroundColor: theme.colors.background,
             }}
           >
             <AppText
-              variant="subheading"
-              tone="primary"
-              style={{ fontVariant: ["tabular-nums"] }}
+              variant="sectionTitle"
+              tone={value ? "primary" : "muted"}
+              style={{
+                fontSize: theme.typography.fontSize.xl,
+                lineHeight: theme.typography.lineHeight.xl,
+                fontVariant: ["tabular-nums"],
+              }}
             >
               {new Intl.NumberFormat(locale).format(value)}
             </AppText>

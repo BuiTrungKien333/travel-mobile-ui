@@ -2,8 +2,8 @@
   "openapi": "3.0.3",
   "info": {
     "title": "WeGo Trip CRUD - MVP contract",
-    "version": "1.1.0",
-    "description": "Implemented: create/list/detail/PATCH/date-impact preview/DELETE/destinations. Android/web online MVP; no draft/AI or provider calls. Province master data import and device/live e2e acceptance remain open. See TRIP-CRUD-CONTRACT.md."
+    "version": "1.2.0",
+    "description": "Implemented: create/list/detail/PATCH/date-impact preview/DELETE/explicit trip completion/destinations. Android/web online MVP; no draft/AI or provider calls. Province master data import and device/live e2e acceptance remain open. See TRIP-CRUD-CONTRACT.md and TRIP-COMPLETION-QA.md."
   },
   "servers": [
     {
@@ -28,9 +28,7 @@
     "/trips": {
       "post": {
         "operationId": "createTrip",
-        "tags": [
-          "Trips"
-        ],
+        "tags": ["Trips"],
         "summary": "Create a real PLANNING trip; no AI draft.",
         "requestBody": {
           "required": true,
@@ -53,10 +51,7 @@
                   "amount": 3000000,
                   "currency": "VND"
                 },
-                "preferences": [
-                  "nature",
-                  "photography"
-                ],
+                "preferences": ["nature", "photography"],
                 "accommodation": null,
                 "notes": null,
                 "initialPlaceIds": []
@@ -148,9 +143,7 @@
       },
       "get": {
         "operationId": "listTrips",
-        "tags": [
-          "Trips"
-        ],
+        "tags": ["Trips"],
         "summary": "Owned non-deleted trips; mode filter before paging.",
         "parameters": [
           {
@@ -268,9 +261,7 @@
       ],
       "get": {
         "operationId": "getTrip",
-        "tags": [
-          "Trips"
-        ],
+        "tags": ["Trips"],
         "summary": "Read Trip metadata and day descriptors.",
         "responses": {
           "200": {
@@ -328,9 +319,7 @@
       },
       "patch": {
         "operationId": "patchTrip",
-        "tags": [
-          "Trips"
-        ],
+        "tags": ["Trips"],
         "summary": "Atomic metadata/date update with version check.",
         "requestBody": {
           "required": true,
@@ -414,9 +403,7 @@
       },
       "delete": {
         "operationId": "deleteTrip",
-        "tags": [
-          "Trips"
-        ],
+        "tags": ["Trips"],
         "summary": "Soft-delete Trip and Memories; no provider calls.",
         "parameters": [
           {
@@ -488,6 +475,62 @@
         "x-implementation-status": "implemented"
       }
     },
+    "/trips/{tripId}/complete": {
+      "post": {
+        "operationId": "completeTrip",
+        "tags": ["Trips"],
+        "summary": "End an ongoing trip explicitly",
+        "description": "Owner only, LIVE mode only. Preserves dates, places, visit history and memories. Repeating completion of an explicitly completed trip returns the current trip without another write. Visiting all places does not trigger completion.",
+        "parameters": [
+          {
+            "name": "tripId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["version"],
+                "additionalProperties": false,
+                "properties": {
+                  "version": {
+                    "type": "integer",
+                    "format": "int64",
+                    "minimum": 0
+                  }
+                }
+              },
+              "example": { "version": 3 }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Trip status COMPLETED and mode RECAP, with updated version/context.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TripResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or missing integer version, or unknown fields."
+          },
+          "401": { "description": "Authentication required." },
+          "404": {
+            "description": "TRIP_001: trip missing, deleted or not owned."
+          },
+          "409": {
+            "description": "TRIP_002: stale version; TRIP_006: not LIVE (planning/cancelled/already past its end date)."
+          }
+        }
+      }
+    },
     "/trips/{tripId}/date-change-preview": {
       "parameters": [
         {
@@ -502,9 +545,7 @@
       ],
       "post": {
         "operationId": "previewTripDateChange",
-        "tags": [
-          "Trips"
-        ],
+        "tags": ["Trips"],
         "summary": "Read-only date impact; no persisted preview token.",
         "requestBody": {
           "required": true,
@@ -589,9 +630,7 @@
     "/destinations": {
       "get": {
         "operationId": "listDestinations",
-        "tags": [
-          "Destinations"
-        ],
+        "tags": ["Destinations"],
         "summary": "Internal Province catalog, not Google search.",
         "parameters": [
           {
@@ -710,21 +749,11 @@
       },
       "TripStatus": {
         "type": "string",
-        "enum": [
-          "PLANNING",
-          "ACTIVE",
-          "COMPLETED",
-          "CANCELLED"
-        ]
+        "enum": ["PLANNING", "ACTIVE", "COMPLETED", "CANCELLED"]
       },
       "TripMode": {
         "type": "string",
-        "enum": [
-          "PLANNING",
-          "LIVE",
-          "RECAP",
-          "CANCELLED"
-        ]
+        "enum": ["PLANNING", "LIVE", "RECAP", "CANCELLED"]
       },
       "DestinationInput": {
         "type": "object",
@@ -741,9 +770,7 @@
             "nullable": true
           }
         },
-        "required": [
-          "name"
-        ]
+        "required": ["name"]
       },
       "DestinationRead": {
         "type": "object",
@@ -758,10 +785,7 @@
             "nullable": true
           }
         },
-        "required": [
-          "name",
-          "provinceId"
-        ]
+        "required": ["name", "provinceId"]
       },
       "Budget": {
         "type": "object",
@@ -775,15 +799,10 @@
           },
           "currency": {
             "type": "string",
-            "enum": [
-              "VND"
-            ]
+            "enum": ["VND"]
           }
         },
-        "required": [
-          "amount",
-          "currency"
-        ],
+        "required": ["amount", "currency"],
         "nullable": true
       },
       "Readiness": {
@@ -801,11 +820,7 @@
             "minimum": 0
           }
         },
-        "required": [
-          "hasDates",
-          "hasPlaces",
-          "unscheduledCount"
-        ]
+        "required": ["hasDates", "hasPlaces", "unscheduledCount"]
       },
       "TripSummary": {
         "type": "object",
@@ -833,9 +848,7 @@
           },
           "timeZone": {
             "type": "string",
-            "enum": [
-              "Asia/Ho_Chi_Minh"
-            ]
+            "enum": ["Asia/Ho_Chi_Minh"]
           },
           "status": {
             "$ref": "#/components/schemas/TripStatus"
@@ -915,11 +928,7 @@
             "maximum": 365
           }
         },
-        "required": [
-          "id",
-          "date",
-          "dayNumber"
-        ]
+        "required": ["id", "date", "dayNumber"]
       },
       "TripDetail": {
         "type": "object",
@@ -947,9 +956,7 @@
           },
           "timeZone": {
             "type": "string",
-            "enum": [
-              "Asia/Ho_Chi_Minh"
-            ]
+            "enum": ["Asia/Ho_Chi_Minh"]
           },
           "status": {
             "$ref": "#/components/schemas/TripStatus"
@@ -1055,10 +1062,7 @@
             "format": "date"
           }
         },
-        "required": [
-          "serverTime",
-          "evaluatedDate"
-        ]
+        "required": ["serverTime", "evaluatedDate"]
       },
       "TripReadData": {
         "type": "object",
@@ -1071,10 +1075,7 @@
             "$ref": "#/components/schemas/ReadContext"
           }
         },
-        "required": [
-          "trip",
-          "context"
-        ]
+        "required": ["trip", "context"]
       },
       "CreateTripRequest": {
         "type": "object",
@@ -1102,9 +1103,7 @@
           },
           "timeZone": {
             "type": "string",
-            "enum": [
-              "Asia/Ho_Chi_Minh"
-            ],
+            "enum": ["Asia/Ho_Chi_Minh"],
             "default": "Asia/Ho_Chi_Minh"
           },
           "budget": {
@@ -1140,12 +1139,7 @@
             "default": []
           }
         },
-        "required": [
-          "clientRequestId",
-          "destination",
-          "startDate",
-          "endDate"
-        ],
+        "required": ["clientRequestId", "destination", "startDate", "endDate"],
         "description": "No draft/status field. 1–365 inclusive days. New startDate >= trip-local today. Successful replay has separate temporal validation semantics; see Markdown."
       },
       "PatchTripRequest": {
@@ -1199,9 +1193,7 @@
             "default": false
           }
         },
-        "required": [
-          "version"
-        ],
+        "required": ["version"],
         "description": "Missing retains; explicit nullable fields clear. At least one mutable field; start/end sent together. Cross-field rules in Markdown."
       },
       "DateChangeRequest": {
@@ -1222,11 +1214,7 @@
             "format": "date"
           }
         },
-        "required": [
-          "version",
-          "startDate",
-          "endDate"
-        ]
+        "required": ["version", "startDate", "endDate"]
       },
       "DateImpact": {
         "type": "object",
@@ -1300,11 +1288,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "id",
-          "code",
-          "name"
-        ]
+        "required": ["id", "code", "name"]
       },
       "TripPage": {
         "type": "object",
@@ -1396,9 +1380,7 @@
         "properties": {
           "success": {
             "type": "boolean",
-            "enum": [
-              true
-            ]
+            "enum": [true]
           },
           "message": {
             "type": "string"
@@ -1407,11 +1389,7 @@
             "$ref": "#/components/schemas/TripReadData"
           }
         },
-        "required": [
-          "success",
-          "message",
-          "data"
-        ],
+        "required": ["success", "message", "data"],
         "example": {
           "success": true,
           "message": "success",
@@ -1444,10 +1422,7 @@
                 "amount": 3000000,
                 "currency": "VND"
               },
-              "preferences": [
-                "nature",
-                "photography"
-              ],
+              "preferences": ["nature", "photography"],
               "accommodation": null,
               "notes": null,
               "days": [
@@ -1481,9 +1456,7 @@
         "properties": {
           "success": {
             "type": "boolean",
-            "enum": [
-              true
-            ]
+            "enum": [true]
           },
           "message": {
             "type": "string"
@@ -1492,11 +1465,7 @@
             "$ref": "#/components/schemas/TripPage"
           }
         },
-        "required": [
-          "success",
-          "message",
-          "data"
-        ],
+        "required": ["success", "message", "data"],
         "example": {
           "success": true,
           "message": "success",
@@ -1545,9 +1514,7 @@
         "properties": {
           "success": {
             "type": "boolean",
-            "enum": [
-              true
-            ]
+            "enum": [true]
           },
           "message": {
             "type": "string"
@@ -1556,11 +1523,7 @@
             "$ref": "#/components/schemas/DateImpact"
           }
         },
-        "required": [
-          "success",
-          "message",
-          "data"
-        ],
+        "required": ["success", "message", "data"],
         "example": {
           "success": true,
           "message": "success",
@@ -1569,9 +1532,7 @@
             "startDate": "2026-11-21",
             "endDate": "2026-11-22",
             "dayCount": 2,
-            "removedDates": [
-              "2026-11-20"
-            ],
+            "removedDates": ["2026-11-20"],
             "addedDates": [],
             "movedToPoolCount": 2,
             "requiresAcknowledgement": true
@@ -1584,9 +1545,7 @@
         "properties": {
           "success": {
             "type": "boolean",
-            "enum": [
-              true
-            ]
+            "enum": [true]
           },
           "message": {
             "type": "string"
@@ -1595,11 +1554,7 @@
             "$ref": "#/components/schemas/DestinationPage"
           }
         },
-        "required": [
-          "success",
-          "message",
-          "data"
-        ],
+        "required": ["success", "message", "data"],
         "example": {
           "success": true,
           "message": "success",
@@ -1618,9 +1573,7 @@
         "properties": {
           "success": {
             "type": "boolean",
-            "enum": [
-              false
-            ]
+            "enum": [false]
           },
           "code": {
             "type": "string"
@@ -1639,12 +1592,7 @@
             "format": "date-time"
           }
         },
-        "required": [
-          "success",
-          "code",
-          "message",
-          "timestamp"
-        ],
+        "required": ["success", "code", "message", "timestamp"],
         "example": {
           "success": false,
           "code": "TRIP_002",

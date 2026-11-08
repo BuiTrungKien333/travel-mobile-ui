@@ -1,5 +1,10 @@
 # Kế hoạch hợp nhất frontend và backend WeGo
 
+### Kết thúc chuyến đi chủ động · 08/11/2026
+
+- Đã thêm API xác nhận kết thúc LIVE, giữ lịch sử và ngày dự kiến, chống ghi đè bằng version; frontend có hành động menu và lời nhắc khi ghé hết điểm toàn chuyến. Không tự hoàn thành theo số check-in.
+- Chi tiết, Home và danh sách đồng bộ sau khi lưu. Checklist và API: [TRIP-COMPLETION-QA.md](TRIP-COMPLETION-QA.md); chờ nghiệm thu trên thiết bị.
+
 
 ### QA · Home và chi tiết chuyến đã hoàn thành · 08/11/2026
 

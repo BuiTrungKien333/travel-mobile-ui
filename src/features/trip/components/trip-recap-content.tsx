@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Share, View } from "react-native";
+import { Share, StyleSheet, View } from "react-native";
 import { AppButton } from "@/components/ui/app-button";
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
@@ -35,20 +35,42 @@ export function TripRecapContent({
           title={copy.dayMemories}
         />
       ) : !memories.some((memory) => memory.text.trim()) ? (
-        <JourneyCard>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: theme.spacing.md,
+            padding: theme.spacing.lg,
+            borderRadius: theme.radius.md,
+            borderWidth: StyleSheet.hairlineWidth,
+            borderStyle: "dashed",
+            borderColor: theme.colors.borderStrong,
+            backgroundColor: theme.colors.glassInset,
+          }}
+        >
           <View
             style={{
-              flexDirection: "row",
+              width: theme.layout.touchTarget,
+              height: theme.layout.touchTarget,
               alignItems: "center",
-              gap: theme.spacing.sm,
+              justifyContent: "center",
+              backgroundColor: theme.colors.surface,
+              borderRadius: theme.radius.sm,
             }}
           >
-            <AppIcon name="memories" size={theme.layout.iconMedium} />
-            <AppText variant="body" tone="muted" style={{ flex: 1 }}>
-              {copy.noDayMemories}
+            <AppIcon
+              name="memories"
+              variant="light"
+              size={theme.layout.iconMedium}
+            />
+          </View>
+          <View style={{ flex: 1, minWidth: 0, gap: theme.spacing.xs }}>
+            <AppText variant="label">{copy.noDayMemories}</AppText>
+            <AppText variant="caption" tone="muted">
+              {copy.noDayMemoriesHint}
             </AppText>
           </View>
-        </JourneyCard>
+        </View>
       ) : null}
       {memories
         .filter((memory) => memory.text)

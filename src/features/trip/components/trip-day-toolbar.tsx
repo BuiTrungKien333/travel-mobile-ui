@@ -8,7 +8,8 @@ import type { TripDay } from "@/features/home/types/home-types";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 import type { TripDetailsSheetState } from "../types/trip-details-types";
 
-export function TripLiveDayTools({
+/** Shared daily controls for planning and ongoing trips. */
+export function TripDayToolbar({
   day,
   canEdit,
   canOptimize,
@@ -185,7 +186,12 @@ function ToolbarPill({
       ) : null}
       <AppText
         variant="label"
-        style={{ color, fontFamily: theme.typography.fontFamily.semibold, flexShrink: 1, textAlign: "center" }}
+        style={{
+          color,
+          fontFamily: theme.typography.fontFamily.semibold,
+          flexShrink: 1,
+          textAlign: "center",
+        }}
       >
         {label}
       </AppText>

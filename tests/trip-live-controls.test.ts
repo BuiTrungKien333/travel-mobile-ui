@@ -95,7 +95,7 @@ test("live toolbar labels retain transport, optimization, reorder and day edit a
     today: "2026-10-21",
     canEdit: true,
     editHistory: false,
-    liveLayout: true,
+    compactLayout: true,
     showOptimize: true,
     routeMetrics: { km: 30.5, minutes: 87 },
     transportLabel: "Ô tô",

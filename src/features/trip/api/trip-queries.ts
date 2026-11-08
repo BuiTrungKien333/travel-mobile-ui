@@ -10,7 +10,6 @@ import { authSession } from "@/features/auth/services/auth-session";
 import { ApiError } from "@/services/api/api-error";
 import type {
   CreateTripPayload,
-  UpdateTripPayload,
   DatePreviewRequest,
   TripReadDto,
 } from "./trip-contract";
@@ -70,13 +69,25 @@ export function useCreateTripMutation() {
 }
 
 export function useUpdateTripMutation(id: string) {
+  return useTripWriteMutation(id, tripApi.update);
+}
+
+export function useCompleteTripMutation(id: string) {
+  return useTripWriteMutation(id, tripApi.complete);
+}
+
+/** Both writes replace the trip and refresh the screens derived from its mode. */
+function useTripWriteMutation<T>(
+  id: string,
+  write: (id: string, payload: T) => Promise<TripReadDto>,
+) {
   const owner = useProfile().data?.id;
   const client = useQueryClient();
   return useMutation({
     retry: false,
-    mutationFn: async (payload: UpdateTripPayload) => {
+    mutationFn: async (payload: T) => {
       const sessionVersion = authSession.getVersion();
-      const result = await tripApi.update(id, payload);
+      const result = await write(id, payload);
       if (sessionVersion !== authSession.getVersion())
         throw new ApiError("CANCELLED");
       return { read: result, sessionVersion };

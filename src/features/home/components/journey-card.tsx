@@ -6,9 +6,11 @@ import { useAppTheme } from "@/hooks/use-app-theme";
 export function JourneyCard({
   children,
   cover,
+  variant = "default",
 }: {
   children: ReactNode;
   cover?: ReactNode;
+  variant?: "default" | "neutral";
 }) {
   const theme = useAppTheme();
   return (
@@ -19,12 +21,19 @@ export function JourneyCard({
           padding: cover ? theme.spacing.none : theme.spacing.lg,
           gap: cover ? theme.spacing.none : theme.spacing.md,
           borderRadius: theme.radius.md,
-          backgroundColor: theme.colors.surfaceTint,
+          backgroundColor:
+            variant === "neutral"
+              ? theme.colors.surface
+              : theme.colors.surfaceTint,
           borderWidth: StyleSheet.hairlineWidth,
-          borderColor: theme.colors.glassBorder,
-          boxShadow: [
-            { ...theme.elevation.glass, color: theme.colors.glassShadow },
-          ],
+          borderColor:
+            variant === "neutral"
+              ? theme.colors.border
+              : theme.colors.glassBorder,
+          boxShadow:
+            variant === "neutral"
+              ? undefined
+              : [{ ...theme.elevation.glass, color: theme.colors.glassShadow }],
         },
       ]}
     >

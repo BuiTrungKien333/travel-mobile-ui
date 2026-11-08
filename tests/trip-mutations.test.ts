@@ -264,6 +264,9 @@ function harness() {
     "./trip-details-sheet": { TripDetailsSheet: "TripDetailsSheet" },
     "./trip-edit-form": { TripEditForm: "TripEditForm" },
     "./trip-delete-alert": { TripDeleteAlert: "TripDeleteAlert" },
+    "./trip-completion-action": {
+      TripCompletionAction: "TripCompletionAction",
+    },
   });
   const { ConnectedTripActions } = load<
     typeof import("../src/features/trip/components/connected-trip-actions.tsx")

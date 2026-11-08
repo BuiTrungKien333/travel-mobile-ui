@@ -29,7 +29,12 @@ const stop = (id: string, visited = false): TripStop => ({
   visited,
   location: { latitude: 11.94, longitude: 108.44 },
 });
-function fixture(legacy = false, visitedPair = false, recap = false) {
+function fixture(
+  legacy = false,
+  visitedPair = false,
+  recap = false,
+  planning = false,
+) {
   const a = stop("a", true),
     b = stop("b"),
     pool = stop("pool");
@@ -51,7 +56,7 @@ function fixture(legacy = false, visitedPair = false, recap = false) {
   const read = {
     trip: {
       id: "trip",
-      mode: recap ? "RECAP" : "LIVE",
+      mode: recap ? "RECAP" : planning ? "PLANNING" : "LIVE",
       dayCount: 1,
       stopCount: scheduledStops.length,
       memoryCount: recap ? 7 : 0,
@@ -275,6 +280,7 @@ function fixture(legacy = false, visitedPair = false, recap = false) {
     "../components/trip-undo-notice": ["TripUndoNotice"],
     "../components/trip-planning-day-selector": ["TripPlanningDaySelector"],
     "../components/connected-trip-actions": ["ConnectedTripActions"],
+    "../components/trip-completion-action": ["TripCompletionAction"],
   }))
     mocks[path] = Object.fromEntries(names.map((name) => [name, name]));
   const load = tripModuleLoader(mocks);
@@ -317,6 +323,18 @@ function fixture(legacy = false, visitedPair = false, recap = false) {
     },
   };
 }
+
+test("planning shares the daily toolbar and opens day editing without duplicate footer controls", () => {
+  const f = fixture(false, false, false, true);
+  f.routeIsReady();
+  const { tree, rendered } = f.rows();
+  const tools = nodes(rendered, "TripDayTools")[0];
+  assert.equal(tools.props.compactLayout, true);
+  assert.equal(tools.props.canEdit, true);
+  assert.equal(nodes(tree, "TripDetailsActions").length, 0);
+  (tools.props.onEditDay as () => void)();
+  assert.equal(nodes(f.render(), "ConnectedDayScheduleSheet").length, 1);
+});
 
 test("completed details reuse the map and dates with API counts, daily memories and a read-only timeline", () => {
   const f = fixture(false, false, true);

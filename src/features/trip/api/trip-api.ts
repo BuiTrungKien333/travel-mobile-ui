@@ -17,6 +17,7 @@ export const tripEndpoints = {
   detail: (id: string) => `/api/v1/trips/${encodeURIComponent(id)}`,
   datePreview: (id: string) =>
     `/api/v1/trips/${encodeURIComponent(id)}/date-change-preview`,
+  complete: (id: string) => `/api/v1/trips/${encodeURIComponent(id)}/complete`,
 };
 const readEnvelope = z.object({
   success: z.literal(true),
@@ -28,6 +29,16 @@ const pageEnvelope = z.object({
 });
 
 export const tripApi = {
+  async complete(id: string, version: number) {
+    if (!Number.isSafeInteger(version) || version < 0)
+      throw new ApiError("INVALID_TRIP");
+    const response = await apiClient.post<unknown>(tripEndpoints.complete(id), {
+      version,
+    });
+    const parsed = readEnvelope.safeParse(response.data);
+    if (!parsed.success) throw new ApiError("INVALID_RESPONSE");
+    return parsed.data.data;
+  },
   async update(id: string, payload: UpdateTripPayload) {
     const body = updateTripSchema.safeParse(payload);
     if (!body.success) throw new ApiError("INVALID_TRIP");

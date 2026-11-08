@@ -1,5 +1,12 @@
 # Tiến độ Travel Mobile UI
 
+### Kết thúc chuyến đi chủ động · 08/11/2026
+
+- Thêm API `POST /trips/{tripId}/complete`, kiểm tra owner/LIVE/version, khóa transaction và hỗ trợ gửi lặp. Không đổi schema, ngày hay lịch sử ghé/kỷ niệm.
+- Menu chi tiết có Kết thúc chuyến đi + xác nhận; ghé hết điểm toàn chuyến chỉ hiện lời nhắc nhẹ. Đồng bộ cache chi tiết/Home/danh sách sau thành công. VI/EN, trạng thái chờ/lỗi/xung đột được xử lý.
+- Hướng dẫn API và nghiệm thu: [TRIP-COMPLETION-QA.md](TRIP-COMPLETION-QA.md). Chờ nghiệm thu web/Android.
+- Kiểm tra: 21 ca backend (PostgreSQL Testcontainers), 26 ca mobile liên quan và TypeScript đạt; không chạy lint theo yêu cầu.
+
 
 ### QA · Home và chi tiết chuyến đã hoàn thành · 08/11/2026
 
