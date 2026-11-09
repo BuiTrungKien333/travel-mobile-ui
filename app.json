@@ -6,11 +6,13 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "travelplannermobileui",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.travel.mobile"
     },
     "android": {
+      "package": "com.travel.mobile",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -33,7 +35,34 @@
           "imageWidth": 76
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-sharing",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Cho phép WeGo dùng camera để ghi lại khoảnh khắc trong chuyến đi.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Cho phép WeGo chọn ảnh để thêm vào kỷ niệm chuyến đi.",
+          "cameraPermission": "Cho phép WeGo dùng camera để ghi lại khoảnh khắc trong chuyến đi.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": false,
+          "savePhotosPermission": "Cho phép WeGo lưu ảnh bạn chọn vào thư viện ảnh.",
+          "granularPermissions": [],
+          "isAccessMediaLocationEnabled": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

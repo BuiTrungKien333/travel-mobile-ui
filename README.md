@@ -1,56 +1,53 @@
-# Welcome to your Expo app 👋
+# WeGo · Travel Mobile UI
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Ứng dụng React Native dùng Expo SDK 57, Expo Router, TypeScript strict và React Compiler. Giao diện sáng, hỗ trợ Tiếng Việt/Tiếng Anh; mặc định Tiếng Việt.
 
-## Get started
-
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Chạy dự án
 
 ```bash
-npm run reset-project
+npm install
+npm run web
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Trong chế độ development, ứng dụng mở Home trực tiếp để làm UI, không cần chạy backend. Chọn **Đổi trạng thái** ở cuối Home để xem bốn tình huống. Dữ liệu mẫu dùng ngày cố định **21/10/2026** và chỉ tồn tại trong phiên.
 
-### Other setup steps
+Chạy Android bằng development build khi đã chuẩn bị Android SDK và thiết bị/emulator:
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```bash
+npm run android
+```
 
-## Learn more
+Build iOS bằng `npm run ios` trên macOS có Xcode. Các module Google Sign-In native cần development build; Expo Go không đủ cho toàn bộ chức năng của dự án.
 
-To learn more about developing your project with Expo, look at the following resources:
+## Cấu trúc chính
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- `src/app`: routes và layout Expo Router.
+- `src/features/home`: Home, dữ liệu preview, tương tác chuyến đi và album ảnh.
+- `src/features/auth`: giao diện và tích hợp xác thực.
+- `src/components`: UI và thành phần dùng chung.
+- `src/theme`: màu, typography, spacing, layout và motion tokens.
+- `tests`: kiểm tra hợp đồng, state và logic thuần bằng Node test runner.
 
-## Join the community
+## Kiểm tra
 
-Join our community of developers creating universal apps.
+```bash
+npx tsc --noEmit --noUnusedLocals --noUnusedParameters
+npm test
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+ESLint đã được cấu hình qua `npm run lint`. Đợt rà soát Home ngày 19/10/2026 không chạy lint theo yêu cầu hiện tại của chủ dự án.
+
+## Tài liệu và tiến độ
+
+- [Bàn giao ngữ cảnh cho agent mới](docs/AGENT-HANDOFF.md) · [Lời nhắn để mở chat mới](docs/NEXT-CHAT-PROMPT.md)
+- [Trạng thái dự án](docs/PROJECT-STATUS.md)
+- [Cách xem và cấu trúc Home preview](docs/HOME-PREVIEW.md)
+- [Kết quả rà soát Home](docs/HOME-REVIEW.md)
+- [Review danh sách/tạo chuyến](docs/TRIPS-REVIEW.md) · [Đề xuất chi tiết chuyến đi](docs/TRIP-DETAIL-DESIGN.md)
+- [Tích hợp Auth](docs/auth-integration.md)
+- [Thiết lập Google Sign-In](docs/google-auth.md)
+- [Quy định phát triển](AGENTS.md)
+
+Development mặc định dùng auth thật và tạo/list/chi tiết/sửa/xóa chuyến đi; release luôn yêu cầu auth/API. Đặt `EXPO_PUBLIC_UI_PREVIEW=true` khi chỉ cần làm UI không có backend. Chọn `EXPO_PUBLIC_API_URL` theo thiết bị và khởi động lại Metro sau khi đổi env. Tab Cá nhân có thông tin tài khoản, đổi ngôn ngữ, đặt lại mật khẩu qua email và đăng xuất. Xem [hướng dẫn auth](docs/auth-integration.md), [tích hợp Trip](docs/TRIP-API-INTEGRATION.md) và [Phase 2](docs/PHASE-2-TRIP-MUTATIONS.md).
+
+Nhánh `minhduc` đã được đối chiếu và gộp có chọn lọc, giữ UI hiện tại. Các service Places/Itinerary/Media chưa nối vào UI; Maps native tắt mặc định và cần development build mới khi bật. Backend chưa merge trong đợt này. Xem [báo cáo merge mobile](docs/MERGE-MINHDUC-2026-11-02.md).

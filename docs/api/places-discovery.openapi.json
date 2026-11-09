@@ -1,0 +1,2311 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "WeGo Place discovery - proposed Phase 3 contract",
+    "version": "0.1.0",
+    "description": "SPECIFICATION ONLY: none of these operations is implemented in the audited backend. See PHASE-3-PLACES-CONTRACT.md. Distinguishes persistent INTERNAL/USER IDs and transient GOOGLE previews. Trip membership/day scheduling and Google materialization belong to Phase 4."
+  },
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Places"
+    },
+    {
+      "name": "Saved locations"
+    }
+  ],
+  "paths": {
+    "/places/suggestions": {
+      "get": {
+        "operationId": "listPlaceSuggestions",
+        "tags": [
+          "Places"
+        ],
+        "summary": "Owner-scoped Trip context, internal Province catalog; no AI/provider calls.",
+        "x-implementation-status": "planned",
+        "x-implementation-phase": "3A",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuggestionPageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "COMMON_003/006/008/009: invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "AUTH_001: sign in required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "AUTH_007: account disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "TRIP_001: trip missing, deleted or owned by someone else",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "tripId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ]
+      }
+    },
+    "/places/autocomplete": {
+      "get": {
+        "operationId": "autocompletePlaces",
+        "tags": [
+          "Places"
+        ],
+        "summary": "Google predictions for names/addresses in Vietnam; no coordinates or DB writes.",
+        "x-implementation-status": "planned",
+        "x-implementation-phase": "3B",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutocompleteResultResponse"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "private, no-store"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "COMMON_003/006/008/009: invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "AUTH_001: sign in required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "AUTH_007: account disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "PLACE_003: application rate limit; preserve query/selection",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until application retry is allowed",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "PLACE_005: invalid provider response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "PLACE_004: provider unavailable, timeout, quota or not configured",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "sessionToken",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+            }
+          },
+          {
+            "name": "latitude",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "minimum": -90,
+              "maximum": 90
+            }
+          },
+          {
+            "name": "longitude",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "minimum": -180,
+              "maximum": 180
+            }
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ],
+        "description": "Trim q; latitude/longitude must both be supplied or both omitted. Limit to up to 5 place predictions; do not include query predictions. Location bias is not a hard city restriction. Session token is not an authentication credential."
+      }
+    },
+    "/places/resolve": {
+      "post": {
+        "operationId": "resolvePlace",
+        "tags": [
+          "Places"
+        ],
+        "summary": "Resolve one prediction to a transient Google preview; no internal UUID is created.",
+        "x-implementation-status": "planned",
+        "x-implementation-phase": "3B",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaceDetailResponse"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "private, no-store"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "COMMON_003/006/008/009: invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "AUTH_001: sign in required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "AUTH_007: account disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "PLACE_003: application rate limit; preserve query/selection",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until application retry is allowed",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "PLACE_005: invalid provider response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "PLACE_004: provider unavailable, timeout, quota or not configured",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "PLACE_001: provider place no longer exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/places/{placeId}": {
+      "get": {
+        "operationId": "getPlace",
+        "tags": [
+          "Places"
+        ],
+        "summary": "Read INTERNAL or own USER Place; foreign private IDs are indistinguishable from missing.",
+        "x-implementation-status": "planned",
+        "x-implementation-phase": "3A",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaceDetailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "COMMON_003/006/008/009: invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "AUTH_001: sign in required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "AUTH_007: account disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "PLACE_001: place missing or not readable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "placeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ]
+      }
+    },
+    "/places/custom": {
+      "post": {
+        "operationId": "createCustomPlace",
+        "tags": [
+          "Places"
+        ],
+        "summary": "Create an owner-private USER Place, not Trip membership or schedule.",
+        "x-implementation-status": "planned",
+        "x-implementation-phase": "3A",
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaceDetailResponse"
+                }
+              }
+            },
+            "headers": {
+              "Location": {
+                "description": "Relative URL of the created resource",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "COMMON_003/006/008/009: invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "AUTH_001: sign in required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "AUTH_007: account disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Same owner/request key/normalized payload replay",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaceDetailResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "PLACE_002: request key conflicts with previous payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomPlaceRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/places/reverse-geocode": {
+      "post": {
+        "operationId": "reverseGeocodePlace",
+        "tags": [
+          "Places"
+        ],
+        "summary": "Resolve a user pin address for display; no Place is created.",
+        "x-implementation-status": "planned",
+        "x-implementation-phase": "3B",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReverseGeocodeResultResponse"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "private, no-store"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "COMMON_003/006/008/009: invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "AUTH_001: sign in required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "AUTH_007: account disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "PLACE_003: application rate limit; preserve query/selection",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until application retry is allowed",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "PLACE_005: invalid provider response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "PLACE_004: provider unavailable, timeout, quota or not configured",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReverseGeocodeRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/me/saved-locations": {
+      "get": {
+        "operationId": "listSavedLocations",
+        "tags": [
+          "Saved locations"
+        ],
+        "summary": "List only this account saved locations.",
+        "x-implementation-status": "planned",
+        "x-implementation-phase": "3C",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedLocationPageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "COMMON_003/006/008/009: invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "AUTH_001: sign in required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "AUTH_007: account disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ]
+      },
+      "post": {
+        "operationId": "createSavedLocation",
+        "tags": [
+          "Saved locations"
+        ],
+        "summary": "Save a location shortcut; place must be INTERNAL or own USER.",
+        "x-implementation-status": "planned",
+        "x-implementation-phase": "3C",
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedLocationResponse"
+                }
+              }
+            },
+            "headers": {
+              "Location": {
+                "description": "Relative URL of the created resource",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "COMMON_003/006/008/009: invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "AUTH_001: sign in required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "AUTH_007: account disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Same owner/request key/normalized payload replay",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedLocationResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "PLACE_002: request key conflicts with previous payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "PLACE_001: place missing or not readable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavedLocationRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/me/saved-locations/{id}": {
+      "delete": {
+        "operationId": "deleteSavedLocation",
+        "tags": [
+          "Saved locations"
+        ],
+        "summary": "Delete only the shortcut; no matching owned row also returns 204.",
+        "x-implementation-status": "planned",
+        "x-implementation-phase": "3C",
+        "responses": {
+          "204": {
+            "description": "Idempotent no-content success"
+          },
+          "400": {
+            "description": "COMMON_003/006/008/009: invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "AUTH_001: sign in required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "AUTH_007: account disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Location": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "latitude": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "longitude": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          }
+        },
+        "required": [
+          "latitude",
+          "longitude"
+        ]
+      },
+      "Category": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          }
+        },
+        "required": [
+          "code",
+          "label"
+        ]
+      },
+      "InternalReference": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "INTERNAL"
+            ]
+          },
+          "placeId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "kind",
+          "placeId"
+        ]
+      },
+      "UserReference": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "USER"
+            ]
+          },
+          "placeId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "kind",
+          "placeId"
+        ]
+      },
+      "GoogleReference": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "GOOGLE"
+            ]
+          },
+          "googlePlaceId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          }
+        },
+        "required": [
+          "kind",
+          "googlePlaceId"
+        ]
+      },
+      "StoredReference": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/InternalReference"
+          },
+          {
+            "$ref": "#/components/schemas/UserReference"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "kind"
+        }
+      },
+      "PlaceReference": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/InternalReference"
+          },
+          {
+            "$ref": "#/components/schemas/UserReference"
+          },
+          {
+            "$ref": "#/components/schemas/GoogleReference"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "kind"
+        }
+      },
+      "Attribution": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "GOOGLE",
+              "PROVIDER",
+              "AUTHOR"
+            ]
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https://",
+            "nullable": true
+          }
+        },
+        "required": [
+          "kind",
+          "label",
+          "url"
+        ]
+      },
+      "Photo": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https://"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "INTERNAL"
+            ]
+          },
+          "attributions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Attribution"
+            },
+            "maxItems": 10
+          }
+        },
+        "required": [
+          "url",
+          "source",
+          "attributions"
+        ]
+      },
+      "ReadContext": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "serverTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "evaluatedDate": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "serverTime",
+          "evaluatedDate"
+        ]
+      },
+      "PlaceSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reference": {
+            "$ref": "#/components/schemas/StoredReference"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "INTERNAL",
+              "USER"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "formattedAddress": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000,
+            "nullable": true
+          },
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "provinceId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "category": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255
+              }
+            },
+            "required": [
+              "code",
+              "label"
+            ],
+            "nullable": true
+          },
+          "photo": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "url": {
+                "type": "string",
+                "format": "uri",
+                "pattern": "^https://"
+              },
+              "source": {
+                "type": "string",
+                "enum": [
+                  "INTERNAL"
+                ]
+              },
+              "attributions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Attribution"
+                },
+                "maxItems": 10
+              }
+            },
+            "required": [
+              "url",
+              "source",
+              "attributions"
+            ],
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "source",
+          "name",
+          "formattedAddress",
+          "location",
+          "provinceId",
+          "category",
+          "photo"
+        ]
+      },
+      "OpeningHours": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "displayLines": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "maxItems": 14
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "INTERNAL",
+              "GOOGLE"
+            ]
+          }
+        },
+        "required": [
+          "displayLines",
+          "source"
+        ]
+      },
+      "Admission": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "amount": {
+            "type": "number",
+            "minimum": 0,
+            "nullable": true
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "VND"
+            ]
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "INTERNAL"
+            ]
+          }
+        },
+        "required": [
+          "amount",
+          "currency",
+          "text",
+          "source"
+        ]
+      },
+      "DataAvailability": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "hours": {
+            "type": "string",
+            "enum": [
+              "AVAILABLE",
+              "NOT_PROVIDED",
+              "PROVIDER_UNAVAILABLE"
+            ]
+          },
+          "admission": {
+            "type": "string",
+            "enum": [
+              "AVAILABLE",
+              "NOT_PROVIDED",
+              "PROVIDER_UNAVAILABLE"
+            ]
+          },
+          "photos": {
+            "type": "string",
+            "enum": [
+              "AVAILABLE",
+              "NOT_PROVIDED",
+              "PROVIDER_UNAVAILABLE"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "enum": [
+              "AVAILABLE",
+              "NOT_PROVIDED",
+              "PROVIDER_UNAVAILABLE"
+            ]
+          }
+        },
+        "required": [
+          "hours",
+          "admission",
+          "photos",
+          "description"
+        ]
+      },
+      "PlaceDetailFields": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "reference": {
+            "$ref": "#/components/schemas/PlaceReference"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "INTERNAL",
+              "USER",
+              "GOOGLE"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "formattedAddress": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000,
+            "nullable": true
+          },
+          "location": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "latitude": {
+                "type": "number",
+                "minimum": -90,
+                "maximum": 90
+              },
+              "longitude": {
+                "type": "number",
+                "minimum": -180,
+                "maximum": 180
+              }
+            },
+            "required": [
+              "latitude",
+              "longitude"
+            ],
+            "nullable": true
+          },
+          "provinceId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "category": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255
+              }
+            },
+            "required": [
+              "code",
+              "label"
+            ],
+            "nullable": true
+          },
+          "environmentType": {
+            "type": "string",
+            "enum": [
+              "INDOOR",
+              "OUTDOOR",
+              "HYBRID",
+              "UNSPECIFIED"
+            ]
+          },
+          "openingHours": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "displayLines": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500
+                },
+                "maxItems": 14
+              },
+              "source": {
+                "type": "string",
+                "enum": [
+                  "INTERNAL",
+                  "GOOGLE"
+                ]
+              }
+            },
+            "required": [
+              "displayLines",
+              "source"
+            ],
+            "nullable": true
+          },
+          "openingStatus": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "CLOSED",
+              "UNKNOWN"
+            ]
+          },
+          "businessStatus": {
+            "type": "string",
+            "enum": [
+              "OPERATIONAL",
+              "CLOSED_TEMPORARILY",
+              "CLOSED_PERMANENTLY",
+              "UNKNOWN"
+            ]
+          },
+          "openingStatusAsOf": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "admission": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "amount": {
+                "type": "number",
+                "minimum": 0,
+                "nullable": true
+              },
+              "currency": {
+                "type": "string",
+                "enum": [
+                  "VND"
+                ]
+              },
+              "text": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              },
+              "source": {
+                "type": "string",
+                "enum": [
+                  "INTERNAL"
+                ]
+              }
+            },
+            "required": [
+              "amount",
+              "currency",
+              "text",
+              "source"
+            ],
+            "nullable": true
+          },
+          "amenities": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            },
+            "maxItems": 30
+          },
+          "tips": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "maxItems": 30
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 5000,
+            "nullable": true
+          },
+          "photos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Photo"
+            },
+            "maxItems": 10
+          },
+          "attributions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Attribution"
+            },
+            "maxItems": 20
+          },
+          "dataAvailability": {
+            "$ref": "#/components/schemas/DataAvailability"
+          },
+          "evaluatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "source",
+          "name",
+          "formattedAddress",
+          "location",
+          "provinceId",
+          "category",
+          "environmentType",
+          "openingHours",
+          "openingStatus",
+          "businessStatus",
+          "openingStatusAsOf",
+          "admission",
+          "amenities",
+          "tips",
+          "description",
+          "photos",
+          "attributions",
+          "dataAvailability",
+          "evaluatedAt"
+        ]
+      },
+      "PlaceDetail": {
+        "description": "Google preview has id=null, source=GOOGLE and no database write. Stored INTERNAL/USER IDs are UUIDs. Google photos are not enabled in this release.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PlaceDetailFields"
+          },
+          {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "INTERNAL",
+                      "USER"
+                    ]
+                  },
+                  "reference": {
+                    "$ref": "#/components/schemas/StoredReference"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      null
+                    ]
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "GOOGLE"
+                    ]
+                  },
+                  "reference": {
+                    "$ref": "#/components/schemas/GoogleReference"
+                  },
+                  "photos": {
+                    "type": "array",
+                    "maxItems": 0,
+                    "items": {
+                      "$ref": "#/components/schemas/Photo"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "example": {
+          "id": "70d708f5-d949-4bce-8ac1-e69a4a117e54",
+          "reference": {
+            "kind": "USER",
+            "placeId": "70d708f5-d949-4bce-8ac1-e69a4a117e54"
+          },
+          "source": "USER",
+          "name": "My home",
+          "formattedAddress": null,
+          "location": {
+            "latitude": 10.838,
+            "longitude": 106.663
+          },
+          "provinceId": null,
+          "category": null,
+          "environmentType": "UNSPECIFIED",
+          "openingHours": null,
+          "openingStatus": "UNKNOWN",
+          "businessStatus": "UNKNOWN",
+          "openingStatusAsOf": null,
+          "admission": null,
+          "amenities": [],
+          "tips": [],
+          "description": null,
+          "photos": [],
+          "attributions": [],
+          "dataAvailability": {
+            "hours": "NOT_PROVIDED",
+            "admission": "NOT_PROVIDED",
+            "photos": "NOT_PROVIDED",
+            "description": "NOT_PROVIDED"
+          },
+          "evaluatedAt": "2026-11-03T00:00:00Z"
+        }
+      },
+      "SuggestionPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlaceSummary"
+            },
+            "maxItems": 100
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "totalPages": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "context": {
+            "$ref": "#/components/schemas/ReadContext"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "DESTINATION_NOT_LINKED",
+              "EMPTY_CATALOG"
+            ],
+            "nullable": true
+          }
+        },
+        "required": [
+          "content",
+          "page",
+          "size",
+          "totalElements",
+          "totalPages",
+          "context",
+          "reason"
+        ],
+        "example": {
+          "content": [],
+          "page": 0,
+          "size": 20,
+          "totalElements": 0,
+          "totalPages": 0,
+          "context": {
+            "serverTime": "2026-11-03T00:00:00Z",
+            "evaluatedDate": "2026-11-03"
+          },
+          "reason": "DESTINATION_NOT_LINKED"
+        }
+      },
+      "Prediction": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "googlePlaceId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "primaryText": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "secondaryText": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "resultType": {
+            "type": "string",
+            "enum": [
+              "PLACE_PREDICTION"
+            ]
+          }
+        },
+        "required": [
+          "googlePlaceId",
+          "primaryText",
+          "secondaryText",
+          "resultType"
+        ]
+      },
+      "AutocompleteResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Prediction"
+            },
+            "maxItems": 5
+          },
+          "sessionToken": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "GOOGLE"
+            ]
+          },
+          "attributions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Attribution"
+            },
+            "maxItems": 20
+          }
+        },
+        "required": [
+          "items",
+          "sessionToken",
+          "provider",
+          "attributions"
+        ],
+        "example": {
+          "items": [],
+          "sessionToken": "461858ba-7939-43cd-98f6-97f706df58bd",
+          "provider": "GOOGLE",
+          "attributions": [
+            {
+              "kind": "GOOGLE",
+              "label": "Google Maps",
+              "url": "https://maps.google.com/"
+            }
+          ]
+        }
+      },
+      "ResolveRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "googlePlaceId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "sessionToken": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "vi",
+              "en"
+            ],
+            "default": "vi"
+          }
+        },
+        "required": [
+          "googlePlaceId",
+          "sessionToken"
+        ],
+        "example": {
+          "googlePlaceId": "example-google-place-id",
+          "sessionToken": "461858ba-7939-43cd-98f6-97f706df58bd",
+          "locale": "vi"
+        }
+      },
+      "CustomPlaceRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "clientRequestId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "address": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000,
+            "nullable": true
+          },
+          "latitude": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "longitude": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          },
+          "locationOrigin": {
+            "type": "string",
+            "enum": [
+              "USER_PIN",
+              "DEVICE_GPS"
+            ]
+          }
+        },
+        "required": [
+          "clientRequestId",
+          "name",
+          "latitude",
+          "longitude",
+          "locationOrigin"
+        ],
+        "example": {
+          "clientRequestId": "461858ba-7939-43cd-98f6-97f706df58bd",
+          "name": "My home",
+          "address": null,
+          "latitude": 10.838,
+          "longitude": 106.663,
+          "locationOrigin": "USER_PIN"
+        }
+      },
+      "ReverseGeocodeRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "latitude": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "longitude": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "vi",
+              "en"
+            ],
+            "default": "vi"
+          }
+        },
+        "required": [
+          "latitude",
+          "longitude"
+        ],
+        "example": {
+          "latitude": 10.838,
+          "longitude": 106.663,
+          "locale": "vi"
+        }
+      },
+      "ReverseGeocodeResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "formattedAddress": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000,
+            "nullable": true
+          },
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "attributions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Attribution"
+            },
+            "maxItems": 20
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "GOOGLE"
+            ]
+          },
+          "evaluatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "formattedAddress",
+          "location",
+          "attributions",
+          "provider",
+          "evaluatedAt"
+        ]
+      },
+      "SavedLocationRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "clientRequestId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "HOME",
+              "LODGING"
+            ]
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "placeId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "clientRequestId",
+          "type",
+          "label",
+          "placeId"
+        ],
+        "example": {
+          "clientRequestId": "14bd6942-fddf-40ee-a888-49a6799fef6e",
+          "type": "HOME",
+          "label": "My home",
+          "placeId": "70d708f5-d949-4bce-8ac1-e69a4a117e54"
+        }
+      },
+      "SavedLocation": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "HOME",
+              "LODGING"
+            ]
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "place": {
+            "$ref": "#/components/schemas/PlaceSummary"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "label",
+          "place",
+          "createdAt"
+        ]
+      },
+      "SavedLocationPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SavedLocation"
+            },
+            "maxItems": 100
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "totalPages": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "context": {
+            "$ref": "#/components/schemas/ReadContext"
+          }
+        },
+        "required": [
+          "content",
+          "page",
+          "size",
+          "totalElements",
+          "totalPages",
+          "context"
+        ]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              false
+            ]
+          },
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "success",
+          "code",
+          "message",
+          "timestamp"
+        ]
+      },
+      "PlaceDetailResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "data": {
+            "$ref": "#/components/schemas/PlaceDetail"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "SuggestionPageResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "data": {
+            "$ref": "#/components/schemas/SuggestionPage"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "AutocompleteResultResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "data": {
+            "$ref": "#/components/schemas/AutocompleteResult"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "ReverseGeocodeResultResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "data": {
+            "$ref": "#/components/schemas/ReverseGeocodeResult"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "SavedLocationResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "data": {
+            "$ref": "#/components/schemas/SavedLocation"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "SavedLocationPageResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "data": {
+            "$ref": "#/components/schemas/SavedLocationPage"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      }
+    }
+  }
+}

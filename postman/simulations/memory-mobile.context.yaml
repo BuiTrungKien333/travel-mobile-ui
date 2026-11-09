@@ -1,0 +1,30 @@
+purpose:
+  stands_in_for: Tripzy memory, media and trip read endpoints
+  unblocks: Mobile HTTP contract and upload retry checks without credentials or Cloudinary writes
+assumptions:
+  - id: memory-upload-contract
+    status: supported
+    claim: Mobile creates a memory with a stable clientRequestId before uploading multipart field file with memoryId.
+    reason: Matches the inspected backend controllers and DTOs; the stand-in checks the request ordering and multipart encoding.
+    verification: On 2026-11-04 tests/memory-api.test.ts passed against a Postman simulation on port 4518. Request events confirmed real Axios calls to trips, places, limits, memory creation, multipart upload, detail, pagination and versioned note updates. Real backend and device verification remain separate.
+    source: travel-system/backend/src/main/java/com/travel/memory/controller/MemoryController.java; travel-system/backend/src/main/java/com/travel/media/controller/MediaController.java; tests/memory-api.test.ts
+    updated_at: "2026-11-04"
+  - id: idempotent-retry
+    status: supported
+    claim: The backend reuses a memory for the same unchanged create request and clientRequestId, and reuses identical uploaded bytes within that memory.
+    reason: MemoryServiceImpl.replay and MediaController document these guarantees. Simulation checks caller key reuse, not actual database locking or Cloudinary availability.
+    verification: On 2026-11-04 the caller retained its draft and reused its key in simulated upload failure, create-response loss and upload-response loss. Each scenario left one memory and one photo. The backend was initially unavailable; later health returned UP on localhost:8080 and its LAN address, and its live OpenAPI matched the inspected memory/media DTOs. No authenticated upload to the real backend or Cloudinary was performed.
+    source: travel-system/backend/src/main/java/com/travel/memory/service/impl/MemoryServiceImpl.java; travel-system/backend/src/main/java/com/travel/media/controller/MediaController.java
+    updated_at: "2026-11-04"
+  - id: development-network
+    status: supported
+    claim: A localhost development origin can be resolved for web, Android emulator and a phone using the Metro LAN host.
+    reason: The pure resolver is tested for each environment. Health checks reached the real backend from both localhost and the host LAN address, and a localhost:8081 web preflight succeeded. This does not establish reachability from a physical phone or emulator.
+    verification: On 2026-11-04 tests/api-url.test.ts passed. Real backend health and OpenAPI returned 200 on port 8080; CORS accepted localhost:8081 and rejected localhost:8082 and the LAN web origin. Use localhost:8081 for web; native apps do not use browser CORS.
+    source: src/services/api/api-url.ts; tests/api-url.test.ts; .env.example
+    updated_at: "2026-11-04"
+fingerprints:
+  - id: local-contract
+    date: "2026-11-04"
+    commit: null
+    cli: "1.73.0 (status command unavailable; owner workspace lookup skipped)"

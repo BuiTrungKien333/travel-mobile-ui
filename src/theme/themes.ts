@@ -5,13 +5,25 @@ import {
 } from "expo-router/react-navigation";
 
 import { darkColors, lightColors, type AppColorTokens } from "./colors";
-import { radius, spacing, typography } from "./tokens";
+import {
+  elevation,
+  glass,
+  layout,
+  motion,
+  radius,
+  spacing,
+  typography,
+} from "./tokens";
 
 export type AppTheme = Omit<NavigationTheme, "colors"> & {
   colors: NavigationTheme["colors"] & AppColorTokens;
   spacing: typeof spacing;
   radius: typeof radius;
   typography: typeof typography;
+  layout: typeof layout;
+  motion: typeof motion;
+  elevation: typeof elevation;
+  glass: typeof glass;
 };
 
 export const lightTheme: AppTheme = {
@@ -28,6 +40,10 @@ export const lightTheme: AppTheme = {
   spacing,
   radius,
   typography,
+  layout,
+  motion,
+  elevation,
+  glass,
 };
 
 export const darkTheme: AppTheme = {
@@ -44,4 +60,8 @@ export const darkTheme: AppTheme = {
   spacing,
   radius,
   typography,
+  layout,
+  motion,
+  elevation,
+  glass,
 };

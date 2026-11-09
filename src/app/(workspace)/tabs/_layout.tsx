@@ -1,0 +1,71 @@
+import { Tabs } from "expo-router/js-tabs";
+import { View } from "react-native";
+
+import { FloatingBottomNavigation } from "@/components/common/floating-bottom-navigation";
+import { AppIcon, type AppIconName } from "@/components/ui/app-icon";
+import { useHomeCopy } from "@/features/home/i18n/home-copy";
+import { useNavigationCapture } from "@/features/home/hooks/use-navigation-capture";
+import { useTripPreview } from "@/features/home/providers/trip-preview-provider";
+import { useAppTheme } from "@/hooks/use-app-theme";
+
+export default function AuthenticatedLayout() {
+  return <WorkspaceTabs />;
+}
+
+function WorkspaceTabs() {
+  const theme = useAppTheme();
+  const { copy } = useHomeCopy();
+  const panelOpen = useTripPreview((state) => state.panel !== null);
+  const onCapture = useNavigationCapture();
+  const tabs: { name: string; title: string; icon: AppIconName }[] = [
+    { name: "index", title: copy.home, icon: "home" },
+    { name: "trips", title: copy.trips, icon: "compass" },
+    { name: "memories", title: copy.memories, icon: "memories" },
+    { name: "profile", title: copy.profile, icon: "person" },
+  ];
+  return (
+    <View
+      style={{ flex: 1 }}
+      aria-hidden={panelOpen}
+      accessibilityElementsHidden={panelOpen}
+      importantForAccessibility={panelOpen ? "no-hide-descendants" : "auto"}
+    >
+      <Tabs
+        initialRouteName="index"
+        tabBar={(props) => (
+          <FloatingBottomNavigation
+            {...props}
+            onCapture={onCapture}
+            captureLabel={copy.capture}
+            animationEnabled={!panelOpen}
+          />
+        )}
+        screenOptions={{
+          headerShown: false,
+          tabBarHideOnKeyboard: true,
+          tabBarStyle: { position: "absolute" },
+          sceneStyle: { backgroundColor: theme.colors.background },
+        }}
+      >
+        {tabs.map((tab) => (
+          <Tabs.Screen
+            key={tab.name}
+            name={tab.name}
+            options={{
+              title: tab.title,
+              tabBarAccessibilityLabel: tab.title,
+              tabBarIcon: ({ focused, color, size }) => (
+                <AppIcon
+                  name={tab.icon}
+                  color={color}
+                  size={size}
+                  variant={focused ? "solid" : "outline"}
+                />
+              ),
+            }}
+          />
+        ))}
+      </Tabs>
+    </View>
+  );
+}
