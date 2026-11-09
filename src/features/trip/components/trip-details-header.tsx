@@ -49,8 +49,7 @@ export function TripDetailsHeader({
         alignItems: "flex-start",
         justifyContent: "space-between",
         gap: theme.spacing.sm,
-        paddingTop:
-          hideTripInfo || titleOnly ? theme.spacing.xxl : theme.spacing.lg,
+        paddingTop: theme.spacing.sm,
         paddingBottom: theme.spacing.sm,
         borderBottomWidth: titleOnly ? StyleSheet.hairlineWidth : 0,
         borderBottomColor: theme.colors.border,
@@ -173,7 +172,7 @@ export function DetailIconButton({
   onPress: () => void;
   accessibilityState?: AccessibilityState;
   compact?: boolean;
-  variant?: "glass" | "outline";
+  variant?: "glass" | "outline" | "plain";
 }) {
   const theme = useAppTheme();
   const surfaceSize = compact

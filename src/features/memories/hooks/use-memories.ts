@@ -107,14 +107,17 @@ export function useMemoryActions() {
   const updateLocal = useTripPreview((state) => state.updateMemoryNote);
   const localMemories = useTripPreview((state) => state.memories);
   const queryKey = memoryQueryKeys.list(profile.data?.id ?? "");
-  function accept(memory: ServerMemory) {
+  function refresh() {
+    void client.invalidateQueries({ queryKey });
+    void client.invalidateQueries({ queryKey: homeMemoryQueryKeys.all });
+    void client.invalidateQueries({ queryKey: tripQueryKeys.root });
+  }
+  function accept(memory: ServerMemory, refreshQueries = true) {
     client.setQueryData<ServerMemory[]>(queryKey, (old = []) => [
       memory,
       ...old.filter((item) => item.id !== memory.id),
     ]);
-    void client.invalidateQueries({ queryKey });
-    void client.invalidateQueries({ queryKey: homeMemoryQueryKeys.all });
-    void client.invalidateQueries({ queryKey: tripQueryKeys.root });
+    if (refreshQueries) refresh();
   }
   function protectSession(memory: Memory) {
     const version = authSession.getVersion();
@@ -134,6 +137,7 @@ export function useMemoryActions() {
     }: {
       memory: Memory;
       onProgress?: (progress: number) => void;
+      refreshQueries?: boolean;
     }) => {
       if (!profile.data) throw new ApiError("AUTH_001", 401);
       const version = authSession.getVersion();
@@ -154,9 +158,10 @@ export function useMemoryActions() {
         onProgress,
       );
     },
-    onSuccess: accept,
-    onError: () => {
-      void client.invalidateQueries({ queryKey });
+    onSuccess: (memory, variables) => accept(memory, variables.refreshQueries),
+    onError: (_error, variables) => {
+      if (variables.refreshQueries !== false)
+        void client.invalidateQueries({ queryKey });
     },
   });
   const update = useMutation({
@@ -227,5 +232,5 @@ export function useMemoryActions() {
       void client.invalidateQueries({ queryKey: tripQueryKeys.root });
     },
   });
-  return { upload, update, remove };
+  return { upload, update, remove, refresh };
 }

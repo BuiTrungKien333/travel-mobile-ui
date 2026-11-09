@@ -18,7 +18,7 @@ Giới hạn cần truyền đạt đúng: bản trong ứng dụng có thể m�
 - Tái sử dụng `JournalPhotoViewer`, `usePhotoViewerMotion` và thumbnail đo vị trí từ Home; tách thumbnail và hook quản lý gallery để dùng chung. Giữ pinch/double-tap zoom, vuốt ảnh, tap ẩn/hiện toolbar, kéo đóng và chuyển cảnh trở về thumbnail. Giữ danh sách ảnh ổn định trong một phiên xem khi query/background thay đổi; đọc lại vị trí thumbnail trước khi đóng. Thuật toán gesture/physics không bị viết lại.
 - Xác nhận chuyến/ngày lưu snapshot local trước rồi upload đúng snapshot đó, gồm Place ID thật khi có. Không dựng payload thứ hai từ dữ liệu cũ. Ảnh đã gắn chuyến hoặc có request/server ID không được gán lại trong Xem sau để tránh làm lệch request đang retry.
 - Ảnh chưa upload thành công nằm trong nhóm **Chờ đồng bộ vào chuyến** ngay trên màn Xem sau, có nút thử đồng bộ lại, mở album và tiến độ upload. Mở lại app vẫn nhận từ storage, không tự upload khi có mạng trở lại. Chỉ rời nhóm chờ sau khi GET detail xác nhận server có media và đã ghi trạng thái local thành công.
-- Lưu vào thư viện máy từ toolbar dùng hành động export local hiện có để ghi nhận `deviceSaved`; chia sẻ và xóa tiếp tục dùng core/hook cũ. Xóa local chỉ thực hiện sau bước xác nhận của viewer; việc dọn asset cloud vẫn thuộc phần nghiệm thu sau.
+- Lưu vào thư viện máy từ toolbar dùng hành động export local hiện có để ghi nhận `deviceSaved`; chia sẻ và xóa tiếp tục dùng core/hook chung. Viewer chờ kết quả xóa trước khi đóng; dọn asset cloud đã triển khai, còn nghiệm thu provider thật theo [MEDIA-DELETION-QA.md](MEDIA-DELETION-QA.md).
 
 Kiểm tra lượt này: **54 ca mobile liên quan đạt**, TypeScript strict/no-unused và export web/Android đạt. Chưa thay thế nghiệm thu gesture trên thiết bị hoặc upload Cloudinary thật.
 
@@ -106,8 +106,8 @@ Dùng `version` mới nhất lấy từ detail. Response 200 có ghi chú/versio
 
 - Cần nghiệm thu UI/camera/quyền/mất mạng trên thiết bị; web/Android bundle chỉ xác minh build.
 - Chưa triển khai private/signed delivery: URL Cloudinary hiện vẫn là URL công khai cho người có link. Không coi kiểm tra quyền API là quyền truy cập file/CDN. Cần chốt trước production nếu album phải riêng tư.
-- API xóa hiện xóa/ẩn bản ghi trong ứng dụng, chưa có quy trình bảo đảm dọn asset Cloudinary và bản cache CDN; cần xử lý và nghiệm thu ở đợt xóa ảnh. Asset có thể tồn tại nếu chuyến bị xóa giữa lúc provider upload và DB finalize.
-- Chưa làm upload nền/offline queue. Upload nhiều file có thể thành công một phần; retry cùng nội dung chống trùng phần đã lưu, không phải giao dịch nguyên tử với provider.
-- Thư viện frontend hiện tải hết các trang và membership của các chuyến để chọn album/địa điểm; cần phân trang/lazy-load trước nghiệm thu thư viện lớn. Không thay bằng cache/client-state chứa bản sao server.
+- Đã bổ sung xóa asset Cloudinary, receipt/retry bền và cleanup upload hoàn tất sau khi memory/chuyến bị ẩn. Viewer chờ kết quả trước khi đóng. Nghiệm thu provider thật, giới hạn cache CDN và process crash: [MEDIA-DELETION-QA.md](MEDIA-DELETION-QA.md).
+- Đã nối chọn nhiều ảnh, lưu local trước mạng, upload 2 ảnh đồng thời và retry riêng ảnh lỗi. API batch trả kết quả từng file, chống trùng khi gửi lại. Đây là luồng foreground, chưa có upload nền/offline queue tự chạy. Chi tiết: [MULTI-PHOTO-UPLOAD-QA.md](MULTI-PHOTO-UPLOAD-QA.md).
+- Thư viện frontend vẫn đọc hết các trang metadata; chế độ thư viện chỉ lấy summary chuyến, đã bỏ request membership không cần thiết. Cần phân trang theo nhóm trước nghiệm thu thư viện lớn. Không thay bằng client-state chứa bản sao server.
 
 Cloudinary xác nhận `overwrite=false` trả asset đã tồn tại thay vì ghi đè: [Upload API reference](https://cloudinary.com/documentation/image_upload_api_reference). Cơ chế này kết hợp unique key DB, không thay cho giao dịch phân tán hoặc quy trình xóa riêng tư.

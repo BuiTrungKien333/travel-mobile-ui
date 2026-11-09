@@ -1,3 +1,11 @@
+import { GlassBackdrop } from "@/components/common/glass-backdrop";
+import { ScreenSafeArea } from "@/components/common/screen-safe-area";
+import { AppIcon } from "@/components/ui/app-icon";
+import { AppText } from "@/components/ui/app-text";
+import { useAppTheme } from "@/hooks/use-app-theme";
+import { useScreenInsets } from "@/hooks/use-screen-insets";
+import { useIsFocused } from "expo-router/react-navigation";
+import { StatusBar } from "expo-status-bar";
 import type { ReactNode } from "react";
 import {
   ActivityIndicator,
@@ -12,14 +20,6 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
-import { StatusBar } from "expo-status-bar";
-import { useIsFocused } from "expo-router/react-navigation";
-import { ScreenSafeArea } from "@/components/common/screen-safe-area";
-import { GlassBackdrop } from "@/components/common/glass-backdrop";
-import { AppIcon } from "@/components/ui/app-icon";
-import { AppText } from "@/components/ui/app-text";
-import { useAppTheme } from "@/hooks/use-app-theme";
-import { useScreenInsets } from "@/hooks/use-screen-insets";
 import { useCameraCopy } from "../i18n/camera-copy";
 import { CameraIconButton } from "./camera-icon-button";
 
@@ -62,6 +62,7 @@ export function CameraLayout({
   canCapture = false,
   status,
   error,
+  overlay,
 }: CameraLayoutProps & {
   frame: ReactNode;
   frameControls?: ReactNode;
@@ -74,6 +75,7 @@ export function CameraLayout({
   canCapture?: boolean;
   status?: string;
   error?: string;
+  overlay?: ReactNode;
 }) {
   const theme = useAppTheme();
   const focused = useIsFocused();
@@ -117,56 +119,59 @@ export function CameraLayout({
         }}
       >
         <CameraIconButton
-          size="small"
+          size="header"
           icon="back"
           label={copy.back}
           onPress={onBack}
           disabled={busy}
         />
-        <Pressable
-          accessibilityRole={onSelectTrip ? "button" : undefined}
-          accessibilityLabel={subtitle ? `${title}, ${subtitle}` : title}
-          disabled={!onSelectTrip || busy}
-          onPress={onSelectTrip}
-          style={({ pressed }) => ({
-            flex: 1,
-            minWidth: 0,
-            overflow: "hidden",
-            paddingHorizontal: theme.spacing.lg,
-            paddingVertical: theme.spacing.sm,
-            minHeight: theme.layout.compactTouchTarget,
-            borderRadius: theme.radius.full,
-            alignItems: "center",
-            flexDirection: "row",
-            justifyContent: "center",
-            gap: theme.spacing.sm,
-            opacity: pressed ? theme.motion.pressOpacity : 1,
-          })}
-        >
-          <GlassBackdrop variant="camera" borderRadius={theme.radius.full} />
-          <View style={{ flexShrink: 1, alignItems: "center" }}>
-            <AppText
-              numberOfLines={2}
-              accessibilityRole="header"
-              variant="caption"
-              style={{
-                color: textColor,
-                fontSize: theme.typography.fontSize.sm,
-                lineHeight: theme.typography.lineHeight.sm,
-              }}
-            >
-              {title}
-            </AppText>
-          </View>
-          {onSelectTrip ? (
-            <AppIcon
-              name="chevron"
-              variant="light"
-              size={theme.layout.iconSmall}
-              color={mutedColor}
-            />
-          ) : null}
-        </Pressable>
+        <View style={{ flex: 1, minWidth: 0, alignItems: "center" }}>
+          <Pressable
+            accessibilityRole={onSelectTrip ? "button" : undefined}
+            accessibilityLabel={subtitle ? `${title}, ${subtitle}` : title}
+            disabled={!onSelectTrip || busy}
+            onPress={onSelectTrip}
+            style={({ pressed }) => ({
+              flexShrink: 1,
+              maxWidth: "100%",
+              minWidth: 0,
+              overflow: "hidden",
+              paddingHorizontal: theme.spacing.lg,
+              paddingVertical: theme.spacing.sm,
+              minHeight: theme.layout.compactTouchTarget,
+              borderRadius: theme.radius.full,
+              alignItems: "center",
+              flexDirection: "row",
+              justifyContent: "center",
+              gap: theme.spacing.sm,
+              opacity: pressed ? theme.motion.pressOpacity : 1,
+            })}
+          >
+            <GlassBackdrop variant="camera" borderRadius={theme.radius.full} />
+            <View style={{ flexShrink: 1, alignItems: "center" }}>
+              <AppText
+                numberOfLines={1}
+                accessibilityRole="header"
+                variant="caption"
+                style={{
+                  color: textColor,
+                  fontSize: theme.typography.fontSize.sm,
+                  lineHeight: theme.typography.lineHeight.sm,
+                }}
+              >
+                {title}
+              </AppText>
+            </View>
+            {onSelectTrip ? (
+              <AppIcon
+                name="chevron"
+                variant="light"
+                size={theme.layout.iconSmall}
+                color={mutedColor}
+              />
+            ) : null}
+          </Pressable>
+        </View>
         <View
           accessible={false}
           style={{
@@ -413,6 +418,7 @@ export function CameraLayout({
           ))}
         </View>
       ) : null}
+      {overlay}
     </ScreenSafeArea>
   );
 }

@@ -236,7 +236,7 @@ function PhotoIconButton({
         <AppIcon
           name={icon}
           variant="light"
-          color={theme.colors.photoViewerText}
+          color={icon === "heartFilled" ? theme.colors.photoViewerFavorite : theme.colors.photoViewerText}
           size={iconSize ?? theme.layout.iconMedium}
         />
       )}
@@ -339,9 +339,13 @@ export function PhotoInfoPanel({
 export function PhotoDeleteConfirmation({
   onCancel,
   onConfirm,
+  busy = false,
+  error,
 }: {
   onCancel: () => void;
   onConfirm: () => void;
+  busy?: boolean;
+  error?: string;
 }) {
   const theme = useAppTheme();
   const { copy } = usePhotoViewerCopy();
@@ -353,6 +357,8 @@ export function PhotoDeleteConfirmation({
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
+      disabled={busy}
+      accessibilityState={{ disabled: busy, busy: destructive && busy }}
       style={({ pressed }) => ({
         flex: 1,
         minHeight: theme.layout.touchTarget,
@@ -366,9 +372,16 @@ export function PhotoDeleteConfirmation({
         opacity: pressed ? theme.motion.pressOpacity : 1,
       })}
     >
-      <AppText variant="label" style={{ color: theme.colors.photoViewerText }}>
-        {text}
-      </AppText>
+      {busy && destructive ? (
+        <ActivityIndicator color={theme.colors.photoViewerText} />
+      ) : (
+        <AppText
+          variant="label"
+          style={{ color: theme.colors.photoViewerText }}
+        >
+          {text}
+        </AppText>
+      )}
     </Pressable>
   );
   return (
@@ -383,6 +396,7 @@ export function PhotoDeleteConfirmation({
         accessible={false}
         style={StyleSheet.absoluteFill}
         onPress={onCancel}
+        disabled={busy}
       />
       <View
         accessibilityViewIsModal
@@ -411,6 +425,15 @@ export function PhotoDeleteConfirmation({
         >
           {copy.deleteHint}
         </AppText>
+        {error ? (
+          <AppText
+            accessibilityRole="alert"
+            variant="caption"
+            style={{ color: theme.colors.photoViewerDanger }}
+          >
+            {error}
+          </AppText>
+        ) : null}
         <View style={{ flexDirection: "row", gap: theme.spacing.sm }}>
           {button(copy.cancel, onCancel)}
           {button(copy.remove, onConfirm, true)}

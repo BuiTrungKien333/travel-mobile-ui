@@ -9,7 +9,6 @@ import Animated, {
   useSharedValue,
   type SharedValue,
   withDelay,
-  withSpring,
   withTiming,
 } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
@@ -40,6 +39,7 @@ export function TripPlanningMap({
   mapContent,
   showLocationControl = true,
   overlayHeader = false,
+  scrollGesture,
 }: {
   header: ReactNode;
   viewportHeight: number;
@@ -57,6 +57,7 @@ export function TripPlanningMap({
   mapContent?: ReactNode;
   showLocationControl?: boolean;
   overlayHeader?: boolean;
+  scrollGesture?: ReturnType<typeof Gesture.Native>;
 }) {
   const theme = useAppTheme();
   const { copy } = useTripDetailsCopy();
@@ -84,8 +85,8 @@ export function TripPlanningMap({
   const suppressTap = useSharedValue(0);
   const resizeSettleDuration = theme.motion.tripMapScrollSettleDuration;
   const tapGuardDuration = theme.motion.shutterPressDuration;
-  const spring = {
-    ...theme.motion.photoViewerSpring,
+  const snap = {
+    duration: theme.motion.tripMapSnapDuration,
     reduceMotion: ReduceMotion.System,
   };
   useEffect(() => {
@@ -131,16 +132,9 @@ export function TripPlanningMap({
     targetExpanded.set(true);
     setExpanded(true);
     height.set(
-      withSpring(
-        maximum,
-        {
-          ...theme.motion.photoViewerSpring,
-          reduceMotion: ReduceMotion.System,
-        },
-        (finished) => {
-          if (finished) releaseResizeLock();
-        },
-      ),
+      withTiming(maximum, snap, (finished) => {
+        if (finished) releaseResizeLock();
+      }),
     );
   }, [
     expandRequest,
@@ -148,14 +142,21 @@ export function TripPlanningMap({
     height,
     targetExpanded,
     resizeLock,
-    theme.motion.photoViewerSpring,
+    theme.motion.tripMapSnapDuration,
     resizeSettleDuration,
   ]);
   const motion = useAnimatedStyle(() => ({ height: height.get() }));
-  const projection = theme.motion.tripMapVelocityProjection;
+  const flingVelocity = theme.motion.tripMapFlingVelocity;
+  const dragThreshold = theme.motion.tripMapDragThreshold;
   const drag = Gesture.Pan()
+    .blocksExternalGesture(...(scrollGesture ? [scrollGesture] : []))
+    .maxPointers(1)
     .activeOffsetY([-theme.spacing.sm, theme.spacing.sm])
     .failOffsetX([-theme.spacing.lg, theme.spacing.lg])
+    .onBegin(() => {
+      cancelAnimation(resizeLock);
+      resizeLock.set(1);
+    })
     .onStart(() => {
       cancelAnimation(height);
       cancelAnimation(resizeLock);
@@ -173,10 +174,14 @@ export function TripPlanningMap({
     })
     .onEnd((event) => {
       const next =
-        height.get() + event.velocityY * projection > (collapsed + maximum) / 2;
+        Math.abs(event.velocityY) >= flingVelocity
+          ? event.velocityY > 0
+          : Math.abs(event.translationY) >= dragThreshold
+            ? event.translationY > 0
+            : targetExpanded.get();
       targetExpanded.set(next);
       height.set(
-        withSpring(next ? maximum : collapsed, spring, (finished) => {
+        withTiming(next ? maximum : collapsed, snap, (finished) => {
           if (finished) releaseResizeLock();
         }),
       );
@@ -192,9 +197,9 @@ export function TripPlanningMap({
       );
       if (!success)
         height.set(
-          withSpring(
+          withTiming(
             targetExpanded.get() ? maximum : collapsed,
-            spring,
+            snap,
             (finished) => {
               if (finished) releaseResizeLock();
             },
@@ -209,7 +214,7 @@ export function TripPlanningMap({
     targetExpanded.set(next);
     setExpanded(next);
     height.set(
-      withSpring(next ? maximum : collapsed, spring, (finished) => {
+      withTiming(next ? maximum : collapsed, snap, (finished) => {
         if (finished) releaseResizeLock();
       }),
     );
@@ -223,7 +228,7 @@ export function TripPlanningMap({
       }
       pointerEvents={collapsedByScroll ? "none" : "auto"}
       style={[
-        { overflow: "hidden", backgroundColor: theme.colors.surfaceTint },
+        { overflow: "hidden", backgroundColor: theme.colors.background },
         motion,
       ]}
     >
@@ -235,18 +240,20 @@ export function TripPlanningMap({
           {header}
         </View>
       ) : null}
-      {mapContent ??
-        (onSelect && onStart ? (
-          <TripMapPreview
-            stops={stops ?? []}
-            showStart={showStart}
-            selectedId={selectedId}
-            startLabel={startLabel ?? ""}
-            onSelect={onSelect}
-            onStart={onStart}
-            fitContainer
-          />
-        ) : null)}
+      <View style={{ flex: 1, minHeight: 0 }}>
+        {mapContent ??
+          (onSelect && onStart ? (
+            <TripMapPreview
+              stops={stops ?? []}
+              showStart={showStart}
+              selectedId={selectedId}
+              startLabel={startLabel ?? ""}
+              onSelect={onSelect}
+              onStart={onStart}
+              fitContainer
+            />
+          ) : null)}
+      </View>
       <GestureDetector gesture={drag}>
         <Pressable
           accessibilityRole="button"

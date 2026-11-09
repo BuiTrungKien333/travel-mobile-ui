@@ -1,7 +1,8 @@
 import { router } from "expo-router";
 import { UI_PREVIEW_ENABLED } from "@/constants/development";
 import { ConnectedTripDetailsScreen } from "./connected-trip-details-screen";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { StyleSheet, View } from "react-native";
 import Animated, { useSharedValue } from "react-native-reanimated";
 import { ScreenSafeArea } from "@/components/common/screen-safe-area";
@@ -188,6 +189,7 @@ function TripDetailsContent({
   } | null>(null);
   const [availableHeight, setAvailableHeight] = useState(0);
   const mapResizeLock = useSharedValue(0);
+  const mapScrollGesture = useMemo(() => Gesture.Native(), []);
   const [mapExpandRequest, setMapExpandRequest] = useState(expandMap ? 1 : 0);
   const [planningMapGeometry, setPlanningMapGeometry] =
     useState<PlanningMapGeometry>({
@@ -513,6 +515,7 @@ function TripDetailsContent({
       onStart={() => jump(2)}
       onGeometryChange={setPlanningMapGeometry}
       resizeLock={mapResizeLock}
+      scrollGesture={mapScrollGesture}
       collapsedByScroll={planningScroll.hidden}
       expandRequest={mapExpandRequest}
     />
@@ -649,6 +652,7 @@ function TripDetailsContent({
                 },
               ]}
             >
+              <GestureDetector gesture={mapScrollGesture}>
               <Animated.FlatList<Row>
                 key={selectionKey}
                 ref={list}
@@ -717,6 +721,7 @@ function TripDetailsContent({
                   ) : null
                 }
               />
+              </GestureDetector>
             </View>
           </View>
           {undo ? (

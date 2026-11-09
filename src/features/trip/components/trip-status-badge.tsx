@@ -61,6 +61,8 @@ export function TripStatusBadge({
         styles.badge,
         {
           backgroundColor: config.bg,
+          borderWidth: 1,
+          borderColor: config.dotColor ?? theme.colors.borderStrong,
           borderRadius: theme.radius.full,
           paddingHorizontal: theme.spacing.sm,
         },

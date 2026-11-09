@@ -42,7 +42,6 @@ export function SharePlaceButton({ place }: { place: TripStop }) {
       }}
     >
       <DetailIconButton
-        compact
         name="share"
         label={copy.sharePlace}
         accessibilityState={{ busy: sharing, disabled: sharing }}

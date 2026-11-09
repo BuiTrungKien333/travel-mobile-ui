@@ -63,8 +63,7 @@ export function PlaceDetailsContent({
   const details = suppliedDetails ?? getPlaceDetailsPreview(place);
   const isAddress = place.locationType === "address";
   const photo = details.photo ?? (isAddress ? defaultLocationImage : null);
-  const headerTopSpacing =
-    topInset !== undefined ? topInset + theme.spacing.xl : theme.spacing.xxl;
+  const headerTopSpacing = topInset ?? theme.spacing.none;
   const header = (
     <View
       pointerEvents="box-none"
@@ -72,6 +71,7 @@ export function PlaceDetailsContent({
         styles.row,
         {
           gap: theme.spacing.sm,
+          justifyContent: "space-between",
           paddingTop: headerTopSpacing,
           paddingBottom: theme.spacing.xs,
         },
@@ -82,6 +82,7 @@ export function PlaceDetailsContent({
         label={backLabel ?? copy.returnResults}
         onPress={onBack}
       />
+      {mapAction}
     </View>
   );
   const info = [
@@ -120,23 +121,7 @@ export function PlaceDetailsContent({
           expandRequest={expandMapRequest}
           mapContent={
             mapContent ? (
-              <View style={styles.fill}>
-                {mapContent}
-                {mapAction ? (
-                  <View
-                    style={{
-                      position: "absolute",
-                      right: theme.spacing.sm,
-                      top:
-                        headerTopSpacing +
-                        theme.layout.touchTarget +
-                        theme.spacing.xs,
-                    }}
-                  >
-                    {mapAction}
-                  </View>
-                ) : null}
-              </View>
+              <View style={styles.fill}>{mapContent}</View>
             ) : region ? (
               <PlaceSearchMap
                 places={places}
@@ -144,8 +129,11 @@ export function PlaceDetailsContent({
                 focused={place}
                 custom={false}
                 fitContainer
-                controlsTop={headerTopSpacing}
-                extraControl={mapAction}
+                controlsTop={
+                  headerTopSpacing +
+                  theme.layout.compactTouchTarget +
+                  theme.spacing.xs
+                }
               />
             ) : null
           }

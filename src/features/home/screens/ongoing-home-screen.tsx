@@ -1,3 +1,4 @@
+import { svgDataUri } from "@/utils/svg-data-uri";
 import { JournalAlbum } from "../components/journal-album";
 import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
@@ -49,9 +50,9 @@ export function OngoingHomeScreen({
   };
 }) {
   const theme = useAppTheme();
-  const backdropUri = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
+  const backdropUri = svgDataUri(
     `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100" preserveAspectRatio="none"><defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="${theme.colors.surfaceTint}"/><stop offset="1" stop-color="${theme.colors.background}"/></linearGradient></defs><rect width="100" height="100" fill="url(#sky)"/></svg>`,
-  )}`;
+  );
   const [checkedInStop, setCheckedInStop] = useState<TripStop | null>(null);
   const visiting = useRef(false);
   const [coverFailed, setCoverFailed] = useState(false);
@@ -194,7 +195,6 @@ export function OngoingHomeScreen({
         <JournalAlbum
           memories={todayMemories}
           onOpen={openJournal}
-          onCapture={openCamera}
           onDeletePhoto={runtime?.onDeletePhoto}
         />
       </HomePage>

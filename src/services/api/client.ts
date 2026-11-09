@@ -27,6 +27,7 @@ export function configureAuthTransport(transport: AuthTransport) {
 export function resolveApiUrl(value: string | undefined) {
   return resolveDeviceApiUrl(value, {
     development: __DEV__,
+    allowLanHttp: process.env.EXPO_PUBLIC_LAN_DEMO === "true",
     platform: "web",
     isDevice: false,
   });
@@ -34,6 +35,7 @@ export function resolveApiUrl(value: string | undefined) {
 
 const baseURL = resolveDeviceApiUrl(process.env.EXPO_PUBLIC_API_URL, {
   development: __DEV__,
+  allowLanHttp: process.env.EXPO_PUBLIC_LAN_DEMO === "true",
   platform: Platform.OS,
   isDevice,
   metroHost: Constants.expoConfig?.hostUri,
@@ -41,7 +43,7 @@ const baseURL = resolveDeviceApiUrl(process.env.EXPO_PUBLIC_API_URL, {
 export const apiClient = create({ baseURL, timeout: 15000 });
 
 apiClient.interceptors.request.use((config: AuthConfig) => {
-  if (!baseURL) throw new ApiError("API_CONFIG");
+  if (!apiClient.defaults.baseURL) throw new ApiError("API_CONFIG");
   config.headers.set("Accept-Language", useLocaleStore.getState().locale);
   if (!publicAuthEndpoints.has(config.url ?? "") && authTransport) {
     config.authVersion ??= authTransport.getVersion();

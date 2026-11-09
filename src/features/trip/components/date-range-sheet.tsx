@@ -1,11 +1,9 @@
+import { SheetHeader } from "@/components/common/sheet-header";
 import { useMemo, useState } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
-import {
-  GestureDetector,
-  GestureHandlerRootView,
-} from "react-native-gesture-handler";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Animated from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useScreenInsets } from "@/hooks/use-screen-insets";
 import { usePickerSheetMotion } from "../hooks/use-picker-sheet-motion";
 import { useTripCopy } from "../i18n/trip-copy";
 import { formatDisplayDate } from "../utils/create-trip-formatters";
@@ -15,7 +13,7 @@ import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
 import { dayDistance } from "@/features/home/utils/select-home";
 import { useAppTheme } from "@/hooks/use-app-theme";
-import { spacing, typography, layout, radius } from "@/theme/tokens";
+import { spacing, typography, layout } from "@/theme/tokens";
 
 type DateRangeSheetProps = {
   visible: boolean;
@@ -41,7 +39,7 @@ function DateRangeSession({
   onClose,
 }: DateRangeSheetProps) {
   const theme = useAppTheme();
-  const insets = useSafeAreaInsets();
+  const insets = useScreenInsets();
 
   const [selectedStart, setSelectedStart] = useState(startDate);
   const [selectedEnd, setSelectedEnd] = useState(endDate);
@@ -62,7 +60,7 @@ function DateRangeSession({
     const firstDayIndex =
       (new Date(Date.UTC(year, month, 1)).getUTCDay() + 6) % 7;
 
-    const days: ({ dateStr: string; dayNum: number } | null)[] = [];
+    const days: ({ dateStr: string; dayNum: number; } | null)[] = [];
     for (let i = 0; i < firstDayIndex; i++) {
       days.push(null);
     }
@@ -148,7 +146,7 @@ function DateRangeSession({
       onRequestClose={() => close()}
     >
       <GestureHandlerRootView style={styles.root}>
-        <View style={styles.backdrop}>
+        <View style={[styles.backdrop, { paddingTop: insets.top + theme.spacing.sm, paddingLeft: insets.left, paddingRight: insets.right }]}>
           <Animated.View
             style={[
               StyleSheet.absoluteFill,
@@ -163,58 +161,15 @@ function DateRangeSession({
               sheetMotion,
               {
                 backgroundColor: theme.colors.surface,
-                borderTopLeftRadius: theme.radius.xxl,
-                borderTopRightRadius: theme.radius.xxl,
+                borderTopLeftRadius: theme.radius.xl,
+                borderTopRightRadius: theme.radius.xl,
                 paddingBottom:
                   Math.max(insets.bottom, theme.spacing.lg) + theme.spacing.md,
               },
             ]}
           >
             {/* Drag Handle & Header */}
-            <GestureDetector gesture={dragGesture}>
-              <View collapsable={false} style={styles.dragHeaderZone}>
-                <View style={styles.handleWrapper}>
-                  <View
-                    style={[
-                      styles.handle,
-                      { backgroundColor: theme.colors.borderStrong },
-                    ]}
-                  />
-                </View>
-
-                {/* Header */}
-                <View style={styles.headerRow}>
-                  <AppText
-                    variant="heading"
-                    style={[
-                      styles.headerTitle,
-                      {
-                        color: theme.colors.text,
-                        fontFamily: theme.typography.fontFamily.medium,
-                      },
-                    ]}
-                  >
-                    {copy.chooseDates}
-                  </AppText>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={copy.close}
-                    onPress={() => close()}
-                    hitSlop={12}
-                    style={({ pressed }) => [
-                      styles.closeButton,
-                      { opacity: pressed ? theme.motion.pressOpacity : 1 },
-                    ]}
-                  >
-                    <AppIcon
-                      name="close"
-                      size={20}
-                      color={theme.colors.textSecondary}
-                    />
-                  </Pressable>
-                </View>
-              </View>
-            </GestureDetector>
+            <SheetHeader title={copy.chooseDates} closeLabel={copy.close} onClose={() => close()} gesture={dragGesture} />
 
             <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
               {/* Selected Range Banner */}
@@ -371,19 +326,19 @@ function DateRangeSession({
                           backgroundColor: theme.colors.surfaceTint,
                         },
                         isStart &&
-                          selectedEnd &&
-                          selectedEnd !== selectedStart && {
-                            borderTopLeftRadius: theme.radius.full,
-                            borderBottomLeftRadius: theme.radius.full,
-                            backgroundColor: theme.colors.surfaceTint,
-                          },
+                        selectedEnd &&
+                        selectedEnd !== selectedStart && {
+                          borderTopLeftRadius: theme.radius.full,
+                          borderBottomLeftRadius: theme.radius.full,
+                          backgroundColor: theme.colors.surfaceTint,
+                        },
                         isEnd &&
-                          selectedStart &&
-                          selectedEnd !== selectedStart && {
-                            borderTopRightRadius: theme.radius.full,
-                            borderBottomRightRadius: theme.radius.full,
-                            backgroundColor: theme.colors.surfaceTint,
-                          },
+                        selectedStart &&
+                        selectedEnd !== selectedStart && {
+                          borderTopRightRadius: theme.radius.full,
+                          borderBottomRightRadius: theme.radius.full,
+                          backgroundColor: theme.colors.surfaceTint,
+                        },
                       ]}
                     >
                       <View
@@ -463,39 +418,10 @@ const styles = StyleSheet.create({
   sheet: {
     width: "100%",
     maxHeight: "90%",
-    paddingHorizontal: spacing.lg + spacing.xs,
+    paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
   },
-  dragHeaderZone: {
-    width: "100%",
-  },
-  handleWrapper: {
-    alignItems: "center",
-    paddingVertical: spacing.sm,
-  },
-  handle: {
-    width: layout.sheetDragHandleWidth,
-    height: layout.sheetDragHandleHeight,
-    borderRadius: radius.full,
-    opacity: 0.35,
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: spacing.lg,
-  },
-  headerTitle: {
-    fontSize: typography.fontSize.lg,
-    lineHeight: typography.lineHeight.lg,
-  },
-  closeButton: {
-    minWidth: layout.compactTouchTarget,
-    minHeight: layout.compactTouchTarget,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: spacing.xs,
-  },
+
   rangeBanner: {
     flexDirection: "row",
     alignItems: "center",

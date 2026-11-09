@@ -133,6 +133,10 @@ export function TripMapboxView({
       <MapView
         style={{ flex: 1 }}
         styleURL={TRIP_MAP_STYLE}
+        scaleBarEnabled={false}
+        zoomEnabled
+        scrollEnabled
+        requestDisallowInterceptTouchEvent
         rotateEnabled={false}
         pitchEnabled={false}
         onDidFinishLoadingMap={() => setLoaded(true)}
@@ -225,7 +229,7 @@ export function TripMapboxView({
           style={{
             position: "absolute",
             right: theme.spacing.sm,
-            bottom: theme.spacing.sm,
+            bottom: theme.layout.compactTouchTarget + theme.spacing.sm * 2,
           }}
         >
           <DetailIconButton

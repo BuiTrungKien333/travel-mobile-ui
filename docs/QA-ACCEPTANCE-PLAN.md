@@ -1,5 +1,13 @@
 # Kế hoạch nghiệm thu theo màn hình sau merge
 
+### Ưu tiên V1 báo cáo · 08/11/2026
+
+- Cập nhật sau rà soát: người dùng đã chạy được trên điện thoại thật; bộ test mobile hiện tại đạt 399/399, TypeScript strict/no-unused và export web đạt. Thêm ErrorBoundary root/Auth/Workspace; source mới cần build lại APK để có trên điện thoại. Các bước E2E dưới đây vẫn cần xác nhận riêng. Checklist phạm vi: [PRODUCTION-READINESS-CHECKLIST.md](PRODUCTION-READINESS-CHECKLIST.md).
+- APK Android độc lập + web dự phòng, backend laptop cùng Wi-Fi. Checklist và lệnh build: [V1-RELEASE-PLAN.md](V1-RELEASE-PLAN.md).
+- Thông báo/push ngoài V1; vali chọn lưu tại thiết bị, chưa coi state component là lưu bền. Không mở thêm module API Packing/Notification trong đợt chốt ổn định.
+- Đã đạt backend đầy đủ 518/518, mobile đầy đủ 395/395 ở baseline; 18 ca auth/cấu hình và TypeScript đạt sau sửa footer bị cắt trên Android. APK release đã tạo, ký/ZIP alignment đạt, cài và mở Login → Register → Back trên Pixel 7 không có Metro. Web cuối export và 5 route auth HTTP đạt. Các số này không thay thế nghiệm thu điện thoại/provider thật; xem file bàn giao trong [V1-RELEASE-PLAN.md](V1-RELEASE-PLAN.md).
+- Vòng người dùng cần xác nhận: login/restore → trip CRUD/lịch ngày → live/visited → camera/upload nhiều ảnh/mất mạng/retry/xóa → recap → đổi tài khoản. Kiểm tra mạng từ điện thoại, safe area/back/keyboard/quyền trên APK thật trước khi chốt V1.
+
 
 ### QA · Home và chi tiết chuyến đã hoàn thành · 08/11/2026
 

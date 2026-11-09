@@ -250,6 +250,7 @@ test("camera releases inactive previews and opens the gallery directly from the 
     "@/components/ui/app-text": { AppText: "AppText" },
     "../services/camera-photos": { prepareCameraPhoto: () => {} },
     "./camera-layout": { CameraLayout: "CameraLayout" },
+    "./photo-import-sheet": { PhotoImportSheet: "PhotoImportSheet" },
     "./camera-icon-button": { CameraIconButton: "CameraIconButton" },
   });
   const { NativeTripCamera } = nativeLoad<

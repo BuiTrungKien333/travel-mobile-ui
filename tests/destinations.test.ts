@@ -186,10 +186,7 @@ function pickerHarness(preview = false) {
   const tokens = tripModuleLoader()<typeof import("../src/theme/tokens.ts")>(
     "src/theme/tokens.ts",
   );
-  const element = (type: unknown, props: Record<string, unknown>) => ({
-    type,
-    props,
-  });
+  const element = (type: unknown, props: Record<string, unknown>) => typeof type === "function" && /^CreateTrip.*Card$/.test(type.name) ? type(props) : ({ type, props });
   const load = tripModuleLoader({
     react: {
       useState: (initial: unknown) => {
@@ -452,10 +449,7 @@ test("actual create/edit forms carry picker IDs through RHF and submit payloads"
   const tokens = tripModuleLoader()<typeof import("../src/theme/tokens.ts")>(
     "src/theme/tokens.ts",
   );
-  const element = (type: unknown, props: Record<string, unknown>) => ({
-    type,
-    props,
-  });
+  const element = (type: unknown, props: Record<string, unknown>) => typeof type === "function" && /^CreateTrip.*Card$/.test(type.name) ? type(props) : ({ type, props });
   let values: Record<string, unknown> = {};
   let defaults: Record<string, unknown> = {};
   const dirty: Record<string, boolean> = {};

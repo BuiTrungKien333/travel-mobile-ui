@@ -1,3 +1,4 @@
+import { svgDataUri } from "@/utils/svg-data-uri";
 import { Image } from "expo-image";
 import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
@@ -60,7 +61,7 @@ export function TripMapPreview({
   const path = points
     .map((point, index) => `${index ? "L" : "M"}${point.x} ${point.y}`)
     .join(" ");
-  const source = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${graphWidth} ${graphHeight}" preserveAspectRatio="none"><path d="${path}" fill="none" stroke="${theme.colors.primary}" stroke-width="2" stroke-dasharray="4 5" vector-effect="non-scaling-stroke" /></svg>`)}`;
+  const source = svgDataUri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${graphWidth} ${graphHeight}" preserveAspectRatio="none"><path d="${path}" fill="none" stroke="${theme.colors.primary}" stroke-width="2" stroke-dasharray="4 5" vector-effect="non-scaling-stroke" /></svg>`);
   return (
     <View
       onLayout={(event) => setWidth(event.nativeEvent.layout.width)}

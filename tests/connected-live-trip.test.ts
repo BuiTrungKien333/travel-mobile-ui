@@ -140,13 +140,11 @@ function fixture(
       },
     },
     "react/jsx-runtime": {
-      jsx: (type: unknown, props: Record<string, unknown>) => ({ type, props }),
-      jsxs: (type: unknown, props: Record<string, unknown>) => ({
-        type,
-        props,
-      }),
+      jsx: (type: unknown, props: Record<string, unknown>) => typeof type === "function" && ["ConnectedTripSchedulePanels"].includes(type.name) ? type(props) : ({ type, props }),
+      jsxs: (type: unknown, props: Record<string, unknown>) => typeof type === "function" && ["ConnectedTripSchedulePanels"].includes(type.name) ? type(props) : ({ type, props }),
     },
     "react-native": { View: "View", Modal: "Modal" },
+    "react-native-gesture-handler": { Gesture: { Native: () => ({}) }, GestureDetector: "GestureDetector" },
     "react-native-reanimated": {
       __esModule: true,
       default: { FlatList: "FlatList" },
@@ -165,6 +163,7 @@ function fixture(
     },
     "@/components/ui/app-text": { AppText: "AppText" },
     "@/components/ui/app-button": { AppButton: "AppButton" },
+    "@/components/ui/app-icon": { AppIcon: "AppIcon" },
     "@/features/home/components/home-primitives": { TextAction: "TextAction" },
     "../api/trip-queries": {
       useTripQuery: () => ({
@@ -256,6 +255,7 @@ function fixture(
     },
   };
   for (const [path, names] of Object.entries({
+    "../components/backlog-schedule-sheet": ["BacklogScheduleSheet"],
     "../components/trip-details-overview": ["TripDayTools"],
     "./connected-place-picker-screen": ["ConnectedPlacePickerScreen"],
     "../components/connected-stop-schedule-sheet": [

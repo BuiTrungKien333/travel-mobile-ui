@@ -15,7 +15,6 @@ const JOURNAL_PREVIEW_LIMIT = 6;
 export function JournalAlbum({
   memories,
   onOpen,
-  onCapture,
   variant = "today",
   title,
   onDeletePhoto,
@@ -23,7 +22,6 @@ export function JournalAlbum({
 }: {
   memories: Memory[];
   onOpen?: () => void;
-  onCapture?: () => void;
   variant?: "today" | "recent";
   title?: string;
   onDeletePhoto?: (memory: Memory) => Promise<void>;
@@ -96,13 +94,7 @@ export function JournalAlbum({
               ? copy.recentEmptyHint
               : copy.journalEmptyHint}
           </AppText>
-          {onCapture ? (
-            <TextAction
-              label={copy.capture}
-              icon="camera"
-              onPress={onCapture}
-            />
-          ) : null}
+
         </JourneyCard>
       )}
       {gallery.opened ? (

@@ -1,5 +1,44 @@
 # Tiến độ Travel Mobile UI
 
+### Chỉnh navigation và khoảng cách Home trên Android · 08/11/2026
+
+- Camera nằm bên trong pill navigation, tăng 58 → 62; thanh cao 74, bỏ cradle/notch và khoảng nhô. Giữ vị trí tab đối xứng, vùng chạm và chấm active theo cùng hình học web/native.
+- Android dùng surface kín + border/shadow nhẹ, không để text cuộn phía sau xuyên qua. Web/iOS tiếp tục dùng GlassBackdrop và fallback sẵn có; bỏ asset SVG/notch không còn sử dụng.
+- Home giảm padding đầu 16 → 4 và gap dưới header 24 → 16, giữ nguyên safe area. Đã nhìn lại qua screenshot máy ảo; 6 test navigation và TypeScript strict/no-unused đạt. Không chạy lint hoặc nâng dependency.
+- Máy ảo đang dùng development build cũ: khi mở camera báo thiếu module `ExpoCamera`; cần rebuild native trước khi nghiệm thu chụp ảnh. Chỉnh navigation đã hiện qua Metro, chưa đưa vào APK release đã bàn giao.
+
+### Rà soát checklist Production theo phạm vi V1 · 08/11/2026
+
+- Người dùng xác nhận chạy được trên điện thoại thật; giữ nguyên dependency theo lựa chọn người dùng. Chưa coi đây là nghiệm thu toàn bộ nghiệp vụ/provider.
+- Cập nhật [PRODUCTION-READINESS-CHECKLIST.md](PRODUCTION-READINESS-CHECKLIST.md): tách V1 demo khỏi Store; sửa nhận định về session/splash, light-only, Mapbox/nhánh bản đồ cũ, dọn file local, đổi tài khoản, upload foreground và OTA. Ghi rõ vali chưa có persistence, web reload mất phiên và ảnh Cloudinary dùng URL công khai.
+- Thêm ErrorBoundary dùng chung root/Auth/Workspace, thông báo VI/EN và Thử lại; tự cung cấp theme/safe area khi root lỗi, không hiện exception/stack trace. Không đổi API, schema, dependency hay giao diện nghiệp vụ.
+- Bộ test mobile mới nhất đạt **399/399**; TypeScript strict/no-unused và export web `.expo/v1-readiness-web` đạt. Không chạy lint. APK và web `.expo/v1-web-final` đã bàn giao trước đó chưa chứa ErrorBoundary mới; cần build/serve bản mới để nghiệm thu thay đổi này.
+
+### Chuẩn bị V1 báo cáo · 08/11/2026
+
+- Chốt APK Android độc lập + web dự phòng, backend laptop cùng Wi-Fi. Vali chọn lưu cục bộ bền theo user/trip, chưa triển khai persistence trong lượt này; thông báo/push hoãn ngoài V1, ẩn bell mẫu khỏi luồng thật.
+- Thêm profile `preview-lan`, hỗ trợ HTTP API private IPv4 với cờ riêng và cấu hình Android cleartext cho demo; production ép cờ LAN false. Backend qua IP Wi-Fi hiện `192.168.1.9:18081` trả UP từ laptop.
+- Bộ test mobile đầy đủ đạt 395/395, thêm 8 ca cấu hình/API URL liên quan đạt; TypeScript strict/no-unused đạt. Backend đầy đủ đạt 518/518 sau khi cập nhật kiểm tra migration từ V16 lên V19. Expo Doctor đạt 20/21; còn 13 package lệch patch SDK 57 khuyến nghị, chưa tự nâng/bỏ check.
+- Web đã export và serve tại `http://localhost:8082`, trang login trả 200. Backend đã khởi động bằng `-WebUrl http://192.168.1.9:8082`, health LAN UP và preflight LAN trả 200. Giới hạn Metro tối đa 2 worker riêng demo LAN để giảm tranh RAM.
+- Android prebuild và build release đạt; APK cuối ở `.expo/v1-release/WeGo-v1-demo-lan.apk` (~146 MiB), version 1.0.0, arm64/x86_64. Chữ ký và ZIP alignment đạt; bundle có sẵn, API LAN đã đóng vào APK. Không cài thêm dependency hoặc đổi version.
+- Cài và mở bản cuối trên Pixel 7 emulator không có Metro; nhìn được màn Login, chuyển Register và Back về Login, không ghi nhận lỗi fatal/JS/thiếu module trong smoke test. Sửa lỗi native làm link Đăng ký bị cắt bằng một dòng + không shrink + padding ngang; đã xác nhận lại bằng ảnh native. 18 ca auth/cấu hình liên quan và TypeScript đạt sau sửa.
+- Web cuối đã export lại ở `.expo/v1-web-final`, serve cổng 8082; 5 route auth trả 200. Công cụ CUA không khởi tạo được nên chưa nghiệm thu trực quan web; đã kiểm tra trực quan Login/Register trên emulator qua ADB. Vòng đầu emulator có ANR Quickstep và restore báo mạng trong lúc build nặng; Retry phục hồi, lần mở sạch bản cuối tới Login. Chưa benchmark hiệu năng hoặc nghiệm thu điện thoại thật/provider thật. Checklist: [V1-RELEASE-PLAN.md](V1-RELEASE-PLAN.md).
+
+### QA-6 · Upload nhiều ảnh · 08/11/2026
+
+- Camera chọn tối đa 10 ảnh, giữ tỉ lệ ảnh, lưu local trước mạng, upload tối đa 2 ảnh đồng thời. Màn hình tiến độ tối có tổng số/trạng thái/retry từng ảnh; không có chuyến thì chỉ lưu Xem sau.
+- Retry dùng request/server ID đã lưu, không gửi lại ảnh thành công; khóa gửi trùng/đổi phiên. Gom refetch cuối đợt. API batch trả kết quả/error riêng từng file, kiểm tra owner trước provider, dùng chung upload policy/idempotency; không thêm dependency/schema.
+- API, hợp đồng batch đã đổi, checklist và giới hạn foreground: [MULTI-PHOTO-UPLOAD-QA.md](MULTI-PHOTO-UPLOAD-QA.md). Chờ nghiệm thu thiết bị và Cloudinary thật.
+- Kiểm tra: 29 ca backend, 63 ca mobile liên quan và TypeScript strict/no-unused đạt; backend dev khởi động lại tại 18081, health UP. Không chạy lint theo yêu cầu.
+
+### QA-6 · Xóa ảnh xuyên suốt · 08/11/2026
+
+- Viewer chờ kết quả xóa, khóa gửi trùng và giữ ảnh/thông báo khi lỗi; không đổi core zoom/vuốt. VI/EN, ảnh mẫu và Xem sau giữ đúng phạm vi.
+- Backend xác nhận Cloudinary trước khi xóa media, kiểm tra chủ sở hữu, hỗ trợ gửi lặp. V19 lưu yêu cầu dọn file để retry sau lỗi/restart; dọn nền cho memory/chuyến đã ẩn và xử lý upload hoàn tất muộn. I/O provider nằm ngoài transaction DB.
+- API, cách nghiệm thu và giới hạn CDN/private delivery: [MEDIA-DELETION-QA.md](MEDIA-DELETION-QA.md). Chưa nghiệm thu Cloudinary thật trên thiết bị.
+- Loại bản sao local đã đồng bộ khỏi danh sách nháp khi ghép thư viện để ảnh đã xóa ở server không xuất hiện trở lại; giữ nguyên file/nháp chưa đồng bộ.
+- Kiểm tra: 71 ca backend đạt (PostgreSQL Testcontainers, mock Cloudinary); 38 ca mobile đạt; TypeScript strict/no-unused đạt. Backend dev đã chạy V19, health UP tại 18081; DELETE thiếu token trả 401. Không chạy lint theo yêu cầu.
+
 ### Tối ưu ảnh mẫu dùng chung · 08/11/2026
 
 - Dùng duy nhất 14 WebP nhẹ trong `assets/images/examples/thumbnails` cho ảnh mẫu toàn ứng dụng qua helper hiện có. Xóa bộ 14 ảnh mẫu cũ ở thư mục cha theo yêu cầu; dung lượng giảm khoảng 29,1 MB xuống 0,93 MB. Hash chọn ảnh vẫn ổn định. Ảnh mẫu tối đa 768px, không thay đổi ảnh thật từ máy chủ/thiết bị.

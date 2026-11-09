@@ -3,7 +3,6 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Modal,
   Platform,
   Pressable,
@@ -19,6 +18,7 @@ import Animated from "react-native-reanimated";
 import { useScreenInsets } from "@/hooks/use-screen-insets";
 
 import { AppText } from "@/components/ui/app-text";
+import { ApiError } from "@/services/api/api-error";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { usePhotoViewerMotion } from "../hooks/use-photo-viewer-motion";
 import { usePhotoViewerKeyboard } from "../hooks/use-photo-viewer-keyboard";
@@ -87,8 +87,10 @@ export function JournalPhotoViewer({
   >({});
   const currentSelection = getSelection(memory.id) ?? selections[memory.id];
   const info = photoInfo[memory.id] ?? currentSelection;
-  const [controls, setControls] = useState(false);
+  const [controls, setControls] = useState(true);
   const [confirming, setConfirming] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string>();
   const [showInfo, setShowInfo] = useState(false);
   const [busy, setBusy] = useState<"share" | "save" | null>(null);
   const [notice, setNotice] = useState<{ text: string; error: boolean } | null>(
@@ -103,7 +105,6 @@ export function JournalPhotoViewer({
   }, [failed]);
   const active = useRef(true);
   const actionInFlight = useRef(false);
-  const removeAfterClose = useRef(false);
   const presented = useRef(false);
   useEffect(() => {
     active.current = true;
@@ -148,31 +149,53 @@ export function JournalPhotoViewer({
     pageIndex: index,
     pageCount: memories.length,
     onPageChange: changePage,
-    blocked: confirming || showInfo || busy !== null,
+    blocked: confirming || showInfo || busy !== null || deleting,
     controlsVisible: controls,
     onToggleControls: toggleControls,
-    onDismiss: () => {
-      onClose();
-      if (removeAfterClose.current)
-        void Promise.resolve(onDelete(memory.id)).catch(() =>
-          Alert.alert(copy.actionError),
-        );
-    },
+    onDismiss: onClose,
   });
 
   function handleBack() {
+    if (actionInFlight.current) return;
     if (confirming) setConfirming(false);
     else if (showInfo) setShowInfo(false);
     else motion.close();
   }
 
   usePhotoViewerKeyboard({
-    blocked: confirming || showInfo || busy !== null,
+    blocked: confirming || showInfo || busy !== null || deleting,
     onBack: handleBack,
     onPrevious: motion.previous,
     onNext: motion.next,
     onToggleControls: toggleControls,
   });
+
+  async function handleDelete() {
+    if (actionInFlight.current || (canDelete && !canDelete(memory))) return;
+    actionInFlight.current = true;
+    setDeleting(true);
+    setDeleteError(undefined);
+    try {
+      await onDelete(memory.id);
+      if (active.current) {
+        setConfirming(false);
+        motion.close();
+      }
+    } catch (failure) {
+      if (active.current)
+        setDeleteError(
+          failure instanceof ApiError && failure.code === "MEDIA_003"
+            ? copy.deleteIdentityMissing
+            : failure instanceof ApiError &&
+                ["MEDIA_002", "UPLOAD_006"].includes(failure.code)
+              ? copy.deletePending
+              : copy.deleteFailed,
+        );
+    } finally {
+      actionInFlight.current = false;
+      if (active.current) setDeleting(false);
+    }
+  }
 
   async function handleAction(action: "share" | "save") {
     if (actionInFlight.current || !info?.uri || failed) return;
@@ -189,7 +212,7 @@ export function JournalPhotoViewer({
         });
       } else {
         if (onSave) await onSave(memory);
-        else await saveJournalPhoto(info.uri);
+        else await saveJournalPhoto(info.uri, memory.photo);
         if (active.current)
           setNotice({
             text: Platform.OS === "web" ? copy.downloaded : copy.saved,
@@ -483,7 +506,10 @@ export function JournalPhotoViewer({
             onSave={() => void handleAction("save")}
             onDelete={
               !canDelete || canDelete(memory)
-                ? () => setConfirming(true)
+                ? () => {
+                    setDeleteError(undefined);
+                    setConfirming(true);
+                  }
                 : undefined
             }
           />
@@ -497,12 +523,12 @@ export function JournalPhotoViewer({
           ) : null}
           {confirming ? (
             <PhotoDeleteConfirmation
-              onCancel={() => setConfirming(false)}
-              onConfirm={() => {
-                setConfirming(false);
-                removeAfterClose.current = true;
-                motion.close();
+              busy={deleting}
+              error={deleteError}
+              onCancel={() => {
+                if (!actionInFlight.current) setConfirming(false);
               }}
+              onConfirm={() => void handleDelete()}
             />
           ) : null}
         </View>

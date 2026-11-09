@@ -1,3 +1,5 @@
+import { router } from "expo-router";
+import { canConfigureServer } from "@/services/api/server-connection";
 import { Image } from "expo-image";
 import { ScrollView, StyleSheet, View } from "react-native";
 import Animated, { useAnimatedStyle } from "react-native-reanimated";
@@ -23,21 +25,11 @@ export function SessionGate({ failed }: { failed: boolean }) {
   const progressStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: progress.get() * travelDistance }],
   }));
-  const backdrop = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="800" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice"><defs><radialGradient id="mist"><stop stop-color="${theme.colors.surfaceTint}"/><stop offset="1" stop-color="${theme.colors.background}"/></radialGradient></defs><rect width="400" height="800" fill="${theme.colors.background}"/><ellipse cx="200" cy="330" rx="300" ry="340" fill="url(#mist)"/></svg>`,
-  )}`;
 
   return (
     <ScreenSafeArea
-      style={[styles.screen, { backgroundColor: theme.colors.background }]}
+      style={[styles.screen, { backgroundColor: theme.colors.surface }]}
     >
-      <Image
-        accessible={false}
-        pointerEvents="none"
-        source={{ uri: backdrop }}
-        contentFit="cover"
-        style={StyleSheet.absoluteFill}
-      />
       <ScrollView
         contentInsetAdjustmentBehavior="never"
         showsVerticalScrollIndicator={false}
@@ -52,40 +44,14 @@ export function SessionGate({ failed }: { failed: boolean }) {
             },
           ]}
         >
-          <View
-            style={{
-              alignSelf: "center",
-              padding: theme.spacing.xl,
-              backgroundColor: theme.colors.glassFallback,
-              borderRadius: theme.radius.xl,
-              borderWidth: StyleSheet.hairlineWidth,
-              borderColor: theme.colors.glassBorder,
-              boxShadow: [
-                { ...theme.elevation.glass, color: theme.colors.glassShadow },
-              ],
-            }}
-          >
-            <Image
-              accessibilityLabel={t("common.logoAccessibility")}
-              contentFit="contain"
-              source={require("@/assets/images/logo.png")}
-              style={{
-                width: theme.layout.sessionLogoWidth,
-                height:
-                  theme.layout.sessionLogoWidth *
-                  (theme.layout.headerLogoHeight /
-                    theme.layout.headerLogoWidth),
-              }}
-            />
-          </View>
+          <Image
+            accessibilityLabel={t("common.logoAccessibility")}
+            contentFit="contain"
+            source={require("@/assets/images/wego-wordmark.png")}
+            style={{ width: theme.layout.sessionLogoWidth, height: theme.layout.headerLogoHeight * 2, alignSelf: "center" }}
+          />
           <View style={{ gap: theme.spacing.sm }}>
-            <AppText
-              accessibilityRole="header"
-              variant="subheading"
-              style={styles.centered}
-            >
-              {t(failed ? "auth.session.restoreFailed" : "auth.login.title")}
-            </AppText>
+            {failed ? <AppText accessibilityRole="header" variant="subheading" style={styles.centered}>{t("auth.session.restoreFailed")}</AppText> : null}
             <AppText
               accessibilityRole={failed ? "alert" : undefined}
               accessibilityLiveRegion="polite"
@@ -135,6 +101,7 @@ export function SessionGate({ failed }: { failed: boolean }) {
               />
             </View>
           )}
+          {failed && canConfigureServer ? <AppButton variant="outline" size="small" onPress={() => router.push("/connection")}>Kết nối máy chủ / Server</AppButton> : null}
         </View>
       </ScrollView>
     </ScreenSafeArea>

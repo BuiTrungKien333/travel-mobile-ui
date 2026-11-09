@@ -58,6 +58,7 @@ export function HomePage({
           styles.scroll,
           {
             padding: theme.spacing.lg,
+            paddingTop: theme.spacing.xs,
             paddingBottom: tabBarHeight + theme.spacing.lg,
           },
         ]}
@@ -65,7 +66,7 @@ export function HomePage({
         <View
           style={[
             styles.width,
-            { maxWidth: theme.layout.contentMaxWidth, gap: theme.spacing.xl },
+            { maxWidth: theme.layout.contentMaxWidth, gap: theme.spacing.lg },
           ]}
         >
           {showHeader ? <HomeHeader /> : null}

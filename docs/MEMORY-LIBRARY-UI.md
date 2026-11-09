@@ -29,11 +29,11 @@ API/DB/auth không đổi; không thêm dependency. Native và web dùng chung s
 
 ## Nghiệm thu
 
-1. Mở tab Kỷ niệm: mặc định Ảnh, logo và switcher hiển thị; lưới ba cột, khe mảnh, nhóm đúng chuyến. Kiểm tra màn 320px, Pixel 7 và tablet; tăng font hệ thống.
+1. Mở tab Kỷ niệm: mặc định Ảnh, switcher hiển thị, không có header logo/thông báo; lưới ba cột, khe mảnh, nhóm đúng chuyến. Kiểm tra màn 320px, Pixel 7 và tablet; tăng font hệ thống.
 2. Bấm Album: một cột thẻ, text nằm trên ảnh, badge chỉ là số; mở thẻ vào đúng chuyến. Chuyển lại Ảnh và kéo refresh.
 3. Chuyến chưa có ảnh: thấy ảnh local mẫu; tổng ảnh vẫn bằng 0. Mở ảnh mẫu không có Xóa; không phát sinh request ghi/upload.
 4. Chuyến có ảnh thật: không trộn mẫu. Mở ảnh, pinch/double tap, vuốt trước/sau, tap ẩn/hiện công cụ, kéo xuống đóng về thumbnail. Thử cả lưới chính và bên trong album.
-5. Xóa ảnh thật, xác nhận dữ liệu/các số đếm cập nhật; kiểm tra Xem sau vẫn mở và giữ ảnh local. Chụp từ album vẫn chọn đúng chuyến.
+5. Xóa ảnh thật, chờ kết quả rồi xác nhận dữ liệu/các số đếm cập nhật; lỗi giữ viewer để thử lại. Kiểm tra Xem sau vẫn mở và giữ ảnh local. Chụp từ album vẫn chọn đúng chuyến. Xem [MEDIA-DELETION-QA.md](MEDIA-DELETION-QA.md) để nghiệm thu file Cloudinary.
 6. Mạng chậm/lỗi: có loading/retry, không thay ảnh thật bằng mẫu vì lỗi tải API. Nếu CDN thumbnail lỗi, thử source gốc. Kiểm tra chuyển EN, Reduced Motion và xoay màn hình.
 
 Đã chạy kiểm thử grid/nhóm ảnh, fallback mẫu, URL thumbnail, không gọi membership ở thư viện, core thumbnail/zoom/worklets và các luồng memory liên quan; TypeScript strict/no-unused. Chưa xác nhận trực quan trên trình duyệt/thiết bị: công cụ CUA không khởi tạo được (`failed to write kernel assets`). Không chạy lint theo yêu cầu của người dùng.

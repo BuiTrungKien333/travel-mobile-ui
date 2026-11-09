@@ -1,20 +1,7 @@
+import { SheetHeader } from "@/components/common/sheet-header";
 import { useMemo, useState } from "react";
-import {
-  FlatList,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  StyleSheet,
-  TextInput,
-  TextStyle,
-  View,
-} from "react-native";
-import {
-  GestureDetector,
-  GestureHandlerRootView,
-} from "react-native-gesture-handler";
+import { FlatList, ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, TextInput, TextStyle, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Animated from "react-native-reanimated";
 import { useScreenInsets } from "@/hooks/use-screen-insets";
 import { UI_PREVIEW_ENABLED } from "@/constants/development";
@@ -27,7 +14,7 @@ import { useTripCopy } from "../i18n/trip-copy";
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
-import { spacing, typography, layout, radius } from "@/theme/tokens";
+import { spacing, typography, layout } from "@/theme/tokens";
 
 const webInputReset: TextStyle = Platform.select({
   web: { outlineWidth: 0 },
@@ -102,10 +89,10 @@ function DestinationPickerSession({
       const items = isDebouncing
         ? []
         : catalogRows.map((item) => ({
-            id: item.id,
-            name: item.name,
-            city: item.name,
-          }));
+          id: item.id,
+          name: item.name,
+          city: item.name,
+        }));
       return q ? [{ name: q, city: q, custom: true }, ...items] : items;
     }
     if (!q) return popularDestinations;
@@ -138,7 +125,7 @@ function DestinationPickerSession({
           style={[
             styles.backdrop,
             {
-              paddingTop: insets.top + theme.spacing.lg,
+              paddingTop: insets.top + theme.spacing.sm,
               paddingLeft: insets.left,
               paddingRight: insets.right,
             },
@@ -158,58 +145,15 @@ function DestinationPickerSession({
               sheetMotion,
               {
                 backgroundColor: theme.colors.surface,
-                borderTopLeftRadius: theme.radius.xxl,
-                borderTopRightRadius: theme.radius.xxl,
+                borderTopLeftRadius: theme.radius.xl,
+                borderTopRightRadius: theme.radius.xl,
                 paddingBottom:
                   Math.max(insets.bottom, theme.spacing.lg) + theme.spacing.md,
               },
             ]}
           >
             {/* Drag Handle & Header */}
-            <GestureDetector gesture={dragGesture}>
-              <View collapsable={false} style={styles.dragHeaderZone}>
-                <View style={styles.handleWrapper}>
-                  <View
-                    style={[
-                      styles.handle,
-                      { backgroundColor: theme.colors.borderStrong },
-                    ]}
-                  />
-                </View>
-
-                {/* Header */}
-                <View style={styles.headerRow}>
-                  <AppText
-                    variant="heading"
-                    style={[
-                      styles.headerTitle,
-                      {
-                        color: theme.colors.text,
-                        fontFamily: theme.typography.fontFamily.medium,
-                      },
-                    ]}
-                  >
-                    {copy.chooseDestination}
-                  </AppText>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={copy.close}
-                    onPress={() => close()}
-                    hitSlop={12}
-                    style={({ pressed }) => [
-                      styles.closeButton,
-                      { opacity: pressed ? theme.motion.pressOpacity : 1 },
-                    ]}
-                  >
-                    <AppIcon
-                      name="close"
-                      size={20}
-                      color={theme.colors.textSecondary}
-                    />
-                  </Pressable>
-                </View>
-              </View>
-            </GestureDetector>
+            <SheetHeader title={copy.chooseDestination} closeLabel={copy.close} onClose={() => close()} gesture={dragGesture} />
 
             {/* Search Input Box */}
             <View
@@ -357,8 +301,8 @@ function DestinationPickerSession({
                       </AppText>
                     ) : null}
                     {!catalog.isError &&
-                    !isDebouncing &&
-                    catalog.hasNextPage ? (
+                      !isDebouncing &&
+                      catalog.hasNextPage ? (
                       <AppButton
                         variant="outline"
                         size="small"
@@ -380,10 +324,10 @@ function DestinationPickerSession({
                     ? currentProvinceId === item.id
                     : !currentProvinceId && currentDestination === item.name
                   : currentDestination
-                      .toLowerCase()
-                      .includes(item.city.toLowerCase()) ||
-                    currentDestination.toLowerCase() ===
-                      item.name.toLowerCase();
+                    .toLowerCase()
+                    .includes(item.city.toLowerCase()) ||
+                  currentDestination.toLowerCase() ===
+                  item.name.toLowerCase();
                 return (
                   <Pressable
                     accessibilityRole="button"
@@ -463,39 +407,10 @@ const styles = StyleSheet.create({
   sheet: {
     width: "100%",
     maxHeight: "85%",
-    paddingHorizontal: spacing.lg + spacing.xs,
+    paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
   },
-  dragHeaderZone: {
-    width: "100%",
-  },
-  handleWrapper: {
-    alignItems: "center",
-    paddingVertical: spacing.sm,
-  },
-  handle: {
-    width: layout.sheetDragHandleWidth,
-    height: layout.sheetDragHandleHeight,
-    borderRadius: radius.full,
-    opacity: 0.35,
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: spacing.lg,
-  },
-  headerTitle: {
-    fontSize: typography.fontSize.lg,
-    lineHeight: typography.lineHeight.lg,
-  },
-  closeButton: {
-    minWidth: layout.compactTouchTarget,
-    minHeight: layout.compactTouchTarget,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: spacing.xs,
-  },
+
   inputBox: {
     flexDirection: "row",
     alignItems: "center",

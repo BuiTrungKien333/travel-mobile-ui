@@ -40,6 +40,7 @@ export function floatingNavigationLayout(
     barHeight: Math.max(
       metrics.tabBarHeight,
       metrics.compactTouchTarget + metrics.tabBarPadding * 2,
+      metrics.tabBarCameraSize + metrics.tabBarPadding * 2,
     ),
     itemWidth,
     groupGap: groupGap + outerOffset,

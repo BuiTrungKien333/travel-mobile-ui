@@ -1,3 +1,4 @@
+import { svgDataUri } from "@/utils/svg-data-uri";
 import { useEffect, type ReactNode } from "react";
 import { Image } from "expo-image";
 import { StyleSheet, View } from "react-native";
@@ -199,7 +200,7 @@ export function PlaceSearchMap({
             <Image
               accessible={false}
               source={{
-                uri: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`,
+                uri: svgDataUri(svg),
               }}
               contentFit="fill"
               style={StyleSheet.absoluteFill}

@@ -44,7 +44,7 @@ export function TripDayTools({
   routeMetrics?: { km: number; minutes: number };
   onEditDay?: () => void;
   transportLabel?: string;
-  transportIcon?: "car" | "walk" | "route";
+  transportIcon?: "car" | "walk" | "bicycle" | "route";
   actions?: ReactNode;
 }) {
   const theme = useAppTheme();

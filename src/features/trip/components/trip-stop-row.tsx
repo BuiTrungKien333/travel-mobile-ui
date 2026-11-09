@@ -330,7 +330,10 @@ export function TripStopRow({
                         <AppIcon name="pin" size={theme.layout.iconSmall} />
                       ) : null}
                     </View>
-                    <AppText variant="sectionTitle">
+                    <AppText
+                      variant="label"
+                      style={{ fontFamily: theme.typography.fontFamily.semibold }}
+                    >
                       {stop.name[locale]}
                     </AppText>
                     <AppText variant="caption" tone="muted">

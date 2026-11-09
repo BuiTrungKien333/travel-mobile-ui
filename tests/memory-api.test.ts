@@ -315,7 +315,7 @@ test("mobile memory HTTP flow matches the backend contract and safely retries pa
     },
   );
   await t.test(
-    "every media item is visible and local drafts remain isolated from other accounts",
+    "media is visible, local drafts stay isolated, and uploaded backups never resurrect deleted photos",
     () => {
       const remote: ServerMemory = {
         id: "20000000-0000-0000-0000-000000000001",
@@ -352,7 +352,7 @@ test("mobile memory HTTP flow matches the backend contract and safely retries pa
           [],
           userId,
         ).length,
-        1,
+        0,
       );
     },
   );

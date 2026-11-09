@@ -2,11 +2,11 @@ import { Image } from "expo-image";
 import { router } from "expo-router";
 import { Pressable, StyleSheet, View } from "react-native";
 
-import { GlassBackdrop } from "@/components/common/glass-backdrop";
 import { AppIcon } from "@/components/ui/app-icon";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useHomeCopy } from "../i18n/home-copy";
 import { useTripPreview } from "../providers/trip-preview-provider";
+import { UI_PREVIEW_ENABLED } from "@/constants/development";
 
 // Align the visible artwork, compensating for logo.png's transparent left inset.
 const logoLeftInsetRatio = 307 / 2172;
@@ -53,36 +53,32 @@ export function HomeHeader() {
           }}
         />
       </Pressable>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={copy.notifications}
-        onPress={() => openPanel({ kind: "notifications" })}
-        hitSlop={theme.spacing.xs}
-        style={({ pressed }) => [
-          styles.control,
-          {
-            minWidth: theme.layout.compactTouchTarget,
-            minHeight: theme.layout.compactTouchTarget,
-            borderRadius: theme.radius.full,
-            backgroundColor: theme.colors.glassGlow,
-            boxShadow: [
-              { ...theme.elevation.glass, color: theme.colors.glassShadow },
-              {
-                ...theme.elevation.raisedActionHighlight,
-                color: theme.colors.glassInset,
-              },
-            ],
-            opacity: pressed ? theme.motion.pressOpacity : 1,
-          },
-        ]}
-      >
-        <GlassBackdrop borderRadius={theme.radius.full} />
-        <AppIcon
-          name="bell"
-          variant="light"
-          size={theme.layout.headerActionIconSize}
-        />
-      </Pressable>
+      {UI_PREVIEW_ENABLED ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={copy.notifications}
+          onPress={() => openPanel({ kind: "notifications" })}
+          hitSlop={theme.spacing.xs}
+          style={({ pressed }) => [
+            styles.control,
+            {
+              minWidth: theme.layout.compactTouchTarget,
+              minHeight: theme.layout.compactTouchTarget,
+              borderRadius: theme.radius.full,
+              backgroundColor: theme.colors.surface,
+              borderWidth: 1,
+              borderColor: theme.colors.border,
+              opacity: pressed ? theme.motion.pressOpacity : 1,
+            },
+          ]}
+        >
+          <AppIcon
+            name="bell"
+            variant="outline"
+            size={theme.layout.headerActionIconSize}
+          />
+        </Pressable>
+      ) : null}
     </View>
   );
 }

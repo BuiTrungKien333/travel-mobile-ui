@@ -1,5 +1,5 @@
-import { useCallback, useMemo, useState } from "react";
-import { View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { StyleSheet, View } from "react-native";
 import { Image } from "expo-image";
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
@@ -35,6 +35,9 @@ export function TripDayMap({
   const { copy: integration } = useItineraryCopy();
   const [staticOnly, setStaticOnly] = useState(false);
   const [failedImage, setFailedImage] = useState<string>();
+  const [imageSize, setImageSize] = useState<{ width: number; height: number }>();
+  const resizeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => clearTimeout(resizeTimer.current), []);
   const showStatic = useCallback(() => setStaticOnly(true), []);
   const pins = useMemo(() => {
     const points = tripMapPins(stops, locale);
@@ -82,18 +85,37 @@ export function TripDayMap({
       path.length > 1 ? polyline : undefined,
       tripMapToken,
       theme.colors.primaryText,
+      imageSize,
     );
   if (uri && failedImage !== uri)
     return (
-      <Image
-        source={uri}
-        style={{ flex: 1 }}
-        contentFit="contain"
-        cachePolicy="memory"
-        accessibilityLabel={integration.staticMap}
-        accessible
-        onError={() => setFailedImage(uri)}
-      />
+      <View
+        style={{ flex: 1, minHeight: 0 }}
+        onLayout={({ nativeEvent }) => {
+          const width = Math.round(nativeEvent.layout.width);
+          const height = Math.round(nativeEvent.layout.height);
+          clearTimeout(resizeTimer.current);
+          if (width <= 0 || height <= 0) return;
+          // Fetch once the drag settles, rather than one image per animation frame.
+          resizeTimer.current = setTimeout(() => {
+            setImageSize((previous) =>
+              previous?.width === width && previous.height === height
+                ? previous
+                : { width, height },
+            );
+          }, theme.motion.tabTransitionDuration);
+        }}
+      >
+        <Image
+          source={uri}
+          style={StyleSheet.absoluteFill}
+          contentFit="cover"
+          cachePolicy="memory"
+          accessibilityLabel={integration.staticMap}
+          accessible
+          onError={() => setFailedImage(uri)}
+        />
+      </View>
     );
 
   return stops.length ? (

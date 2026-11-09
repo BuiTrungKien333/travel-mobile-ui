@@ -1,3 +1,4 @@
+import { svgDataUri } from "@/utils/svg-data-uri";
 import { Image } from "expo-image";
 import { Pressable, StyleSheet, View } from "react-native";
 import Animated, {
@@ -46,9 +47,9 @@ export function NavigationCameraButton({
       reduceMotion: ReduceMotion.System,
     });
   };
-  const gradientUri = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
+  const gradientUri = svgDataUri(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${diskSize}" height="${diskSize}" viewBox="0 0 ${diskSize} ${diskSize}"><defs><linearGradient id="shutter" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="${diskSize}" y2="${diskSize}"><stop offset="0" stop-color="${theme.colors.primary}"/><stop offset="1" stop-color="${theme.colors.gradientActionEnd}"/></linearGradient></defs><rect width="${diskSize}" height="${diskSize}" fill="url(#shutter)"/></svg>`,
-  )}`;
+  );
   return (
     <Animated.View style={animatedStyle}>
       <Animated.View

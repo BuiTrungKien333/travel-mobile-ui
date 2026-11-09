@@ -1,6 +1,17 @@
 import { useI18n } from "@/hooks/use-i18n";
 
 const vi = {
+  selectMultiple: "Chọn nhiều",
+  selectAll: "Chọn tất cả",
+  clearSelection: "Bỏ chọn tất cả",
+  cancelSelection: "Hủy chọn",
+  selectedCount: "Đã chọn {count} địa điểm",
+  assignSelected: "Xếp {count} địa điểm vào ngày…",
+  assignTitle: "Chọn ngày để xếp lịch",
+  dayLabel: "Ngày",
+  assignHint: "Các điểm đã chọn sẽ được thêm cuối lịch ngày này.",
+  assignConfirm: "Thêm vào ngày {day}",
+  dayCapacity: "Ngày này sẽ vượt giới hạn 100 điểm dừng. Hãy chọn ít điểm hơn hoặc chọn ngày khác.",
   schedule: "Xếp vào lịch",
   clearTime: "Bỏ giờ đến",
   edit: "Sửa điểm dừng",
@@ -49,6 +60,17 @@ const vi = {
     "Chưa có gợi ý tuyến đường. Bạn có thể sắp xếp thủ công.",
 };
 const en: typeof vi = {
+  selectMultiple: "Select multiple",
+  selectAll: "Select all",
+  clearSelection: "Deselect all",
+  cancelSelection: "Cancel selection",
+  selectedCount: "{count} places selected",
+  assignSelected: "Schedule {count} places…",
+  assignTitle: "Choose a day",
+  dayLabel: "Day",
+  assignHint: "Selected places will be added to the end of this day's itinerary.",
+  assignConfirm: "Add to day {day}",
+  dayCapacity: "This would exceed 100 stops for the day. Select fewer places or another day.",
   schedule: "Schedule stop",
   clearTime: "Clear arrival time",
   edit: "Edit stop",

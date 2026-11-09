@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Keyboard, Pressable, StyleSheet, TextInput, View } from "react-native";
 
+import { canConfigureServer } from "@/services/api/server-connection";
 import { AppButton } from "@/components/ui/app-button";
 import { AppInput } from "@/components/ui/app-input";
 import { AppText } from "@/components/ui/app-text";
@@ -196,6 +197,9 @@ export function LoginScreen() {
           }}
         />
         <GoogleFeedback error={google.error} outcome={google.data} />
+        {canConfigureServer ? <AppButton variant="outline" size="small" onPress={() => router.push("/connection")}>
+          {locale === "vi" ? "Kết nối máy chủ" : "Server connection"}
+        </AppButton> : null}
       </View>
     </AuthScaffold>
   );

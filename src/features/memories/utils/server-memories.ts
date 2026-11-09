@@ -37,6 +37,8 @@ export function mergeMemories(
     (memory) =>
       memory.local &&
       memory.local.userId === userId &&
+      // Uploaded backups must not resurrect a photo removed on the server.
+      !memory.local.uploaded &&
       !remote.some(
         (item) => item.id === memory.local?.serverId && item.media.length > 0,
       ),

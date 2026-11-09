@@ -41,6 +41,9 @@ import {
 import { useProfile } from "@/features/auth/hooks/use-auth";
 import { ApiError } from "@/services/api/api-error";
 import { authSession } from "@/features/auth/services/auth-session";
+import { MEMORY_IMPORT_LIMIT } from "@/features/memories/constants/memory-limits";
+import type { ImportSource } from "@/features/memories/services/import-photos";
+import { PhotoImportSheet } from "./photo-import-sheet";
 
 const CAMERA_READY_TIMEOUT_MS = 15000;
 
@@ -63,6 +66,9 @@ export function NativeTripCamera(
   const operation = useRef(false);
   const requestedOnOpen = useRef(false);
   const [busy, setBusy] = useState(false);
+  const [importSources, setImportSources] = useState<ImportSource[] | null>(
+    null,
+  );
   const [facing, setFacing] = useState<CameraType>("back");
   const [flashOn, setFlashOn] = useState(false);
   const [zoom, setZoom] = useState(1);
@@ -99,17 +105,21 @@ export function NativeTripCamera(
   );
   const focused = useIsFocused();
   const navigation = useNavigation();
-  usePreventRemove(busy || (!!pending && !pending.id), ({ data }) => {
-    if (operation.current) return;
-    Alert.alert(copy.unsavedTitle, copy.unsavedHint, [
-      { text: copy.keepPhoto, style: "cancel" },
-      {
-        text: copy.leavePhoto,
-        style: "destructive",
-        onPress: () => navigation.dispatch(data.action),
-      },
-    ]);
-  });
+  usePreventRemove(
+    busy || !!importSources || (!!pending && !pending.id),
+    ({ data }) => {
+      if (importSources) return;
+      if (operation.current) return;
+      Alert.alert(copy.unsavedTitle, copy.unsavedHint, [
+        { text: copy.keepPhoto, style: "cancel" },
+        {
+          text: copy.leavePhoto,
+          style: "destructive",
+          onPress: () => navigation.dispatch(data.action),
+        },
+      ]);
+    },
+  );
   const panelOpen = useTripPreview((state) => state.panel !== null);
   const savePhoto = useTripPreview((state) => state.saveLocalPhoto);
   const exportPhoto = useTripPreview((state) => state.exportLocalPhoto);
@@ -119,7 +129,8 @@ export function NativeTripCamera(
   const { upload } = useMemoryActions();
   const operationSession = useRef<number | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
-  const active = foreground && focused && !panelOpen && !props.suspended;
+  const active =
+    foreground && focused && !panelOpen && !props.suspended && !importSources;
   useEffect(() => {
     if (
       props.requestOnOpen &&
@@ -189,15 +200,17 @@ export function NativeTripCamera(
           error instanceof PhotoActionError
             ? photoCopy[error.code]
             : error instanceof ApiError
-              ? error.code === "UPLOAD_002"
-                ? copy.tooLarge
-                : error.code === "UPLOAD_003"
-                  ? copy.invalidType
-                  : error.code === "UPLOAD_008"
-                    ? copy.imageTooLarge
-                    : error.code === "MEMORY_FUTURE_DATE"
-                      ? copy.futureDate
-                      : copy.uploadError
+              ? error.code === "UPLOAD_005"
+                ? copy.importLimit
+                : error.code === "UPLOAD_002"
+                  ? copy.tooLarge
+                  : error.code === "UPLOAD_003"
+                    ? copy.invalidType
+                    : error.code === "UPLOAD_008"
+                      ? copy.imageTooLarge
+                      : error.code === "MEMORY_FUTURE_DATE"
+                        ? copy.futureDate
+                        : copy.uploadError
               : copy.photoError,
         );
     } finally {
@@ -310,17 +323,31 @@ export function NativeTripCamera(
       const result = await launchImageLibraryAsync({
         mediaTypes: ["images"],
         allowsEditing: false,
-        allowsMultipleSelection: false,
+        allowsMultipleSelection: true,
+        selectionLimit: MEMORY_IMPORT_LIMIT,
         quality: theme.layout.cameraPhotoQuality,
         exif: false,
       });
-      if (result.canceled || !result.assets[0] || !mounted.current) return;
-      const photo = await prepareCameraPhoto(result.assets[0]);
-      if (mounted.current) {
-        setPending(photo);
-        setReady(false);
-        await persistPhoto(photo);
-      }
+      if (result.canceled || !result.assets.length || !mounted.current) return;
+      if (result.assets.length > MEMORY_IMPORT_LIMIT)
+        throw new ApiError("UPLOAD_005");
+      if (
+        !props.quick &&
+        props.tripId &&
+        !trips.some((trip) => trip.id === props.tripId)
+      )
+        throw new ApiError("TRIP_001");
+      if (operationSession.current !== authSession.getVersion())
+        throw new ApiError("CANCELLED");
+      setImportSources(
+        result.assets.map(({ uri, width, height, mimeType }) => ({
+          uri,
+          width,
+          height,
+          mimeType,
+        })),
+      );
+      setReady(false);
     });
   }
   function retake() {
@@ -420,11 +447,11 @@ export function NativeTripCamera(
             mode="picture"
             mirror={facing === "front"}
             flash={flashOn ? (facing === "front" ? "screen" : "on") : "off"}
-            ratio="1:1"
             zoom={0}
             style={StyleSheet.absoluteFill}
             onCameraReady={() => setReady(true)}
-            onMountError={() => {
+            onMountError={(event) => {
+              console.warn("WeGo camera could not start", event.message);
               setMountError(true);
               setReady(false);
             }}
@@ -457,6 +484,24 @@ export function NativeTripCamera(
   return (
     <CameraLayout
       {...props}
+      overlay={
+        importSources ? (
+          <PhotoImportSheet
+            sources={importSources}
+            trip={
+              !props.quick
+                ? trips.find((trip) => trip.id === props.tripId)
+                : undefined
+            }
+            date={props.date}
+            stopId={props.stopId}
+            onClose={() => {
+              setImportSources(null);
+              setReady(false);
+            }}
+          />
+        ) : undefined
+      }
       onBack={() => {
         if (!operation.current) props.onBack();
       }}

@@ -66,6 +66,9 @@ export const translations = {
     "validation.confirmPasswordRequired": "Vui lòng xác nhận mật khẩu.",
     "validation.passwordMismatch": "Mật khẩu xác nhận chưa khớp.",
     "common.retry": "Thử lại",
+    "common.screenErrorTitle": "Chưa thể hiển thị màn hình này",
+    "common.screenErrorHint":
+      "Hãy thử mở lại. Nếu vẫn gặp lỗi, vui lòng đóng và mở lại ứng dụng.",
     "auth.profile.title": "Tài khoản của bạn",
     "auth.profile.edit": "Sửa thông tin cá nhân",
     "auth.profile.save": "Lưu thay đổi",
@@ -220,6 +223,9 @@ export const translations = {
     "validation.confirmPasswordRequired": "Please confirm your password.",
     "validation.passwordMismatch": "The passwords do not match.",
     "common.retry": "Try again",
+    "common.screenErrorTitle": "This screen couldn't be displayed",
+    "common.screenErrorHint":
+      "Please try again. If the problem continues, close and reopen the app.",
     "auth.profile.title": "Your account",
     "auth.profile.edit": "Edit profile",
     "auth.profile.save": "Save changes",

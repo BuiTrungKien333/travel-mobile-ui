@@ -27,7 +27,7 @@ export function TripDayToolbar({
   routeSummary: string;
   routeMetrics?: { km: number; minutes: number };
   transportLabel?: string;
-  transportIcon?: "car" | "walk" | "route";
+  transportIcon?: "car" | "walk" | "bicycle" | "route";
   onSheetChange: (sheet: TripDetailsSheetState) => void;
   onEditDay?: () => void;
   actions?: ReactNode;

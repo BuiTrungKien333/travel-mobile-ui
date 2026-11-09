@@ -68,6 +68,8 @@ export function MemoryLibrarySwitcher({
                   {
                     backgroundColor: theme.colors.surface,
                     borderRadius: theme.radius.full,
+                    borderWidth: 1,
+                    borderColor: theme.colors.primary,
                   },
                 ]}
               />

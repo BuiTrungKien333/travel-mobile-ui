@@ -186,27 +186,35 @@ export function TripDetailsPanels({
           ) : null}
           {sheet.kind === "transport" && day && canEdit ? (
             <>
-              {tripTransportModes.map((transport) => (
-                <AppButton
-                  key={transport}
-                  variant={
-                    transport === (day.transport ?? "car") ? "soft" : "outline"
-                  }
-                  accessibilityState={{
-                    selected: transport === (day.transport ?? "car"),
-                  }}
-                  leadingIcon={<AppIcon name={transport} />}
-                  onPress={() =>
-                    commit({
-                      kind: "day",
-                      date: day.date,
-                      values: { transport },
-                    })
-                  }
-                >
-                  {copy[transport]}
-                </AppButton>
-              ))}
+              {tripTransportModes.map((transport) => {
+                const isSelected = transport === (day.transport ?? "car");
+                return (
+                  <AppButton
+                    key={transport}
+                    variant={isSelected ? "soft" : "outline"}
+                    accessibilityState={{ selected: isSelected }}
+                    leadingIcon={
+                      <AppIcon
+                        name={transport}
+                        color={
+                          isSelected
+                            ? theme.colors.onSoftAction
+                            : theme.colors.text
+                        }
+                      />
+                    }
+                    onPress={() =>
+                      commit({
+                        kind: "day",
+                        date: day.date,
+                        values: { transport },
+                      })
+                    }
+                  >
+                    {copy[transport]}
+                  </AppButton>
+                );
+              })}
             </>
           ) : null}
           {sheet.kind === "reorder" && day && scheduledDay ? (

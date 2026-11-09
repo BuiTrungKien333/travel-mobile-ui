@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { floatingNavigationLayout } from "./floating-navigation-layout";
 import { NavigationCameraButton } from "./navigation-camera-button";
-import { NotchedNavigationBackdrop } from "./notched-navigation-backdrop";
+import { NavigationBarSurface } from "./navigation-bar-surface";
 
 type FloatingBottomNavigationProps = BottomTabBarProps & {
   onCapture: () => void;
@@ -169,7 +169,6 @@ export function FloatingNavigation({
           styles.frame,
           {
             maxWidth: theme.layout.tabBarMaxWidth,
-            paddingTop: theme.layout.tabBarCameraRise,
             opacity: frameWidth > 0 ? 1 : 0,
           },
         ]}
@@ -180,7 +179,7 @@ export function FloatingNavigation({
             padding: theme.layout.tabBarPadding,
           }}
         >
-          <NotchedNavigationBackdrop
+          <NavigationBarSurface
             width={frameWidth}
             height={geometry.barHeight}
           />
@@ -275,7 +274,7 @@ export function FloatingNavigation({
             styles.camera,
             {
               left: geometry.cameraLeft,
-              top: theme.layout.tabBarPadding,
+              top: (geometry.barHeight - theme.layout.tabBarCameraSize) / 2,
             },
           ]}
         >

@@ -1,6 +1,26 @@
 import { useI18n } from "@/hooks/use-i18n";
 
 const vi = {
+  importTitle: "Thêm ảnh vào kỷ niệm",
+  importLocalHint:
+    "Ảnh được giữ trong ứng dụng trước khi đồng bộ. Ảnh lỗi có thể thử lại trong Xem sau.",
+  importInboxHint:
+    "Ảnh được giữ trong Xem sau trên thiết bị. Chọn chuyến đi sau để đồng bộ.",
+  importWaiting: "Đang chờ",
+  importSaving: "Đang lưu vào ứng dụng…",
+  importSaved: "Đã giữ trong Xem sau",
+  importUploaded: "Đã đồng bộ",
+  importSaveFailed: "Chưa lưu được ảnh này. Hãy thử lại trước khi đóng.",
+  importUploadFailed: "Chưa đồng bộ. Bản sao trong ứng dụng vẫn được giữ.",
+  importSessionChanged:
+    "Phiên đăng nhập đã thay đổi. Vui lòng mở lại thư viện sau khi đăng nhập.",
+  importSummary: "ảnh đã lưu",
+  importSynced: "đã đồng bộ",
+  importRetry: "Thử lại ảnh lỗi",
+  importDone: "Xong",
+  importPhoto: "Ảnh",
+  importLimit:
+    "Mỗi lần chọn tối đa 10 ảnh. Hãy chọn lại để giữ đủ các ảnh bạn muốn.",
   libraryCopyError:
     "Ảnh đã giữ trong ứng dụng, nhưng chưa chép được vào thư viện điện thoại. Bạn vẫn có thể xem và đồng bộ ảnh.",
   savedPrivateInbox: "Đã giữ ảnh trong ứng dụng và Xem sau",
@@ -74,6 +94,26 @@ const vi = {
   savedDownload: "Đã lưu trong ứng dụng và gửi ảnh đến trình tải xuống",
 };
 const en: typeof vi = {
+  importTitle: "Add photos to memories",
+  importLocalHint:
+    "Photos are kept in the app before syncing. Retry failed uploads in Saved for later.",
+  importInboxHint:
+    "Photos stay in Saved for later on this device. Choose a trip later to sync them.",
+  importWaiting: "Waiting",
+  importSaving: "Saving in the app…",
+  importSaved: "Kept in Saved for later",
+  importUploaded: "Synced",
+  importSaveFailed: "Couldn't keep this photo. Retry before closing.",
+  importUploadFailed: "Couldn't sync. The copy in the app is still kept.",
+  importSessionChanged:
+    "Your session changed. Reopen the library after signing in.",
+  importSummary: "photos kept",
+  importSynced: "synced",
+  importRetry: "Retry failed photos",
+  importDone: "Done",
+  importPhoto: "Photo",
+  importLimit:
+    "Select up to 10 photos at a time. Please select again to include all the photos you want.",
   libraryCopyError:
     "The photo is kept in the app, but couldn't be copied to your phone library. You can still view and sync it.",
   savedPrivateInbox: "Photo kept in the app and Saved for later",

@@ -65,8 +65,8 @@ export function OngoingTripHeader({
             paddingVertical: theme.spacing.xxs,
             paddingHorizontal: theme.spacing.sm,
             borderRadius: theme.radius.full,
-            borderWidth: StyleSheet.hairlineWidth,
-            borderColor: theme.colors.glassClockBorder,
+            borderWidth: 1,
+            borderColor: theme.colors.success,
           },
         ]}
       >

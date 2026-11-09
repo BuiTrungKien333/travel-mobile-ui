@@ -239,20 +239,21 @@ export function PlacePickerScreen({
                 {
                   gap: theme.spacing.sm,
                   paddingHorizontal: theme.spacing.md,
-                  paddingTop: theme.spacing.xxl,
+                  paddingTop: theme.spacing.xs,
                   paddingBottom: theme.spacing.xs,
                 },
               ]}
             >
               <DetailIconButton
                 name="back"
+                variant="plain"
                 label={inPreview ? copy.returnResults : copy.back}
                 onPress={() => (inPreview ? setFocus(undefined) : onClose())}
               />
               <View style={styles.fill}>
                 <AppText
-                  variant="heading"
-                  style={{ fontSize: theme.typography.fontSize.lg }}
+                  variant="subheading"
+                  accessibilityRole="header"
                 >
                   {inPreview ? copy.mapTitle : copy.title}
                 </AppText>
@@ -323,7 +324,7 @@ export function PlacePickerScreen({
                 contentContainerStyle={{
                   paddingHorizontal: theme.spacing.lg,
                   paddingBottom: theme.spacing.xl,
-                  gap: theme.spacing.md,
+                  gap: theme.spacing.sm,
                 }}
                 ListHeaderComponent={
                   <View
@@ -355,7 +356,7 @@ export function PlacePickerScreen({
                           justifyContent: "center",
                         }}
                       >
-                        <AppText variant="caption" tone="primary">
+                        <AppText variant="body" tone="primary">
                           {selectedOnly
                             ? copy.all
                             : `${copy.selected} (${chosen.length})`}

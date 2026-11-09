@@ -12,6 +12,7 @@ export async function prepareCameraPhoto(
     format?: "jpg" | "png";
   },
   zoom = 1,
+  square = true,
 ) {
   // A missing optional editor in an older build must not prevent taking a photo.
   if (
@@ -33,9 +34,15 @@ export async function prepareCameraPhoto(
   const crop = cameraPhotoCrop(photo.width, photo.height, zoom);
   const context = ImageManipulator.manipulate(photo.uri);
   try {
-    context.crop(crop);
-    if (crop.width > layout.cameraMaxPhotoSize)
-      context.resize({ width: layout.cameraMaxPhotoSize });
+    if (square) context.crop(crop);
+    const width = square ? crop.width : photo.width;
+    const height = square ? crop.height : photo.height;
+    if (Math.max(width, height) > layout.cameraMaxPhotoSize)
+      context.resize(
+        width >= height
+          ? { width: layout.cameraMaxPhotoSize }
+          : { height: layout.cameraMaxPhotoSize },
+      );
     const rendered = await context.renderAsync();
     try {
       const result = await rendered.saveAsync({

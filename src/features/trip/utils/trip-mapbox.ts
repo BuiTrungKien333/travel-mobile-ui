@@ -72,11 +72,14 @@ export function tripStaticMapUri(
   polyline: string | undefined,
   token: string,
   color: string,
+  size: { width: number; height: number } = { width: 640, height: 420 },
 ) {
   if (!/^pk\.[\w.-]+$/.test(token)) return;
+  const scale = Math.min(1, 1280 / Math.max(size.width, size.height));
+  const dimensions = `${Math.max(1, Math.round(size.width * scale))}x${Math.max(1, Math.round(size.height * scale))}`;
   if (!pins.length) {
     const [longitude, latitude] = TRIP_MAP_DEFAULT_CENTER;
-    return `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/${longitude},${latitude},${TRIP_MAP_DEFAULT_ZOOM}/640x420@2x?access_token=${encodeURIComponent(token)}`;
+    return `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/${longitude},${latitude},${TRIP_MAP_DEFAULT_ZOOM}/${dimensions}@2x?access_token=${encodeURIComponent(token)}`;
   }
   const markerColor = color.replace("#", "");
   const markers = pins
@@ -93,7 +96,7 @@ export function tripStaticMapUri(
     ? `${first.longitude},${first.latitude},15`
     : "auto";
   const makeUrl = (overlay: string) =>
-    `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/${overlay}/${viewport}/640x420@2x?access_token=${encodeURIComponent(token)}${viewport === "auto" ? "&padding=32" : ""}`;
+    `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/${overlay}/${viewport}/${dimensions}@2x?access_token=${encodeURIComponent(token)}${viewport === "auto" ? "&padding=32" : ""}`;
   if (polyline) {
     const encoded = encodeURIComponent(polyline)
       .replace(/\(/g, "%28")

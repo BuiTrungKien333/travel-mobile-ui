@@ -14,6 +14,7 @@ import {
 import { UI_PREVIEW_ENABLED } from "@/constants/development";
 import { MagicLinkProvider } from "@/features/auth/components/magic-link-provider";
 import { authSession } from "@/features/auth/services/auth-session";
+import { restoreServerConnection } from "@/services/api/server-connection";
 import { queryClient } from "@/services/api/query-client";
 import { useAuthStore } from "@/store/use-auth-store";
 
@@ -24,11 +25,13 @@ import { Roboto_500Medium } from "@expo-google-fonts/roboto/500Medium";
 import { Roboto_600SemiBold } from "@expo-google-fonts/roboto/600SemiBold";
 import { Roboto_700Bold } from "@expo-google-fonts/roboto/700Bold";
 
+export { RouteErrorScreen as ErrorBoundary } from "@/components/common/route-error-screen";
+
 export default function RootLayout() {
   const status = useAuthStore((state) => state.status);
   useEffect(() => {
     // Tạm ngưng khôi phục phiên/gọi refresh API trong bản xem trước UI.
-    if (!UI_PREVIEW_ENABLED) void authSession.restore();
+    if (!UI_PREVIEW_ENABLED) void restoreServerConnection().then(() => authSession.restore());
     if (Platform.OS === "web") return;
     const subscription = AppState.addEventListener("change", (state) =>
       focusManager.setFocused(state === "active"),
@@ -62,6 +65,7 @@ export default function RootLayout() {
                 }}
               >
                 <Stack.Screen name="index" />
+                <Stack.Screen name="connection" />
                 <Stack.Screen name="forgot-password" />
                 <Stack.Screen name="verify-email" />
                 <Stack.Screen name="reset-password" />

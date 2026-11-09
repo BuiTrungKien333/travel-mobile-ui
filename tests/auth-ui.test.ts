@@ -100,8 +100,8 @@ function harness() {
       },
     },
     "react/jsx-runtime": {
-      jsx: (type: unknown, props: Element["props"]) => ({ type, props }),
-      jsxs: (type: unknown, props: Element["props"]) => ({ type, props }),
+      jsx: (type: unknown, props: Element["props"]) => typeof type === "function" && ["ProfileIdentityCard", "ProfileMenuRow", "ProfileSection"].includes(type.name) ? type(props) : ({ type, props }),
+      jsxs: (type: unknown, props: Element["props"]) => typeof type === "function" && ["ProfileIdentityCard", "ProfileMenuRow", "ProfileSection"].includes(type.name) ? type(props) : ({ type, props }),
     },
     "react-native": {
       View: "View",
@@ -112,6 +112,9 @@ function harness() {
       Keyboard: { dismiss: () => {} },
       StyleSheet: { create: (value: unknown) => value, hairlineWidth: 1 },
     },
+    "../components/profile-preferences": { ProfilePreferences: "ProfilePreferences" },
+    "../components/profile-settings-sheet": { ProfileSettingsSheet: "ProfileSettingsSheet" },
+    "@/services/api/server-connection": { canConfigureServer: false },
     "expo-image": { Image: "Image" },
     "react-native-reanimated": {
       __esModule: true,
@@ -239,7 +242,7 @@ test("Profile preserves the account name and routes password recovery to the exi
   assert.ok(nodes(tree).some((node) => node.props.children === user.fullName));
   assert.ok(
     nodes(tree).some(
-      (node) => node.props.children === "auth.profile.memberRole",
+      (node) => typeof node.props.children === "string" && node.props.children.includes("auth.profile.memberRole"),
     ),
   );
   press(
@@ -265,7 +268,7 @@ test("Profile handles disabled preview queries without an endless spinner and re
   assert.ok(
     nodes(tree).some((node) => node.props.children === "auth.profile.empty"),
   );
-  assert.ok(nodes(tree).some((node) => node.type === "LanguageSwitcher"));
+  assert.ok(nodes(tree).some((node) => node.type === "ProfilePreferences"));
   assert.equal(button(tree, "auth.session.logout"), undefined);
 });
 

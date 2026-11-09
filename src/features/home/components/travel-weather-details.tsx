@@ -168,7 +168,7 @@ export function TravelWeatherDetails({
                   styles.card,
                   styles.hourColumn,
                   {
-                    minWidth: layout.weatherModalHourMinWidth,
+                    minWidth: layout.weatherHourCardWidth,
                     paddingHorizontal: spacing.sm,
                     paddingVertical: spacing.md,
                     gap: spacing.xs,
@@ -180,10 +180,8 @@ export function TravelWeatherDetails({
                       : rainy
                         ? colors.weatherRainSurface
                         : colors.weatherGlassSurface,
-                    borderWidth: StyleSheet.hairlineWidth,
-                    borderColor: restrained
-                      ? colors.border
-                      : colors.glassClockBorder,
+                    borderColor: colors.border,
+                    borderWidth: 1,
                     boxShadow: restrained
                       ? undefined
                       : [
@@ -398,7 +396,7 @@ export function TravelWeatherDetails({
 }
 const styles = StyleSheet.create({
   card: { overflow: "hidden", borderCurve: "continuous" },
-  hourColumn: { flexGrow: 1, alignItems: "center" },
+  hourColumn: { flexGrow: 1, flexShrink: 0, alignItems: "center" },
   artShadow: { position: "absolute", alignSelf: "center" },
   adviceIcon: { alignItems: "center", justifyContent: "center" },
 });
