@@ -186,7 +186,7 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
     );
   const handleBudgetChange = (text: string) =>
     budgetField.onChange(text.replace(/\D/g, ""));
-  const submitForm = handleSubmit(
+  const submitForm = () => handleSubmit(
     async (values) => {
       Keyboard.dismiss();
       if (!UI_PREVIEW_ENABLED) {
@@ -285,7 +285,7 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
       )
         scrollRef.current?.scrollTo({ y: 0, animated: !reduceMotion });
     },
-  );
+  )();
 
   const submit = async () => {
     // Guard before async validation, rather than waiting for the next loading-state render.
@@ -644,7 +644,7 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
                   titleEdited.current = true;
                   titleField.onChange(text);
                 }}
-                ref={titleField.ref}
+                ref={(instance) => titleField.ref(instance)}
                 accessibilityLabel={copy.tripTitle}
                 maxLength={tripFormLimits.title}
                 onFocus={() => setIsTitleFocused(true)}
@@ -1008,7 +1008,7 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
                       allowFontScaling
                       value={budget}
                       onChangeText={handleBudgetChange}
-                      ref={budgetField.ref}
+                      ref={(instance) => budgetField.ref(instance)}
                       accessibilityLabel={copy.budget}
                       maxLength={20}
                       onFocus={() => setIsBudgetFocused(true)}

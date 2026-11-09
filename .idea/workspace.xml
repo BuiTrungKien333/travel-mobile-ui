@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="NONE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="dc9c1dd9-5974-46cc-9543-1b33a9dda264" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/app.json" beforeDir="false" afterPath="$PROJECT_DIR$/app.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/eas.json" beforeDir="false" afterPath="$PROJECT_DIR$/eas.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/common/navigation-camera-button.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/common/navigation-camera-button.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/home/components/check-in-prompt.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/home/components/check-in-prompt.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/home/components/journal-photo-viewer.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/home/components/journal-photo-viewer.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/home/components/ongoing-trip-panels.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/home/components/ongoing-trip-panels.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/home/components/upcoming-trip-card.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/home/components/upcoming-trip-card.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/home/components/weather-packing-checklist.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/home/components/weather-packing-checklist.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/home/hooks/use-photo-viewer-motion.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/home/hooks/use-photo-viewer-motion.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/trip/components/connected-trip-recap.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/trip/components/connected-trip-recap.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/trip/components/create-trip-modal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/trip/components/create-trip-modal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/trip/components/trip-planning-map.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/trip/components/trip-planning-map.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/trip/components/trip-start-time-field.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/trip/components/trip-start-time-field.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/trip/hooks/use-connected-timeline-actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/trip/hooks/use-connected-timeline-actions.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/trip/hooks/use-picker-sheet-motion.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/trip/hooks/use-picker-sheet-motion.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/trip/hooks/use-planning-map-collapse.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/trip/hooks/use-planning-map-collapse.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/trip/hooks/use-trip-timeline-drag.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/trip/hooks/use-trip-timeline-drag.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/trip/screens/connected-trip-details-screen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/trip/screens/connected-trip-details-screen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/trip/screens/connected-trip-stop-details-screen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/trip/screens/connected-trip-stop-details-screen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/trip/screens/place-picker-screen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/trip/screens/place-picker-screen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/floating-navigation.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tests/floating-navigation.test.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/trip-map-resize.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tests/trip-map-resize.test.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/trip-picker-motion.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tests/trip-picker-motion.test.ts" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "customColor": "",
+  "associatedIndex": 2
+}]]></component>
+  <component name="ProjectId" id="3LpiPoo8rxqZH3oO16ymL7bWpT8" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "git-widget-placeholder": "test/feature",
+    "kotlin-language-version-configured": "true"
+  }
+}]]></component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="dc9c1dd9-5974-46cc-9543-1b33a9dda264" name="Changes" comment="" />
+      <created>1794157390121</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1794157390121</updated>
+    </task>
+    <servers />
+  </component>
+</project>

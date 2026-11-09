@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "travel-mobile-ui",
-    "slug": "travel-mobile-ui",
+    "slug": "travel-mobile-ui-apk",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -67,6 +67,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "95d9d8c1-cc2e-41c3-842c-915389aaa078"
+      }
+    },
+    "owner": "daisuki0951"
   }
 }

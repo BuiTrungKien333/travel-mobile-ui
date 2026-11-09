@@ -26,7 +26,7 @@ export function useConnectedTimelineActions({
   stops,
   editable,
   mutation,
-  saving,
+  saving: savingRef,
 }: {
   selectionKey: string;
   date?: string;
@@ -48,16 +48,20 @@ export function useConnectedTimelineActions({
   const [pending, setPending] = useState<Operation | null>(null);
   const [failed, setFailed] = useState<Operation | null>(null);
   const [undo, setUndo] = useState<Snapshot | null>(null);
+  const [previousSelection, setPreviousSelection] = useState(selectionKey);
   const dragSnapshot = useRef<Snapshot | null>(null);
   const currentSelection = useRef(selectionKey);
   const blocked =
     mutation.error instanceof ApiError &&
     ["TRIP_006", "TRIP_007", "TRIP_008"].includes(mutation.error.code);
 
-  useEffect(() => {
-    currentSelection.current = selectionKey;
+  if (previousSelection !== selectionKey) {
+    setPreviousSelection(selectionKey);
     setUndo(null);
     setFailed(null);
+  }
+  useEffect(() => {
+    currentSelection.current = selectionKey;
     dragSnapshot.current = null;
   }, [selectionKey]);
 
@@ -81,12 +85,12 @@ export function useConnectedTimelineActions({
   async function commit(operation: Operation) {
     if (
       !editable ||
-      saving.current ||
+      savingRef.current ||
       blocked ||
       operation.key !== currentSelection.current
     )
       return;
-    saving.current = true;
+    savingRef.current = true;
     mutation.reset();
     setPending(operation);
     setFailed(null);
@@ -111,7 +115,7 @@ export function useConnectedTimelineActions({
       setFailed(operation);
     } finally {
       setPending(null);
-      saving.current = false;
+      savingRef.current = false;
     }
   }
 

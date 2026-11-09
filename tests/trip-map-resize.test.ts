@@ -69,6 +69,7 @@ function harness() {
   };
   const load = tripModuleLoader({
     react: {
+      useCallback: (callback: unknown) => callback,
       useRef: (initial: Value) => {
         const index = refIndex++;
         return refs[index] ?? (refs[index] = { current: initial });

@@ -352,7 +352,7 @@ export function JourneySheet({
   const snapDuration = theme.motion.tabTransitionDuration;
   const minimumSwipe = theme.spacing.md;
   const sheetMotion = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }],
+    transform: [{ translateY: translateY.get() }],
   }));
   useEffect(() => () => cancelAnimation(translateY), [translateY]);
   const dragGesture = Gesture.Pan()
@@ -360,7 +360,7 @@ export function JourneySheet({
     .activeOffsetY(theme.spacing.sm)
     .failOffsetX([-theme.spacing.lg, theme.spacing.lg])
     .onUpdate((event) => {
-      translateY.value = Math.max(0, event.translationY);
+      translateY.set(Math.max(0, event.translationY));
     })
     .onEnd((event) => {
       if (
@@ -370,18 +370,18 @@ export function JourneySheet({
       ) {
         scheduleOnRN(onClose);
       } else {
-        translateY.value = withTiming(0, {
+        translateY.set(withTiming(0, {
           duration: snapDuration,
           reduceMotion: ReduceMotion.System,
-        });
+        }));
       }
     })
     .onFinalize((_event, success) => {
       if (!success)
-        translateY.value = withTiming(0, {
+        translateY.set(withTiming(0, {
           duration: snapDuration,
           reduceMotion: ReduceMotion.System,
-        });
+        }));
     });
   return (
     <Modal

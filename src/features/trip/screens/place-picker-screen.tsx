@@ -148,7 +148,7 @@ export function PlacePickerScreen({
       setCoordinate({ latitude: region.latitude, longitude: region.longitude });
     }
   }
-  const chooseCustom = handleSubmit(({ name }) => {
+  const chooseCustom = () => handleSubmit(({ name }) => {
     if (!coordinate) return;
     const stop: TripStop = {
       id: `custom-${Date.now()}`,
@@ -166,7 +166,7 @@ export function PlacePickerScreen({
     setSelectedOnly(false);
     setQuery("");
     setFocus(undefined);
-  });
+  })();
   function confirmPlace() {
     if (focus?.locationType === "address") {
       void handleSubmit(({ name }) => {

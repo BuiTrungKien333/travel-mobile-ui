@@ -5,6 +5,11 @@
       "distribution": "internal",
       "android": { "buildType": "apk" }
     },
+    "preview": {
+      "distribution": "internal",
+      "environment": "preview",
+      "android": { "buildType": "apk", "credentialsSource": "local" }
+    },
     "production": {}
   }
 }

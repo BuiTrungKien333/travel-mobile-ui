@@ -70,6 +70,10 @@ export function usePickerSheetMotion(
   const backdropMotion = useAnimatedStyle(() => ({
     opacity: Math.max(0, Math.min(1, 1 - translateY.get() / fadeDistance)),
   }));
+  function finishDismiss() {
+    Keyboard.dismiss();
+    onClose();
+  }
   const dragGesture = Gesture.Pan()
     .enabled(!dismissDisabled)
     .activeOffsetY(theme.spacing.sm)
@@ -90,7 +94,7 @@ export function usePickerSheetMotion(
             height,
             { duration: exitDuration, reduceMotion: ReduceMotion.System },
             (finished) => {
-              if (finished) scheduleOnRN(finishClose);
+              if (finished) scheduleOnRN(finishDismiss);
             },
           ),
         );

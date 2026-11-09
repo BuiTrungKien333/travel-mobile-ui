@@ -94,11 +94,7 @@ export function JournalPhotoViewer({
   );
   const failed = photoStates[memory.id] === "failed";
   const loading = !photoStates[memory.id];
-  const [showSpinner, setShowSpinner] = useState(false);
   const [attempt, setAttempt] = useState(0);
-  useEffect(() => {
-    if (failed) setControls(true);
-  }, [failed]);
   const active = useRef(true);
   const actionInFlight = useRef(false);
   const removeAfterClose = useRef(false);
@@ -117,24 +113,13 @@ export function JournalPhotoViewer({
     );
     return () => clearTimeout(timer);
   }, [notice, theme.motion.photoViewerNoticeDuration]);
-  useEffect(() => {
-    if (!loading) {
-      setShowSpinner(false);
-      return;
-    }
-    const timer = setTimeout(
-      () => setShowSpinner(true),
-      theme.motion.enterDuration,
-    );
-    return () => clearTimeout(timer);
-  }, [loading, theme.motion.enterDuration]);
-
   function toggleControls() {
     setControls((value) => !value);
   }
   function changePage(next: number) {
     const photo = getSelection(memories[next].id);
     if (photo) setSelections((old) => ({ ...old, [photo.id]: photo }));
+    if (photoStates[memories[next].id] === "failed") setControls(true);
     setIndex(next);
     onActiveChange(memories[next].id);
     setNotice(null);
@@ -380,6 +365,7 @@ export function JournalPhotoViewer({
                               );
                             }}
                             onError={() => {
+                              if (selected) setControls(true);
                               setPhotoStates((old) => ({
                                 ...old,
                                 [photo.id]: "failed",
@@ -394,14 +380,7 @@ export function JournalPhotoViewer({
               </Animated.View>
             </View>
           </GestureDetector>
-          {showSpinner && !failed ? (
-            <View
-              pointerEvents="none"
-              style={[StyleSheet.absoluteFill, styles.center]}
-            >
-              <ActivityIndicator color={theme.colors.photoViewerText} />
-            </View>
-          ) : null}
+          {loading ? <PhotoLoadingIndicator key={`${memory.id}:${attempt}`} /> : null}
           {failed ? (
             <View
               style={[
@@ -503,6 +482,24 @@ export function JournalPhotoViewer({
       </GestureHandlerRootView>
     </Modal>
   );
+}
+
+function PhotoLoadingIndicator() {
+  const theme = useAppTheme();
+  const [visible, setVisible] = useState(false);
+  const delay = theme.motion.enterDuration;
+  useEffect(() => {
+    const timer = setTimeout(() => setVisible(true), delay);
+    return () => clearTimeout(timer);
+  }, [delay]);
+  return visible ? (
+    <View
+      pointerEvents="none"
+      style={[StyleSheet.absoluteFill, styles.center]}
+    >
+      <ActivityIndicator color={theme.colors.photoViewerText} />
+    </View>
+  ) : null;
 }
 
 const styles = StyleSheet.create({

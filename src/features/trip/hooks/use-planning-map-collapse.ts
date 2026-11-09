@@ -25,6 +25,14 @@ export function usePlanningMapCollapse<T>({
 }) {
   const theme = useAppTheme();
   const [hidden, setHidden] = useState(false);
+  const [previousContext, setPreviousContext] = useState({ enabled, selectionKey });
+  if (
+    previousContext.enabled !== enabled ||
+    previousContext.selectionKey !== selectionKey
+  ) {
+    setPreviousContext({ enabled, selectionKey });
+    setHidden(false);
+  }
   const collapsed = useSharedValue(false);
   const reduceMotion = useReducedMotion();
   const hideDistance = theme.layout.tripPlanningMapAutoHideDistance;
@@ -37,7 +45,6 @@ export function usePlanningMapCollapse<T>({
   const previousTime = useSharedValue(0);
   useEffect(() => {
     collapsed.set(false);
-    setHidden(false);
     target.set(-1);
     previousOffset.set(0);
     previousTime.set(0);

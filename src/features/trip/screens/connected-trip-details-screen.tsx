@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Modal, View } from "react-native";
 import { TextAction } from "@/features/home/components/home-primitives";
 import { TripDayTools } from "../components/trip-details-overview";
@@ -48,8 +48,7 @@ import { TripDayMap } from "../components/trip-day-map";
 import { TripDetailsActions } from "../components/trip-details-actions";
 import { ConnectedTripRecap } from "../components/connected-trip-recap";
 import { TripRecapCard } from "../components/trip-recap-card";
-import { TripTimelineTail } from "../components/trip-timeline-states";
-import { TripStartNode } from "../components/trip-timeline-states";
+import { TripTimelineTail, TripStartNode } from "../components/trip-timeline-states";
 import { ConnectedDayScheduleSheet } from "../components/connected-day-schedule-sheet";
 import { TripOptimizationSheet } from "../components/trip-optimization-preview";
 import { usePlanningMapCollapse } from "../hooks/use-planning-map-collapse";
@@ -614,6 +613,89 @@ export function ConnectedTripDetailsScreen({
       onMenu={openActions}
     />
   );
+  let optimizationSheet: ReactNode = null;
+  if (editor?.kind === "optimize") {
+    const proposal = optimize.data;
+    const ids =
+      proposal?.order.flatMap(
+        (placeId) =>
+          editor.stops.find((stop) => stop.placeId === placeId)?.id ??
+          [],
+      ) ?? [];
+    if (
+      proposal &&
+      ids.length === editor.stops.length &&
+      proposal.originalOrder.length === editor.stops.length &&
+      proposal.originalOrder.every(
+        (id, index) => id === editor.stops[index].placeId,
+      ) &&
+      ((proposal.originalDistanceMeters != null &&
+        proposal.originalDurationSeconds != null) ||
+        editor.route)
+    ) {
+      const before = {
+        km:
+          (proposal.originalDistanceMeters ??
+            editor.route?.distanceMeters ??
+            0) / 1000,
+        minutes: Math.ceil(
+          (proposal.originalDurationSeconds ??
+            editor.route?.durationSeconds ??
+            0) / 60,
+        ),
+      };
+      const after = {
+        km: proposal.distanceMeters / 1000,
+        minutes: Math.ceil(proposal.durationSeconds / 60),
+      };
+      optimizationSheet = (
+        <TripOptimizationSheet
+          day={{
+            date: editor.date,
+            stops: editor.stops.map((stop) => ({
+              ...stop,
+              visited: proposal.visitedOrder.includes(
+                stop.placeId ?? "",
+              ),
+            })),
+          }}
+          onClose={closeEditor}
+          busy={save.isPending}
+          problem={scheduleError}
+          onReload={
+            isConflict ? () => void refreshSchedule() : undefined
+          }
+          proposal={{
+            order: ids,
+            lockedPrefixIds: ids.slice(0, proposal.visitedOrder.length),
+            comparison: {
+              before,
+              after,
+              savedKm: Math.round((before.km - after.km) * 10) / 10,
+              savedMinutes: before.minutes - after.minutes,
+            },
+          }}
+          onApply={(order) =>
+            persistOrder(editor, order, proposal.visitedOrder)
+          }
+        />
+      );
+    } else {
+    optimizationSheet = (
+      <TripDetailsSheet
+        title={detailCopy.optimizeTitle}
+        onClose={closeEditor}
+        dismissDisabled={optimize.isPending}
+      >
+        <AppText accessibilityLiveRegion="polite">
+          {optimize.isPending
+            ? itineraryCopy.optimizeLoading
+            : itineraryCopy.optimizeUnavailable}
+        </AppText>
+      </TripDetailsSheet>
+    );
+    }
+  }
   return (
     <ScreenSafeArea
       edges={["top", "left", "right"]}
@@ -1219,89 +1301,7 @@ export function ConnectedTripDetailsScreen({
           />
         </TripDetailsSheet>
       ) : null}
-      {editor?.kind === "optimize"
-        ? (() => {
-            const proposal = optimize.data;
-            const ids =
-              proposal?.order.flatMap(
-                (placeId) =>
-                  editor.stops.find((stop) => stop.placeId === placeId)?.id ??
-                  [],
-              ) ?? [];
-            if (
-              proposal &&
-              ids.length === editor.stops.length &&
-              proposal.originalOrder.length === editor.stops.length &&
-              proposal.originalOrder.every(
-                (id, index) => id === editor.stops[index].placeId,
-              ) &&
-              ((proposal.originalDistanceMeters != null &&
-                proposal.originalDurationSeconds != null) ||
-                editor.route)
-            ) {
-              const before = {
-                km:
-                  (proposal.originalDistanceMeters ??
-                    editor.route?.distanceMeters ??
-                    0) / 1000,
-                minutes: Math.ceil(
-                  (proposal.originalDurationSeconds ??
-                    editor.route?.durationSeconds ??
-                    0) / 60,
-                ),
-              };
-              const after = {
-                km: proposal.distanceMeters / 1000,
-                minutes: Math.ceil(proposal.durationSeconds / 60),
-              };
-              return (
-                <TripOptimizationSheet
-                  day={{
-                    date: editor.date,
-                    stops: editor.stops.map((stop) => ({
-                      ...stop,
-                      visited: proposal.visitedOrder.includes(
-                        stop.placeId ?? "",
-                      ),
-                    })),
-                  }}
-                  onClose={closeEditor}
-                  busy={save.isPending}
-                  problem={scheduleError}
-                  onReload={
-                    isConflict ? () => void refreshSchedule() : undefined
-                  }
-                  proposal={{
-                    order: ids,
-                    lockedPrefixIds: ids.slice(0, proposal.visitedOrder.length),
-                    comparison: {
-                      before,
-                      after,
-                      savedKm: Math.round((before.km - after.km) * 10) / 10,
-                      savedMinutes: before.minutes - after.minutes,
-                    },
-                  }}
-                  onApply={(order) =>
-                    persistOrder(editor, order, proposal.visitedOrder)
-                  }
-                />
-              );
-            }
-            return (
-              <TripDetailsSheet
-                title={detailCopy.optimizeTitle}
-                onClose={closeEditor}
-                dismissDisabled={optimize.isPending}
-              >
-                <AppText accessibilityLiveRegion="polite">
-                  {optimize.isPending
-                    ? itineraryCopy.optimizeLoading
-                    : itineraryCopy.optimizeUnavailable}
-                </AppText>
-              </TripDetailsSheet>
-            );
-          })()
-        : null}
+      {optimizationSheet}
       {modeOpen ? (
         <TripDetailsSheet
           title={detailCopy.transport}

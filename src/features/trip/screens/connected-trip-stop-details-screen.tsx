@@ -117,7 +117,7 @@ export function ConnectedTripStopDetailsScreen({
             getSampleImage(`${stop.placeId ?? stop.id}:photo:${index}`),
           )
         : [],
-    [stop?.placeId, stop?.id],
+    [stop],
   );
   const ready = !!read && !!places.data && !!itinerary.data;
   const loadError = query.isError || places.isError || itinerary.isError;
