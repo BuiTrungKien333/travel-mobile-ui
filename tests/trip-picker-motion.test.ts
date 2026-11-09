@@ -112,6 +112,16 @@ test("cancelled exit does not commit form values and unmount cancels motion", ()
   assert.deepEqual(events, ["cancel"]);
 });
 
+test("a swipe cannot bypass an in-flight Apply animation", () => {
+  const { motion, handlers, completions, events } = motionHarness();
+  motion.close(() => events.push("apply"));
+  handlers.onEnd({ translationY: 90, velocityY: 100 });
+  assert.equal(completions.length, 1);
+  assert.deepEqual(events, []);
+  completions[0](true);
+  assert.deepEqual(events, ["apply", "close"]);
+});
+
 test("backdrop close and downward swipe dismiss without committing a selection", () => {
   const backdrop = motionHarness();
   backdrop.motion.close();

@@ -3,6 +3,8 @@ const vi = {
   loadingPlaces: "Đang tải địa điểm…",
   catalogSearch: "Tìm trong các địa điểm gợi ý",
   catalogHint: "Chọn từ các địa điểm gợi ý tại điểm đến của bạn.",
+  catalogProvinceRequired:
+    "Điểm đến chưa liên kết với tỉnh/thành. Hãy chọn tỉnh/thành từ danh mục khi chỉnh sửa chuyến đi.",
   catalogEmpty:
     "Chưa có địa điểm phù hợp ở điểm đến này. Thử từ khóa khác; bạn vẫn có thể tạo chuyến đi trước.",
   requestFailed: "Chưa thể tải hoặc lưu địa điểm. Vui lòng thử lại.",
@@ -98,6 +100,8 @@ const en: typeof vi = {
   loadingPlaces: "Loading places…",
   catalogSearch: "Search suggested places",
   catalogHint: "Choose from suggested places at your destination.",
+  catalogProvinceRequired:
+    "Your destination is not linked to a province or city. Choose one from the catalog when editing your trip.",
   catalogEmpty:
     "No matching places for this destination. Try another search; you can still create your trip first.",
   requestFailed: "Couldn't load or save places. Please try again.",

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
@@ -113,7 +113,7 @@ export function TripPlanningMap({
       resizeLock.set(0);
     };
   }, [collapsed, maximum, height, targetExpanded, resizeLock]);
-  function releaseResizeLock() {
+  const releaseResizeLock = useCallback(() => {
     "worklet";
     resizeLock.set(
       withDelay(
@@ -122,7 +122,7 @@ export function TripPlanningMap({
         ReduceMotion.Never,
       ),
     );
-  }
+  }, [resizeLock, resizeSettleDuration]);
   useEffect(() => {
     if (handledExpandRequest.current === expandRequest) return;
     handledExpandRequest.current = expandRequest;
@@ -149,7 +149,7 @@ export function TripPlanningMap({
     targetExpanded,
     resizeLock,
     theme.motion.photoViewerSpring,
-    resizeSettleDuration,
+    releaseResizeLock,
   ]);
   const motion = useAnimatedStyle(() => ({ height: height.get() }));
   const projection = theme.motion.tripMapVelocityProjection;

@@ -117,7 +117,7 @@ export function ConnectedTripStopDetailsScreen({
             getSampleImage(`${stop.placeId ?? stop.id}:photo:${index}`),
           )
         : [],
-    [stop?.placeId, stop?.id],
+    [stop],
   );
   const ready = !!read && !!places.data && !!itinerary.data;
   const loadError = query.isError || places.isError || itinerary.isError;
@@ -293,6 +293,7 @@ export function ConnectedTripStopDetailsScreen({
             suppliedDetails={{
               photo: getSampleImage(place.placeId ?? place.id),
               hours: detail.data?.openingHours?.displayLines.join(" · "),
+              description: detail.data?.description,
               admission: detail.data?.admission
                 ? {
                     vi: detail.data.admission.text,

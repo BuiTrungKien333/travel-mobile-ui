@@ -25,6 +25,11 @@ export function useTripTimelineDrag({
   const offset = useSharedValue(0);
   const openSwipe = useSharedValue<string | null>(null);
   const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [previousSelection, setPreviousSelection] = useState(selectionKey);
+  if (previousSelection !== selectionKey) {
+    setPreviousSelection(selectionKey);
+    setDraggedId(null);
+  }
   const sizes = useRef<Record<string, number>>({});
   const estimate = theme.layout.tripTimelineEstimatedRowHeight;
   useEffect(() => {
@@ -32,7 +37,6 @@ export function useTripTimelineDrag({
     active.set(null);
     openSwipe.set(null);
     offset.set(0);
-    setDraggedId(null);
   }, [selectionKey, active, openSwipe, offset]);
   useEffect(() => {
     slots.set(

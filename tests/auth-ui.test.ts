@@ -70,6 +70,9 @@ function harness() {
     },
   };
   const values = {
+    currentPassword: "current-password",
+    newPassword: "new-password",
+    confirmPassword: "new-password",
     fullName: user.fullName,
     email: user.email,
     password: "valid-password",
@@ -81,6 +84,11 @@ function harness() {
       state.registerResets++;
     },
     mutateAsync: async () => ({ resendAfterSeconds: 60 }),
+  };
+  const changes: unknown[] = [];
+  const change = {
+    isPending: false, isSuccess: false, error: null as unknown,
+    mutateAsync: async (input: unknown) => { changes.push(input); },
   };
   const states: unknown[] = [];
   let cursor = 0;
@@ -122,6 +130,7 @@ function harness() {
       useAmbientMotion: () => ({ get: () => 0 }),
     },
     "expo-router": {
+      Redirect: "Redirect",
       router: {
         push: (value: unknown) => navigation.push(value),
         replace: (value: unknown) => navigation.push(value),
@@ -146,6 +155,7 @@ function harness() {
       useLogout: () => logout,
       useRegister: () => register,
       useLogin: () => ({ isPending: false, error: null }),
+      useChangePassword: () => change,
     },
     "../hooks/use-google-login": {
       useGoogleLogin: () => ({ isPending: false, reset: () => {} }),
@@ -168,10 +178,14 @@ function harness() {
         reset: () => {},
         setError: () => {},
         clearErrors: () => {},
+        setFocus: () => {},
       }),
     },
     "@hookform/resolvers/zod": { zodResolver: () => ({}) },
     "../components/check-email": { CheckEmail: "CheckEmail" },
+    "../components/auth-return-button": { AuthReturnButton: "AuthReturnButton" },
+    "../components/auth-scaffold": { AuthScaffold: "AuthScaffold" },
+    "../components/magic-link-loading": { MagicLinkLoading: "MagicLinkLoading" },
     "../components/google-feedback": { GoogleFeedback: "GoogleFeedback" },
     ...Object.fromEntries(
       [
@@ -194,6 +208,8 @@ function harness() {
     return screen();
   };
   return {
+    change,
+    changes,
     load,
     render,
     state,
@@ -230,7 +246,7 @@ test("Development auth is the default; fixture preview requires an explicit flag
   }
 });
 
-test("Profile preserves the account name and routes password recovery to the existing flow", () => {
+test("Profile preserves the account name and opens authenticated password change", () => {
   const h = harness();
   const { ProfileScreen } = h.load<{ ProfileScreen: () => Element }>(
     "src/features/auth/screens/profile-screen.tsx",
@@ -247,7 +263,22 @@ test("Profile preserves the account name and routes password recovery to the exi
       (node) => node.props.accessibilityLabel === "auth.profile.changePassword",
     ),
   );
-  assert.deepEqual(h.navigation, ["/forgot-password"]);
+  assert.deepEqual(h.navigation, ["/change-password"]);
+});
+
+test("Password change requires a signed-in user and keeps its success message after session revocation", async () => {
+  const h = harness();
+  const { ChangePasswordScreen } = h.load<{ ChangePasswordScreen: () => Element }>(
+    "src/features/auth/screens/change-password-screen.tsx",
+  );
+  const tree = h.render(ChangePasswordScreen);
+  assert.equal(nodes(tree).filter((node) => node.type === "Controller").length, 3);
+  await press(button(tree, "auth.change.submit"));
+  assert.deepEqual(JSON.parse(JSON.stringify(h.changes)), [{ currentPassword: "current-password", newPassword: "new-password" }]);
+  h.state.status = "anonymous";
+  assert.equal(h.render(ChangePasswordScreen).type, "Redirect");
+  h.change.isSuccess = true;
+  assert.ok(nodes(h.render(ChangePasswordScreen)).some((node) => node.props.children === "auth.change.success"));
 });
 
 test("Profile handles disabled preview queries without an endless spinner and retains language settings", () => {

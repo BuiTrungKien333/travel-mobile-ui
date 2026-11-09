@@ -105,9 +105,17 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
       },
       mode: "onTouched",
     });
-  const titleField = useController({ name: "title", control }).field;
+  const {
+    onChange: onTitleChange,
+    onBlur: onTitleBlur,
+    ref: titleInputRef,
+  } = useController({ name: "title", control }).field;
   const titleEdited = useRef(false);
-  const budgetField = useController({ name: "budget", control }).field;
+  const {
+    onChange: onBudgetChange,
+    onBlur: onBudgetBlur,
+    ref: budgetInputRef,
+  } = useController({ name: "budget", control }).field;
   const {
     destination = "",
     destinationProvinceId = null,
@@ -146,7 +154,11 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
   ) => {
     const previousCity = destination.split(",")[0].trim().toLowerCase();
     const nextCity = newDest.split(",")[0].trim().toLowerCase();
-    if (previousCity !== nextCity && selectedStops.length) {
+    setNotice("");
+    if (
+      (previousCity !== nextCity || destinationProvinceId !== provinceId) &&
+      selectedStops.length
+    ) {
       setValue("initialStops", [], { shouldDirty: true });
       setNotice(copy.destinationChanged);
     }
@@ -163,6 +175,15 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
         "title",
         generateDefaultTitle(newDest, startDate, endDate, copy),
       );
+  };
+  const openPlacePicker = () => {
+    Keyboard.dismiss();
+    if (!destination.trim() || (!UI_PREVIEW_ENABLED && !destinationProvinceId)) {
+      if (destination.trim()) setNotice(copy.catalogProvinceRequired);
+      setShowDestSheet(true);
+      return;
+    }
+    setShowPlaceSheet(true);
   };
   const handleApplyDateRange = (start: string, end: string) => {
     setValue("startDate", start, { shouldDirty: true, shouldValidate: true });
@@ -185,8 +206,8 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
       { shouldDirty: true },
     );
   const handleBudgetChange = (text: string) =>
-    budgetField.onChange(text.replace(/\D/g, ""));
-  const submitForm = handleSubmit(
+    onBudgetChange(text.replace(/\D/g, ""));
+  const submitForm = () => handleSubmit(
     async (values) => {
       Keyboard.dismiss();
       if (!UI_PREVIEW_ENABLED) {
@@ -285,7 +306,7 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
       )
         scrollRef.current?.scrollTo({ y: 0, animated: !reduceMotion });
     },
-  );
+  )();
 
   const submit = async () => {
     // Guard before async validation, rather than waiting for the next loading-state render.
@@ -642,15 +663,15 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
                 value={tripTitle}
                 onChangeText={(text) => {
                   titleEdited.current = true;
-                  titleField.onChange(text);
+                  onTitleChange(text);
                 }}
-                ref={titleField.ref}
+                ref={titleInputRef}
                 accessibilityLabel={copy.tripTitle}
                 maxLength={tripFormLimits.title}
                 onFocus={() => setIsTitleFocused(true)}
                 onBlur={() => {
                   setIsTitleFocused(false);
-                  titleField.onBlur();
+                  onTitleBlur();
                 }}
                 placeholder={copy.titlePlaceholder}
                 placeholderTextColor={theme.colors.textSecondary}
@@ -672,7 +693,7 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
                   accessibilityLabel={copy.clearTitle}
                   onPress={() => {
                     titleEdited.current = true;
-                    titleField.onChange("");
+                    onTitleChange("");
                   }}
                   hitSlop={8}
                   style={({ pressed }) => [
@@ -743,14 +764,7 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={copy.addPlace}
-                onPress={() => {
-                  if (!destination.trim()) {
-                    setShowDestSheet(true);
-                  } else {
-                    Keyboard.dismiss();
-                    setShowPlaceSheet(true);
-                  }
-                }}
+                onPress={openPlacePicker}
                 style={({ pressed }) => [
                   styles.addPlaceDashedCard,
                   {
@@ -868,10 +882,7 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={copy.addMorePlaces}
-                  onPress={() => {
-                    Keyboard.dismiss();
-                    setShowPlaceSheet(true);
-                  }}
+                  onPress={openPlacePicker}
                   style={({ pressed }) => [
                     styles.addMoreStopsBtn,
                     {
@@ -1008,13 +1019,13 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
                       allowFontScaling
                       value={budget}
                       onChangeText={handleBudgetChange}
-                      ref={budgetField.ref}
+                      ref={budgetInputRef}
                       accessibilityLabel={copy.budget}
                       maxLength={20}
                       onFocus={() => setIsBudgetFocused(true)}
                       onBlur={() => {
                         setIsBudgetFocused(false);
-                        budgetField.onBlur();
+                        onBudgetBlur();
                       }}
                       keyboardType="numeric"
                       placeholder={copy.budgetPlaceholder}

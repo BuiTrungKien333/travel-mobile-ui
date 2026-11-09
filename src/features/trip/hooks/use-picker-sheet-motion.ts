@@ -23,7 +23,7 @@ export function usePickerSheetMotion(
   const reduceMotion = useReducedMotion();
   const closing = useSharedValue(false);
   const translateY = useSharedValue<number>(theme.layout.sheetEntryOffset);
-  const commit = useRef<(() => void) | undefined>(undefined);
+  const commitRef = useRef<(() => void) | undefined>(undefined);
   const enterDuration = theme.motion.tabTransitionDuration;
   const exitDuration = theme.motion.sheetDismissDuration;
   const dismissDistance = theme.layout.sheetDismissDistance;
@@ -41,10 +41,14 @@ export function usePickerSheetMotion(
     return () => cancelAnimation(translateY);
   }, [enterDuration, translateY]);
 
+  function finishDismiss() {
+    Keyboard.dismiss();
+    onClose();
+  }
   function finishClose() {
     Keyboard.dismiss();
-    const apply = commit.current;
-    commit.current = undefined;
+    const apply = commitRef.current;
+    commitRef.current = undefined;
     apply?.();
     onClose();
   }
@@ -52,7 +56,7 @@ export function usePickerSheetMotion(
     if (dismissDisabled) return;
     if (closing.get()) return;
     closing.set(true);
-    commit.current = afterClose;
+    commitRef.current = afterClose;
     Keyboard.dismiss();
     translateY.set(
       withTiming(
@@ -90,7 +94,7 @@ export function usePickerSheetMotion(
             height,
             { duration: exitDuration, reduceMotion: ReduceMotion.System },
             (finished) => {
-              if (finished) scheduleOnRN(finishClose);
+              if (finished) scheduleOnRN(finishDismiss);
             },
           ),
         );

@@ -50,6 +50,9 @@ const googleLoginEnvelope = z.object({
 });
 
 export const authApi = {
+  async changePassword(values: { currentPassword: string; newPassword: string }) {
+    await apiClient.put(authEndpoints.changePassword, values);
+  },
   async updateProfile(values: UpdateProfile) {
     const response = await apiClient.put<unknown>(
       authEndpoints.profile,

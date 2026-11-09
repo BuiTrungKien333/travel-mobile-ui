@@ -126,6 +126,7 @@ export function ConnectedPlacePickerScreen({
                   suppliedDetails={{
                     photo: null,
                     hours: detail.data.openingHours?.displayLines.join(" · "),
+                    description: detail.data.description,
                     admission: detail.data.admission
                       ? {
                           vi: detail.data.admission.text,
@@ -293,7 +294,11 @@ export function ConnectedPlacePickerScreen({
                             : copy.empty}
                       </AppText>
                       {!query.isPending && !isDebouncing && !selectedOnly ? (
-                        <AppText tone="muted">{copy.catalogEmpty}</AppText>
+                        <AppText tone="muted">
+                          {query.data?.pages[0]?.reason === "DESTINATION_NOT_LINKED"
+                            ? copy.catalogProvinceRequired
+                            : copy.catalogEmpty}
+                        </AppText>
                       ) : null}
                     </View>
                   ) : null

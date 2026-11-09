@@ -8,6 +8,7 @@ export const authEndpoints = {
   verifyEmail: "/api/v1/auth/verify-email",
   forgotPassword: "/api/v1/auth/forgot-password",
   resetPassword: "/api/v1/auth/reset-password",
+  changePassword: "/api/v1/users/me/password",
   googleChallenge: "/api/v1/auth/google/challenge",
   googleLogin: "/api/v1/auth/google",
   googleVerifyLink: "/api/v1/auth/google/verify-link",

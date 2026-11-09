@@ -35,6 +35,7 @@ export const placeDetailSchema = z
       .nullable(),
     openingStatus: z.enum(["OPEN", "CLOSED", "UNKNOWN"]),
     admission: z.object({ text: z.string() }).nullable(),
+    description: z.string().nullable().optional(),
     photos: z.array(z.unknown()).max(0),
     evaluatedAt: z.iso.datetime(),
   })

@@ -65,6 +65,7 @@ export default function RootLayout() {
                 <Stack.Screen name="forgot-password" />
                 <Stack.Screen name="verify-email" />
                 <Stack.Screen name="reset-password" />
+                <Stack.Screen name="change-password" />
                 <Stack.Screen name="google-link" />
                 <Stack.Protected
                   guard={!UI_PREVIEW_ENABLED && status === "anonymous"}

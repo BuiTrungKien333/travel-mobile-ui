@@ -2,6 +2,9 @@ import { type TranslationKey } from "@/i18n/translations";
 import { normalizeApiError } from "@/services/api/api-error";
 
 const errorKeys: Record<string, TranslationKey> = {
+  AUTH_015: "auth.error.currentPassword",
+  AUTH_016: "auth.error.passwordUnchanged",
+  AUTH_017: "auth.error.passwordNotSet",
   AUTH_011: "auth.error.googleInvalid",
   AUTH_012: "auth.error.googleUnavailable",
   AUTH_013: "auth.error.googleConfig",

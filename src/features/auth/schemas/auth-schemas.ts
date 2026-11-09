@@ -51,3 +51,12 @@ export const resetPasswordSchema = z
     message: "validation.passwordMismatch",
   });
 export type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
+
+export const changePasswordSchema = z.object({
+  currentPassword: loginSchema.shape.password,
+  newPassword: registerSchema.shape.password,
+  confirmPassword: z.string().min(1, "validation.confirmPasswordRequired"),
+}).refine((values) => values.newPassword === values.confirmPassword, {
+  path: ["confirmPassword"], message: "validation.passwordMismatch",
+});
+export type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>;

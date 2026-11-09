@@ -33,13 +33,13 @@ export function CheckInPrompt({
   const offset = useSharedValue<number>(theme.spacing.sm);
   const duration = theme.motion.enterDuration;
   const slideStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: offset.value }],
+    transform: [{ translateY: offset.get() }],
   }));
   useEffect(() => {
-    offset.value = withTiming(0, {
+    offset.set(withTiming(0, {
       duration,
       reduceMotion: ReduceMotion.System,
-    });
+    }));
     return () => cancelAnimation(offset);
   }, [duration, offset]);
   useEffect(() => {

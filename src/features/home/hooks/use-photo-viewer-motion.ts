@@ -97,114 +97,112 @@ export function usePhotoViewerMotion({
 
   useEffect(() => {
     cancelAnimation(pageX);
-    pageX.value = -currentPage.value * viewport.width;
+    pageX.set(-currentPage.get() * viewport.width);
   }, [viewport.width, pageX, currentPage]);
 
   function goToPage(index: number) {
     "worklet";
-    if (closing.value) return;
+    if (closing.get()) return;
     const target = clampPhoto(index, 0, pageCount - 1);
-    const changed = target !== currentPage.value;
-    currentPage.value = target;
-    pageX.value = withSpring(-target * viewport.width, spring);
-    scale.value = 1;
-    x.value = 0;
-    y.value = 0;
+    const changed = target !== currentPage.get();
+    currentPage.set(target);
+    pageX.set(withSpring(-target * viewport.width, spring));
+    scale.set(1);
+    x.set(0);
+    y.set(0);
     if (changed) scheduleOnRN(onPageChange, target);
   }
 
   function open() {
-    if (opened.value) return;
-    opened.value = true;
-    progress.value = withSpring(1, spring);
+    if (opened.get()) return;
+    opened.set(true);
+    progress.set(withSpring(1, spring));
   }
 
   function close() {
-    if (closing.value) return;
-    closing.value = true;
-    pageX.value = withSpring(-currentPage.value * viewport.width, spring);
-    chrome.value = withTiming(0, {
+    if (closing.get()) return;
+    closing.set(true);
+    pageX.set(withSpring(-currentPage.get() * viewport.width, spring));
+    chrome.set(withTiming(0, {
       duration: motion.shutterPressDuration,
       reduceMotion: ReduceMotion.System,
-    });
-    scale.value = withSpring(1, spring);
-    x.value = withSpring(0, spring);
-    y.value = withSpring(0, spring);
-    dragX.value = withSpring(0, spring);
-    dragY.value = withSpring(0, spring);
-    progress.value = withSpring(0, spring, (finished) => {
+    }));
+    scale.set(withSpring(1, spring));
+    x.set(withSpring(0, spring));
+    y.set(withSpring(0, spring));
+    dragX.set(withSpring(0, spring));
+    dragY.set(withSpring(0, spring));
+    progress.set(withSpring(0, spring, (finished) => {
       if (finished) scheduleOnRN(onDismiss);
-    });
+    }));
   }
 
   function resetZoom() {
-    scale.value = withSpring(1, zoomSpring);
-    x.value = withSpring(0, zoomSpring);
-    y.value = withSpring(0, zoomSpring);
+    scale.set(withSpring(1, zoomSpring));
+    x.set(withSpring(0, zoomSpring));
+    y.set(withSpring(0, zoomSpring));
   }
 
   useEffect(() => {
-    if (closing.value) return;
-    chrome.value = withTiming(controlsVisible ? 1 : 0, {
+    if (closing.get()) return;
+    chrome.set(withTiming(controlsVisible ? 1 : 0, {
       duration: motion.shutterPressDuration,
       reduceMotion: ReduceMotion.System,
-    });
+    }));
   }, [chrome, closing, controlsVisible, motion.shutterPressDuration]);
 
   function settleZoom() {
     "worklet";
-    const target = clampPhoto(scale.value, 1, maximum);
+    const target = clampPhoto(scale.get(), 1, maximum);
     const bounds = panLimits(fitted, viewport, target);
-    scale.value = withSpring(target, zoomSpring);
-    x.value = withSpring(clampPhoto(x.value, -bounds.x, bounds.x), zoomSpring);
-    y.value = withSpring(clampPhoto(y.value, -bounds.y, bounds.y), zoomSpring);
+    scale.set(withSpring(target, zoomSpring));
+    x.set(withSpring(clampPhoto(x.get(), -bounds.x, bounds.x), zoomSpring));
+    y.set(withSpring(clampPhoto(y.get(), -bounds.y, bounds.y), zoomSpring));
   }
 
   const pinch = Gesture.Pinch()
     .enabled(!blocked)
     .onStart((event) => {
-      if (closing.value) return;
-      pinching.value = true;
+      if (closing.get()) return;
+      pinching.set(true);
       [scale, x, y, dragX, dragY, pageX].forEach(cancelAnimation);
-      pageX.value = -currentPage.value * viewport.width;
-      dragX.value = 0;
-      dragY.value = 0;
-      startScale.value = scale.value;
-      anchorX.value =
-        (event.focalX - viewport.width / 2 - x.value) / scale.value;
-      anchorY.value =
-        (event.focalY - viewport.height / 2 - y.value) / scale.value;
+      pageX.set(-currentPage.get() * viewport.width);
+      dragX.set(0);
+      dragY.set(0);
+      startScale.set(scale.get());
+      anchorX.set((event.focalX - viewport.width / 2 - x.get()) / scale.get());
+      anchorY.set((event.focalY - viewport.height / 2 - y.get()) / scale.get());
     })
     .onUpdate((event) => {
-      if (closing.value) return;
+      if (closing.get()) return;
       const next = rubberBand(
-        startScale.value * event.scale,
+        startScale.get() * event.scale,
         1,
         maximum,
         maximum,
         resistance,
       );
       const bounds = panLimits(fitted, viewport, next);
-      scale.value = next;
-      x.value = rubberBand(
-        event.focalX - viewport.width / 2 - anchorX.value * next,
+      scale.set(next);
+      x.set(rubberBand(
+        event.focalX - viewport.width / 2 - anchorX.get() * next,
         -bounds.x,
         bounds.x,
         viewport.width,
         resistance,
-      );
-      y.value = rubberBand(
-        event.focalY - viewport.height / 2 - anchorY.value * next,
+      ));
+      y.set(rubberBand(
+        event.focalY - viewport.height / 2 - anchorY.get() * next,
         -bounds.y,
         bounds.y,
         viewport.height,
         resistance,
-      );
+      ));
     })
     .onFinalize(() => {
-      if (!pinching.value) return;
-      pinching.value = false;
-      if (!closing.value) settleZoom();
+      if (!pinching.get()) return;
+      pinching.set(false);
+      if (!closing.get()) settleZoom();
     });
 
   const pan = Gesture.Pan()
@@ -212,79 +210,79 @@ export function usePhotoViewerMotion({
     .maxPointers(2)
     .minDistance(layout.photoViewerMinimumPanDistance)
     .onStart(() => {
-      if (closing.value) return;
-      panActive.value = true;
-      panNeedsReset.value = pinching.value;
+      if (closing.get()) return;
+      panActive.set(true);
+      panNeedsReset.set(pinching.get());
       [x, y, dragX, dragY, pageX].forEach(cancelAnimation);
-      pageStart.value = pageX.value;
-      direction.value = 0;
-      startX.value = x.value;
-      startY.value = y.value;
-      translationStartX.value = 0;
-      translationStartY.value = 0;
-      panningZoom.value = scale.value > threshold;
+      pageStart.set(pageX.get());
+      direction.set(0);
+      startX.set(x.get());
+      startY.set(y.get());
+      translationStartX.set(0);
+      translationStartY.set(0);
+      panningZoom.set(scale.get() > threshold);
     })
     .onUpdate((event) => {
-      if (closing.value) return;
-      if (pinching.value || event.numberOfPointers > 1) {
-        panNeedsReset.value = true;
+      if (closing.get()) return;
+      if (pinching.get() || event.numberOfPointers > 1) {
+        panNeedsReset.set(true);
         return;
       }
       // Continue panning with the remaining finger after a pinch, without a centroid jump.
-      if (panNeedsReset.value) {
-        startX.value = x.value;
-        startY.value = y.value;
-        translationStartX.value = event.translationX;
-        translationStartY.value = event.translationY;
-        panningZoom.value = scale.value > threshold;
-        panNeedsReset.value = false;
+      if (panNeedsReset.get()) {
+        startX.set(x.get());
+        startY.set(y.get());
+        translationStartX.set(event.translationX);
+        translationStartY.set(event.translationY);
+        panningZoom.set(scale.get() > threshold);
+        panNeedsReset.set(false);
       }
-      const dx = event.translationX - translationStartX.value;
-      const dy = event.translationY - translationStartY.value;
-      if (panningZoom.value) {
-        const bounds = panLimits(fitted, viewport, scale.value);
-        x.value = rubberBand(
-          startX.value + dx,
+      const dx = event.translationX - translationStartX.get();
+      const dy = event.translationY - translationStartY.get();
+      if (panningZoom.get()) {
+        const bounds = panLimits(fitted, viewport, scale.get());
+        x.set(rubberBand(
+          startX.get() + dx,
           -bounds.x,
           bounds.x,
           viewport.width,
           resistance,
-        );
-        y.value = rubberBand(
-          startY.value + dy,
+        ));
+        y.set(rubberBand(
+          startY.get() + dy,
           -bounds.y,
           bounds.y,
           viewport.height,
           resistance,
-        );
+        ));
       } else {
-        if (direction.value === 0 && Math.max(Math.abs(dx), Math.abs(dy)) > 0) {
-          direction.value = Math.abs(dx) > Math.abs(dy) ? 1 : 2;
+        if (direction.get() === 0 && Math.max(Math.abs(dx), Math.abs(dy)) > 0) {
+          direction.set(Math.abs(dx) > Math.abs(dy) ? 1 : 2);
         }
-        if (direction.value === 1) {
-          pageX.value = rubberBand(
-            pageStart.value + dx,
+        if (direction.get() === 1) {
+          pageX.set(rubberBand(
+            pageStart.get() + dx,
             -(pageCount - 1) * viewport.width,
             0,
             viewport.width,
             resistance,
-          );
+          ));
         } else {
-          dragX.value = dx * resistance;
-          dragY.value = dy >= 0 ? dy : dy * resistance;
+          dragX.set(dx * resistance);
+          dragY.set(dy >= 0 ? dy : dy * resistance);
         }
       }
     })
     .onEnd((event) => {
-      if (closing.value || pinching.value) return;
-      if (panningZoom.value || scale.value > threshold) {
+      if (closing.get() || pinching.get()) return;
+      if (panningZoom.get() || scale.get() > threshold) {
         settleZoom();
         return;
       }
-      if (direction.value === 1) {
-        const displacement = pageX.value + currentPage.value * viewport.width;
+      if (direction.get() === 1) {
+        const displacement = pageX.get() + currentPage.get() * viewport.width;
         const target = photoPageDestination(
-          currentPage.value,
+          currentPage.get(),
           pageCount,
           displacement,
           event.velocityX,
@@ -296,52 +294,52 @@ export function usePhotoViewerMotion({
         goToPage(target);
         return;
       }
-      pageX.value = withSpring(-currentPage.value * viewport.width, spring);
+      pageX.set(withSpring(-currentPage.get() * viewport.width, spring));
       if (
-        dragY.value > dismissDistance ||
-        (dragY.value > layout.photoViewerMinimumFlingDistance &&
+        dragY.get() > dismissDistance ||
+        (dragY.get() > layout.photoViewerMinimumFlingDistance &&
           event.velocityY > layout.photoViewerDismissVelocity)
       ) {
         scheduleOnRN(close);
       } else {
-        dragX.value = withSpring(0, zoomSpring);
-        dragY.value = withSpring(0, zoomSpring);
+        dragX.set(withSpring(0, zoomSpring));
+        dragY.set(withSpring(0, zoomSpring));
       }
     })
     .onFinalize((_event, success) => {
-      if (!panActive.value) return;
-      panActive.value = false;
-      if (!success && !closing.value && !pinching.value) {
-        pageX.value = withSpring(-currentPage.value * viewport.width, spring);
-        dragX.value = withSpring(0, zoomSpring);
-        dragY.value = withSpring(0, zoomSpring);
+      if (!panActive.get()) return;
+      panActive.set(false);
+      if (!success && !closing.get() && !pinching.get()) {
+        pageX.set(withSpring(-currentPage.get() * viewport.width, spring));
+        dragX.set(withSpring(0, zoomSpring));
+        dragY.set(withSpring(0, zoomSpring));
         settleZoom();
       }
     });
 
   function zoomToPoint(focalX: number, focalY: number) {
     "worklet";
-    if (closing.value) return;
+    if (closing.get()) return;
     const target =
-      scale.value > threshold ? 1 : layout.photoViewerDoubleTapScale;
+      scale.get() > threshold ? 1 : layout.photoViewerDoubleTapScale;
     const bounds = panLimits(fitted, viewport, target);
-    x.value = withSpring(
+    x.set(withSpring(
       clampPhoto(
-        zoomOffset(focalX, viewport.width / 2, x.value, scale.value, target),
+        zoomOffset(focalX, viewport.width / 2, x.get(), scale.get(), target),
         -bounds.x,
         bounds.x,
       ),
       zoomSpring,
-    );
-    y.value = withSpring(
+    ));
+    y.set(withSpring(
       clampPhoto(
-        zoomOffset(focalY, viewport.height / 2, y.value, scale.value, target),
+        zoomOffset(focalY, viewport.height / 2, y.get(), scale.get(), target),
         -bounds.y,
         bounds.y,
       ),
       zoomSpring,
-    );
-    scale.value = withSpring(target, zoomSpring);
+    ));
+    scale.set(withSpring(target, zoomSpring));
   }
 
   const doubleTap = Gesture.Tap()
@@ -355,7 +353,7 @@ export function usePhotoViewerMotion({
     .enabled(!blocked)
     .maxDistance(theme.spacing.sm)
     .onEnd((_event, success) => {
-      if (success && !closing.value) scheduleOnRN(onToggleControls);
+      if (success && !closing.get()) scheduleOnRN(onToggleControls);
     });
   const gesture = Gesture.Race(
     Gesture.Simultaneous(pan, pinch),
@@ -363,35 +361,35 @@ export function usePhotoViewerMotion({
   );
 
   const imageStyle = useAnimatedStyle(() => {
-    const p = clampPhoto(progress.value, 0, 1);
+    const p = clampPhoto(progress.get(), 0, 1);
     const sx = (origin.width / fitted.width) * (1 - p) + p;
     const sy = (origin.height / fitted.height) * (1 - p) + p;
     const dragScale =
       1 -
-      Math.min(1, Math.max(0, dragY.value) / viewport.height) *
+      Math.min(1, Math.max(0, dragY.get()) / viewport.height) *
         (1 - layout.photoViewerMinimumDismissScale);
     return {
       transform: [
         {
           translateX:
             (origin.x + origin.width / 2 - viewport.width / 2) * (1 - p) +
-            x.value +
-            dragX.value,
+            x.get() +
+            dragX.get(),
         },
         {
           translateY:
             (origin.y + origin.height / 2 - viewport.height / 2) * (1 - p) +
-            y.value +
-            dragY.value,
+            y.get() +
+            dragY.get(),
         },
-        { scaleX: sx * scale.value * dragScale },
-        { scaleY: sy * scale.value * dragScale },
+        { scaleX: sx * scale.get() * dragScale },
+        { scaleY: sy * scale.get() * dragScale },
       ],
     };
   });
   // Counter-scale inside the clipping frame: cover thumbnail -> uncropped original, without stretching pixels.
   const contentStyle = useAnimatedStyle(() => {
-    const p = clampPhoto(progress.value, 0, 1);
+    const p = clampPhoto(progress.get(), 0, 1);
     const sx = (origin.width / fitted.width) * (1 - p) + p;
     const sy = (origin.height / fitted.height) * (1 - p) + p;
     const cover = Math.max(sx, sy);
@@ -399,17 +397,17 @@ export function usePhotoViewerMotion({
   });
   const backdropStyle = useAnimatedStyle(() => ({
     opacity:
-      clampPhoto(progress.value, 0, 1) *
-      (1 - clampPhoto(dragY.value / (viewport.height / 2), 0, 1)),
+      clampPhoto(progress.get(), 0, 1) *
+      (1 - clampPhoto(dragY.get() / (viewport.height / 2), 0, 1)),
   }));
   const controlsStyle = useAnimatedStyle(() => ({
     opacity:
-      chrome.value *
-      clampPhoto(progress.value, 0, 1) *
-      (1 - clampPhoto(dragY.value / dismissDistance, 0, 1)),
+      chrome.get() *
+      clampPhoto(progress.get(), 0, 1) *
+      (1 - clampPhoto(dragY.get() / dismissDistance, 0, 1)),
   }));
   const carouselStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: pageX.value }],
+    transform: [{ translateX: pageX.get() }],
   }));
 
   return {
@@ -420,8 +418,8 @@ export function usePhotoViewerMotion({
     backdropStyle,
     controlsStyle,
     carouselStyle,
-    previous: () => goToPage(currentPage.value - 1),
-    next: () => goToPage(currentPage.value + 1),
+    previous: () => goToPage(currentPage.get() - 1),
+    next: () => goToPage(currentPage.get() + 1),
     open,
     close,
     resetZoom,

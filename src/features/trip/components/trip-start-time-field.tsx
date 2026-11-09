@@ -1,4 +1,4 @@
-import DateTimePicker from "@expo/ui/community/datetime-picker";
+import { DateTimePicker } from "@expo/ui/community/datetime-picker";
 import { useState } from "react";
 import { Keyboard, Platform, Pressable, View } from "react-native";
 import { AppButton } from "@/components/ui/app-button";

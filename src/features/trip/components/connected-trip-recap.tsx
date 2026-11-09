@@ -50,10 +50,8 @@ export function ConnectedTripRecap({
     void refetch();
   }, [refreshVersion, refetch]);
   const totalPages = query.data?.totalPages;
-  useEffect(() => {
-    if (totalPages !== undefined && page >= totalPages && page > 0)
-      setPage(Math.max(0, totalPages - 1));
-  }, [page, totalPages]);
+  if (totalPages !== undefined && page >= totalPages && page > 0)
+    setPage(Math.max(0, totalPages - 1));
   const time = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Asia/Ho_Chi_Minh",
     hour: "2-digit",

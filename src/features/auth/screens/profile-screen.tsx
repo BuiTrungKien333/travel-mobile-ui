@@ -772,7 +772,7 @@ export function ProfileScreen({ isPreview = false }: { isPreview?: boolean } = {
                 accessibilityRole="button"
                 accessibilityLabel={t("auth.profile.changePassword")}
                 accessibilityHint={t("auth.profile.changePasswordHint")}
-                onPress={() => router.push("/forgot-password")}
+                onPress={() => router.push("/change-password")}
                 style={({ pressed }) => [
                   styles.cardRow,
                   { opacity: pressed ? theme.motion.pressOpacity : 1 },

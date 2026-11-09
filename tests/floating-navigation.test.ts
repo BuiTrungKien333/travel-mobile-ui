@@ -347,12 +347,17 @@ test("camera ambient animation only changes the halo, with an explicit gradient 
       __esModule: true,
       default: { View: "Animated.View" },
       ReduceMotion: { System: "system" },
-      useSharedValue: (value: number) => ({ value }),
+      useSharedValue: (value: number) => ({
+        get: () => value,
+        set: (next: number) => {
+          value = next;
+        },
+      }),
       useAnimatedStyle: (get: () => unknown) => get(),
       withTiming: (value: number) => value,
     },
     "@/hooks/use-ambient-motion": {
-      useAmbientMotion: () => ({ value: phase }),
+      useAmbientMotion: () => ({ get: () => phase }),
     },
     "@/hooks/use-app-theme": {
       useAppTheme: () => ({ ...tokens, colors: lightColors }),

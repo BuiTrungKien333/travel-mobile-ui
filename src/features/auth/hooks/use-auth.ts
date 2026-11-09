@@ -36,6 +36,16 @@ export function useResetPassword() {
     },
   });
 }
+export function useChangePassword() {
+  return useMutation({
+    mutationFn: async (values: { currentPassword: string; newPassword: string }) => {
+      const version = authSession.getVersion();
+      await authApi.changePassword(values);
+      if (version !== authSession.getVersion()) throw new ApiError("CANCELLED");
+      await authSession.expire();
+    },
+  });
+}
 export function useProfile() {
   const authenticated = useAuthStore(
     (state) => state.status === "authenticated",

@@ -58,6 +58,7 @@ const vi = {
   destinationChanged:
     "Đã bỏ các địa điểm của điểm đến cũ. Bạn có thể chọn lại địa điểm phù hợp.",
   destinationRequired: "Vui lòng chọn điểm đến chính.",
+  catalogProvinceRequired: "Chọn tỉnh/thành trong danh mục để tải địa điểm gợi ý.",
   destinationTooLong: "Điểm đến tối đa 120 ký tự.",
   dateRequired: "Vui lòng chọn ngày đi và ngày về.",
   invalidDate: "Ngày không hợp lệ.",
@@ -164,6 +165,8 @@ const en: typeof vi = {
   destinationChanged:
     "Places from the previous destination were cleared. Choose places for your new destination.",
   destinationRequired: "Choose a main destination.",
+  catalogProvinceRequired:
+    "Choose a province or city from the catalog to load suggested places.",
   destinationTooLong: "Destination must be 120 characters or fewer.",
   dateRequired: "Choose departure and return dates.",
   invalidDate: "Enter a valid date.",

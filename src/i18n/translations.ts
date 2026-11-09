@@ -1,5 +1,14 @@
 export const translations = {
   vi: {
+    "auth.change.title": "Đổi mật khẩu",
+    "auth.change.subtitle": "Nhập mật khẩu hiện tại để đổi mật khẩu. Sau khi thành công, bạn cần đăng nhập lại trên mọi thiết bị.",
+    "auth.change.current": "Mật khẩu hiện tại",
+    "auth.change.new": "Mật khẩu mới",
+    "auth.change.submit": "Lưu mật khẩu mới",
+    "auth.change.success": "Đã đổi mật khẩu. Vui lòng đăng nhập lại bằng mật khẩu mới.",
+    "auth.error.currentPassword": "Mật khẩu hiện tại không chính xác. Vui lòng kiểm tra lại.",
+    "auth.error.passwordUnchanged": "Mật khẩu mới phải khác mật khẩu hiện tại.",
+    "auth.error.passwordNotSet": "Tài khoản này chưa có mật khẩu. Hãy chọn Quên mật khẩu để tạo mật khẩu qua email.",
     "auth.google.emailProof":
       "Hãy mở email xác nhận đăng nhập Google. Bấm xác nhận trong liên kết để vào ứng dụng; không cần nhập mật khẩu.",
     "auth.google.confirmTitle": "Xác nhận đăng nhập Google",
@@ -82,9 +91,9 @@ export const translations = {
     "auth.profile.language": "Ngôn ngữ",
     "auth.profile.languageHint": "Chọn ngôn ngữ hiển thị trong ứng dụng.",
     "auth.profile.security": "Bảo mật tài khoản",
-    "auth.profile.changePassword": "Đặt lại mật khẩu",
+    "auth.profile.changePassword": "Đổi mật khẩu",
     "auth.profile.changePasswordHint":
-      "Nhận liên kết đặt mật khẩu mới qua email.",
+      "Đổi mật khẩu bằng mật khẩu hiện tại và đăng nhập lại.",
     "auth.profile.memberRole": "Thành viên Wego",
     "auth.profile.adminRole": "Quản trị viên",
     "auth.profile.guestRole": "Khách",
@@ -156,6 +165,15 @@ export const translations = {
     "validation.passwordMin": "Mật khẩu phải có ít nhất 8 ký tự.",
   },
   en: {
+    "auth.change.title": "Change password",
+    "auth.change.subtitle": "Enter your current password. After saving, sign in again on all devices.",
+    "auth.change.current": "Current password",
+    "auth.change.new": "New password",
+    "auth.change.submit": "Save new password",
+    "auth.change.success": "Password changed. Please sign in again with your new password.",
+    "auth.error.currentPassword": "Your current password is incorrect. Please try again.",
+    "auth.error.passwordUnchanged": "Choose a password different from your current password.",
+    "auth.error.passwordNotSet": "This account has no password yet. Choose Forgot password to create one using email.",
     "auth.google.emailProof":
       "Open your Google sign-in confirmation email. Confirm the link to enter the app; no password is needed.",
     "auth.google.confirmTitle": "Confirm Google sign-in",
@@ -236,9 +254,9 @@ export const translations = {
     "auth.profile.language": "Language",
     "auth.profile.languageHint": "Choose the language used in the app.",
     "auth.profile.security": "Account security",
-    "auth.profile.changePassword": "Reset password",
+    "auth.profile.changePassword": "Change password",
     "auth.profile.changePasswordHint":
-      "Get a link to choose a new password by email.",
+      "Change your password using your current password, then sign in again.",
     "auth.profile.memberRole": "Wego member",
     "auth.profile.adminRole": "Administrator",
     "auth.profile.guestRole": "Guest",

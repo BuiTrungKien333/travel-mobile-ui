@@ -53,6 +53,7 @@ export function PlaceDetailsContent({
     photo: ReturnType<typeof getPlaceDetailsPreview>["photo"];
     hours?: string;
     admission?: LocalizedText;
+    description?: string | null;
   };
   mapContent?: ReactNode;
 }) {
@@ -263,6 +264,9 @@ export function PlaceDetailsContent({
             </AppText>
           ) : null}
         </View>
+        {suppliedDetails?.description ? (
+          <AppText>{suppliedDetails.description}</AppText>
+        ) : null}
         {afterInfo}
         {children}
       </ScrollView>

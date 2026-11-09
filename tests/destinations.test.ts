@@ -599,6 +599,16 @@ test("actual create/edit forms carry picker IDs through RHF and submit payloads"
     return (outer.type as (props: unknown) => Node)(outer.props);
   };
   let tree = renderCreate();
+  invoke(nodes(tree, "DestinationPickerSheet")[0], "onSelect", "Đà Lạt", null);
+  tree = renderCreate();
+  const unlinkedAddPlace = nodes(tree, "Pressable").find(
+    (node) => node.props.accessibilityLabel === "Thêm địa điểm",
+  );
+  assert.ok(unlinkedAddPlace);
+  invoke(unlinkedAddPlace, "onPress");
+  tree = renderCreate();
+  assert.equal(nodes(tree, "ConnectedPlacePickerScreen").length, 0);
+  assert.equal(nodes(tree, "DestinationPickerSheet")[0].props.visible, true);
   invoke(nodes(tree, "DestinationPickerSheet")[0], "onSelect", option.name, id);
   tree = renderCreate();
   assert.equal(
@@ -659,8 +669,13 @@ test("actual create/edit forms carry picker IDs through RHF and submit payloads"
       .provinceId,
     id,
   );
-  invoke(nodes(tree, "DestinationPickerSheet")[0], "onSelect", "Đà Lạt", null);
+  invoke(nodes(tree, "DestinationPickerSheet")[0], "onSelect", option.name, null);
   assert.equal(values.destinationProvinceId, null);
+  assert.equal(
+    (values.initialStops as unknown[]).length,
+    0,
+    "changing the province identity must clear old catalog places even when the name stays the same",
+  );
 
   values = {};
   states = [];

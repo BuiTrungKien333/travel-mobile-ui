@@ -22,6 +22,7 @@ const detail = {
   openingHours: null,
   openingStatus: "UNKNOWN",
   admission: null,
+  description: "Hồ nước tại trung tâm Đà Lạt.",
   photos: [],
   evaluatedAt: "2026-11-06T00:00:00Z",
 };
@@ -118,7 +119,14 @@ test("discovery API trims search, scopes by trip or province, forwards cancellat
   const read = await placeDiscoveryApi.detail(id, "en", signal);
   assert.equal(read.openingHours, null);
   assert.equal(read.admission, null);
+  assert.equal(read.description, detail.description);
   assert.equal(calls.at(-1)?.url, `/api/v1/places/${id}`);
+  response = { success: true, data: { ...detail, description: 123 } };
+  await assert.rejects(
+    placeDiscoveryApi.detail(id, "vi"),
+    (error: unknown) =>
+      error instanceof ApiError && error.code === "INVALID_RESPONSE",
+  );
 });
 
 test("batch client uses one atomic request and rejects duplicate or preview IDs before sending", async () => {
@@ -172,7 +180,7 @@ function nodes(value: unknown): Element[] {
   const element = value as Element;
   return [element, ...nodes(element.props.children)];
 }
-function pickerHarness() {
+function pickerHarness(reason: "DESTINATION_NOT_LINKED" | null = null) {
   const state: unknown[] = [];
   let cursor = 0;
   const tokens = tripModuleLoader()<typeof import("../src/theme/tokens.ts")>(
@@ -182,7 +190,7 @@ function pickerHarness() {
   let count = 0;
   let closed = 0;
   const query = {
-    data: { pages: [page] },
+    data: { pages: [{ ...page, content: reason ? [] : page.content, reason }] },
     isPending: false,
     isError: false,
     isFetchingNextPage: false,
@@ -301,6 +309,17 @@ function pickerHarness() {
 const event = (node: Element, name: string) =>
   (node.props[name] as () => void)();
 
+test("an unlinked trip explains how to select a catalog province instead of reporting an empty catalog", () => {
+  const h = pickerHarness("DESTINATION_NOT_LINKED");
+  const tree = h.render();
+  const list = tree.find((node) => node.type === "FlatList")!;
+  const labels = nodes(list.props.ListEmptyComponent)
+    .filter((node) => node.type === "AppText")
+    .map((node) => node.props.children);
+  assert.match(JSON.stringify(labels), /chưa liên kết với tỉnh\/thành/);
+  assert.doesNotMatch(JSON.stringify(labels), /Chưa có địa điểm phù hợp/);
+});
+
 test("day-scoped picker shows the selected day and confirms adding directly to it", () => {
   const h = pickerHarness();
   const day = { date: "2026-11-20", dayNumber: 2 };
@@ -362,7 +381,7 @@ test("real place detail is passed explicit unknown content and never sample pric
   assert.ok(content);
   assert.equal(
     JSON.stringify(content.props.suppliedDetails),
-    JSON.stringify({ photo: null }),
+    JSON.stringify({ photo: null, description: detail.description }),
   );
   assert.equal(
     (content.props.place as { durationMinutes?: number }).durationMinutes,

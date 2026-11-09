@@ -98,9 +98,20 @@ export function JournalPhotoViewer({
   const loading = !photoStates[memory.id];
   const [showSpinner, setShowSpinner] = useState(false);
   const [attempt, setAttempt] = useState(0);
-  useEffect(() => {
+  const [previousPhoto, setPreviousPhoto] = useState({
+    id: memory.id,
+    failed,
+    loading,
+  });
+  if (
+    previousPhoto.id !== memory.id ||
+    previousPhoto.failed !== failed ||
+    previousPhoto.loading !== loading
+  ) {
+    setPreviousPhoto({ id: memory.id, failed, loading });
     if (failed) setControls(true);
-  }, [failed]);
+    setShowSpinner(false);
+  }
   const active = useRef(true);
   const actionInFlight = useRef(false);
   const removeAfterClose = useRef(false);
@@ -120,16 +131,13 @@ export function JournalPhotoViewer({
     return () => clearTimeout(timer);
   }, [notice, theme.motion.photoViewerNoticeDuration]);
   useEffect(() => {
-    if (!loading) {
-      setShowSpinner(false);
-      return;
-    }
+    if (!loading) return;
     const timer = setTimeout(
       () => setShowSpinner(true),
       theme.motion.enterDuration,
     );
     return () => clearTimeout(timer);
-  }, [loading, theme.motion.enterDuration]);
+  }, [loading, memory.id, theme.motion.enterDuration]);
 
   function toggleControls() {
     setControls((value) => !value);

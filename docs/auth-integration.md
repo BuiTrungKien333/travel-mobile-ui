@@ -1,5 +1,7 @@
 # Tích hợp auth
 
+**Đổi mật khẩu Android:** Cá nhân → Đổi mật khẩu dùng `PUT /api/v1/users/me/password` với `currentPassword,newPassword`; thành công 204 thu hồi mọi phiên và yêu cầu đăng nhập lại. Quên mật khẩu vẫn dùng email. Để email mở được trong Gmail/trình duyệt Android, cấu hình backend `AUTH_RESET_PASSWORD_URL=https://<public-backend-origin>/reset-password`; backend phục vụ trang đặt mật khẩu này trực tiếp, không cần Metro/web frontend. Khởi động lại backend và yêu cầu email mới sau khi đổi URL. Các hướng dẫn dùng custom scheme dưới đây chỉ áp dụng khi ứng dụng email hỗ trợ mở scheme đó.
+
 **Dev web hiện tại · 05/11/2026:** frontend `http://localhost:8082`, API `http://localhost:18080`. Các URL trong email dùng `http://localhost:8082/verify-email`, `/reset-password` và `/google-link`. Đã đổi fallback profile dev, local backend env và env example; CORS dev đã có origin 8082. Khởi động lại backend để áp dụng, gửi lại link mới; email cũ không tự đổi URL. Native dùng scheme override theo hướng dẫn bên dưới. Google popup cần authorized origin 8082 ở Cloud Console, xem [google-auth.md](google-auth.md).
 
 **Review Phase 1 · 03/11/2026:** đã chạy 337 tests backend/194 mobile, sửa cache khi Google link đổi account; các giới hạn và nghiệm thu còn lại được ghi ở [PHASE-1-AUTH-REVIEW-2026-11-03.md](PHASE-1-AUTH-REVIEW-2026-11-03.md). Không coi build/tests là xác nhận SMTP/Google/device thật.

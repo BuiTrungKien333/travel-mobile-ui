@@ -100,11 +100,12 @@ test("server content overrides preview facts and never invents a 45-minute visit
     places: [place],
     region: getPlaceMapRegion([place]),
     onBack: () => {},
-    suppliedDetails: { photo: null },
+    suppliedDetails: { photo: null, description: "Mô tả từ danh mục địa điểm." },
   });
   assert.ok(text(tree).includes("Chưa có thông tin"));
   assert.ok(!text(tree).includes("Thông tin mẫu"));
   assert.ok(!text(tree).includes("45 phút"));
+  assert.ok(text(tree).includes("Mô tả từ danh mục địa điểm."));
   assert.equal(
     elements(tree).filter((node) => node.type === "Image").length,
     0,
