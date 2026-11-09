@@ -44,6 +44,7 @@ import { authSession } from "@/features/auth/services/auth-session";
 import { MEMORY_IMPORT_LIMIT } from "@/features/memories/constants/memory-limits";
 import type { ImportSource } from "@/features/memories/services/import-photos";
 import { PhotoImportSheet } from "./photo-import-sheet";
+import { cameraApiErrorMessage } from "../utils/camera-error-message";
 
 const CAMERA_READY_TIMEOUT_MS = 15000;
 
@@ -200,17 +201,7 @@ export function NativeTripCamera(
           error instanceof PhotoActionError
             ? photoCopy[error.code]
             : error instanceof ApiError
-              ? error.code === "UPLOAD_005"
-                ? copy.importLimit
-                : error.code === "UPLOAD_002"
-                  ? copy.tooLarge
-                  : error.code === "UPLOAD_003"
-                    ? copy.invalidType
-                    : error.code === "UPLOAD_008"
-                      ? copy.imageTooLarge
-                      : error.code === "MEMORY_FUTURE_DATE"
-                        ? copy.futureDate
-                        : copy.uploadError
+              ? cameraApiErrorMessage(error, copy)
               : copy.photoError,
         );
     } finally {
@@ -442,7 +433,9 @@ export function NativeTripCamera(
         <Animated.View style={[StyleSheet.absoluteFill, previewMotion]}>
           <CameraView
             ref={handleCameraRef}
-            key={`${facing}:${attempt}`}
+            // Keep one native session while switching lenses. Remounting for every
+            // flip lets the old Android view's unbindAll close the new camera.
+            key={attempt}
             facing={facing}
             mode="picture"
             mirror={facing === "front"}

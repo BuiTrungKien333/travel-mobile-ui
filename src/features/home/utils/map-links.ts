@@ -8,7 +8,7 @@ export function directionsUrl(place: string, destination: string) {
 export function tripDirectionsUrl(
   stop: TripStop,
   destination: string,
-  mode: TravelMode = "car",
+  mode: TravelMode | "bicycle" = "car",
 ) {
   const target = stop.location
     ? `${stop.location.latitude},${stop.location.longitude}`
@@ -16,6 +16,8 @@ export function tripDirectionsUrl(
   const travelmode =
     mode === "walk"
       ? "walking"
+      : mode === "bicycle"
+        ? "bicycling"
       : mode === "motorcycle"
         ? "two-wheeler"
         : "driving";

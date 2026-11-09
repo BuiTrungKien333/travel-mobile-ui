@@ -2,7 +2,7 @@ import { ConnectedTripSchedulePanels } from "../components/connected-trip-schedu
 import type { ScheduleEdit, ScheduleEditor, DayStops } from "../types/schedule-editor";
 import { router } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Modal, View } from "react-native";
+import { ActivityIndicator, Modal, View } from "react-native";
 import { TextAction } from "@/features/home/components/home-primitives";
 import { TripDayTools } from "../components/trip-details-overview";
 import Animated, { useSharedValue } from "react-native-reanimated";
@@ -40,6 +40,8 @@ import { TripTimelineTail } from "../components/trip-timeline-states";
 import { TripStartNode } from "../components/trip-timeline-states";
 
 import { usePlanningMapCollapse } from "../hooks/use-planning-map-collapse";
+import { useTripPullRefresh } from "../hooks/use-trip-pull-refresh";
+import { useTripDirections } from "../hooks/use-trip-directions";
 import { useTripTimelineScroll } from "../hooks/use-trip-timeline-scroll";
 import { useTripTimelineDrag } from "../hooks/use-trip-timeline-drag";
 import { useConnectedTimelineActions } from "../hooks/use-connected-timeline-actions";
@@ -82,6 +84,7 @@ export function ConnectedTripDetailsScreen({
   expandMap?: boolean;
 }) {
   const theme = useAppTheme();
+  const directions = useTripDirections();
   const insets = useScreenInsets();
   const { copy } = useTripIntegrationCopy();
   const { copy: detailCopy } = useTripDetailsCopy();
@@ -234,6 +237,18 @@ export function ConnectedTripDetailsScreen({
     list,
     mapHeight: mapGeometry.height,
     resizeLock,
+  });
+  const pullRefresh = useTripPullRefresh({
+    scrollGesture: mapScrollGesture,
+    offset: mapScroll.offset,
+    mapHeight: mapGeometry.height,
+    enabled: !!read && !mapScroll.hidden && !mapGeometry.expanded &&
+      !timelineDrag.draggedId && !places.isRefetching && !itinerary.isRefetching,
+    onRefresh: () => {
+      if (resizeLock.get() > 0) return;
+      void refreshSchedule();
+      if (activeDate && rows.length >= 2) void routeQuery.refetch();
+    },
   });
   const inferredSchedule = useMemo(
     () => inferredDaySchedule(itinerary.data, activeDate, read?.trip.version),
@@ -501,10 +516,9 @@ export function ConnectedTripDetailsScreen({
   };
   const showJournal = () => setJournalDate(activeDate ?? defaultDate);
   const openDirections = () => {
-    if (!next || !activeDate || !pins.some((p) => p.id === next.id)) return;
-    setFocus({ date: activeDate, id: next.id });
-    mapScroll.show();
-    setMapExpansion((value) => value + 1);
+    if (!next) return;
+    void directions.open(next, trip.destination,
+      routeMode === "WALK" ? "walk" : routeMode === "BICYCLE" ? "bicycle" : "car");
   };
   const markVisited = async (stop = next, value = true) => {
     if (
@@ -604,6 +618,7 @@ export function ConnectedTripDetailsScreen({
         style={{ flex: 1 }}
         onLayout={(event) => setViewport(event.nativeEvent.layout.height)}
       >
+        <GestureDetector gesture={pullRefresh}>
         <GestureDetector gesture={mapScrollGesture}>
           <Animated.FlatList
             ref={list}
@@ -614,7 +629,8 @@ export function ConnectedTripDetailsScreen({
             onScrollToIndexFailed={onScrollToIndexFailed}
             stickyHeaderIndices={[1]}
             scrollEnabled={!timelineDrag.draggedId}
-            removeClippedSubviews={timelineDrag.draggedId ? false : undefined}
+            // Keep the native map attached while its header is resizing/scrolling.
+            removeClippedSubviews={false}
             CellRendererComponentStyle={({ item }) => ({
               zIndex:
                 item.kind === "days"
@@ -624,11 +640,6 @@ export function ConnectedTripDetailsScreen({
                     ? 1
                     : 0,
             })}
-            refreshing={places.isRefetching || itinerary.isRefetching}
-            onRefresh={() => {
-              void refreshSchedule();
-              if (activeDate && rows.length >= 2) void routeQuery.refetch();
-            }}
             contentContainerStyle={{
               minHeight: viewport + mapGeometry.height,
               paddingBottom: theme.spacing.xl,
@@ -1055,6 +1066,11 @@ export function ConnectedTripDetailsScreen({
             }}
           />
         </GestureDetector>
+        </GestureDetector>
+        {places.isRefetching || itinerary.isRefetching ? (
+          <ActivityIndicator pointerEvents="none" color={theme.colors.primaryText}
+            style={{ position: "absolute", top: theme.spacing.sm, alignSelf: "center" }} />
+        ) : null}
       </View>
       {timeline.canUndo ||
         ((timeline.hasFailure || completion.isError) && scheduleError) ? (
@@ -1104,6 +1120,7 @@ export function ConnectedTripDetailsScreen({
           </AppButton>
         </View>
       ) : null}
+      {directions.error ? <AppText accessibilityRole="alert">{directions.error}</AppText> : null}
       {mode === "planning" ||
         (backlog && mode !== "recap") ||
         (mode === "live" && !defaultDate) ? null : (
@@ -1113,7 +1130,7 @@ export function ConnectedTripDetailsScreen({
           canOptimize={canOptimize}
           onOptimize={() => void requestOptimization()}
           nextStop={ready && next?.tripPlaceId ? next : undefined}
-          canDirect={ready && !!next && pins.some((pin) => pin.id === next.id)}
+          canDirect={ready && !!next && !directions.busy}
           onDirections={openDirections}
           onVisited={() => void markVisited()}
           visitPending={

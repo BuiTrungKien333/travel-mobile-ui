@@ -132,6 +132,9 @@ export function TripMapboxView({
     <View style={{ flex: 1 }}>
       <MapView
         style={{ flex: 1 }}
+        // A SurfaceView detaches/flashes black when its clipped list header resizes.
+        // TextureView participates in the same Android composition as the sheet.
+        surfaceView={false}
         styleURL={TRIP_MAP_STYLE}
         scaleBarEnabled={false}
         zoomEnabled

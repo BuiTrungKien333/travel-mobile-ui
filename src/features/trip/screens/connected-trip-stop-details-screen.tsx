@@ -44,6 +44,7 @@ import { getSampleImage } from "../utils/trip-images";
 import { getPlaceMapRegion } from "../utils/place-search";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 import { useItineraryCopy } from "../i18n/itinerary-copy";
+import { useTripDirections } from "../hooks/use-trip-directions";
 import { usePlaceSearchCopy } from "../i18n/place-search-copy";
 import {
   tripApiErrorMessage,
@@ -67,6 +68,7 @@ export function ConnectedTripStopDetailsScreen({
   day?: string;
 }) {
   const theme = useAppTheme();
+  const directions = useTripDirections();
   const insets = useScreenInsets();
   const { copy, locale } = useTripDetailsCopy();
   const { copy: ongoing } = useOngoingCopy();
@@ -384,6 +386,7 @@ export function ConnectedTripStopDetailsScreen({
             }}
           >
             <GlassBackdrop borderRadius={theme.radius.none} />
+            {directions.error ? <AppText accessibilityRole="alert">{directions.error}</AppText> : null}
             {!place.location ? (
               <AppText variant="caption" tone="muted">
                 {copy.stopMapUnavailable}
@@ -393,13 +396,13 @@ export function ConnectedTripStopDetailsScreen({
               <AppButton
                 size="small"
                 variant="raised"
-                disabled={!place.location}
+                loading={directions.busy}
                 style={[
                   styles.action,
                   { flexGrow: 60, paddingHorizontal: theme.spacing.sm },
                 ]}
-                accessibilityHint={copy.expandMap}
-                onPress={() => setExpandRequest((value) => value + 1)}
+                accessibilityHint={ongoing.directionsHint}
+                onPress={() => void directions.open(place, trip.destination)}
                 leadingIcon={
                   <AppIcon
                     name="navigation"

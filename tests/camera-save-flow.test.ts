@@ -68,7 +68,7 @@ function cameraFixture(quick = false) {
         return [
           states[index],
           (value: unknown) => {
-            states[index] = value;
+            states[index] = typeof value === "function" ? value(states[index]) : value;
           },
         ];
       },
@@ -180,6 +180,7 @@ function cameraFixture(quick = false) {
   camera.props.onCameraReady();
   return {
     render,
+    preview: () => preview(render().props.frame),
     events,
     records,
     selectPhotos: (count: number) => {
@@ -231,6 +232,20 @@ test("a trip capture saves to the device before its single upload attempt", asyn
   assert.deepEqual(f.events, ["save", "device", "upload"]);
   assert.equal(f.records[0].local.deviceSaved, true);
   assert.equal(f.render().props.pending, false);
+});
+
+test("flipping cameras changes the facing of one mounted native session", () => {
+  const f = cameraFixture();
+  const back = f.preview();
+  assert.ok(back);
+  f.render().props.onFlip();
+  const front = f.preview();
+  assert.ok(front);
+  assert.equal(front.key, back.key, "Android must not unbind a new session through a removed view");
+  assert.equal((front.props as { facing?: string }).facing, "front");
+  f.render().props.onFlip();
+  const rear = f.preview();
+  assert.equal((rear?.props as { facing?: string }).facing, "back");
 });
 
 test("quick capture without a trip saves on device and never uploads", async () => {

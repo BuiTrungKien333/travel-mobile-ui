@@ -102,6 +102,7 @@ export function TripPlanningMap({
     onGeometryChange?.({
       height: expanded ? maximum : collapsed,
       headerHeight,
+      expanded,
     });
   }, [collapsed, maximum, expanded, headerHeight, onGeometryChange]);
   useEffect(() => {
@@ -174,7 +175,8 @@ export function TripPlanningMap({
     })
     .onEnd((event) => {
       const next =
-        Math.abs(event.velocityY) >= flingVelocity
+        Math.abs(event.velocityY) >= flingVelocity &&
+        Math.abs(event.translationY) >= dragThreshold / 2
           ? event.velocityY > 0
           : Math.abs(event.translationY) >= dragThreshold
             ? event.translationY > 0
@@ -345,4 +347,4 @@ export function TripPlanningMap({
   );
 }
 
-export type PlanningMapGeometry = { height: number; headerHeight: number };
+export type PlanningMapGeometry = { height: number; headerHeight: number; expanded?: boolean };

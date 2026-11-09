@@ -29,18 +29,23 @@ export function usePlanningMapCollapse<T>({
   const reduceMotion = useReducedMotion();
   const hideDistance = theme.layout.tripPlanningMapAutoHideDistance;
   const restoreDistance = theme.spacing.sm;
-  const restoreVelocity = theme.motion.tripMapRestoreVelocity;
+  const intentDuration = theme.motion.tripMapScrollIntentDuration;
+  const restoreTravel = theme.motion.tripMapRestoreDistance;
   const settleDuration = theme.motion.tripMapScrollSettleDuration;
   const target = useSharedValue(-1);
   const settleUntil = useSharedValue(0);
   const previousOffset = useSharedValue(0);
-  const previousTime = useSharedValue(0);
+  const dragStart = useSharedValue(0);
+  const dragOffset = useSharedValue(0);
+  const dragging = useSharedValue(false);
+  const offset = useSharedValue(0);
   useEffect(() => {
     collapsed.set(false);
     setHidden(false);
     target.set(-1);
     previousOffset.set(0);
-    previousTime.set(0);
+    dragStart.set(0);
+    dragging.set(false);
     resizeLock?.set(0);
   }, [
     enabled,
@@ -48,7 +53,8 @@ export function usePlanningMapCollapse<T>({
     collapsed,
     target,
     previousOffset,
-    previousTime,
+    dragStart,
+    dragging,
     resizeLock,
   ]);
 
@@ -69,37 +75,40 @@ export function usePlanningMapCollapse<T>({
   }
   const onScroll = useAnimatedScrollHandler({
     onBeginDrag: (event) => {
-      target.set(-1);
+      dragging.set(true);
+      dragOffset.set(Math.max(0, event.contentOffset.y));
+      dragStart.set(Date.now());
       previousOffset.set(Math.max(0, event.contentOffset.y));
-      previousTime.set(Date.now());
     },
+    onEndDrag: () => { dragging.set(false); },
     onScroll: (event) => {
+      offset.set(Math.max(0, event.contentOffset.y));
       if (!enabled || mapHeight <= hideDistance) return;
-      const offset = Math.max(0, event.contentOffset.y);
+      const y = offset.get();
       const now = Date.now();
-      const delta = offset - previousOffset.get();
-      const velocity = (delta / Math.max(1, now - previousTime.get())) * 1000;
-      previousOffset.set(offset);
-      previousTime.set(now);
+      const delta = y - previousOffset.get();
+      previousOffset.set(y);
       // Resizing the list header can emit scroll events without a scrolling gesture.
       if (resizeLock && resizeLock.get() > 0) return;
       if (target.get() >= 0) {
-        if (Math.abs(offset - target.get()) <= restoreDistance) target.set(-1);
+        if (Math.abs(y - target.get()) <= restoreDistance) target.set(-1);
         else if (now >= settleUntil.get()) target.set(-1);
         return;
       }
-      if (!collapsed.get() && offset >= hideDistance && delta > 0) {
+      const deliberate = dragging.get() && now - dragStart.get() >= intentDuration;
+      if (!collapsed.get() && delta > 0 &&
+        (y >= mapHeight || (deliberate && y - dragOffset.get() >= hideDistance))) {
         collapsed.set(true);
-        if (offset < mapHeight) {
+        if (y < mapHeight) {
           target.set(mapHeight);
           settleUntil.set(now + settleDuration);
         }
         // Don't jump backwards when a numbered marker already navigated further down.
-        scheduleOnRN(hide, offset < mapHeight);
+        scheduleOnRN(hide, y < mapHeight);
       } else if (
         collapsed.get() &&
-        (offset <= restoreDistance ||
-          (delta < -restoreDistance && velocity <= -restoreVelocity))
+        deliberate &&
+        (y <= restoreDistance || dragOffset.get() - y >= restoreTravel)
       ) {
         collapsed.set(false);
         target.set(0);
@@ -108,5 +117,5 @@ export function usePlanningMapCollapse<T>({
       }
     },
   });
-  return { hidden, onScroll, show };
+  return { hidden, onScroll, show, offset };
 }

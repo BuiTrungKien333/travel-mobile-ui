@@ -233,3 +233,21 @@ test("cancelling a map drag restores its snap point and guards its release tap",
   h.render().onPress?.();
   assert.equal(h.render().accessibilityLabel, "Thu gọn bản đồ");
 });
+
+test("a short high-velocity release does not reverse the map's snap state", () => {
+  const h = harness();
+  h.render();
+  h.handlers.start?.();
+  h.handlers.update?.({ translationY: 9 });
+  h.handlers.end?.({ velocityY: 1400, translationY: 9 });
+  h.handlers.finalize?.({}, true);
+  assert.equal(h.render().accessibilityLabel, "Mở rộng bản đồ");
+  h.settle();
+  h.render().onPress?.();
+  h.settle();
+  h.handlers.start?.();
+  h.handlers.update?.({ translationY: -10 });
+  h.handlers.end?.({ velocityY: -1600, translationY: -10 });
+  h.handlers.finalize?.({}, true);
+  assert.equal(h.render().accessibilityLabel, "Thu gọn bản đồ");
+});

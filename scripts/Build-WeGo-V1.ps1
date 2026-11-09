@@ -21,7 +21,9 @@ try {
     } finally { Pop-Location }
     $taskOutput = Join-Path $taskRoot '.expo/v1-release'
     New-Item -ItemType Directory -Path $taskOutput -Force | Out-Null
-    $taskApk = Join-Path $taskOutput 'WeGo-v1.0.1-demo.apk'
+    $taskVersion = (Get-Content -LiteralPath 'app.json' -Raw | ConvertFrom-Json).expo.version
+    if ($taskVersion -notmatch '^\d+\.\d+\.\d+$') { throw 'Invalid app version for APK filename.' }
+    $taskApk = Join-Path $taskOutput "WeGo-v$taskVersion-demo.apk"
     Copy-Item -LiteralPath 'android/app/build/outputs/apk/release/app-release.apk' -Destination $taskApk -Force
     Get-FileHash -LiteralPath $taskApk -Algorithm SHA256
     Write-Host "APK ready: $taskApk"

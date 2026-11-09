@@ -86,6 +86,7 @@ function fixture(
   let cursor = 0;
   const writes: unknown[] = [];
   let shows = 0;
+  const directionUrls: string[] = [];
   let ready = true;
   let routeReady = false;
   let effects: (() => void)[] = [];
@@ -143,7 +144,9 @@ function fixture(
       jsx: (type: unknown, props: Record<string, unknown>) => typeof type === "function" && ["ConnectedTripSchedulePanels"].includes(type.name) ? type(props) : ({ type, props }),
       jsxs: (type: unknown, props: Record<string, unknown>) => typeof type === "function" && ["ConnectedTripSchedulePanels"].includes(type.name) ? type(props) : ({ type, props }),
     },
-    "react-native": { View: "View", Modal: "Modal" },
+    "react-native": { View: "View", Modal: "Modal", Linking: {
+      openURL: async (url: string) => { directionUrls.push(url); },
+    } },
     "react-native-gesture-handler": { Gesture: { Native: () => ({}) }, GestureDetector: "GestureDetector" },
     "react-native-reanimated": {
       __esModule: true,
@@ -247,6 +250,7 @@ function fixture(
         onScrollEndDrag() {},
       }),
     },
+    "../hooks/use-trip-pull-refresh": { useTripPullRefresh: () => ({}) },
     "../utils/trip-mapbox": {
       tripMapPins: (stops: TripStop[]) =>
         stops
@@ -306,6 +310,7 @@ function fixture(
     render,
     rows,
     writes,
+    directionUrls,
     trip,
     a,
     b,
@@ -449,8 +454,11 @@ test("live detail reuses the map/date/timeline layout, highlights the next stop 
   );
   const actions = nodes(f.render(), "TripDetailsActions")[0];
   (actions.props.onDirections as () => void)();
-  assert.equal(f.shows, 1);
-  assert.equal(nodes(f.render(), "TripPlanningMap")[0].props.expandRequest, 1);
+  assert.equal(f.shows, 0);
+  const route = new URL(f.directionUrls[0]);
+  assert.equal(route.searchParams.get("destination"), "11.94,108.44");
+  assert.equal(route.searchParams.get("origin"), null, "Maps uses current GPS rather than a saved trip origin");
+  assert.equal(route.searchParams.get("dir_action"), "navigate");
   assert.equal(nodes(rendered, "NextStopCard").length, 0);
 });
 

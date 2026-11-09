@@ -15,6 +15,7 @@ import { useOngoingCopy } from "../i18n/ongoing-copy";
 import { useTripPreview } from "../providers/trip-preview-provider";
 import type { Memory, Trip, TripStop } from "../types/home-types";
 import { getDayProgress } from "../utils/day-progress";
+import { useTripDirections } from "@/features/trip/hooks/use-trip-directions";
 import {
   getTripCoverImage,
   getSampleImage,
@@ -50,6 +51,7 @@ export function OngoingHomeScreen({
   };
 }) {
   const theme = useAppTheme();
+  const directions = useTripDirections();
   const backdropUri = svgDataUri(
     `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100" preserveAspectRatio="none"><defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="${theme.colors.surfaceTint}"/><stop offset="1" stop-color="${theme.colors.background}"/></linearGradient></defs><rect width="100" height="100" fill="url(#sky)"/></svg>`,
   );
@@ -175,14 +177,11 @@ export function OngoingHomeScreen({
             />
           }
           stop={progress.nextStop}
-          onDirections={() =>
-            router.push({
-              pathname: "/trip/[tripId]",
-              params: { tripId: trip.id, day: today, map: "expanded" },
-            })
-          }
+          onDirections={() => {
+            if (progress.nextStop) void directions.open(progress.nextStop, trip.destination);
+          }}
           hasStops={runtime ? runtime.stopCount > 0 : stops.length > 0}
-          busy={runtime?.busy}
+          busy={runtime?.busy || directions.busy}
           onVisited={() => {
             if (progress.nextStop) void handleVisit(progress.nextStop.id, true);
           }}
@@ -192,6 +191,7 @@ export function OngoingHomeScreen({
         {runtime?.error ? (
           <AppText accessibilityRole="alert">{runtime.error}</AppText>
         ) : null}
+        {directions.error ? <AppText accessibilityRole="alert">{directions.error}</AppText> : null}
         <JournalAlbum
           memories={todayMemories}
           onOpen={openJournal}
