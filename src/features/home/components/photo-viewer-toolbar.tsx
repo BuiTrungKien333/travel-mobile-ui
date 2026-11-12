@@ -236,7 +236,11 @@ function PhotoIconButton({
         <AppIcon
           name={icon}
           variant="light"
-          color={icon === "heartFilled" ? theme.colors.photoViewerFavorite : theme.colors.photoViewerText}
+          color={
+            icon === "heartFilled"
+              ? theme.colors.photoViewerFavorite
+              : theme.colors.photoViewerText
+          }
           size={iconSize ?? theme.layout.iconMedium}
         />
       )}

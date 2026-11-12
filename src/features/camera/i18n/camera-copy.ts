@@ -1,11 +1,16 @@
 import { useI18n } from "@/hooks/use-i18n";
 
 const vi = {
-  networkError: "Chưa kết nối được máy chủ. Ảnh vẫn ở trong ứng dụng; kiểm tra Wi-Fi và địa chỉ máy chủ rồi thử lại.",
-  uploadTimeout: "Máy chủ phản hồi chậm. Ảnh vẫn được giữ; hãy thử đồng bộ lại.",
-  storageUnavailable: "Máy chủ chưa sẵn sàng lưu ảnh. Ảnh trong ứng dụng vẫn được giữ.",
-  sessionExpired: "Phiên đăng nhập đã hết hạn. Ảnh vẫn được giữ; đăng nhập lại để đồng bộ.",
-  localPhotoMissing: "Chưa đọc được bản ảnh trong thiết bị. Hãy mở lại ảnh ở Xem sau để thử lại.",
+  networkError:
+    "Chưa kết nối được máy chủ. Ảnh vẫn ở trong ứng dụng; kiểm tra Wi-Fi và địa chỉ máy chủ rồi thử lại.",
+  uploadTimeout:
+    "Máy chủ phản hồi chậm. Ảnh vẫn được giữ; hãy thử đồng bộ lại.",
+  storageUnavailable:
+    "Máy chủ chưa sẵn sàng lưu ảnh. Ảnh trong ứng dụng vẫn được giữ.",
+  sessionExpired:
+    "Phiên đăng nhập đã hết hạn. Ảnh vẫn được giữ; đăng nhập lại để đồng bộ.",
+  localPhotoMissing:
+    "Chưa đọc được bản ảnh trong thiết bị. Hãy mở lại ảnh ở Xem sau để thử lại.",
   importTitle: "Thêm ảnh vào kỷ niệm",
   importLocalHint:
     "Ảnh được giữ trong ứng dụng trước khi đồng bộ. Ảnh lỗi có thể thử lại trong Xem sau.",
@@ -99,11 +104,16 @@ const vi = {
   savedDownload: "Đã lưu trong ứng dụng và gửi ảnh đến trình tải xuống",
 };
 const en: typeof vi = {
-  networkError: "Cannot reach the server. Your photo is kept in the app; check Wi-Fi and the server address, then retry.",
-  uploadTimeout: "The server is taking too long. Your photo is safe; retry syncing.",
-  storageUnavailable: "Server photo storage is unavailable. Your copy is kept in the app.",
-  sessionExpired: "Your session has expired. Your photo is safe; sign in again to sync.",
-  localPhotoMissing: "Cannot read this photo on the device. Open it in Saved for later and retry.",
+  networkError:
+    "Cannot reach the server. Your photo is kept in the app; check Wi-Fi and the server address, then retry.",
+  uploadTimeout:
+    "The server is taking too long. Your photo is safe; retry syncing.",
+  storageUnavailable:
+    "Server photo storage is unavailable. Your copy is kept in the app.",
+  sessionExpired:
+    "Your session has expired. Your photo is safe; sign in again to sync.",
+  localPhotoMissing:
+    "Cannot read this photo on the device. Open it in Saved for later and retry.",
   importTitle: "Add photos to memories",
   importLocalHint:
     "Photos are kept in the app before syncing. Retry failed uploads in Saved for later.",

@@ -1,16 +1,20 @@
 import { useEffect, useRef } from "react";
 import { Keyboard, useWindowDimensions } from "react-native";
 import { Gesture } from "react-native-gesture-handler";
-import { cancelAnimation, ReduceMotion, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from "react-native-reanimated";
+import {
+  cancelAnimation,
+  ReduceMotion,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 
 import { useAppTheme } from "@/hooks/use-app-theme";
 
 /** Mount one session per opening; apply commits only after the exit animation finishes. */
-export function useSheetMotion(
-  onClose: () => void,
-  dismissDisabled = false,
-) {
+export function useSheetMotion(onClose: () => void, dismissDisabled = false) {
   const theme = useAppTheme();
   const { height } = useWindowDimensions();
   const reduceMotion = useReducedMotion();

@@ -9,9 +9,21 @@ import type { Dispatch, SetStateAction } from "react";
 import type { TripStop } from "@/features/home/types/home-types";
 import { createTripStyles as styles } from "./create-trip-styles";
 
-type Props = { selectedStops: TripStop[]; destination: string; setShowDestSheet: Dispatch<SetStateAction<boolean>>; setShowPlaceSheet: Dispatch<SetStateAction<boolean>>; handleRemoveStop: (id: string) => void; };
+type Props = {
+  selectedStops: TripStop[];
+  destination: string;
+  setShowDestSheet: Dispatch<SetStateAction<boolean>>;
+  setShowPlaceSheet: Dispatch<SetStateAction<boolean>>;
+  handleRemoveStop: (id: string) => void;
+};
 
-export function CreateTripStopsCard({ selectedStops, destination, setShowDestSheet, setShowPlaceSheet, handleRemoveStop }: Props) {
+export function CreateTripStopsCard({
+  selectedStops,
+  destination,
+  setShowDestSheet,
+  setShowPlaceSheet,
+  handleRemoveStop,
+}: Props) {
   const theme = useAppTheme();
   const { copy, locale } = useTripCopy();
   return (
@@ -82,11 +94,7 @@ export function CreateTripStopsCard({ selectedStops, destination, setShowDestShe
               { backgroundColor: theme.colors.surfaceTint },
             ]}
           >
-            <AppIcon
-              name="plus"
-              size={16}
-              color={theme.colors.primaryText}
-            />
+            <AppIcon name="plus" size={16} color={theme.colors.primaryText} />
           </View>
           <View style={styles.addPlaceTextCol}>
             <AppText
@@ -197,11 +205,7 @@ export function CreateTripStopsCard({ selectedStops, destination, setShowDestShe
               },
             ]}
           >
-            <AppIcon
-              name="plus"
-              size={14}
-              color={theme.colors.primaryText}
-            />
+            <AppIcon name="plus" size={14} color={theme.colors.primaryText} />
             <AppText
               style={[
                 styles.addMoreStopsText,

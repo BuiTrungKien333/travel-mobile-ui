@@ -94,7 +94,6 @@ export function JournalAlbum({
               ? copy.recentEmptyHint
               : copy.journalEmptyHint}
           </AppText>
-
         </JourneyCard>
       )}
       {gallery.opened ? (

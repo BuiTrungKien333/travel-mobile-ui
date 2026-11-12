@@ -6,7 +6,7 @@ import { authSession } from "@/features/auth/services/auth-session";
 import { placeDiscoveryKeys } from "./place-discovery-query-keys";
 import { tripQueryKeys } from "./trip-query-keys";
 import { weatherQueryKeys } from "@/features/weather/api/weather-query-keys";
-import type { AddTripPlaceRequest, UpdateTripPlaceRequest } from "./trip-types";
+import type { UpdateTripPlaceRequest } from "./trip-types";
 export {
   useTripsQuery,
   useTripQuery,
@@ -56,14 +56,6 @@ export function useAddTripPlacesMutation(tripId: string, date?: string) {
     },
   });
 }
-export function useAddTripPlaceMutation(tripId: string) {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (request: AddTripPlaceRequest) =>
-      tripPlacesApi.addPlace(tripId, request),
-    onSuccess: () => client.invalidateQueries({ queryKey: tripQueryKeys.root }),
-  });
-}
 export function useUpdateTripPlaceMutation(tripId: string) {
   const client = useQueryClient();
   const owner = useProfile().data?.id;
@@ -95,12 +87,5 @@ export function useUpdateTripPlaceMutation(tripId: string) {
           queryKey: weatherQueryKeys.forTrip(owner, tripId),
         }),
       ]),
-  });
-}
-export function useDeleteTripPlaceMutation(tripId: string) {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (placeId: string) => tripPlacesApi.removePlace(tripId, placeId),
-    onSuccess: () => client.invalidateQueries({ queryKey: tripQueryKeys.root }),
   });
 }

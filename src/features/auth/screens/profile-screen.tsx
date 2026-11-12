@@ -30,14 +30,18 @@ const previewUser: AuthUser = {
   role: "USER",
 };
 
-export function ProfileScreen({ isPreview = false }: { isPreview?: boolean; } = {}) {
+export function ProfileScreen({
+  isPreview = false,
+}: { isPreview?: boolean } = {}) {
   const theme = useAppTheme();
   const tabBarHeight = useBottomTabBarHeight();
   const { t } = useI18n();
   const { copy } = useProfileCopy();
   const profile = useProfile();
   const logout = useLogout();
-  const authenticated = useAuthStore((state) => state.status === "authenticated");
+  const authenticated = useAuthStore(
+    (state) => state.status === "authenticated",
+  );
   const user = profile.data ?? (isPreview ? previewUser : undefined);
   const [panel, setPanel] = useState<"privacy" | "settings" | null>(null);
   const [editing, setEditing] = useState(false);
@@ -50,7 +54,10 @@ export function ProfileScreen({ isPreview = false }: { isPreview?: boolean; } = 
     try {
       const revoked = await logout.mutateAsync();
       if (!revoked && authSession.getVersion() === version + 1) {
-        router.replace({ pathname: "/(auth)/login", params: { notice: "local-logout" } });
+        router.replace({
+          pathname: "/(auth)/login",
+          params: { notice: "local-logout" },
+        });
       }
     } catch (error) {
       setLogoutError(authErrorMessage(error, t));
@@ -58,56 +65,164 @@ export function ProfileScreen({ isPreview = false }: { isPreview?: boolean; } = 
   }
 
   return (
-    <ScreenSafeArea edges={["top", "left", "right"]} style={{ flex: 1, backgroundColor: theme.colors.background }}>
+    <ScreenSafeArea
+      edges={["top", "left", "right"]}
+      style={{ flex: 1, backgroundColor: theme.colors.background }}
+    >
       <ScrollView
         contentInsetAdjustmentBehavior="never"
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ flexGrow: 1, alignItems: "center", paddingHorizontal: theme.spacing.lg, paddingTop: theme.spacing.xs, paddingBottom: tabBarHeight + theme.spacing.xl }}
+        contentContainerStyle={{
+          flexGrow: 1,
+          alignItems: "center",
+          paddingHorizontal: theme.spacing.lg,
+          paddingTop: theme.spacing.xs,
+          paddingBottom: tabBarHeight + theme.spacing.xl,
+        }}
       >
-        <View style={{ width: "100%", maxWidth: theme.layout.contentMaxWidth, gap: theme.spacing.lg }}>
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-            <Image accessible={false} source={require("@/assets/images/logo.png")} contentFit="contain" style={{ width: theme.layout.headerLogoWidth, height: theme.layout.headerLogoHeight, marginLeft: -theme.layout.headerLogoWidth * logoLeftInsetRatio }} />
-            <Pressable accessibilityRole="button" accessibilityLabel={copy.settings} onPress={() => setPanel("settings")} style={({ pressed }) => ({ width: theme.layout.compactTouchTarget, minHeight: theme.layout.compactTouchTarget, alignItems: "center", justifyContent: "center", opacity: pressed ? theme.motion.pressOpacity : 1 })}>
-              <AppIcon name="tune" size={theme.layout.iconMedium} color={theme.colors.primaryText} />
+        <View
+          style={{
+            width: "100%",
+            maxWidth: theme.layout.contentMaxWidth,
+            gap: theme.spacing.lg,
+          }}
+        >
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Image
+              accessible={false}
+              source={require("@/assets/images/logo.png")}
+              contentFit="contain"
+              style={{
+                width: theme.layout.headerLogoWidth,
+                height: theme.layout.headerLogoHeight,
+                marginLeft: -theme.layout.headerLogoWidth * logoLeftInsetRatio,
+              }}
+            />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={copy.settings}
+              onPress={() => setPanel("settings")}
+              style={({ pressed }) => ({
+                width: theme.layout.compactTouchTarget,
+                minHeight: theme.layout.compactTouchTarget,
+                alignItems: "center",
+                justifyContent: "center",
+                opacity: pressed ? theme.motion.pressOpacity : 1,
+              })}
+            >
+              <AppIcon
+                name="tune"
+                size={theme.layout.iconMedium}
+                color={theme.colors.primaryText}
+              />
             </Pressable>
           </View>
-          <AppText accessibilityRole="header" variant="subheading">{t("auth.profile.title")}</AppText>
+          <AppText accessibilityRole="header" variant="subheading">
+            {t("auth.profile.title")}
+          </AppText>
           {!isPreview && profile.isLoading ? (
-            <View style={{ alignItems: "center", gap: theme.spacing.sm, padding: theme.spacing.lg }}>
-              <ActivityIndicator color={theme.colors.primary} accessibilityLabel={t("auth.profile.loading")} />
-              <AppText tone="muted" accessibilityLiveRegion="polite">{t("auth.profile.loading")}</AppText>
+            <View
+              style={{
+                alignItems: "center",
+                gap: theme.spacing.sm,
+                padding: theme.spacing.lg,
+              }}
+            >
+              <ActivityIndicator
+                color={theme.colors.primary}
+                accessibilityLabel={t("auth.profile.loading")}
+              />
+              <AppText tone="muted" accessibilityLiveRegion="polite">
+                {t("auth.profile.loading")}
+              </AppText>
             </View>
           ) : null}
           {!isPreview && profile.isError ? (
             <View style={{ gap: theme.spacing.sm }}>
-              <AppText accessibilityRole="alert" tone="error">{authErrorMessage(profile.error, t)}</AppText>
-              <AppButton variant="outline" loading={profile.isFetching} onPress={() => void profile.refetch()}>{t("common.retry")}</AppButton>
+              <AppText accessibilityRole="alert" tone="error">
+                {authErrorMessage(profile.error, t)}
+              </AppText>
+              <AppButton
+                variant="outline"
+                loading={profile.isFetching}
+                onPress={() => void profile.refetch()}
+              >
+                {t("common.retry")}
+              </AppButton>
             </View>
           ) : null}
-          {user ? <ProfileIdentityCard user={user} onEdit={isPreview ? undefined : () => setEditing((value) => !value)} /> : null}
-          {!user && !profile.isLoading && !profile.isError ? <AppText tone="muted">{t("auth.profile.empty")}</AppText> : null}
+          {user ? (
+            <ProfileIdentityCard
+              user={user}
+              onEdit={
+                isPreview ? undefined : () => setEditing((value) => !value)
+              }
+            />
+          ) : null}
+          {!user && !profile.isLoading && !profile.isError ? (
+            <AppText tone="muted">{t("auth.profile.empty")}</AppText>
+          ) : null}
           {editing && user && !isPreview ? (
             <ProfileSection title={t("auth.profile.edit")}>
               <View style={{ padding: theme.spacing.md }}>
-                <ProfileEditor key={user.id} user={user} onDone={() => setEditing(false)} />
+                <ProfileEditor
+                  key={user.id}
+                  user={user}
+                  onDone={() => setEditing(false)}
+                />
               </View>
             </ProfileSection>
           ) : null}
           <ProfilePreferences key={user?.id ?? "anonymous"} />
           <ProfileSection title={copy.security}>
-            <ProfileMenuRow icon="edit" title={t("auth.profile.changePassword")} onPress={() => router.push("/forgot-password")} />
-            <ProfileMenuRow icon="info" title={copy.privacy} onPress={() => setPanel("privacy")} divider={false} />
+            <ProfileMenuRow
+              icon="edit"
+              title={t("auth.profile.changePassword")}
+              onPress={() => router.push("/forgot-password")}
+            />
+            <ProfileMenuRow
+              icon="info"
+              title={copy.privacy}
+              onPress={() => setPanel("privacy")}
+              divider={false}
+            />
           </ProfileSection>
-          {logoutError ? <AppText accessibilityRole="alert" tone="error">{logoutError}</AppText> : null}
+          {logoutError ? (
+            <AppText accessibilityRole="alert" tone="error">
+              {logoutError}
+            </AppText>
+          ) : null}
           {authenticated || isPreview ? (
-            <AppButton variant="outline" loading={logout.isPending} onPress={() => void handleLogout()} style={{ borderColor: theme.colors.error }} leadingIcon={<AppIcon name="logout" size={theme.layout.iconMedium} color={theme.colors.error} />}>
-              <AppText variant="label" tone="error">{t("auth.session.logout")}</AppText>
+            <AppButton
+              variant="outline"
+              loading={logout.isPending}
+              onPress={() => void handleLogout()}
+              style={{ borderColor: theme.colors.error }}
+              leadingIcon={
+                <AppIcon
+                  name="logout"
+                  size={theme.layout.iconMedium}
+                  color={theme.colors.error}
+                />
+              }
+            >
+              <AppText variant="label" tone="error">
+                {t("auth.session.logout")}
+              </AppText>
             </AppButton>
           ) : null}
         </View>
       </ScrollView>
-      {panel ? <ProfileSettingsSheet panel={panel} onClose={() => setPanel(null)} /> : null}
+      {panel ? (
+        <ProfileSettingsSheet panel={panel} onClose={() => setPanel(null)} />
+      ) : null}
     </ScreenSafeArea>
   );
 }

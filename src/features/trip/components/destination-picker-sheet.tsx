@@ -1,6 +1,17 @@
 import { SheetHeader } from "@/components/common/sheet-header";
 import { useMemo, useState } from "react";
-import { FlatList, ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, TextInput, TextStyle, View } from "react-native";
+import {
+  FlatList,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  StyleSheet,
+  TextInput,
+  TextStyle,
+  View,
+} from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Animated from "react-native-reanimated";
 import { useScreenInsets } from "@/hooks/use-screen-insets";
@@ -89,10 +100,10 @@ function DestinationPickerSession({
       const items = isDebouncing
         ? []
         : catalogRows.map((item) => ({
-          id: item.id,
-          name: item.name,
-          city: item.name,
-        }));
+            id: item.id,
+            name: item.name,
+            city: item.name,
+          }));
       return q ? [{ name: q, city: q, custom: true }, ...items] : items;
     }
     if (!q) return popularDestinations;
@@ -153,7 +164,12 @@ function DestinationPickerSession({
             ]}
           >
             {/* Drag Handle & Header */}
-            <SheetHeader title={copy.chooseDestination} closeLabel={copy.close} onClose={() => close()} gesture={dragGesture} />
+            <SheetHeader
+              title={copy.chooseDestination}
+              closeLabel={copy.close}
+              onClose={() => close()}
+              gesture={dragGesture}
+            />
 
             {/* Search Input Box */}
             <View
@@ -301,8 +317,8 @@ function DestinationPickerSession({
                       </AppText>
                     ) : null}
                     {!catalog.isError &&
-                      !isDebouncing &&
-                      catalog.hasNextPage ? (
+                    !isDebouncing &&
+                    catalog.hasNextPage ? (
                       <AppButton
                         variant="outline"
                         size="small"
@@ -324,10 +340,10 @@ function DestinationPickerSession({
                     ? currentProvinceId === item.id
                     : !currentProvinceId && currentDestination === item.name
                   : currentDestination
-                    .toLowerCase()
-                    .includes(item.city.toLowerCase()) ||
-                  currentDestination.toLowerCase() ===
-                  item.name.toLowerCase();
+                      .toLowerCase()
+                      .includes(item.city.toLowerCase()) ||
+                    currentDestination.toLowerCase() ===
+                      item.name.toLowerCase();
                 return (
                   <Pressable
                     accessibilityRole="button"

@@ -116,7 +116,8 @@ export function HourlyForecast({ day }: { day: ForecastDay }) {
             style={[
               styles.hour,
               {
-                width: theme.layout.weatherHourCardWidth * Math.max(1, fontScale),
+                width:
+                  theme.layout.weatherHourCardWidth * Math.max(1, fontScale),
                 paddingHorizontal: theme.spacing.sm,
                 paddingVertical: theme.spacing.md,
                 gap: theme.spacing.xs,

@@ -12,7 +12,7 @@ $env:NODE_ENV = 'production'
 $env:CMAKE_BUILD_PARALLEL_LEVEL = '2'
 Push-Location $taskRoot
 try {
-    & node node_modules/expo/bin/cli prebuild --platform android --no-install
+    & node node_modules/expo/bin/cli prebuild --platform android --no-install --no-clean
     if ($LASTEXITCODE -ne 0) { throw 'Expo prebuild failed.' }
     Push-Location android
     try {

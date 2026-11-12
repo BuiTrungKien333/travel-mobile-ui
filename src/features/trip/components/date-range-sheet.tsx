@@ -60,7 +60,7 @@ function DateRangeSession({
     const firstDayIndex =
       (new Date(Date.UTC(year, month, 1)).getUTCDay() + 6) % 7;
 
-    const days: ({ dateStr: string; dayNum: number; } | null)[] = [];
+    const days: ({ dateStr: string; dayNum: number } | null)[] = [];
     for (let i = 0; i < firstDayIndex; i++) {
       days.push(null);
     }
@@ -146,7 +146,16 @@ function DateRangeSession({
       onRequestClose={() => close()}
     >
       <GestureHandlerRootView style={styles.root}>
-        <View style={[styles.backdrop, { paddingTop: insets.top + theme.spacing.sm, paddingLeft: insets.left, paddingRight: insets.right }]}>
+        <View
+          style={[
+            styles.backdrop,
+            {
+              paddingTop: insets.top + theme.spacing.sm,
+              paddingLeft: insets.left,
+              paddingRight: insets.right,
+            },
+          ]}
+        >
           <Animated.View
             style={[
               StyleSheet.absoluteFill,
@@ -169,7 +178,12 @@ function DateRangeSession({
             ]}
           >
             {/* Drag Handle & Header */}
-            <SheetHeader title={copy.chooseDates} closeLabel={copy.close} onClose={() => close()} gesture={dragGesture} />
+            <SheetHeader
+              title={copy.chooseDates}
+              closeLabel={copy.close}
+              onClose={() => close()}
+              gesture={dragGesture}
+            />
 
             <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
               {/* Selected Range Banner */}
@@ -326,19 +340,19 @@ function DateRangeSession({
                           backgroundColor: theme.colors.surfaceTint,
                         },
                         isStart &&
-                        selectedEnd &&
-                        selectedEnd !== selectedStart && {
-                          borderTopLeftRadius: theme.radius.full,
-                          borderBottomLeftRadius: theme.radius.full,
-                          backgroundColor: theme.colors.surfaceTint,
-                        },
+                          selectedEnd &&
+                          selectedEnd !== selectedStart && {
+                            borderTopLeftRadius: theme.radius.full,
+                            borderBottomLeftRadius: theme.radius.full,
+                            backgroundColor: theme.colors.surfaceTint,
+                          },
                         isEnd &&
-                        selectedStart &&
-                        selectedEnd !== selectedStart && {
-                          borderTopRightRadius: theme.radius.full,
-                          borderBottomRightRadius: theme.radius.full,
-                          backgroundColor: theme.colors.surfaceTint,
-                        },
+                          selectedStart &&
+                          selectedEnd !== selectedStart && {
+                            borderTopRightRadius: theme.radius.full,
+                            borderBottomRightRadius: theme.radius.full,
+                            backgroundColor: theme.colors.surfaceTint,
+                          },
                       ]}
                     >
                       <View

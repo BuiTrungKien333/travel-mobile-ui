@@ -11,7 +11,8 @@ const vi = {
   dayLabel: "Ngày",
   assignHint: "Các điểm đã chọn sẽ được thêm cuối lịch ngày này.",
   assignConfirm: "Thêm vào ngày {day}",
-  dayCapacity: "Ngày này sẽ vượt giới hạn 100 điểm dừng. Hãy chọn ít điểm hơn hoặc chọn ngày khác.",
+  dayCapacity:
+    "Ngày này sẽ vượt giới hạn 100 điểm dừng. Hãy chọn ít điểm hơn hoặc chọn ngày khác.",
   schedule: "Xếp vào lịch",
   clearTime: "Bỏ giờ đến",
   edit: "Sửa điểm dừng",
@@ -68,9 +69,11 @@ const en: typeof vi = {
   assignSelected: "Schedule {count} places…",
   assignTitle: "Choose a day",
   dayLabel: "Day",
-  assignHint: "Selected places will be added to the end of this day's itinerary.",
+  assignHint:
+    "Selected places will be added to the end of this day's itinerary.",
   assignConfirm: "Add to day {day}",
-  dayCapacity: "This would exceed 100 stops for the day. Select fewer places or another day.",
+  dayCapacity:
+    "This would exceed 100 stops for the day. Select fewer places or another day.",
   schedule: "Schedule stop",
   clearTime: "Clear arrival time",
   edit: "Edit stop",

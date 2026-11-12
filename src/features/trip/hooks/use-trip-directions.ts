@@ -9,7 +9,11 @@ export function useTripDirections() {
   const opening = useRef(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
-  async function open(stop: TripStop, destination: string, mode: TravelMode | "bicycle" = "car") {
+  async function open(
+    stop: TripStop,
+    destination: string,
+    mode: TravelMode | "bicycle" = "car",
+  ) {
     if (opening.current) return;
     opening.current = true;
     setBusy(true);

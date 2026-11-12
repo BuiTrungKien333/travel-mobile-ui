@@ -2,7 +2,15 @@ import { useReducedMotion } from "react-native-reanimated";
 import { useController, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRef, useState } from "react";
-import { Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, View } from "react-native";
+import {
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  View,
+} from "react-native";
 import { useScreenInsets } from "@/hooks/use-screen-insets";
 import { AppButton } from "@/components/ui/app-button";
 import { AppIcon } from "@/components/ui/app-icon";
@@ -13,16 +21,30 @@ import { dayDistance } from "@/features/home/utils/select-home";
 import { useAppTheme } from "@/hooks/use-app-theme";
 
 import { useTripCopy } from "../i18n/trip-copy";
-import { createTripSchema, type CreateTripInput, type CreateTripOutput } from "../schemas/create-trip-schema";
+import {
+  createTripSchema,
+  type CreateTripInput,
+  type CreateTripOutput,
+} from "../schemas/create-trip-schema";
 import { confirmDiscard } from "../utils/confirm-discard";
-import { formatBudget, generateDefaultTitle } from "../utils/create-trip-formatters";
+import {
+  formatBudget,
+  generateDefaultTitle,
+} from "../utils/create-trip-formatters";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 import { router } from "expo-router";
 import { UI_PREVIEW_ENABLED } from "@/constants/development";
 import { ApiError } from "@/services/api/api-error";
 import { useCreateTripMutation } from "../api/trip-queries";
-import { createTripRequestId, tripLocalToday, type CreateTripPayload } from "../api/trip-contract";
-import { tripApiErrorMessage, useTripIntegrationCopy } from "../i18n/trip-integration-copy";
+import {
+  createTripRequestId,
+  tripLocalToday,
+  type CreateTripPayload,
+} from "../api/trip-contract";
+import {
+  tripApiErrorMessage,
+  useTripIntegrationCopy,
+} from "../i18n/trip-integration-copy";
 import { DateRangeSheet } from "./date-range-sheet";
 import { DestinationPickerSheet } from "./destination-picker-sheet";
 import { PlacePickerScreen } from "../screens/place-picker-screen";
@@ -52,7 +74,7 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
   const { copy: integrationCopy } = useTripIntegrationCopy();
   const createMutation = useCreateTripMutation();
   const submitLock = useRef(false);
-  const createAttempt = useRef<{ fingerprint: string; id: string; } | null>(
+  const createAttempt = useRef<{ fingerprint: string; id: string } | null>(
     null,
   );
   const scrollRef = useRef<ScrollView>(null);
@@ -336,10 +358,7 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
           </Pressable>
 
           <View style={styles.headerTextCol}>
-            <AppText
-              variant="subheading"
-              accessibilityRole="header"
-            >
+            <AppText variant="subheading" accessibilityRole="header">
               {copy.createTrip}
             </AppText>
           </View>
@@ -361,7 +380,10 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
           ]}
         >
           {/* Card 1: Điểm đến chính */}
-          <CreateTripDestinationCard destination={destination} setShowDestSheet={setShowDestSheet} />
+          <CreateTripDestinationCard
+            destination={destination}
+            setShowDestSheet={setShowDestSheet}
+          />
 
           {errors.destination ? (
             <AppText accessibilityRole="alert" tone="error" variant="caption">
@@ -378,7 +400,12 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
             </AppText>
           ) : null}
           {/* Card 2: Thời gian chuyến đi */}
-          <CreateTripDatesCard startDate={startDate} endDate={endDate} durationDays={durationDays} setShowDateSheet={setShowDateSheet} />
+          <CreateTripDatesCard
+            startDate={startDate}
+            endDate={endDate}
+            durationDays={durationDays}
+            setShowDateSheet={setShowDateSheet}
+          />
 
           {errors.startDate || errors.endDate ? (
             <AppText accessibilityRole="alert" tone="error" variant="caption">
@@ -386,16 +413,36 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
             </AppText>
           ) : null}
           {/* Section 3: Tên chuyến đi */}
-          <CreateTripNameCard tripTitle={tripTitle} titleEdited={titleEdited} titleField={titleField} errors={errors} />
+          <CreateTripNameCard
+            tripTitle={tripTitle}
+            titleEdited={titleEdited}
+            titleField={titleField}
+            errors={errors}
+          />
 
           {/* Section 4: Địa điểm dự kiến */}
-          <CreateTripStopsCard selectedStops={selectedStops} destination={destination} setShowDestSheet={setShowDestSheet} setShowPlaceSheet={setShowPlaceSheet} handleRemoveStop={handleRemoveStop} />
+          <CreateTripStopsCard
+            selectedStops={selectedStops}
+            destination={destination}
+            setShowDestSheet={setShowDestSheet}
+            setShowPlaceSheet={setShowPlaceSheet}
+            handleRemoveStop={handleRemoveStop}
+          />
 
           <AppText variant="caption" tone="muted">
             {detailsCopy.savedPoolHint}
           </AppText>
           {/* Section 5: Accordion (Tùy chọn thêm) */}
-          <CreateTripOptionsCard isAccordionOpen={isAccordionOpen} setIsAccordionOpen={setIsAccordionOpen} budget={budget} handleBudgetChange={handleBudgetChange} budgetField={budgetField} errors={errors} selectedTags={selectedTags} toggleTag={toggleTag} />
+          <CreateTripOptionsCard
+            isAccordionOpen={isAccordionOpen}
+            setIsAccordionOpen={setIsAccordionOpen}
+            budget={budget}
+            handleBudgetChange={handleBudgetChange}
+            budgetField={budgetField}
+            errors={errors}
+            selectedTags={selectedTags}
+            toggleTag={toggleTag}
+          />
 
           {/* Error Message Banner */}
           {error ? (

@@ -6,7 +6,11 @@ import type { PhotoRect } from "../utils/photo-viewer-geometry";
 import { PhotoActionError } from "./photo-action-error";
 
 function assertPhotoModule(
-  name: "FileSystem" | "ExpoMediaLibraryNext" | "ExpoSharing" | "ExpoImageManipulator",
+  name:
+    | "FileSystem"
+    | "ExpoMediaLibraryNext"
+    | "ExpoSharing"
+    | "ExpoImageManipulator",
 ) {
   if (!requireOptionalNativeModule(name))
     throw new PhotoActionError("nativeBuildRequired");
@@ -30,17 +34,19 @@ async function withLocalPhoto(
   let stage = "prepare";
   try {
     if (/^https?:\/\//i.test(uri)) await File.downloadFileAsync(uri, file);
-    else if (/^(file|content):/i.test(uri))
-      await new File(uri).copy(file);
+    else if (/^(file|content):/i.test(uri)) await new File(uri).copy(file);
     else {
       stage = "decode";
       // Bundled Android drawables/asset URIs are images, not filesystem paths.
       // Decode once, export lossless PNG, and release native pixel buffers promptly.
       assertPhotoModule("ExpoImageManipulator");
-      const { ImageManipulator, SaveFormat } = await import("expo-image-manipulator");
+      const { ImageManipulator, SaveFormat } =
+        await import("expo-image-manipulator");
       const decoded = await Image.loadAsync(source ?? uri);
       let context: ReturnType<typeof ImageManipulator.manipulate> | undefined;
-      let rendered: Awaited<ReturnType<NonNullable<typeof context>["renderAsync"]>> | undefined;
+      let rendered:
+        | Awaited<ReturnType<NonNullable<typeof context>["renderAsync"]>>
+        | undefined;
       try {
         stage = "render";
         context = ImageManipulator.manipulate(decoded);
@@ -50,7 +56,11 @@ async function withLocalPhoto(
         stage = "copy";
         const temporary = new File(result.uri);
         file = new File(directory, `WeGo-${Date.now()}.png`);
-        try { await temporary.copy(file); } finally { if (temporary.exists) temporary.delete(); }
+        try {
+          await temporary.copy(file);
+        } finally {
+          if (temporary.exists) temporary.delete();
+        }
       } finally {
         rendered?.release();
         context?.release();
@@ -61,8 +71,16 @@ async function withLocalPhoto(
     await action(file);
   } catch (failure) {
     // Keep export diagnostics useful without logging photo URLs, paths or auth data.
-    const message = failure instanceof Error ? failure.message : String(failure);
-    console.warn("WeGo photo export failed", stage, message.replace(/(?:https?:|file:|content:|\/data\/)[^\s]+/g, "[redacted]"));
+    const message =
+      failure instanceof Error ? failure.message : String(failure);
+    console.warn(
+      "WeGo photo export failed",
+      stage,
+      message.replace(
+        /(?:https?:|file:|content:|\/data\/)[^\s]+/g,
+        "[redacted]",
+      ),
+    );
     throw failure;
   } finally {
     // Android's chooser may return before the receiving app reads the URI.
@@ -94,7 +112,10 @@ export async function shareJournalPhoto(
   );
 }
 
-export async function saveJournalPhoto(uri: string, source?: ImageSource | string | number) {
+export async function saveJournalPhoto(
+  uri: string,
+  source?: ImageSource | string | number,
+) {
   // Native photo dependencies must not block Home when an older build lacks them.
   assertPhotoModule("ExpoMediaLibraryNext");
   const { Asset, requestPermissionsAsync } = await import("expo-media-library");
@@ -106,7 +127,12 @@ export async function saveJournalPhoto(uri: string, source?: ImageSource | strin
     const permission = await requestPermissionsAsync(true, []);
     if (!permission.granted) throw new PhotoActionError("permission");
   }
-  await withLocalPhoto(uri, async (file) => {
-    await Asset.create(file.uri);
-  }, false, source);
+  await withLocalPhoto(
+    uri,
+    async (file) => {
+      await Asset.create(file.uri);
+    },
+    false,
+    source,
+  );
 }

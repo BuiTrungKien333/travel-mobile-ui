@@ -35,8 +35,13 @@ export function TripDayMap({
   const { copy: integration } = useItineraryCopy();
   const [staticOnly, setStaticOnly] = useState(false);
   const [failedImage, setFailedImage] = useState<string>();
-  const [imageSize, setImageSize] = useState<{ width: number; height: number }>();
-  const resizeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const [imageSize, setImageSize] = useState<{
+    width: number;
+    height: number;
+  }>();
+  const resizeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
   useEffect(() => () => clearTimeout(resizeTimer.current), []);
   const showStatic = useCallback(() => setStaticOnly(true), []);
   const pins = useMemo(() => {
@@ -59,9 +64,10 @@ export function TripDayMap({
   const path = useMemo(
     () =>
       polyline
-        ? decodeRoutePolyline(polyline).map(
-            (point): TripMapPosition => [point.longitude, point.latitude],
-          )
+        ? decodeRoutePolyline(polyline).map((point): TripMapPosition => [
+            point.longitude,
+            point.latitude,
+          ])
         : [],
     [polyline],
   );

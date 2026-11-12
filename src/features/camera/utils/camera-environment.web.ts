@@ -1,8 +1,5 @@
 export function getCameraEnvironmentIssue():
-  | "insecure"
-  | "unsupported"
-  | "embedded"
-  | null {
+  "insecure" | "unsupported" | "embedded" | null {
   if (!window.isSecureContext) return "insecure";
   const policy =
     "permissionsPolicy" in document

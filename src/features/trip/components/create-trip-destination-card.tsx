@@ -8,9 +8,15 @@ import { destinationRegion } from "../utils/create-trip-formatters";
 import type { Dispatch, SetStateAction } from "react";
 import { createTripStyles as styles } from "./create-trip-styles";
 
-type Props = { destination: string; setShowDestSheet: Dispatch<SetStateAction<boolean>>; };
+type Props = {
+  destination: string;
+  setShowDestSheet: Dispatch<SetStateAction<boolean>>;
+};
 
-export function CreateTripDestinationCard({ destination, setShowDestSheet }: Props) {
+export function CreateTripDestinationCard({
+  destination,
+  setShowDestSheet,
+}: Props) {
   const theme = useAppTheme();
   const { copy } = useTripCopy();
   return (
@@ -35,11 +41,7 @@ export function CreateTripDestinationCard({ destination, setShowDestSheet }: Pro
             { backgroundColor: theme.colors.surfaceTint },
           ]}
         >
-          <AppIcon
-            name="pin"
-            size={20}
-            color={theme.colors.primaryText}
-          />
+          <AppIcon name="pin" size={20} color={theme.colors.primaryText} />
         </View>
 
         <View style={styles.cardInfoCol}>
@@ -66,11 +68,7 @@ export function CreateTripDestinationCard({ destination, setShowDestSheet }: Pro
           ) : null}
         </View>
 
-        <AppIcon
-          name="chevron"
-          size={18}
-          color={theme.colors.textSecondary}
-        />
+        <AppIcon name="chevron" size={18} color={theme.colors.textSecondary} />
       </View>
     </Pressable>
   );

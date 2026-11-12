@@ -8,11 +8,24 @@ import { useTripCopy } from "../i18n/trip-copy";
 import { useState, type RefObject } from "react";
 import type { ControllerRenderProps, FieldErrors } from "react-hook-form";
 import type { CreateTripInput } from "../schemas/create-trip-schema";
-import { createTripStyles as styles, webInputReset } from "./create-trip-styles";
+import {
+  createTripStyles as styles,
+  webInputReset,
+} from "./create-trip-styles";
 
-type Props = { tripTitle: string; titleEdited: RefObject<boolean>; titleField: ControllerRenderProps<CreateTripInput, "title">; errors: FieldErrors<CreateTripInput>; };
+type Props = {
+  tripTitle: string;
+  titleEdited: RefObject<boolean>;
+  titleField: ControllerRenderProps<CreateTripInput, "title">;
+  errors: FieldErrors<CreateTripInput>;
+};
 
-export function CreateTripNameCard({ tripTitle, titleEdited, titleField, errors }: Props) {
+export function CreateTripNameCard({
+  tripTitle,
+  titleEdited,
+  titleField,
+  errors,
+}: Props) {
   const [isTitleFocused, setIsTitleFocused] = useState(false);
   const theme = useAppTheme();
   const { copy } = useTripCopy();

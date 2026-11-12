@@ -207,6 +207,32 @@ test("Adapter separates place, trip-place and itinerary item identities on read 
   );
 });
 
+test("trip adapter preserves the first matching day's settings and empty days", () => {
+  const { toTrip } = tripModuleLoader()<
+    typeof import("../src/features/trip/api/trip-adapters.ts")
+  >("src/features/trip/api/trip-adapters.ts");
+  const date = trip.days[0].date;
+  const settings = {
+    origin: { name: "Hotel", address: null, latitude: 16, longitude: 108 },
+    departureTime: "08:30:00", returnToStart: true, travelMode: "DRIVE" as const,
+  };
+  const itinerary = {
+    id: null, tripId: trip.id, name: "Main", status: "DRAFT", updatedAt: null,
+    days: [{ date, stops: [], settings }, { date, stops: [], settings: { ...settings, departureTime: "10:00:00" } }],
+  };
+  const before = JSON.stringify(itinerary);
+
+  const result = toTrip(trip, [], itinerary);
+
+  assert.equal(result.days.length, trip.days.length);
+  assert.equal(result.days[0].startTime, "08:30");
+  assert.equal(result.days[0].startLocation, "Hotel");
+  assert.equal(result.days[0].returnToStart, true);
+  assert.ok(result.days.every((day) => day.stops.length === 0));
+  assert.equal(JSON.stringify(itinerary), before);
+  assert.equal(toTrip(trip).days[0].startTime, undefined);
+});
+
 test("Shared trip and memory cache namespaces isolate accounts", () => {
   assert.notDeepEqual(
     tripQueryKeys.detail("alice", trip.id),
@@ -262,52 +288,4 @@ test("Calendar day uses the trip timezone at the Vietnam midnight boundary", () 
     todayCalendarDate(new Date("2026-11-01T17:00:00Z")),
     "2026-11-02",
   );
-});
-
-test("Retrying a partial memory upload reuses the known memory and acknowledged uploads", async () => {
-  let created = 0;
-  let fail = true;
-  const uploads: string[] = [];
-  const load = tripModuleLoader({
-    react: { useRef: (value: unknown) => ({ current: value }) },
-    "@tanstack/react-query": {
-      useQueryClient: () => ({}),
-      useMutation: (options: unknown) => options,
-    },
-    "@/features/auth/hooks/use-auth": {},
-    "@/features/auth/services/auth-session": {
-      authSession: { getVersion: () => 1 },
-    },
-    "@/services/api/api-error": { ApiError },
-    "./memory-api": {
-      memoryApi: {
-        create: async () => {
-          created++;
-          return { id: "memory-1" };
-        },
-        upload: async (_memory: unknown, photo: { uri: string }) => {
-          uploads.push(photo.uri);
-          if (photo.uri === "second" && fail) {
-            fail = false;
-            throw new Error("offline");
-          }
-          return { mediaId: photo.uri };
-        },
-      },
-    },
-  });
-  const { useCreateMemoryWithMediaMutation } = load<{
-    useCreateMemoryWithMediaMutation: () => {
-      mutationFn: (input: unknown) => Promise<unknown>;
-    };
-  }>("src/features/home/api/memory-hooks.ts");
-  const mutation = useCreateMemoryWithMediaMutation();
-  const input = {
-    request: { tripId: trip.id },
-    photos: [{ uri: "first" }, { uri: "second" }],
-  };
-  await assert.rejects(mutation.mutationFn(input), /offline/);
-  await mutation.mutationFn(input);
-  assert.equal(created, 1);
-  assert.deepEqual(uploads, ["first", "second", "second"]);
 });

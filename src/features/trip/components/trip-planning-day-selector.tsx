@@ -32,14 +32,12 @@ export function TripPlanningDaySelector({
   const { copy, locale } = useTripDetailsCopy();
   const width = theme.layout.tripPlanningDateTabWidth * fontScale;
   const data: DateItem[] = [
-    ...trip.days.map(
-      (day, index): DateItem => ({
-        key: day.date,
-        kind: "day",
-        date: day.date,
-        index,
-      }),
-    ),
+    ...trip.days.map((day, index): DateItem => ({
+      key: day.date,
+      kind: "day",
+      date: day.date,
+      index,
+    })),
     ...(showBacklog ? [{ key: "backlog", kind: "backlog" } as const] : []),
     ...(onAddDay ? [{ key: "add", kind: "add" } as const] : []),
   ];

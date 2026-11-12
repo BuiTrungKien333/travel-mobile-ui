@@ -1,6 +1,12 @@
 import { Image, type ImageSource } from "expo-image";
 import { useState, type ReactNode } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, View, type GestureResponderEvent } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  View,
+  type GestureResponderEvent,
+} from "react-native";
 import { router } from "expo-router";
 import { ScreenSafeArea } from "@/components/common/screen-safe-area";
 import { AppIcon, type AppIconName } from "@/components/ui/app-icon";
@@ -38,7 +44,12 @@ export function MemoryIconButton({
         opacity: disabled || pressed ? theme.motion.pressOpacity : 1,
       })}
     >
-      <AppIcon name={icon} variant="light" size={theme.layout.iconMedium} color={theme.colors.primaryText} />
+      <AppIcon
+        name={icon}
+        variant="light"
+        size={theme.layout.iconMedium}
+        color={theme.colors.primaryText}
+      />
     </Pressable>
   );
 }

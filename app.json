@@ -2,7 +2,7 @@
   "expo": {
     "name": "WeGo",
     "slug": "travel-mobile-ui",
-    "version": "1.0.2",
+    "version": "1.0.4",
     "orientation": "portrait",
     "icon": "./assets/images/wego-icon.png",
     "scheme": "travelplannermobileui",
@@ -18,7 +18,7 @@
         "foregroundImage": "./assets/images/wego-adaptive.png"
       },
       "predictiveBackGestureEnabled": false,
-      "versionCode": 3
+      "versionCode": 5
     },
     "web": {
       "output": "static",

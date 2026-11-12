@@ -251,10 +251,7 @@ export function PlacePickerScreen({
                 onPress={() => (inPreview ? setFocus(undefined) : onClose())}
               />
               <View style={styles.fill}>
-                <AppText
-                  variant="subheading"
-                  accessibilityRole="header"
-                >
+                <AppText variant="subheading" accessibilityRole="header">
                   {inPreview ? copy.mapTitle : copy.title}
                 </AppText>
               </View>

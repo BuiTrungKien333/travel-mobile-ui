@@ -32,7 +32,10 @@ export function NavigationBarSurface({
           borderWidth: solid ? StyleSheet.hairlineWidth : 0,
           borderColor: theme.colors.border,
           boxShadow: [
-            { ...theme.elevation.floating, color: theme.colors.navigationShadow },
+            {
+              ...theme.elevation.floating,
+              color: theme.colors.navigationShadow,
+            },
           ],
         },
       ]}

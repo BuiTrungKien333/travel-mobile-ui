@@ -9,11 +9,32 @@ import { useState, type Dispatch, type SetStateAction } from "react";
 import type { ControllerRenderProps, FieldErrors } from "react-hook-form";
 import type { CreateTripInput } from "../schemas/create-trip-schema";
 import type { TripPreference } from "@/features/home/types/home-types";
-import { createTripStyles as styles, webInputReset } from "./create-trip-styles";
+import {
+  createTripStyles as styles,
+  webInputReset,
+} from "./create-trip-styles";
 
-type Props = { isAccordionOpen: boolean; setIsAccordionOpen: Dispatch<SetStateAction<boolean>>; budget: string; handleBudgetChange: (text: string) => void; budgetField: ControllerRenderProps<CreateTripInput, "budget">; errors: FieldErrors<CreateTripInput>; selectedTags: TripPreference[]; toggleTag: (tag: TripPreference) => void; };
+type Props = {
+  isAccordionOpen: boolean;
+  setIsAccordionOpen: Dispatch<SetStateAction<boolean>>;
+  budget: string;
+  handleBudgetChange: (text: string) => void;
+  budgetField: ControllerRenderProps<CreateTripInput, "budget">;
+  errors: FieldErrors<CreateTripInput>;
+  selectedTags: TripPreference[];
+  toggleTag: (tag: TripPreference) => void;
+};
 
-export function CreateTripOptionsCard({ isAccordionOpen, setIsAccordionOpen, budget, handleBudgetChange, budgetField, errors, selectedTags, toggleTag }: Props) {
+export function CreateTripOptionsCard({
+  isAccordionOpen,
+  setIsAccordionOpen,
+  budget,
+  handleBudgetChange,
+  budgetField,
+  errors,
+  selectedTags,
+  toggleTag,
+}: Props) {
   const [isBudgetFocused, setIsBudgetFocused] = useState(false);
   const theme = useAppTheme();
   const { copy } = useTripCopy();
@@ -44,11 +65,7 @@ export function CreateTripOptionsCard({ isAccordionOpen, setIsAccordionOpen, bud
             { backgroundColor: theme.colors.surfaceTint },
           ]}
         >
-          <AppIcon
-            name="tune"
-            size={18}
-            color={theme.colors.primaryText}
-          />
+          <AppIcon name="tune" size={18} color={theme.colors.primaryText} />
         </View>
 
         <View style={styles.cardInfoCol}>

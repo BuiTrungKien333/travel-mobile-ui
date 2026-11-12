@@ -44,8 +44,10 @@ export class SessionManager {
     if (version !== this.version) throw new ApiError("CANCELLED");
     try {
       await this.storage(() => this.dependencies.write(data.refreshToken));
-    } catch {
-      throw new ApiError("STORAGE");
+    } catch (error) {
+      throw error instanceof ApiError && error.code === "STORAGE"
+        ? error
+        : new ApiError("STORAGE");
     }
     if (version !== this.version) throw new ApiError("CANCELLED");
     // A confirmed Google email link can switch accounts without passing through logout.
@@ -103,8 +105,10 @@ export class SessionManager {
     this.restoreError = null;
     this.dependencies.onStatus("restoring");
     try {
-      const token = await this.dependencies.read().catch(() => {
-        throw new ApiError("STORAGE");
+      const token = await this.dependencies.read().catch((error: unknown) => {
+        throw error instanceof ApiError && error.code === "STORAGE"
+          ? error
+          : new ApiError("STORAGE");
       });
       if (version !== this.version) return;
       if (!token) {

@@ -10,11 +10,7 @@ export class ApiError extends Error {
   readonly code: string;
   readonly status?: number;
   readonly fields?: Record<string, string>;
-  constructor(
-    code: string,
-    status?: number,
-    fields?: Record<string, string>,
-  ) {
+  constructor(code: string, status?: number, fields?: Record<string, string>) {
     // Không đưa message kỹ thuật/raw response chứa dữ liệu nhạy cảm ra UI.
     super(code);
     this.name = "ApiError";
@@ -29,7 +25,9 @@ export function normalizeApiError(error: unknown): ApiError {
   if (isCancel(error)) return new ApiError("CANCELLED");
   if (isAxiosError<unknown>(error)) {
     if (!error.response) {
-      return new ApiError(error.code === "ECONNABORTED" ? "TIMEOUT" : "NETWORK");
+      return new ApiError(
+        error.code === "ECONNABORTED" ? "TIMEOUT" : "NETWORK",
+      );
     }
     const parsed = errorSchema.safeParse(error.response.data);
     return new ApiError(

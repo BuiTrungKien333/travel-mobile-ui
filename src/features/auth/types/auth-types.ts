@@ -34,10 +34,7 @@ export const updateProfileSchema = z.object({
 });
 export type UpdateProfile = z.infer<typeof updateProfileSchema>;
 export type AuthStatus =
-  | "restoring"
-  | "authenticated"
-  | "anonymous"
-  | "restore-error";
+  "restoring" | "authenticated" | "anonymous" | "restore-error";
 
 export const emailRequestResultSchema = z.object({
   resendAfterSeconds: z.number().int().positive().safe(),

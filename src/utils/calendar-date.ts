@@ -1,3 +1,16 @@
+const travelDateFormatter = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Asia/Ho_Chi_Minh",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+const travelTimeFormatter = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Asia/Ho_Chi_Minh",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
+
 export function isCalendarDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const date = new Date(`${value}T12:00:00Z`);
@@ -7,12 +20,7 @@ export function isCalendarDate(value: string): boolean {
 }
 
 export function todayCalendarDate(now = new Date()): string {
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Asia/Ho_Chi_Minh",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(now);
+  const parts = travelDateFormatter.formatToParts(now);
   return ["year", "month", "day"]
     .map((type) => parts.find((part) => part.type === type)?.value)
     .join("-");
@@ -20,12 +28,7 @@ export function todayCalendarDate(now = new Date()): string {
 
 /** Travel calendars use Vietnam time, independently of the device time zone. */
 export function travelClockTime(now = new Date()): string {
-  return new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Asia/Ho_Chi_Minh",
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
-  }).format(now);
+  return travelTimeFormatter.format(now);
 }
 
 export function travelDateTime(date: string, time: string): Date {

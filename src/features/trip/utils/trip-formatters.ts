@@ -6,12 +6,7 @@ import {
 } from "../../home/utils/select-home.ts";
 
 export type TripDisplayStatus =
-  | "ongoing"
-  | "upcoming"
-  | "planning"
-  | "draft"
-  | "completed"
-  | "cancelled";
+  "ongoing" | "upcoming" | "planning" | "draft" | "completed" | "cancelled";
 
 export function getTripDisplayStatus(
   trip: Trip,

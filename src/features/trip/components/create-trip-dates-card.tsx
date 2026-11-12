@@ -4,13 +4,26 @@ import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { spacing } from "@/theme/tokens";
 import { useTripCopy } from "../i18n/trip-copy";
-import { formatDisplayDate, tripMessage } from "../utils/create-trip-formatters";
+import {
+  formatDisplayDate,
+  tripMessage,
+} from "../utils/create-trip-formatters";
 import type { Dispatch, SetStateAction } from "react";
 import { createTripStyles as styles } from "./create-trip-styles";
 
-type Props = { startDate: string; endDate: string; durationDays: number; setShowDateSheet: Dispatch<SetStateAction<boolean>>; };
+type Props = {
+  startDate: string;
+  endDate: string;
+  durationDays: number;
+  setShowDateSheet: Dispatch<SetStateAction<boolean>>;
+};
 
-export function CreateTripDatesCard({ startDate, endDate, durationDays, setShowDateSheet }: Props) {
+export function CreateTripDatesCard({
+  startDate,
+  endDate,
+  durationDays,
+  setShowDateSheet,
+}: Props) {
   const theme = useAppTheme();
   const { copy, locale } = useTripCopy();
   return (
@@ -120,9 +133,7 @@ export function CreateTripDatesCard({ startDate, endDate, durationDays, setShowD
         />
 
         {/* Ngày về */}
-        <View
-          style={[styles.dateColumnBlock, { paddingLeft: spacing.sm }]}
-        >
+        <View style={[styles.dateColumnBlock, { paddingLeft: spacing.sm }]}>
           <AppText variant="caption" tone="muted">
             {copy.endDate}
           </AppText>
@@ -131,9 +142,7 @@ export function CreateTripDatesCard({ startDate, endDate, durationDays, setShowD
               styles.dateValueText,
               {
                 fontFamily: theme.typography.fontFamily.medium,
-                color: endDate
-                  ? theme.colors.text
-                  : theme.colors.textSecondary,
+                color: endDate ? theme.colors.text : theme.colors.textSecondary,
               },
             ]}
           >

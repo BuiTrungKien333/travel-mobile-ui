@@ -33,5 +33,13 @@ export function authErrorMessage(
 ): string {
   const failure = normalizeApiError(error);
   if (failure.status === 429) return t("auth.error.rateLimit");
-  return t(errorKeys[failure.code] ?? "auth.error.generic");
+  const message = t(errorKeys[failure.code] ?? "auth.error.generic");
+  if (
+    failure.code === "STORAGE" &&
+    "diagnostic" in failure &&
+    typeof failure.diagnostic === "string" &&
+    /^SECURE_(READ|WRITE|DELETE)_[A-Z_]{1,64}$/.test(failure.diagnostic)
+  )
+    return `${message} (${failure.diagnostic})`;
+  return message;
 }

@@ -1,7 +1,19 @@
 import { SheetHeader } from "./sheet-header";
 import type { ReactNode } from "react";
-import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
-import { GestureDetector, GestureHandlerRootView } from "react-native-gesture-handler";
+import {
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+} from "react-native";
+import {
+  GestureDetector,
+  GestureHandlerRootView,
+} from "react-native-gesture-handler";
 import Animated from "react-native-reanimated";
 import { GlassBackdrop } from "@/components/common/glass-backdrop";
 
@@ -77,9 +89,9 @@ export function AppBottomSheet({
             { paddingTop: safeTop },
             weather
               ? {
-                paddingLeft: insets.left + theme.spacing.sm,
-                paddingRight: insets.right + theme.spacing.sm,
-              }
+                  paddingLeft: insets.left + theme.spacing.sm,
+                  paddingRight: insets.right + theme.spacing.sm,
+                }
               : null,
           ]}
         >
@@ -109,18 +121,18 @@ export function AppBottomSheet({
                 maxWidth: theme.layout.contentMaxWidth,
                 ...(topSpacing !== undefined
                   ? {
-                    maxHeight: Math.max(
-                      theme.layout.touchTarget,
-                      windowHeight - safeTop,
-                    ),
-                  }
+                      maxHeight: Math.max(
+                        theme.layout.touchTarget,
+                        windowHeight - safeTop,
+                      ),
+                    }
                   : {}),
                 height:
                   heightRatio !== undefined
                     ? Math.min(
-                      windowHeight * heightRatio,
-                      windowHeight - safeTop,
-                    )
+                        windowHeight * heightRatio,
+                        windowHeight - safeTop,
+                      )
                     : weather
                       ? windowHeight * theme.layout.weatherSheetHeightRatio
                       : undefined,
@@ -140,15 +152,32 @@ export function AppBottomSheet({
             )}
             {weather ? (
               <GestureDetector gesture={dragGesture}>
-                <View collapsable={false} style={{ paddingHorizontal: theme.spacing.lg }}>
-                  <Pressable accessibilityRole="button" accessibilityLabel={closeLabel} onPress={() => close()} style={{ minHeight: theme.layout.compactTouchTarget, justifyContent: "center", alignItems: "center" }}>
+                <View
+                  collapsable={false}
+                  style={{ paddingHorizontal: theme.spacing.lg }}
+                >
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={closeLabel}
+                    onPress={() => close()}
+                    style={{
+                      minHeight: theme.layout.compactTouchTarget,
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
+                  >
                     {handle}
                   </Pressable>
                 </View>
               </GestureDetector>
             ) : (
               <View style={{ paddingHorizontal: theme.spacing.lg }}>
-                <SheetHeader title={title} closeLabel={closeLabel} onClose={() => close()} gesture={dragGesture} />
+                <SheetHeader
+                  title={title}
+                  closeLabel={closeLabel}
+                  onClose={() => close()}
+                  gesture={dragGesture}
+                />
               </View>
             )}
             <ScrollView
@@ -198,5 +227,4 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     flexShrink: 1,
   },
-
 });

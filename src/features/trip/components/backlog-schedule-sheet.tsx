@@ -27,7 +27,9 @@ export function BacklogScheduleSheet({
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useItineraryCopy();
-  const [date, setDate] = useState(days.find((day) => day.stopCount + count <= 100)?.date);
+  const [date, setDate] = useState(
+    days.find((day) => day.stopCount + count <= 100)?.date,
+  );
   const submitting = useRef(false);
   const selected = days.find((day) => day.date === date);
   const full = selected !== undefined && selected.stopCount + count > 100;
@@ -52,16 +54,22 @@ export function BacklogScheduleSheet({
           disabled={!selected || full || !!onReload || count === 0}
           onPress={() => void submit()}
         >
-          {selected ? copy.assignConfirm.replace("{day}", String(selected.dayNumber)) : copy.day}
+          {selected
+            ? copy.assignConfirm.replace("{day}", String(selected.dayNumber))
+            : copy.day}
         </AppButton>
       }
     >
       <AppText variant="label" tone="primary">
         {copy.selectedCount.replace("{count}", String(count))}
       </AppText>
-      <AppText variant="body" tone="muted">{copy.assignHint}</AppText>
+      <AppText variant="body" tone="muted">
+        {copy.assignHint}
+      </AppText>
       {problem ? (
-        <AppText accessibilityRole="alert" tone="error">{problem}</AppText>
+        <AppText accessibilityRole="alert" tone="error">
+          {problem}
+        </AppText>
       ) : null}
       {onReload ? (
         <AppButton variant="outline" size="small" onPress={onReload}>
@@ -89,19 +97,29 @@ export function BacklogScheduleSheet({
                 padding: theme.spacing.md,
                 borderRadius: theme.radius.md,
                 borderWidth: checked ? 1 : StyleSheet.hairlineWidth,
-                borderColor: checked ? theme.colors.primary : theme.colors.border,
-                backgroundColor: checked ? theme.colors.surfaceTint : theme.colors.surface,
+                borderColor: checked
+                  ? theme.colors.primary
+                  : theme.colors.border,
+                backgroundColor: checked
+                  ? theme.colors.surfaceTint
+                  : theme.colors.surface,
                 opacity: disabled || pressed ? theme.motion.pressOpacity : 1,
               })}
             >
               <AppText variant="body">{label}</AppText>
-              <AppIcon name={checked ? "tick" : "calendar"} size={theme.layout.iconSmall} color={theme.colors.primaryText} />
+              <AppIcon
+                name={checked ? "tick" : "calendar"}
+                size={theme.layout.iconSmall}
+                color={theme.colors.primaryText}
+              />
             </Pressable>
           );
         })}
       </View>
       {full || days.every((day) => day.stopCount + count > 100) ? (
-        <AppText accessibilityRole="alert" variant="caption" tone="error">{copy.dayCapacity}</AppText>
+        <AppText accessibilityRole="alert" variant="caption" tone="error">
+          {copy.dayCapacity}
+        </AppText>
       ) : null}
     </TripDetailsSheet>
   );

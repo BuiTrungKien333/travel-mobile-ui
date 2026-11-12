@@ -57,36 +57,39 @@ export function toTrip(
     places.map((place) => [place.placeId, toTripStop(place)]),
   );
   const scheduled = new Set<string>();
+  const daysByDate = new Map<string, ItineraryResponse["days"][number]>();
+  for (const day of itinerary?.days ?? []) {
+    if (!daysByDate.has(day.date)) daysByDate.set(day.date, day);
+  }
   return {
     ...base,
-    days: base.days.map((day) => ({
-      ...day,
-      ...daySettings(
-        itinerary?.days.find((entry) => entry.date === day.date)?.settings,
-      ),
-      stops: (
-        itinerary?.days.find((entry) => entry.date === day.date)?.stops ?? []
-      ).map((entry) => {
-        const stop = byPlaceId.get(entry.placeId) ?? {
-          id: entry.id,
-          placeId: entry.placeId,
-          name: { vi: entry.name, en: entry.name },
-          kind: { vi: entry.category ?? "", en: entry.category ?? "" },
-          address: entry.address
-            ? { vi: entry.address, en: entry.address }
-            : undefined,
-        };
-        scheduled.add(entry.placeId);
-        return {
-          ...stop,
-          itineraryItemId: entry.id,
-          time: entry.arrivalTime?.slice(11, 16) ?? "",
-          durationMinutes: entry.durationMinutes,
-          note: entry.note ?? undefined,
-          plannedOrder: entry.sequence,
-        };
-      }),
-    })),
+    days: base.days.map((day) => {
+      const schedule = daysByDate.get(day.date);
+      return {
+        ...day,
+        ...daySettings(schedule?.settings),
+        stops: (schedule?.stops ?? []).map((entry) => {
+          const stop = byPlaceId.get(entry.placeId) ?? {
+            id: entry.id,
+            placeId: entry.placeId,
+            name: { vi: entry.name, en: entry.name },
+            kind: { vi: entry.category ?? "", en: entry.category ?? "" },
+            address: entry.address
+              ? { vi: entry.address, en: entry.address }
+              : undefined,
+          };
+          scheduled.add(entry.placeId);
+          return {
+            ...stop,
+            itineraryItemId: entry.id,
+            time: entry.arrivalTime?.slice(11, 16) ?? "",
+            durationMinutes: entry.durationMinutes,
+            note: entry.note ?? undefined,
+            plannedOrder: entry.sequence,
+          };
+        }),
+      };
+    }),
     unscheduledStops: places
       .filter((place) => !scheduled.has(place.placeId))
       .map(toTripStop),

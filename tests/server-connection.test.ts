@@ -7,6 +7,7 @@ function fixture(saved: string | null = null, development = true) {
   const client = { defaults: { baseURL: "https://original.example" } };
   let value = saved;
   let fail = false;
+  let fileValue: string | null = null;
   const load = tripModuleLoader({
     "expo-secure-store": {
       getItemAsync: async () => value,
@@ -16,13 +17,26 @@ function fixture(saved: string | null = null, development = true) {
       },
     },
     "react-native": { Platform: { OS: "android" } },
+    "expo-file-system": {
+      Paths: { document: "file:///documents/" },
+      File: class {
+        get exists() { return fileValue !== null; }
+        async text() { return fileValue; }
+        async write(next: string) {
+          if (fail) throw new Error("STORAGE");
+          fileValue = next;
+        }
+      },
+    },
     "./client": {
       apiClient: client,
       resolveApiUrl: (input: string) => resolveApiUrl(input, { development, platform: "web", isDevice: false }),
     },
   }, { __DEV__: development, process: { env: {} } });
   const service = load<typeof import("../src/services/api/server-connection.ts")>("src/services/api/server-connection.ts");
-  return { service, client, failStorage: () => { fail = true; }, get saved() { return value; } };
+  return { service, client, failStorage: () => { fail = true; },
+    setFile: (next: string) => { fileValue = next; },
+    get saved() { return fileValue === null ? value : JSON.parse(fileValue); } };
 }
 
 test("demo server preference restores an origin and persists only its normalized URL", async () => {
@@ -50,4 +64,18 @@ test("a normal production build ignores demo overrides", async () => {
   assert.equal(f.service.canConfigureServer, false);
   assert.equal(f.service.getServerOrigin(), "https://original.example");
   await assert.rejects(f.service.saveServerConnection("https://other.example"));
+});
+
+test("a persisted public URL takes precedence over the old SecureStore preference", async () => {
+  const f = fixture("https://old.example");
+  f.setFile(JSON.stringify("http://192.168.1.8:18081"));
+  await f.service.restoreServerConnection();
+  assert.equal(f.service.getServerOrigin(), "http://192.168.1.8:18081");
+});
+
+test("a corrupt preference cannot change the active server", async () => {
+  const f = fixture();
+  f.setFile("not json");
+  await f.service.restoreServerConnection();
+  assert.equal(f.service.getServerOrigin(), "https://original.example");
 });

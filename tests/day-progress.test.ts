@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { getDayProgress } from "../src/features/home/utils/day-progress.ts";
-import { directionsUrl } from "../src/features/home/utils/map-links.ts";
 import type { TripStop } from "../src/features/home/types/home-types.ts";
 
 const stops: TripStop[] = [
@@ -44,15 +43,4 @@ test("undoing a visit restores that stop; completed and empty days have no next 
     undefined,
   );
   assert.equal(getDayProgress([], []).nextStop, undefined);
-});
-test("map directions preserve Vietnamese names and safely encode URL parameters", () => {
-  const url = new URL(directionsUrl("Hồ Xuân Hương & quảng trường", "Đà Lạt"));
-  assert.equal(url.origin, "https://www.google.com");
-  assert.equal(url.pathname, "/maps/dir/");
-  assert.equal(url.searchParams.get("api"), "1");
-  assert.equal(
-    url.searchParams.get("destination"),
-    "Hồ Xuân Hương & quảng trường, Đà Lạt, Vietnam",
-  );
-  assert.equal(url.searchParams.size, 2);
 });

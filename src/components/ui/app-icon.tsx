@@ -38,7 +38,11 @@ const symbols = {
   edit: { ios: "square.and.pencil", android: "edit", web: "edit" },
   car: { ios: "car", android: "directions_car", web: "directions_car" },
   motorcycle: { ios: "motorcycle", android: "two_wheeler", web: "two_wheeler" },
-  bicycle: { ios: "bicycle", android: "directions_bike", web: "directions_bike" },
+  bicycle: {
+    ios: "bicycle",
+    android: "directions_bike",
+    web: "directions_bike",
+  },
   walk: {
     ios: "figure.walk",
     android: "directions_walk",

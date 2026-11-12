@@ -197,9 +197,15 @@ export function LoginScreen() {
           }}
         />
         <GoogleFeedback error={google.error} outcome={google.data} />
-        {canConfigureServer ? <AppButton variant="outline" size="small" onPress={() => router.push("/connection")}>
-          {locale === "vi" ? "Kết nối máy chủ" : "Server connection"}
-        </AppButton> : null}
+        {canConfigureServer ? (
+          <AppButton
+            variant="outline"
+            size="small"
+            onPress={() => router.push("/connection")}
+          >
+            {locale === "vi" ? "Kết nối máy chủ" : "Server connection"}
+          </AppButton>
+        ) : null}
       </View>
     </AuthScaffold>
   );

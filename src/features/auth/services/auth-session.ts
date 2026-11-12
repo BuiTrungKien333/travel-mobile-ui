@@ -1,4 +1,4 @@
-import * as SecureStore from "expo-secure-store";
+import { nativeCredentials } from "./native-credentials";
 import { Platform } from "react-native";
 
 import { configureAuthTransport } from "@/services/api/client";
@@ -8,7 +8,6 @@ import { authApi } from "../api/auth-api";
 import { authQueryKeys } from "../api/auth-query-keys";
 import { SessionManager } from "./session-manager";
 
-const refreshTokenKey = "tripzy.auth.refresh-token";
 // Preview web dùng memory: không lưu bearer token vào localStorage/sessionStorage.
 let webRefreshToken: string | null = null;
 
@@ -16,22 +15,20 @@ export const authSession = new SessionManager({
   read: () =>
     Platform.OS === "web"
       ? Promise.resolve(webRefreshToken)
-      : SecureStore.getItemAsync(refreshTokenKey),
+      : nativeCredentials.read(),
   write: async (token) => {
     if (Platform.OS === "web") {
       webRefreshToken = token;
       return;
     }
-    await SecureStore.setItemAsync(refreshTokenKey, token, {
-      keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-    });
+    await nativeCredentials.write(token);
   },
   remove: async () => {
     if (Platform.OS === "web") {
       webRefreshToken = null;
       return;
     }
-    await SecureStore.deleteItemAsync(refreshTokenKey);
+    await nativeCredentials.remove();
   },
   requestRefresh: authApi.refresh,
   requestLogout: authApi.logout,

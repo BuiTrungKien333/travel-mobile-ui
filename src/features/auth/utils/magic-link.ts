@@ -1,7 +1,5 @@
 export type MagicLinkPurpose =
-  | "verify-email"
-  | "reset-password"
-  | "google-link";
+  "verify-email" | "reset-password" | "google-link";
 
 /** Only one-use action tokens in the fragment; access/refresh tokens never belong in a URL. */
 export function readMagicLinkToken(

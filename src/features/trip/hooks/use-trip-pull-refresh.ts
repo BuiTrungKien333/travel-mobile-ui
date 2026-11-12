@@ -5,7 +5,11 @@ import { useAppTheme } from "@/hooks/use-app-theme";
 
 /** Refresh is an intentional pull held briefly, separate from map pan/resize. */
 export function useTripPullRefresh({
-  scrollGesture, offset, mapHeight, enabled, onRefresh,
+  scrollGesture,
+  offset,
+  mapHeight,
+  enabled,
+  onRefresh,
 }: {
   scrollGesture: ReturnType<typeof Gesture.Native>;
   offset: SharedValue<number>;
@@ -29,8 +33,12 @@ export function useTripPullRefresh({
       eligible.set(enabled && offset.get() <= 1 && event.y > mapHeight);
     })
     .onEnd((event) => {
-      if (eligible.get() && event.translationY >= distance &&
-          Date.now() - beganAt.get() >= hold) scheduleOnRN(onRefresh);
+      if (
+        eligible.get() &&
+        event.translationY >= distance &&
+        Date.now() - beganAt.get() >= hold
+      )
+        scheduleOnRN(onRefresh);
     })
     .onFinalize(() => eligible.set(false));
 }

@@ -24,22 +24,41 @@ export function BacklogSelectionToolbar({
     opacity: pressed ? theme.motion.pressOpacity : 1,
   });
   return (
-    <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: theme.spacing.md }}>
+    <View
+      style={{
+        flexDirection: "row",
+        flexWrap: "wrap",
+        alignItems: "center",
+        gap: theme.spacing.md,
+      }}
+    >
       <View style={{ flex: 1 }}>
         {selecting ? (
-          <AppText variant="caption" tone="primary" accessibilityLiveRegion="polite">
+          <AppText
+            variant="caption"
+            tone="primary"
+            accessibilityLiveRegion="polite"
+          >
             {copy.selectedCount.replace("{count}", String(count))}
           </AppText>
         ) : null}
       </View>
       {selecting ? (
-        <Pressable accessibilityRole="button" onPress={onToggleAll} style={actionStyle}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={onToggleAll}
+          style={actionStyle}
+        >
           <AppText variant="link" tone="primary">
             {count === total ? copy.clearSelection : copy.selectAll}
           </AppText>
         </Pressable>
       ) : null}
-      <Pressable accessibilityRole="button" onPress={onToggleMode} style={actionStyle}>
+      <Pressable
+        accessibilityRole="button"
+        onPress={onToggleMode}
+        style={actionStyle}
+      >
         <AppText variant="link" tone="primary">
           {selecting ? copy.cancelSelection : copy.selectMultiple}
         </AppText>

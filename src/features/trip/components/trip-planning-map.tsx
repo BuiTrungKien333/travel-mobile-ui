@@ -347,4 +347,8 @@ export function TripPlanningMap({
   );
 }
 
-export type PlanningMapGeometry = { height: number; headerHeight: number; expanded?: boolean };
+export type PlanningMapGeometry = {
+  height: number;
+  headerHeight: number;
+  expanded?: boolean;
+};

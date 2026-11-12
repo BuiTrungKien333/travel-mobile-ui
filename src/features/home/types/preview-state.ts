@@ -12,11 +12,7 @@ import type {
 export type PreviewPanel =
   | {
       kind:
-        | "scenarios"
-        | "create"
-        | "sample"
-        | "capture-start"
-        | "notifications";
+        "scenarios" | "create" | "sample" | "capture-start" | "notifications";
     }
   | { kind: "plan"; tripId: string; dayIndex?: number };
 export type JourneyPanel =

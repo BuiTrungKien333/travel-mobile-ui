@@ -1,6 +1,6 @@
 import { svgDataUri } from "@/utils/svg-data-uri";
 import { JournalAlbum } from "../components/journal-album";
-import { router } from "expo-router";
+
 import { useEffect, useRef, useState } from "react";
 import { Image } from "expo-image";
 import { View } from "react-native";
@@ -92,16 +92,6 @@ export function OngoingHomeScreen({
     locale === "vi" ? "vi-VN" : "en-GB",
     { weekday: "short", day: "2-digit", month: "2-digit", timeZone: "UTC" },
   ).format(new Date(`${today}T12:00:00Z`));
-  const openCamera = () =>
-    runtime
-      ? runtime.onCamera()
-      : openPanel({
-          kind: "camera",
-          tripId: trip.id,
-          date: today,
-          stopId:
-            visited[`${trip.id}:${today}`]?.at(-1) ?? progress.nextStop?.id,
-        });
   const openJournal = () =>
     runtime
       ? runtime.onJournal()
@@ -178,7 +168,8 @@ export function OngoingHomeScreen({
           }
           stop={progress.nextStop}
           onDirections={() => {
-            if (progress.nextStop) void directions.open(progress.nextStop, trip.destination);
+            if (progress.nextStop)
+              void directions.open(progress.nextStop, trip.destination);
           }}
           hasStops={runtime ? runtime.stopCount > 0 : stops.length > 0}
           busy={runtime?.busy || directions.busy}
@@ -191,7 +182,9 @@ export function OngoingHomeScreen({
         {runtime?.error ? (
           <AppText accessibilityRole="alert">{runtime.error}</AppText>
         ) : null}
-        {directions.error ? <AppText accessibilityRole="alert">{directions.error}</AppText> : null}
+        {directions.error ? (
+          <AppText accessibilityRole="alert">{directions.error}</AppText>
+        ) : null}
         <JournalAlbum
           memories={todayMemories}
           onOpen={openJournal}

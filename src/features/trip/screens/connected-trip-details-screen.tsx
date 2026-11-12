@@ -1,5 +1,9 @@
 import { ConnectedTripSchedulePanels } from "../components/connected-trip-schedule-panels";
-import type { ScheduleEdit, ScheduleEditor, DayStops } from "../types/schedule-editor";
+import type {
+  ScheduleEdit,
+  ScheduleEditor,
+  DayStops,
+} from "../types/schedule-editor";
 import { router } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Modal, View } from "react-native";
@@ -14,12 +18,23 @@ import { AppIcon, type AppIconName } from "@/components/ui/app-icon";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useScreenInsets } from "@/hooks/use-screen-insets";
 import { useTripQuery } from "../api/trip-queries";
-import { useAddTripPlacesMutation, useTripPlacesQuery, useUpdateTripPlaceMutation } from "../api/trip-hooks";
+import {
+  useAddTripPlacesMutation,
+  useTripPlacesQuery,
+  useUpdateTripPlaceMutation,
+} from "../api/trip-hooks";
 import { ConnectedPlacePickerScreen } from "./connected-place-picker-screen";
 import { usePlaceSearchCopy } from "../i18n/place-search-copy";
 import { toTrip, toDayStops } from "../api/trip-adapters";
-import { useSaveItineraryDayMutation, useTripItineraryQuery, useUpdateDayScheduleMutation } from "../api/itinerary-hooks";
-import type { ItineraryResponse, UpdateDayScheduleRequest } from "../api/itinerary-types";
+import {
+  useSaveItineraryDayMutation,
+  useTripItineraryQuery,
+  useUpdateDayScheduleMutation,
+} from "../api/itinerary-hooks";
+import type {
+  ItineraryResponse,
+  UpdateDayScheduleRequest,
+} from "../api/itinerary-types";
 import type { TripStop } from "@/features/home/types/home-types";
 import { ApiError } from "@/services/api/api-error";
 
@@ -30,14 +45,22 @@ import { BacklogSelectionToolbar } from "../components/backlog-selection-toolbar
 import { TripDetailsSheet } from "../components/trip-details-sheet";
 
 import { useItineraryCopy } from "../i18n/itinerary-copy";
-import { TripDetailsHeader, DetailIconButton } from "../components/trip-details-header";
-import { TripPlanningMap, type PlanningMapGeometry } from "../components/trip-planning-map";
+import {
+  TripDetailsHeader,
+  DetailIconButton,
+} from "../components/trip-details-header";
+import {
+  TripPlanningMap,
+  type PlanningMapGeometry,
+} from "../components/trip-planning-map";
 import { TripDayMap } from "../components/trip-day-map";
 import { TripDetailsActions } from "../components/trip-details-actions";
 import { ConnectedTripRecap } from "../components/connected-trip-recap";
 import { TripRecapCard } from "../components/trip-recap-card";
-import { TripTimelineTail } from "../components/trip-timeline-states";
-import { TripStartNode } from "../components/trip-timeline-states";
+import {
+  TripStartNode,
+  TripTimelineTail,
+} from "../components/trip-timeline-states";
 
 import { usePlanningMapCollapse } from "../hooks/use-planning-map-collapse";
 import { useTripPullRefresh } from "../hooks/use-trip-pull-refresh";
@@ -48,18 +71,25 @@ import { useConnectedTimelineActions } from "../hooks/use-connected-timeline-act
 import { TripUndoNotice } from "../components/trip-undo-notice";
 import { reorderDayStops } from "../utils/itinerary-day-order";
 import { inferredDaySchedule } from "../utils/inferred-day-schedule";
-import { useTripDayRoute, useOptimizeDayRoute, type RouteMode } from "../api/trip-day-route";
-import { tripMapPins } from "../utils/trip-mapbox";
+import {
+  useTripDayRoute,
+  useOptimizeDayRoute,
+  type RouteMode,
+} from "../api/trip-day-route";
+
 import { TripPlanningDaySelector } from "../components/trip-planning-day-selector";
 import { ConnectedTripActions } from "../components/connected-trip-actions";
 import { TripCompletionAction } from "../components/trip-completion-action";
 import { hasVisitedAllTripPlaces } from "../utils/trip-completion";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
-import { tripApiErrorMessage, useTripIntegrationCopy } from "../i18n/trip-integration-copy";
+import {
+  tripApiErrorMessage,
+  useTripIntegrationCopy,
+} from "../i18n/trip-integration-copy";
 
 type Row =
-  | { kind: "days" | "summary"; key: string; }
-  | { kind: "stop"; key: string; stop: TripStop; index: number; };
+  | { kind: "days" | "summary"; key: string }
+  | { kind: "stop"; key: string; stop: TripStop; index: number };
 
 const NO_STOPS: TripStop[] = [];
 
@@ -98,7 +128,9 @@ export function ConnectedTripDetailsScreen({
   const { copy: itineraryCopy, locale } = useItineraryCopy();
   const [editor, setEditor] = useState<ScheduleEditor | null>(null);
   const [saved, setSaved] = useState(false);
-  const [backlogSelection, setBacklogSelection] = useState<string[] | null>(null);
+  const [backlogSelection, setBacklogSelection] = useState<string[] | null>(
+    null,
+  );
   const saving = useRef(false);
   const [pickerDay, setPickerDay] = useState<{
     date: string;
@@ -125,8 +157,8 @@ export function ConnectedTripDetailsScreen({
   const [selectorHeight, setSelectorHeight] = useState<number>(
     theme.layout.touchTarget,
   );
-  const [mapExpansion, setMapExpansion] = useState(expandMap ? 1 : 0);
-  const [focus, setFocus] = useState<{ date: string; id: string; }>();
+  const [mapExpansion] = useState(expandMap ? 1 : 0);
+  const [focus, setFocus] = useState<{ date: string; id: string }>();
   const [modeOpen, setModeOpen] = useState(false);
   const visit = useUpdateTripPlaceMutation(tripId ?? "");
   const visiting = useRef(false);
@@ -173,10 +205,10 @@ export function ConnectedTripDetailsScreen({
   const routeResult = routeQuery.data;
   const resolvedRoute =
     routeResult?.status === "READY" &&
-      routeResult.placeIds.length === scheduledEntries?.length &&
-      routeResult.placeIds.every(
-        (id, index) => id === scheduledEntries[index].placeId,
-      )
+    routeResult.placeIds.length === scheduledEntries?.length &&
+    routeResult.placeIds.every(
+      (id, index) => id === scheduledEntries[index].placeId,
+    )
       ? routeResult.route
       : undefined;
   const selectionKey = `${tripId ?? ""}:${activeDate ?? "pool"}`;
@@ -242,8 +274,13 @@ export function ConnectedTripDetailsScreen({
     scrollGesture: mapScrollGesture,
     offset: mapScroll.offset,
     mapHeight: mapGeometry.height,
-    enabled: !!read && !mapScroll.hidden && !mapGeometry.expanded &&
-      !timelineDrag.draggedId && !places.isRefetching && !itinerary.isRefetching,
+    enabled:
+      !!read &&
+      !mapScroll.hidden &&
+      !mapGeometry.expanded &&
+      !timelineDrag.draggedId &&
+      !places.isRefetching &&
+      !itinerary.isRefetching,
     onRefresh: () => {
       if (resizeLock.get() > 0) return;
       void refreshSchedule();
@@ -344,12 +381,12 @@ export function ConnectedTripDetailsScreen({
   const scheduleError =
     mutationError instanceof ApiError
       ? ({
-        TRIP_005: itineraryCopy.invalid,
-        INVALID_ITINERARY: itineraryCopy.invalid,
-        TRIP_006: itineraryCopy.readOnly,
-        TRIP_007: itineraryCopy.membership,
-        TRIP_008: itineraryCopy.conflict,
-      }[mutationError.code] ?? itineraryCopy.error)
+          TRIP_005: itineraryCopy.invalid,
+          INVALID_ITINERARY: itineraryCopy.invalid,
+          TRIP_006: itineraryCopy.readOnly,
+          TRIP_007: itineraryCopy.membership,
+          TRIP_008: itineraryCopy.conflict,
+        }[mutationError.code] ?? itineraryCopy.error)
       : mutationError
         ? itineraryCopy.error
         : undefined;
@@ -448,14 +485,14 @@ export function ConnectedTripDetailsScreen({
   }[read.trip.mode] as "planning" | "live" | "recap" | "cancelled";
   const next = rows.find((stop) => stop.id === nextStop);
   const mapStops = backlog ? NO_STOPS : rows;
-  const pins = tripMapPins(mapStops, locale);
+
   const visitedStops = rows.filter((stop) => stop.visited);
   const pendingStops = rows.filter((stop) => !stop.visited);
   const remainingCoordinates =
     visitedStops.length > 0
       ? [visitedStops[visitedStops.length - 1], ...pendingStops].every(
-        (stop) => !!stop.location,
-      )
+          (stop) => !!stop.location,
+        )
       : false;
   const returnOriginReady =
     !storedSettings?.returnToStart ||
@@ -467,12 +504,12 @@ export function ConnectedTripDetailsScreen({
     canEditDay(activeDate) &&
     (visitedStops.length > 0
       ? pendingStops.length > 0 &&
-      remainingCoordinates &&
-      returnOriginReady &&
-      pendingStops.length + 1 + (storedSettings?.returnToStart ? 1 : 0) <= 12
+        remainingCoordinates &&
+        returnOriginReady &&
+        pendingStops.length + 1 + (storedSettings?.returnToStart ? 1 : 0) <= 12
       : !!route &&
-      rows.length >= 4 &&
-      rows.length + (storedSettings?.origin ? 1 : 0) <= 12);
+        rows.length >= 4 &&
+        rows.length + (storedSettings?.origin ? 1 : 0) <= 12);
   const selectedPin = focus?.date === activeDate ? focus?.id : nextStop;
   const total = route
     ? `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(route.distanceMeters / 1000)} km · ${Math.round(route.durationSeconds / 60)} ${detailCopy.minutes}`
@@ -506,10 +543,10 @@ export function ConnectedTripDetailsScreen({
     setPickerDay(
       activeDate
         ? {
-          date: activeDate,
-          dayNumber:
-            trip.days.findIndex((entry) => entry.date === activeDate) + 1,
-        }
+            date: activeDate,
+            dayNumber:
+              trip.days.findIndex((entry) => entry.date === activeDate) + 1,
+          }
         : undefined,
     );
     setPickerOpen(true);
@@ -517,8 +554,15 @@ export function ConnectedTripDetailsScreen({
   const showJournal = () => setJournalDate(activeDate ?? defaultDate);
   const openDirections = () => {
     if (!next) return;
-    void directions.open(next, trip.destination,
-      routeMode === "WALK" ? "walk" : routeMode === "BICYCLE" ? "bicycle" : "car");
+    void directions.open(
+      next,
+      trip.destination,
+      routeMode === "WALK"
+        ? "walk"
+        : routeMode === "BICYCLE"
+          ? "bicycle"
+          : "car",
+    );
   };
   const markVisited = async (stop = next, value = true) => {
     if (
@@ -566,7 +610,7 @@ export function ConnectedTripDetailsScreen({
     }
   };
   const persistOrder = (
-    edit: Extract<ScheduleEditor, { kind: "reorder" | "optimize"; }>,
+    edit: Extract<ScheduleEditor, { kind: "reorder" | "optimize" }>,
     ids: string[],
     visitedPlaceIds?: readonly string[],
   ) => {
@@ -589,9 +633,12 @@ export function ConnectedTripDetailsScreen({
     { kind: "days", key: "days" },
     { kind: "summary", key: "summary" },
     ...(ready
-      ? rows.map(
-        (stop, index): Row => ({ kind: "stop", key: stop.id, stop, index }),
-      )
+      ? rows.map((stop, index): Row => ({
+          kind: "stop",
+          key: stop.id,
+          stop,
+          index,
+        }))
       : []),
   ];
   const openActions = () => {
@@ -619,461 +666,513 @@ export function ConnectedTripDetailsScreen({
         onLayout={(event) => setViewport(event.nativeEvent.layout.height)}
       >
         <GestureDetector gesture={pullRefresh}>
-        <GestureDetector gesture={mapScrollGesture}>
-          <Animated.FlatList
-            ref={list}
-            data={listRows}
-            keyExtractor={(row) => row.key}
-            onScroll={mapScroll.onScroll}
-            scrollEventThrottle={16}
-            onScrollToIndexFailed={onScrollToIndexFailed}
-            stickyHeaderIndices={[1]}
-            scrollEnabled={!timelineDrag.draggedId}
-            // Keep the native map attached while its header is resizing/scrolling.
-            removeClippedSubviews={false}
-            CellRendererComponentStyle={({ item }) => ({
-              zIndex:
-                item.kind === "days"
-                  ? 2
-                  : item.kind === "stop" &&
-                    timelineDrag.draggedId === item.stop.id
-                    ? 1
-                    : 0,
-            })}
-            contentContainerStyle={{
-              minHeight: viewport + mapGeometry.height,
-              paddingBottom: theme.spacing.xl,
-            }}
-            ListHeaderComponent={
-              <TripPlanningMap
-                expandRequest={mapExpansion}
-                header={header}
-                viewportHeight={viewport}
-                selectorHeight={selectorHeight}
-                resizeLock={resizeLock}
-                scrollGesture={mapScrollGesture}
-                onGeometryChange={setMapGeometry}
-                collapsedByScroll={mapScroll.hidden}
-                showStart={false}
-                showLocationControl={false}
-                overlayHeader={mode !== "cancelled"}
-                mapContent={
-                  <TripDayMap
-                    key={selectionKey}
-                    stops={mapStops}
-                    origin={storedSettings?.origin}
-                    polyline={route?.encodedPolyline}
-                    focusedId={selectedPin}
-                    onSelect={(id) => {
-                      const index = rows.findIndex((stop) => stop.id === id);
-                      if (activeDate && index >= 0 && ready) {
-                        setFocus({ date: activeDate, id });
-                        jump(index + 2);
-                      }
-                    }}
-                  />
-                }
-              />
-            }
-            ListFooterComponent={
-              canManagePlaces &&
+          <GestureDetector gesture={mapScrollGesture}>
+            <Animated.FlatList
+              ref={list}
+              data={listRows}
+              keyExtractor={(row) => row.key}
+              onScroll={mapScroll.onScroll}
+              scrollEventThrottle={16}
+              onScrollToIndexFailed={onScrollToIndexFailed}
+              stickyHeaderIndices={[1]}
+              scrollEnabled={!timelineDrag.draggedId}
+              // Keep the native map attached while its header is resizing/scrolling.
+              removeClippedSubviews={false}
+              CellRendererComponentStyle={({ item }) => ({
+                zIndex:
+                  item.kind === "days"
+                    ? 2
+                    : item.kind === "stop" &&
+                        timelineDrag.draggedId === item.stop.id
+                      ? 1
+                      : 0,
+              })}
+              contentContainerStyle={{
+                minHeight: viewport + mapGeometry.height,
+                paddingBottom: theme.spacing.xl,
+              }}
+              ListHeaderComponent={
+                <TripPlanningMap
+                  expandRequest={mapExpansion}
+                  header={header}
+                  viewportHeight={viewport}
+                  selectorHeight={selectorHeight}
+                  resizeLock={resizeLock}
+                  scrollGesture={mapScrollGesture}
+                  onGeometryChange={setMapGeometry}
+                  collapsedByScroll={mapScroll.hidden}
+                  showStart={false}
+                  showLocationControl={false}
+                  overlayHeader={mode !== "cancelled"}
+                  mapContent={
+                    <TripDayMap
+                      key={selectionKey}
+                      stops={mapStops}
+                      origin={storedSettings?.origin}
+                      polyline={route?.encodedPolyline}
+                      focusedId={selectedPin}
+                      onSelect={(id) => {
+                        const index = rows.findIndex((stop) => stop.id === id);
+                        if (activeDate && index >= 0 && ready) {
+                          setFocus({ date: activeDate, id });
+                          jump(index + 2);
+                        }
+                      }}
+                    />
+                  }
+                />
+              }
+              ListFooterComponent={
+                canManagePlaces &&
                 !backlog &&
                 activeDate &&
                 canEditDay(activeDate) &&
                 ready ? (
-                <View style={{ paddingHorizontal: theme.spacing.lg }}>
-                  <TripTimelineTail
-                    trip={trip}
-                    day={day}
-                    empty={false}
-                    canEdit
-                    onAdd={openPlacePicker}
-                    returnSummary={
-                      route &&
+                  <View style={{ paddingHorizontal: theme.spacing.lg }}>
+                    <TripTimelineTail
+                      trip={trip}
+                      day={day}
+                      empty={false}
+                      canEdit
+                      onAdd={openPlacePicker}
+                      returnSummary={
+                        route &&
                         routeResult?.status === "READY" &&
                         routeResult.returnLeg
-                        ? `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(routeResult.returnLeg.distanceMeters / 1000)} km · ${Math.ceil(routeResult.returnLeg.durationSeconds / 60)} ${detailCopy.minutes}`
-                        : undefined
-                    }
-                  />
-                </View>
-              ) : null
-            }
-            renderItem={({ item }) => {
-              if (item.kind === "days")
-                return (
-                  <View
-                    style={{
-                      backgroundColor: theme.colors.surface,
-                      paddingHorizontal: theme.spacing.lg,
-                    }}
-                  >
-                    {mapScroll.hidden ? (
-                      <TripDetailsHeader
-                        trip={trip}
-                        mode={mode}
-                        today={read.context.evaluatedDate}
-                        titleOnly
-                        onBack={back}
-                        onEdit={
-                          mode === "recap" || mode === "cancelled"
-                            ? undefined
-                            : openActions
-                        }
-                        onMenu={
-                          mode === "recap" || mode === "cancelled"
-                            ? openActions
-                            : undefined
-                        }
-                        onOpenMap={mapScroll.show}
-                      />
-                    ) : null}
-                    <View
-                      onLayout={(event) =>
-                        setSelectorHeight(event.nativeEvent.layout.height)
+                          ? `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(routeResult.returnLeg.distanceMeters / 1000)} km · ${Math.ceil(routeResult.returnLeg.durationSeconds / 60)} ${detailCopy.minutes}`
+                          : undefined
                       }
-                    >
-                      <TripPlanningDaySelector
-                        trip={trip}
-                        backlogCount={pool.length}
-                        showBacklog={mode !== "recap" || pool.length > 0}
-                        selectedDate={activeDate}
-                        onSelect={selectDate}
-                        addDayDisabled
-                      />
-                    </View>
+                    />
                   </View>
-                );
-              if (item.kind === "summary")
-                return (
-                  <View
-                    style={{ gap: theme.spacing.sm, padding: theme.spacing.lg }}
-                  >
-                    {hasVisitedAllTripPlaces(read, places.data) &&
-                      !visit.isPending ? (
-                      <TripCompletionAction
-                        read={read}
-                        allVisited
-                        onReload={async () => {
-                          const result = await query.refetch();
-                          return result.isError ? undefined : result.data;
-                        }}
-                      />
-                    ) : null}
-                    {mode === "recap" ? (
-                      <TripRecapCard
-                        key={trip.id}
-                        trip={trip}
-                        dayCount={read.trip.dayCount}
-                        stopCount={read.trip.stopCount}
-                        memoryCount={read.trip.memoryCount}
-                      />
-                    ) : null}
-                    {mode === "recap" && activeDate ? (
-                      <ConnectedTripRecap
-                        key={selectionKey}
-                        tripId={trip.id}
-                        date={activeDate}
-                        destination={trip.destination}
-                        refreshVersion={itinerary.dataUpdatedAt}
-                        onJournal={showJournal}
-                      />
-                    ) : null}
-                    {backlog ? (
-                      <AppText accessibilityRole="header" variant="sectionTitle">
-                        {detailCopy.pool} ({rows.length})
-                      </AppText>
-                    ) : mode === "recap" ? (
+                ) : null
+              }
+              renderItem={({ item }) => {
+                if (item.kind === "days")
+                  return (
+                    <View
+                      style={{
+                        backgroundColor: theme.colors.surface,
+                        paddingHorizontal: theme.spacing.lg,
+                      }}
+                    >
+                      {mapScroll.hidden ? (
+                        <TripDetailsHeader
+                          trip={trip}
+                          mode={mode}
+                          today={read.context.evaluatedDate}
+                          titleOnly
+                          onBack={back}
+                          onEdit={
+                            mode === "recap" || mode === "cancelled"
+                              ? undefined
+                              : openActions
+                          }
+                          onMenu={
+                            mode === "recap" || mode === "cancelled"
+                              ? openActions
+                              : undefined
+                          }
+                          onOpenMap={mapScroll.show}
+                        />
+                      ) : null}
                       <View
-                        style={{
-                          gap: theme.spacing.xs,
-                          paddingBottom: theme.spacing.md,
-                        }}
+                        onLayout={(event) =>
+                          setSelectorHeight(event.nativeEvent.layout.height)
+                        }
                       >
-                        <AppText
-                          variant="sectionTitle"
-                          accessibilityRole="header"
-                        >
-                          {detailCopy.recapTimeline}
-                        </AppText>
-                        <AppText variant="caption" tone="muted">
-                          {rows.length} {detailCopy.places}
-                          {total ? ` · ${total}` : ""}
-                        </AppText>
+                        <TripPlanningDaySelector
+                          trip={trip}
+                          backlogCount={pool.length}
+                          showBacklog={mode !== "recap" || pool.length > 0}
+                          selectedDate={activeDate}
+                          onSelect={selectDate}
+                          addDayDisabled
+                        />
                       </View>
-                    ) : (
-                      <TripDayTools
-                        trip={trip}
-                        day={day}
-                        today={read.context.evaluatedDate}
-                        canEdit={
-                          !!activeDate &&
-                          ready &&
-                          canEditDay(activeDate) &&
-                          !save.isPending
-                        }
-                        editHistory={false}
-                        showWeather={false}
-                        showOptimize={canOptimize}
-                        compactLayout={mode === "live" || mode === "planning"}
-                        routeMetrics={
-                          route
-                            ? {
-                              km: route.distanceMeters / 1000,
-                              minutes: Math.ceil(route.durationSeconds / 60),
-                            }
-                            : undefined
-                        }
-                        onEditDay={
-                          activeDate && day && ready && canEditDay(activeDate)
-                            ? () =>
+                    </View>
+                  );
+                if (item.kind === "summary")
+                  return (
+                    <View
+                      style={{
+                        gap: theme.spacing.sm,
+                        padding: theme.spacing.lg,
+                      }}
+                    >
+                      {hasVisitedAllTripPlaces(read, places.data) &&
+                      !visit.isPending ? (
+                        <TripCompletionAction
+                          read={read}
+                          allVisited
+                          onReload={async () => {
+                            const result = await query.refetch();
+                            return result.isError ? undefined : result.data;
+                          }}
+                        />
+                      ) : null}
+                      {mode === "recap" ? (
+                        <TripRecapCard
+                          key={trip.id}
+                          trip={trip}
+                          dayCount={read.trip.dayCount}
+                          stopCount={read.trip.stopCount}
+                          memoryCount={read.trip.memoryCount}
+                        />
+                      ) : null}
+                      {mode === "recap" && activeDate ? (
+                        <ConnectedTripRecap
+                          key={selectionKey}
+                          tripId={trip.id}
+                          date={activeDate}
+                          destination={trip.destination}
+                          refreshVersion={itinerary.dataUpdatedAt}
+                          onJournal={showJournal}
+                        />
+                      ) : null}
+                      {backlog ? (
+                        <AppText
+                          accessibilityRole="header"
+                          variant="sectionTitle"
+                        >
+                          {detailCopy.pool} ({rows.length})
+                        </AppText>
+                      ) : mode === "recap" ? (
+                        <View
+                          style={{
+                            gap: theme.spacing.xs,
+                            paddingBottom: theme.spacing.md,
+                          }}
+                        >
+                          <AppText
+                            variant="sectionTitle"
+                            accessibilityRole="header"
+                          >
+                            {detailCopy.recapTimeline}
+                          </AppText>
+                          <AppText variant="caption" tone="muted">
+                            {rows.length} {detailCopy.places}
+                            {total ? ` · ${total}` : ""}
+                          </AppText>
+                        </View>
+                      ) : (
+                        <TripDayTools
+                          trip={trip}
+                          day={day}
+                          today={read.context.evaluatedDate}
+                          canEdit={
+                            !!activeDate &&
+                            ready &&
+                            canEditDay(activeDate) &&
+                            !save.isPending
+                          }
+                          editHistory={false}
+                          showWeather={false}
+                          showOptimize={canOptimize}
+                          compactLayout={mode === "live" || mode === "planning"}
+                          routeMetrics={
+                            route
+                              ? {
+                                  km: route.distanceMeters / 1000,
+                                  minutes: Math.ceil(
+                                    route.durationSeconds / 60,
+                                  ),
+                                }
+                              : undefined
+                          }
+                          onEditDay={
+                            activeDate && day && ready && canEditDay(activeDate)
+                              ? () =>
+                                  openEditor({
+                                    kind: "day",
+                                    date: activeDate,
+                                    day,
+                                    routeMode,
+                                  })
+                              : undefined
+                          }
+                          routeSummary={total ?? routeMessage ?? null}
+                          transportLabel={itineraryCopy.routeModes[routeMode]}
+                          transportIcon={
+                            routeMode === "DRIVE"
+                              ? "car"
+                              : routeMode === "WALK"
+                                ? "walk"
+                                : "bicycle"
+                          }
+                          onSheetChange={(sheet) => {
+                            if (saving.current || timelineDrag.draggedId)
+                              return;
+                            if (sheet.kind === "transport") {
+                              daySchedule.reset();
+                              timeline.clear();
+                              setModeOpen(true);
+                            } else if (sheet.kind === "reorder" && activeDate)
+                              openEditor({
+                                kind: "reorder",
+                                date: activeDate,
+                                stops: rows,
+                              });
+                            else if (sheet.kind === "optimize")
+                              void requestOptimization();
+                          }}
+                          actions={
+                            <>
+                              {routeQuery.isError ? (
+                                <TextAction
+                                  label={copy.retry}
+                                  onPress={() => void routeQuery.refetch()}
+                                />
+                              ) : null}
+                            </>
+                          }
+                        />
+                      )}
+                      {backlog && canManagePlaces ? (
+                        <>
+                          {ready &&
+                          pool.length > 0 &&
+                          editableDays.length > 0 ? (
+                            <BacklogSelectionToolbar
+                              selecting={backlogSelection !== null}
+                              count={selectedBacklog.length}
+                              total={
+                                pool.filter((stop) => !!stop.placeId).length
+                              }
+                              onToggleMode={() =>
+                                setBacklogSelection(
+                                  backlogSelection === null ? [] : null,
+                                )
+                              }
+                              onToggleAll={() => {
+                                const ids = pool
+                                  .filter((stop) => !!stop.placeId)
+                                  .map((stop) => stop.id);
+                                setBacklogSelection(
+                                  selectedBacklog.length === ids.length
+                                    ? []
+                                    : ids,
+                                );
+                              }}
+                            />
+                          ) : null}
+                          <AppButton
+                            size="small"
+                            variant="outline"
+                            onPress={openPlacePicker}
+                          >
+                            {placeCopy.title}
+                          </AppButton>
+                        </>
+                      ) : null}
+                      {saved ? (
+                        <AppText
+                          accessibilityLiveRegion="polite"
+                          variant="caption"
+                          tone="primary"
+                        >
+                          {itineraryCopy.saved}
+                        </AppText>
+                      ) : null}
+                      {day?.startLocation ? (
+                        <TripStartNode
+                          trip={trip}
+                          day={day}
+                          canEdit={
+                            ready && !!activeDate && canEditDay(activeDate)
+                          }
+                          live={mode === "live"}
+                          onPress={() => {
+                            if (activeDate && ready && canEditDay(activeDate))
                               openEditor({
                                 kind: "day",
                                 date: activeDate,
                                 day,
                                 routeMode,
-                              })
-                            : undefined
-                        }
-                        routeSummary={total ?? routeMessage ?? null}
-                        transportLabel={itineraryCopy.routeModes[routeMode]}
-                        transportIcon={
-                          routeMode === "DRIVE"
-                            ? "car"
-                            : routeMode === "WALK"
-                              ? "walk"
-                              : "bicycle"
-                        }
-                        onSheetChange={(sheet) => {
-                          if (saving.current || timelineDrag.draggedId) return;
-                          if (sheet.kind === "transport") {
-                            daySchedule.reset();
-                            timeline.clear();
-                            setModeOpen(true);
-                          } else if (sheet.kind === "reorder" && activeDate)
-                            openEditor({
-                              kind: "reorder",
-                              date: activeDate,
-                              stops: rows,
-                            });
-                          else if (sheet.kind === "optimize")
-                            void requestOptimization();
-                        }}
-                        actions={
-                          <>
-                            {routeQuery.isError ? (
-                              <TextAction
-                                label={copy.retry}
-                                onPress={() => void routeQuery.refetch()}
-                              />
-                            ) : null}
-                          </>
-                        }
-                      />
-                    )}
-                    {backlog && canManagePlaces ? (
-                      <>
-                        {ready && pool.length > 0 && editableDays.length > 0 ? (
-                          <BacklogSelectionToolbar
-                            selecting={backlogSelection !== null}
-                            count={selectedBacklog.length}
-                            total={pool.filter((stop) => !!stop.placeId).length}
-                            onToggleMode={() => setBacklogSelection(backlogSelection === null ? [] : null)}
-                            onToggleAll={() => {
-                              const ids = pool.filter((stop) => !!stop.placeId).map((stop) => stop.id);
-                              setBacklogSelection(selectedBacklog.length === ids.length ? [] : ids);
-                            }}
-                          />
-                        ) : null}
-                        <AppButton
-                          size="small"
-                          variant="outline"
-                          onPress={openPlacePicker}
+                              });
+                          }}
+                        />
+                      ) : null}
+                      {timeline.pending || completion.isPending ? (
+                        <AppText
+                          accessibilityLiveRegion="polite"
+                          variant="caption"
+                          tone="muted"
                         >
-                          {placeCopy.title}
-                        </AppButton>
-                      </>
-                    ) : null}
-                    {saved ? (
-                      <AppText
-                        accessibilityLiveRegion="polite"
-                        variant="caption"
-                        tone="primary"
-                      >
-                        {itineraryCopy.saved}
-                      </AppText>
-                    ) : null}
-                    {day?.startLocation ? (
-                      <TripStartNode
-                        trip={trip}
-                        day={day}
-                        canEdit={ready && !!activeDate && canEditDay(activeDate)}
-                        live={mode === "live"}
-                        onPress={() => {
-                          if (activeDate && ready && canEditDay(activeDate))
-                            openEditor({
-                              kind: "day",
-                              date: activeDate,
-                              day,
-                              routeMode,
-                            });
-                        }}
-                      />
-                    ) : null}
-                    {timeline.pending || completion.isPending ? (
-                      <AppText
-                        accessibilityLiveRegion="polite"
-                        variant="caption"
-                        tone="muted"
-                      >
-                        {completion.isPending
-                          ? itineraryCopy.routeLoading
-                          : itineraryCopy.saving}
-                      </AppText>
-                    ) : null}
-                    {visit.isError ? (
-                      <AppText accessibilityRole="alert" tone="error">
-                        {itineraryCopy.visitFailed}
-                      </AppText>
-                    ) : null}
-                    {places.isError || itinerary.isError || query.isError ? (
-                      <>
-                        <AppText accessibilityRole="alert">
-                          {itineraryCopy.error}
+                          {completion.isPending
+                            ? itineraryCopy.routeLoading
+                            : itineraryCopy.saving}
                         </AppText>
-                        <AppButton
-                          size="small"
-                          variant="outline"
-                          onPress={() => void refreshSchedule()}
-                        >
-                          {copy.retry}
-                        </AppButton>
-                      </>
-                    ) : !ready ? (
-                      <AppText accessibilityLiveRegion="polite">
-                        {placeCopy.loadingPlaces}
-                      </AppText>
-                    ) : !trip.days.length ? (
-                      <AppText tone="muted">{itineraryCopy.noTripDates}</AppText>
-                    ) : !rows.length ? (
-                      <AppText tone="muted">
-                        {backlog
-                          ? detailCopy.poolEmpty
-                          : itineraryCopy.noDayStops}
-                      </AppText>
-                    ) : null}
-                  </View>
-                );
-              if (item.kind !== "stop") return null;
-              const { stop, index } = item;
-              if (activeDate) {
-                const leg =
-                  index === 0
-                    ? route && routeResult?.status === "READY"
-                      ? routeResult.startLeg
-                      : undefined
-                    : route?.legs.length === rows.length - 1
-                      ? route.legs[index - 1]
-                      : undefined;
-                const entry = timeline.pending
-                  ? undefined
-                  : scheduledEntries?.[index];
-                const savedLeg = leg
-                  ? {
-                    km: leg.distanceMeters / 1000,
-                    minutes: Math.ceil(leg.durationSeconds / 60),
-                  }
-                  : routeMode === "DRIVE" &&
-                    entry?.distanceFromPreviousKm != null &&
-                    entry.travelMinutesFromPrevious != null
+                      ) : null}
+                      {visit.isError ? (
+                        <AppText accessibilityRole="alert" tone="error">
+                          {itineraryCopy.visitFailed}
+                        </AppText>
+                      ) : null}
+                      {places.isError || itinerary.isError || query.isError ? (
+                        <>
+                          <AppText accessibilityRole="alert">
+                            {itineraryCopy.error}
+                          </AppText>
+                          <AppButton
+                            size="small"
+                            variant="outline"
+                            onPress={() => void refreshSchedule()}
+                          >
+                            {copy.retry}
+                          </AppButton>
+                        </>
+                      ) : !ready ? (
+                        <AppText accessibilityLiveRegion="polite">
+                          {placeCopy.loadingPlaces}
+                        </AppText>
+                      ) : !trip.days.length ? (
+                        <AppText tone="muted">
+                          {itineraryCopy.noTripDates}
+                        </AppText>
+                      ) : !rows.length ? (
+                        <AppText tone="muted">
+                          {backlog
+                            ? detailCopy.poolEmpty
+                            : itineraryCopy.noDayStops}
+                        </AppText>
+                      ) : null}
+                    </View>
+                  );
+                if (item.kind !== "stop") return null;
+                const { stop, index } = item;
+                if (activeDate) {
+                  const leg =
+                    index === 0
+                      ? route && routeResult?.status === "READY"
+                        ? routeResult.startLeg
+                        : undefined
+                      : route?.legs.length === rows.length - 1
+                        ? route.legs[index - 1]
+                        : undefined;
+                  const entry = timeline.pending
+                    ? undefined
+                    : scheduledEntries?.[index];
+                  const savedLeg = leg
                     ? {
-                      km: entry.distanceFromPreviousKm,
-                      minutes: entry.travelMinutesFromPrevious,
-                    }
-                    : undefined;
-                return (
-                  <View style={{ paddingHorizontal: theme.spacing.lg }}>
-                    <TripStopRow
-                      preview={false}
-                      savedLeg={savedLeg}
-                      stop={stop}
-                      previous={rows[index - 1]}
-                      fromStart={index === 0 && !!day?.startLocation}
-                      number={index + 1}
-                      last={index === rows.length - 1}
-                      mode={routeMode === "DRIVE" ? "car" : "walk"}
-                      legIcon={routeMode === "BICYCLE" ? "route" : undefined}
-                      visited={!!stop.visited}
-                      next={stop.id === nextStop}
-                      visitDisabled={
-                        visit.isPending ||
-                        timeline.pending ||
-                        !!timelineDrag.draggedId
+                        km: leg.distanceMeters / 1000,
+                        minutes: Math.ceil(leg.durationSeconds / 60),
                       }
-                      onVisited={
-                        mode === "live" &&
+                    : routeMode === "DRIVE" &&
+                        entry?.distanceFromPreviousKm != null &&
+                        entry.travelMinutesFromPrevious != null
+                      ? {
+                          km: entry.distanceFromPreviousKm,
+                          minutes: entry.travelMinutesFromPrevious,
+                        }
+                      : undefined;
+                  return (
+                    <View style={{ paddingHorizontal: theme.spacing.lg }}>
+                      <TripStopRow
+                        preview={false}
+                        savedLeg={savedLeg}
+                        stop={stop}
+                        previous={rows[index - 1]}
+                        fromStart={index === 0 && !!day?.startLocation}
+                        number={index + 1}
+                        last={index === rows.length - 1}
+                        mode={routeMode === "DRIVE" ? "car" : "walk"}
+                        legIcon={routeMode === "BICYCLE" ? "route" : undefined}
+                        visited={!!stop.visited}
+                        next={stop.id === nextStop}
+                        visitDisabled={
+                          visit.isPending ||
+                          timeline.pending ||
+                          !!timelineDrag.draggedId
+                        }
+                        onVisited={
+                          mode === "live" &&
                           activeDate <= read.context.evaluatedDate &&
                           ready
-                          ? () => void markVisited(stop, !stop.visited)
+                            ? () => void markVisited(stop, !stop.visited)
+                            : undefined
+                        }
+                        highlighted={selectedPin === stop.id}
+                        drag={
+                          timeline.canInteract &&
+                          !(
+                            mode === "live" &&
+                            activeDate === today &&
+                            stop.visited
+                          )
+                            ? timelineDrag
+                            : undefined
+                        }
+                        onRemove={
+                          timeline.canInteract &&
+                          !(
+                            mode === "live" &&
+                            activeDate === today &&
+                            stop.visited
+                          )
+                            ? () => timeline.remove(stop.id)
+                            : undefined
+                        }
+                        onOpen={() => {
+                          if (saving.current) return;
+                          timeline.clear();
+                          router.push({
+                            pathname: "/trip/place-details",
+                            params: {
+                              tripId: trip.id,
+                              day: activeDate,
+                              stopId: stop.itineraryItemId ?? stop.id,
+                            },
+                          });
+                        }}
+                      />
+                    </View>
+                  );
+                }
+                return (
+                  <View style={{ paddingHorizontal: theme.spacing.lg }}>
+                    <TripBacklogRow
+                      stop={stop}
+                      canEdit={ready && editableDays.length > 0}
+                      selected={
+                        backlogSelection === null
+                          ? undefined
+                          : selectedBacklog.some((item) => item.id === stop.id)
+                      }
+                      onLongPress={
+                        ready && editableDays.length > 0 && canManagePlaces
+                          ? () => setBacklogSelection([stop.id])
                           : undefined
                       }
-                      highlighted={selectedPin === stop.id}
-                      drag={
-                        timeline.canInteract &&
-                          !(mode === "live" && activeDate === today && stop.visited)
-                          ? timelineDrag
-                          : undefined
-                      }
-                      onRemove={
-                        timeline.canInteract &&
-                          !(mode === "live" && activeDate === today && stop.visited)
-                          ? () => timeline.remove(stop.id)
-                          : undefined
-                      }
-                      onOpen={() => {
-                        if (saving.current) return;
-                        timeline.clear();
-                        router.push({
-                          pathname: "/trip/place-details",
-                          params: {
-                            tripId: trip.id,
-                            day: activeDate,
-                            stopId: stop.itineraryItemId ?? stop.id,
-                          },
-                        });
+                      onPress={() => {
+                        if (backlogSelection !== null) {
+                          setBacklogSelection((current) =>
+                            current?.includes(stop.id)
+                              ? current.filter((id) => id !== stop.id)
+                              : [...(current ?? []), stop.id],
+                          );
+                        } else openEditor({ kind: "stop", stop });
                       }}
                     />
                   </View>
                 );
-              }
-              return (
-                <View style={{ paddingHorizontal: theme.spacing.lg }}>
-                  <TripBacklogRow
-                    stop={stop}
-                    canEdit={ready && editableDays.length > 0}
-                    selected={backlogSelection === null ? undefined : selectedBacklog.some((item) => item.id === stop.id)}
-                    onLongPress={ready && editableDays.length > 0 && canManagePlaces ? () => setBacklogSelection([stop.id]) : undefined}
-                    onPress={() => {
-                      if (backlogSelection !== null) {
-                        setBacklogSelection((current) => current?.includes(stop.id)
-                          ? current.filter((id) => id !== stop.id)
-                          : [...(current ?? []), stop.id]);
-                      } else openEditor({ kind: "stop", stop });
-                    }}
-                  />
-                </View>
-              );
-            }}
-          />
-        </GestureDetector>
+              }}
+            />
+          </GestureDetector>
         </GestureDetector>
         {places.isRefetching || itinerary.isRefetching ? (
-          <ActivityIndicator pointerEvents="none" color={theme.colors.primaryText}
-            style={{ position: "absolute", top: theme.spacing.sm, alignSelf: "center" }} />
+          <ActivityIndicator
+            pointerEvents="none"
+            color={theme.colors.primaryText}
+            style={{
+              position: "absolute",
+              top: theme.spacing.sm,
+              alignSelf: "center",
+            }}
+          />
         ) : null}
       </View>
       {timeline.canUndo ||
-        ((timeline.hasFailure || completion.isError) && scheduleError) ? (
+      ((timeline.hasFailure || completion.isError) && scheduleError) ? (
         <View
           style={{
             paddingBottom: mode === "planning" ? insets.bottom : 0,
@@ -1110,20 +1209,39 @@ export function ConnectedTripDetailsScreen({
         </View>
       ) : null}
       {backlog && backlogSelection !== null && canManagePlaces ? (
-        <View style={{ padding: theme.spacing.lg, paddingBottom: Math.max(insets.bottom, theme.spacing.md), backgroundColor: theme.colors.surface, borderTopWidth: 1, borderTopColor: theme.colors.border }}>
+        <View
+          style={{
+            padding: theme.spacing.lg,
+            paddingBottom: Math.max(insets.bottom, theme.spacing.md),
+            backgroundColor: theme.colors.surface,
+            borderTopWidth: 1,
+            borderTopColor: theme.colors.border,
+          }}
+        >
           <AppButton
             variant="gradient"
-            disabled={!ready || selectedBacklog.length === 0 || editableDays.length === 0}
-            onPress={() => openEditor({ kind: "assign", stops: selectedBacklog })}
+            disabled={
+              !ready ||
+              selectedBacklog.length === 0 ||
+              editableDays.length === 0
+            }
+            onPress={() =>
+              openEditor({ kind: "assign", stops: selectedBacklog })
+            }
           >
-            {itineraryCopy.assignSelected.replace("{count}", String(selectedBacklog.length))}
+            {itineraryCopy.assignSelected.replace(
+              "{count}",
+              String(selectedBacklog.length),
+            )}
           </AppButton>
         </View>
       ) : null}
-      {directions.error ? <AppText accessibilityRole="alert">{directions.error}</AppText> : null}
+      {directions.error ? (
+        <AppText accessibilityRole="alert">{directions.error}</AppText>
+      ) : null}
       {mode === "planning" ||
-        (backlog && mode !== "recap") ||
-        (mode === "live" && !defaultDate) ? null : (
+      (backlog && mode !== "recap") ||
+      (mode === "live" && !defaultDate) ? null : (
         <TripDetailsActions
           trip={trip}
           mode={mode}
@@ -1142,10 +1260,10 @@ export function ConnectedTripDetailsScreen({
           onJournal={
             mode === "recap"
               ? () =>
-                router.push({
-                  pathname: "/memories/[tripId]",
-                  params: { tripId: trip.id },
-                })
+                  router.push({
+                    pathname: "/memories/[tripId]",
+                    params: { tripId: trip.id },
+                  })
               : showJournal
           }
           onInfo={openActions}
@@ -1201,9 +1319,7 @@ export function ConnectedTripDetailsScreen({
                   <AppIcon
                     name={ROUTE_MODE_ICONS[value]}
                     color={
-                      isSelected
-                        ? theme.colors.onSoftAction
-                        : theme.colors.text
+                      isSelected ? theme.colors.onSoftAction : theme.colors.text
                     }
                   />
                 }

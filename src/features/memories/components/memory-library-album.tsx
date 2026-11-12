@@ -25,7 +25,9 @@ export const MemoryLibraryAlbum = memo(function MemoryLibraryAlbum({
   const theme = useAppTheme();
   const { copy, locale } = useMemoriesCopy();
   const [failed, setFailed] = useState(false);
-  const scrim = svgDataUri(`<svg xmlns="http://www.w3.org/2000/svg" width="1" height="100" preserveAspectRatio="none"><defs><linearGradient id="s" x2="0" y2="1"><stop offset="0.3" stop-color="${theme.colors.photoViewerBackdrop}" stop-opacity="0"/><stop offset="1" stop-color="${theme.colors.photoViewerBackdrop}" stop-opacity="0.55"/></linearGradient></defs><rect width="1" height="100" fill="url(#s)"/></svg>`);
+  const scrim = svgDataUri(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="1" height="100" preserveAspectRatio="none"><defs><linearGradient id="s" x2="0" y2="1"><stop offset="0.3" stop-color="${theme.colors.photoViewerBackdrop}" stop-opacity="0"/><stop offset="1" stop-color="${theme.colors.photoViewerBackdrop}" stop-opacity="0.55"/></linearGradient></defs><rect width="1" height="100" fill="url(#s)"/></svg>`,
+  );
   return (
     <Pressable
       accessibilityRole="button"

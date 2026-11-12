@@ -80,7 +80,9 @@ export function usePlanningMapCollapse<T>({
       dragStart.set(Date.now());
       previousOffset.set(Math.max(0, event.contentOffset.y));
     },
-    onEndDrag: () => { dragging.set(false); },
+    onEndDrag: () => {
+      dragging.set(false);
+    },
     onScroll: (event) => {
       offset.set(Math.max(0, event.contentOffset.y));
       if (!enabled || mapHeight <= hideDistance) return;
@@ -95,9 +97,13 @@ export function usePlanningMapCollapse<T>({
         else if (now >= settleUntil.get()) target.set(-1);
         return;
       }
-      const deliberate = dragging.get() && now - dragStart.get() >= intentDuration;
-      if (!collapsed.get() && delta > 0 &&
-        (y >= mapHeight || (deliberate && y - dragOffset.get() >= hideDistance))) {
+      const deliberate =
+        dragging.get() && now - dragStart.get() >= intentDuration;
+      if (
+        !collapsed.get() &&
+        delta > 0 &&
+        (y >= mapHeight || (deliberate && y - dragOffset.get() >= hideDistance))
+      ) {
         collapsed.set(true);
         if (y < mapHeight) {
           target.set(mapHeight);

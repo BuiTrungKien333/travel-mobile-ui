@@ -269,15 +269,13 @@ function TripDetailsContent({
           ...(hasStartNode
             ? [{ kind: "start", key: "start" } satisfies TimelineRow]
             : []),
-          ...timedStops.map(
-            (stop, index): TimelineRow => ({
-              kind: "stop",
-              key: stop.id,
-              stop,
-              previous: timedStops[index - 1],
-              number: index + 1,
-            }),
-          ),
+          ...timedStops.map((stop, index): TimelineRow => ({
+            kind: "stop",
+            key: stop.id,
+            stop,
+            previous: timedStops[index - 1],
+            number: index + 1,
+          })),
         ]
       : [];
   const listRows: Row[] = mapFirstLayout
@@ -653,74 +651,76 @@ function TripDetailsContent({
               ]}
             >
               <GestureDetector gesture={mapScrollGesture}>
-              <Animated.FlatList<Row>
-                key={selectionKey}
-                ref={list}
-                data={listRows}
-                keyExtractor={(item) => item.key}
-                renderItem={renderRow}
-                onScrollToIndexFailed={onScrollToIndexFailed}
-                initialNumToRender={8}
-                scrollEnabled={!timelineDrag.draggedId}
-                removeClippedSubviews={
-                  timelineDrag.draggedId ? false : undefined
-                }
-                CellRendererComponentStyle={({ item }) => ({
-                  zIndex:
-                    item.kind === "planning-days"
-                      ? 2
-                      : item.kind === "stop" &&
-                          timelineDrag.draggedId === item.stop.id
-                        ? 1
-                        : 0,
-                })}
-                ListHeaderComponent={
-                  mapFirstLayout ? planningHeader : listHeader
-                }
-                stickyHeaderIndices={mapFirstLayout ? [1] : undefined}
-                onScroll={mapFirstLayout ? planningScroll.onScroll : undefined}
-                scrollEventThrottle={16}
-                showsVerticalScrollIndicator={false}
-                style={styles.fill}
-                contentContainerStyle={{
-                  padding: mapFirstLayout ? 0 : theme.spacing.lg,
-                  paddingBottom:
-                    theme.spacing.xxl +
-                    (mode === "planning" ? insets.bottom : 0),
-                  minHeight:
-                    mapFirstLayout && showMap
-                      ? availableHeight + planningMapGeometry.height
-                      : undefined,
-                }}
-                ListEmptyComponent={
-                  backlog || !day ? (
-                    <TripTimelineEmpty
-                      backlog={backlog}
-                      canSetDates={!day && canEdit}
-                      onDates={() => setSheet({ kind: "dates" })}
-                    />
-                  ) : null
-                }
-                ListFooterComponent={
-                  !backlog ? (
-                    <View
-                      style={{
-                        paddingHorizontal: mapFirstLayout
-                          ? theme.spacing.lg
+                <Animated.FlatList<Row>
+                  key={selectionKey}
+                  ref={list}
+                  data={listRows}
+                  keyExtractor={(item) => item.key}
+                  renderItem={renderRow}
+                  onScrollToIndexFailed={onScrollToIndexFailed}
+                  initialNumToRender={8}
+                  scrollEnabled={!timelineDrag.draggedId}
+                  removeClippedSubviews={
+                    timelineDrag.draggedId ? false : undefined
+                  }
+                  CellRendererComponentStyle={({ item }) => ({
+                    zIndex:
+                      item.kind === "planning-days"
+                        ? 2
+                        : item.kind === "stop" &&
+                            timelineDrag.draggedId === item.stop.id
+                          ? 1
                           : 0,
-                      }}
-                    >
-                      <TripTimelineTail
-                        trip={trip}
-                        day={day}
-                        canEdit={canEdit}
-                        empty={!timedStops.length}
-                        onAdd={() => day && openPlacePicker(day.date)}
+                  })}
+                  ListHeaderComponent={
+                    mapFirstLayout ? planningHeader : listHeader
+                  }
+                  stickyHeaderIndices={mapFirstLayout ? [1] : undefined}
+                  onScroll={
+                    mapFirstLayout ? planningScroll.onScroll : undefined
+                  }
+                  scrollEventThrottle={16}
+                  showsVerticalScrollIndicator={false}
+                  style={styles.fill}
+                  contentContainerStyle={{
+                    padding: mapFirstLayout ? 0 : theme.spacing.lg,
+                    paddingBottom:
+                      theme.spacing.xxl +
+                      (mode === "planning" ? insets.bottom : 0),
+                    minHeight:
+                      mapFirstLayout && showMap
+                        ? availableHeight + planningMapGeometry.height
+                        : undefined,
+                  }}
+                  ListEmptyComponent={
+                    backlog || !day ? (
+                      <TripTimelineEmpty
+                        backlog={backlog}
+                        canSetDates={!day && canEdit}
+                        onDates={() => setSheet({ kind: "dates" })}
                       />
-                    </View>
-                  ) : null
-                }
-              />
+                    ) : null
+                  }
+                  ListFooterComponent={
+                    !backlog ? (
+                      <View
+                        style={{
+                          paddingHorizontal: mapFirstLayout
+                            ? theme.spacing.lg
+                            : 0,
+                        }}
+                      >
+                        <TripTimelineTail
+                          trip={trip}
+                          day={day}
+                          canEdit={canEdit}
+                          empty={!timedStops.length}
+                          onAdd={() => day && openPlacePicker(day.date)}
+                        />
+                      </View>
+                    ) : null
+                  }
+                />
               </GestureDetector>
             </View>
           </View>

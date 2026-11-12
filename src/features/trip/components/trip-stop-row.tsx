@@ -332,7 +332,9 @@ export function TripStopRow({
                     </View>
                     <AppText
                       variant="label"
-                      style={{ fontFamily: theme.typography.fontFamily.semibold }}
+                      style={{
+                        fontFamily: theme.typography.fontFamily.semibold,
+                      }}
                     >
                       {stop.name[locale]}
                     </AppText>

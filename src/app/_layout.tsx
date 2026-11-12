@@ -31,7 +31,8 @@ export default function RootLayout() {
   const status = useAuthStore((state) => state.status);
   useEffect(() => {
     // Tạm ngưng khôi phục phiên/gọi refresh API trong bản xem trước UI.
-    if (!UI_PREVIEW_ENABLED) void restoreServerConnection().then(() => authSession.restore());
+    if (!UI_PREVIEW_ENABLED)
+      void restoreServerConnection().then(() => authSession.restore());
     if (Platform.OS === "web") return;
     const subscription = AppState.addEventListener("change", (state) =>
       focusManager.setFocused(state === "active"),

@@ -48,10 +48,22 @@ export function SessionGate({ failed }: { failed: boolean }) {
             accessibilityLabel={t("common.logoAccessibility")}
             contentFit="contain"
             source={require("@/assets/images/wego-wordmark.png")}
-            style={{ width: theme.layout.sessionLogoWidth, height: theme.layout.headerLogoHeight * 2, alignSelf: "center" }}
+            style={{
+              width: theme.layout.sessionLogoWidth,
+              height: theme.layout.headerLogoHeight * 2,
+              alignSelf: "center",
+            }}
           />
           <View style={{ gap: theme.spacing.sm }}>
-            {failed ? <AppText accessibilityRole="header" variant="subheading" style={styles.centered}>{t("auth.session.restoreFailed")}</AppText> : null}
+            {failed ? (
+              <AppText
+                accessibilityRole="header"
+                variant="subheading"
+                style={styles.centered}
+              >
+                {t("auth.session.restoreFailed")}
+              </AppText>
+            ) : null}
             <AppText
               accessibilityRole={failed ? "alert" : undefined}
               accessibilityLiveRegion="polite"
@@ -101,7 +113,15 @@ export function SessionGate({ failed }: { failed: boolean }) {
               />
             </View>
           )}
-          {failed && canConfigureServer ? <AppButton variant="outline" size="small" onPress={() => router.push("/connection")}>Kết nối máy chủ / Server</AppButton> : null}
+          {failed && canConfigureServer ? (
+            <AppButton
+              variant="outline"
+              size="small"
+              onPress={() => router.push("/connection")}
+            >
+              Kết nối máy chủ / Server
+            </AppButton>
+          ) : null}
         </View>
       </ScrollView>
     </ScreenSafeArea>

@@ -112,14 +112,15 @@ export function ConnectedTripStopDetailsScreen({
       : stop;
   }, [stop, detail.data]);
   const mapStops = useMemo(() => (place ? [place] : []), [place]);
+  const samplePhotoSeed = stop ? (stop.placeId ?? stop.id) : null;
   const samplePhotos = useMemo(
     () =>
-      stop
+      samplePhotoSeed !== null
         ? [0, 1, 2].map((index) =>
-            getSampleImage(`${stop.placeId ?? stop.id}:photo:${index}`),
+            getSampleImage(`${samplePhotoSeed}:photo:${index}`),
           )
         : [],
-    [stop?.placeId, stop?.id],
+    [samplePhotoSeed],
   );
   const ready = !!read && !!places.data && !!itinerary.data;
   const loadError = query.isError || places.isError || itinerary.isError;
@@ -386,7 +387,9 @@ export function ConnectedTripStopDetailsScreen({
             }}
           >
             <GlassBackdrop borderRadius={theme.radius.none} />
-            {directions.error ? <AppText accessibilityRole="alert">{directions.error}</AppText> : null}
+            {directions.error ? (
+              <AppText accessibilityRole="alert">{directions.error}</AppText>
+            ) : null}
             {!place.location ? (
               <AppText variant="caption" tone="muted">
                 {copy.stopMapUnavailable}
