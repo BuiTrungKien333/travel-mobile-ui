@@ -1,3 +1,5 @@
+import { canAdminister } from "../utils/authorization";
+import { accessCopy } from "@/features/access/access-copy";
 import { useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
 import { Image } from "expo-image";
@@ -35,7 +37,7 @@ export function ProfileScreen({
 }: { isPreview?: boolean } = {}) {
   const theme = useAppTheme();
   const tabBarHeight = useBottomTabBarHeight();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { copy } = useProfileCopy();
   const profile = useProfile();
   const logout = useLogout();
@@ -127,6 +129,7 @@ export function ProfileScreen({
           <AppText accessibilityRole="header" variant="subheading">
             {t("auth.profile.title")}
           </AppText>
+          {!isPreview && canAdminister(user) ? <AppButton variant="outline" onPress={() => router.push("/admin")}>{accessCopy(locale).admin}</AppButton> : null}
           {!isPreview && profile.isLoading ? (
             <View
               style={{

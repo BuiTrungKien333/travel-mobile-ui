@@ -1,3 +1,4 @@
+import { accessCopy } from "@/features/access/access-copy";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { router, useLocalSearchParams } from "expo-router";
 import { useRef } from "react";
@@ -67,12 +68,15 @@ export function LoginScreen() {
   return (
     <AuthScaffold
       footer={
-        <AuthFooterLink
+        <View style={{ gap: theme.spacing.md }}>
+        <AppButton variant="outline" onPress={() => router.push("/explore")}>{accessCopy(locale).explore}</AppButton>
+      <AuthFooterLink
           action={t("auth.login.register")}
           label={t("auth.login.noAccount")}
           disabled={isSubmitting || google.isPending}
           onPress={() => router.push("/(auth)/register")}
         />
+        </View>
       }
       showLogo
       subtitle={t("auth.login.subtitle")}

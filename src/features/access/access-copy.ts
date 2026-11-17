@@ -1,0 +1,31 @@
+const vi = {
+  explore: "Khám phá điểm đến", guest: "Bạn đang ở chế độ khám phá. Đăng nhập để tạo chuyến đi, lưu kỷ niệm và dùng AI.",
+  login: "Đăng nhập / Đăng ký", logout: "Đăng xuất", back: "Quay lại", retry: "Thử lại", next: "Trang sau", previous: "Trang trước",
+  empty: "Chưa có dữ liệu công khai đã duyệt tại đây.", loading: "Đang tải…", failed: "Không tải được dữ liệu. Kiểm tra kết nối và thử lại.",
+  admin: "Quản trị hệ thống", users: "Tài khoản", catalog: "Catalog", history: "Lịch sử quản trị", search: "Tìm tên hoặc email", find: "Tìm",
+  locked: "Đã khóa", active: "Hoạt động", unverified: "Email chưa xác minh", lock: "Khóa tài khoản", unlock: "Mở khóa tài khoản",
+  role: "Đổi quyền", confirm: "Xác nhận thay đổi", cancel: "Hủy", review: "Kiểm tra thay đổi bên dưới trước khi xác nhận. Phiên đăng nhập của tài khoản này sẽ bị thu hồi.",
+  self: "Không thể tự đổi quyền hoặc khóa tài khoản quản trị đang dùng.", denied: "Bạn không có quyền thực hiện thao tác này.",
+  conflict: "Dữ liệu đã thay đổi. Tải lại danh sách và thử lại.", protected: "Thao tác bị chặn để bảo vệ tài khoản quản trị.",
+  verifiedRequired: "Cần xác minh email trước khi cấp quyền admin.", approved: "Đã duyệt", unpublished: "Chưa công khai",
+  approve: "Duyệt công khai", withdraw: "Gỡ khỏi catalog công khai", index: "Cập nhật chỉ mục AI", indexed: "Chỉ mục đã cập nhật",
+  updated: "Đã cập nhật", skipped: "Giữ nguyên", failedCount: "Lỗi",
+  indexFailure: "Có địa điểm chưa index được. Kiểm tra cấu hình AI rồi thử lại.", scope: "Phạm vi xác minh", user: "Người dùng", administrator: "Quản trị viên", visitor: "Khách",
+  unknownHours: "Giờ hoạt động và dữ liệu địa điểm có thể chưa xác minh đầy đủ.",
+};
+const en: typeof vi = {
+  explore: "Explore destinations", guest: "You are exploring as a guest. Sign in to create trips, save memories and use AI.",
+  login: "Sign in / Register", logout: "Sign out", back: "Back", retry: "Retry", next: "Next page", previous: "Previous page",
+  empty: "No approved public data here yet.", loading: "Loading…", failed: "Could not load data. Check your connection and try again.",
+  admin: "System administration", users: "Accounts", catalog: "Catalog", history: "Administration history", search: "Search name or email", find: "Search",
+  locked: "Locked", active: "Active", unverified: "Email not verified", lock: "Lock account", unlock: "Unlock account",
+  role: "Change role", confirm: "Confirm change", cancel: "Cancel", review: "Review the change below before confirming. This account's sessions will be revoked.",
+  self: "You cannot change your own administrator role or lock your own account.", denied: "You do not have permission to perform this action.",
+  conflict: "Data changed. Reload the list and try again.", protected: "This change is blocked to protect administrator access.",
+  verifiedRequired: "Verify the email address before granting admin access.", approved: "Approved", unpublished: "Not public",
+  approve: "Approve for public catalog", withdraw: "Remove from public catalog", index: "Update AI index", indexed: "Index updated",
+  updated: "Updated", skipped: "Unchanged", failedCount: "Failed",
+  indexFailure: "Some places could not be indexed. Check AI configuration and try again.", scope: "Verification scope", user: "User", administrator: "Administrator", visitor: "Guest",
+  unknownHours: "Opening hours and place data may not be fully verified.",
+};
+export const accessCopy = (locale: string) => locale === "en" ? en : vi;

@@ -11,6 +11,7 @@ import {
   SafeAreaProvider,
 } from "react-native-safe-area-context";
 
+import { canUseWorkspace } from "@/features/auth/utils/authorization";
 import { UI_PREVIEW_ENABLED } from "@/constants/development";
 import { MagicLinkProvider } from "@/features/auth/components/magic-link-provider";
 import { authSession } from "@/features/auth/services/auth-session";
@@ -29,6 +30,7 @@ export { RouteErrorScreen as ErrorBoundary } from "@/components/common/route-err
 
 export default function RootLayout() {
   const status = useAuthStore((state) => state.status);
+  const user = useAuthStore((state) => state.user);
   useEffect(() => {
     // Tạm ngưng khôi phục phiên/gọi refresh API trong bản xem trước UI.
     if (!UI_PREVIEW_ENABLED)
@@ -67,6 +69,7 @@ export default function RootLayout() {
               >
                 <Stack.Screen name="index" />
                 <Stack.Screen name="connection" />
+                <Stack.Screen name="explore" />
                 <Stack.Screen name="forgot-password" />
                 <Stack.Screen name="verify-email" />
                 <Stack.Screen name="reset-password" />
@@ -77,7 +80,7 @@ export default function RootLayout() {
                   <Stack.Screen name="(auth)" />
                 </Stack.Protected>
                 <Stack.Protected
-                  guard={UI_PREVIEW_ENABLED || status === "authenticated"}
+                  guard={UI_PREVIEW_ENABLED || (status === "authenticated" && canUseWorkspace(user))}
                 >
                   <Stack.Screen name="(workspace)" />
                 </Stack.Protected>

@@ -34,9 +34,10 @@ export const authSession = new SessionManager({
   requestLogout: authApi.logout,
   onStatus: (status) => useAuthStore.setState({ status }),
   onUser: (user) => {
+    useAuthStore.setState({ user });
     queryClient.setQueryData(authQueryKeys.profile, user, { updatedAt: 0 });
   },
-  onClear: () => queryClient.clear(),
+  onClear: () => { useAuthStore.setState({ user: null }); queryClient.clear(); },
 });
 
 configureAuthTransport(authSession);

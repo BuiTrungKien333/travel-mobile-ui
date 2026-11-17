@@ -116,6 +116,7 @@ export const translations = {
     "auth.error.rateLimit":
       "Bạn thao tác quá nhanh. Vui lòng đợi một lát rồi thử lại.",
     "auth.error.fieldInvalid": "Thông tin chưa hợp lệ. Vui lòng kiểm tra lại.",
+    "auth.error.forbidden": "Bạn không có quyền thực hiện thao tác này.",
     "auth.error.generic": "Không thể hoàn tất thao tác. Vui lòng thử lại.",
     "validation.emailMax": "Email không được vượt quá 255 ký tự.",
     "validation.fullNameMax": "Họ và tên không được vượt quá 100 ký tự.",
@@ -276,6 +277,7 @@ export const translations = {
       "Too many requests. Please wait a moment and try again.",
     "auth.error.fieldInvalid":
       "Some information is invalid. Please check your entries.",
+    "auth.error.forbidden": "You do not have permission to perform this action.",
     "auth.error.generic": "Cannot complete this action. Please try again.",
     "validation.emailMax": "Email must not exceed 255 characters.",
     "validation.fullNameMax": "Full name must not exceed 100 characters.",

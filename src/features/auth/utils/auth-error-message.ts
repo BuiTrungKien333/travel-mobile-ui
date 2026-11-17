@@ -15,6 +15,7 @@ const errorKeys: Record<string, TranslationKey> = {
   AUTH_010: "auth.error.emailUnavailable",
   COMMON_003: "auth.error.fieldInvalid",
   AUTH_001: "auth.error.sessionExpired",
+  AUTH_002: "auth.error.forbidden",
   AUTH_003: "auth.error.emailExists",
   AUTH_004: "auth.error.credentials",
   AUTH_005: "auth.error.sessionExpired",

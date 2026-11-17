@@ -18,6 +18,8 @@ import { AppIcon, type AppIconName } from "@/components/ui/app-icon";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useScreenInsets } from "@/hooks/use-screen-insets";
 import { useTripQuery } from "../api/trip-queries";
+import { usePlanningCopy } from "../i18n/planning-copy";
+import { supportsAiPlanning } from "../utils/planning-eligibility";
 import {
   useAddTripPlacesMutation,
   useTripPlacesQuery,
@@ -114,6 +116,7 @@ export function ConnectedTripDetailsScreen({
   expandMap?: boolean;
 }) {
   const theme = useAppTheme();
+  const { copy: planningCopy } = usePlanningCopy();
   const directions = useTripDirections();
   const insets = useScreenInsets();
   const { copy } = useTripIntegrationCopy();
@@ -799,6 +802,11 @@ export function ConnectedTripDetailsScreen({
                         padding: theme.spacing.lg,
                       }}
                     >
+                      {supportsAiPlanning(read.trip) && itinerary.data?.days.every(day => day.stops.length === 0) ? (
+                        <AppButton variant="soft" onPress={() => router.push({ pathname: "/trip/planning", params: { tripId: trip.id } })}>
+                          {planningCopy.title}
+                        </AppButton>
+                      ) : null}
                       {hasVisitedAllTripPlaces(read, places.data) &&
                       !visit.isPending ? (
                         <TripCompletionAction

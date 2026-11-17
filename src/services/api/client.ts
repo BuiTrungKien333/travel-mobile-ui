@@ -3,7 +3,7 @@ import Constants from "expo-constants";
 import { isDevice } from "expo-device";
 import { Platform } from "react-native";
 
-import { publicAuthEndpoints } from "@/features/auth/api/auth-endpoints";
+import { isPublicApiRequest } from "./public-endpoints";
 import { useLocaleStore } from "@/store/use-locale-store";
 import { ApiError, normalizeApiError } from "./api-error";
 import { resolveApiUrl as resolveDeviceApiUrl } from "./api-url";
@@ -45,7 +45,7 @@ export const apiClient = create({ baseURL, timeout: 15000 });
 apiClient.interceptors.request.use((config: AuthConfig) => {
   if (!apiClient.defaults.baseURL) throw new ApiError("API_CONFIG");
   config.headers.set("Accept-Language", useLocaleStore.getState().locale);
-  if (!publicAuthEndpoints.has(config.url ?? "") && authTransport) {
+  if (!isPublicApiRequest(config.url ?? "", config.method) && authTransport) {
     config.authVersion ??= authTransport.getVersion();
     if (config.authVersion !== authTransport.getVersion())
       throw new ApiError("CANCELLED");
@@ -63,7 +63,7 @@ apiClient.interceptors.response.use(
       ? error.config
       : undefined;
     const protectedRequest =
-      config && !publicAuthEndpoints.has(config.url ?? "");
+      config && !isPublicApiRequest(config.url ?? "", config.method);
     if (
       protectedRequest &&
       authTransport &&

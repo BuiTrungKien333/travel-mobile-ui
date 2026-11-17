@@ -56,6 +56,8 @@ function fixture(
   const read = {
     trip: {
       id: "trip",
+      destination: { name: "Đà Lạt" },
+      status: recap ? "COMPLETED" : planning ? "PLANNING" : "ACTIVE",
       mode: recap ? "RECAP" : planning ? "PLANNING" : "LIVE",
       dayCount: 1,
       stopCount: scheduledStops.length,
