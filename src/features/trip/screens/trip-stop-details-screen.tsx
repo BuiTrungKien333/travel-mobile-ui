@@ -160,7 +160,7 @@ function StopDetailsContent({
             expandMapRequest={expandRequest}
             onBack={goBack}
             backLabel={copy.back}
-            topInset={insets.top}
+            topInset={insets.top + theme.spacing.lg}
             mapAction={<SharePlaceButton place={place} />}
             classification={<PlaceClassification place={place} />}
             afterInfo={<PlaceAmenities place={place} />}

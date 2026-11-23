@@ -14,6 +14,15 @@ export const tripStopRouteSchema = tripRouteSchema
   .pick({ tripId: true, day: true })
   .extend({ stopId: tripRouteSchema.shape.tripId });
 
+export const planningPlaceDetailsRouteSchema = z.object({
+  planningPlaceId: z.guid(),
+  tripId: z.guid(),
+  day: z.iso.date(),
+  visitStart: z.iso.datetime({ local: true }),
+  departure: z.iso.datetime({ local: true }),
+  durationMinutes: z.coerce.number().int().positive(),
+});
+
 export const tripCameraRouteSchema = tripRouteSchema
   .pick({ tripId: true, day: true })
   .extend({ stopId: tripRouteSchema.shape.tripId.optional() });

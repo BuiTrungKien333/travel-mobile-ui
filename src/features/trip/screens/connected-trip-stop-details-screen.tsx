@@ -283,7 +283,7 @@ export function ConnectedTripStopDetailsScreen({
             showSavedName
             onBack={back}
             backLabel={copy.back}
-            topInset={insets.top}
+            topInset={insets.top + theme.spacing.lg}
             expandMapRequest={expandRequest}
             mapAction={<SharePlaceButton place={place} />}
             mapContent={

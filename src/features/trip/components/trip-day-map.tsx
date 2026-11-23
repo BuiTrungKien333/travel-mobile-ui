@@ -20,12 +20,14 @@ import type { DaySettings } from "../api/itinerary-types";
 export function TripDayMap({
   stops,
   polyline,
+  pathCoordinates,
   focusedId,
   onSelect,
   origin,
 }: {
   stops: TripStop[];
   polyline?: string;
+  pathCoordinates?: TripMapPosition[];
   focusedId?: string;
   onSelect: (id: string) => void;
   origin?: DaySettings["origin"];
@@ -63,13 +65,13 @@ export function TripDayMap({
   }, [stops, locale, origin]);
   const path = useMemo(
     () =>
-      polyline
+      pathCoordinates ?? (polyline
         ? decodeRoutePolyline(polyline).map((point): TripMapPosition => [
             point.longitude,
             point.latitude,
           ])
-        : [],
-    [polyline],
+        : []),
+    [pathCoordinates, polyline],
   );
 
   if (tripMapToken && !staticOnly)

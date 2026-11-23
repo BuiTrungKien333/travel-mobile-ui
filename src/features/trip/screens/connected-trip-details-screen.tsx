@@ -511,7 +511,7 @@ export function ConnectedTripDetailsScreen({
         returnOriginReady &&
         pendingStops.length + 1 + (storedSettings?.returnToStart ? 1 : 0) <= 12
       : !!route &&
-        rows.length >= 4 &&
+        rows.length >= 2 &&
         rows.length + (storedSettings?.origin ? 1 : 0) <= 12);
   const selectedPin = focus?.date === activeDate ? focus?.id : nextStop;
   const total = route

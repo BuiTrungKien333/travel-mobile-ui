@@ -1,9 +1,10 @@
 import { useRef, useState } from "react";
 import { router } from "expo-router";
-import { KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from "react-native";
 import { ScreenSafeArea } from "@/components/common/screen-safe-area";
 import { AppButton } from "@/components/ui/app-button";
 import { AppText } from "@/components/ui/app-text";
+import { AppIcon } from "@/components/ui/app-icon";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { ApiError } from "@/services/api/api-error";
 import { createRequestId } from "@/utils/create-request-id";
@@ -56,9 +57,15 @@ export function TripPlanningScreen({ tripId }: { tripId?: string }) {
   }
   return <ScreenSafeArea style={{ flex: 1, backgroundColor: theme.colors.background }}>
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: theme.spacing.lg, gap: theme.spacing.lg }}>
-        <AppButton variant="outline" disabled={apply.isPending} onPress={back}>{copy.close}</AppButton>
-        <AppText variant="title">{copy.title}</AppText><AppText tone="muted">{copy.scope}</AppText>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: theme.spacing.lg, gap: theme.spacing.md, paddingBottom: theme.spacing.xl }}>
+        <View style={{ minHeight: theme.layout.buttonHeight, flexDirection: "row", alignItems: "center", gap: theme.spacing.sm }}>
+          <Pressable accessibilityRole="button" accessibilityLabel={copy.close} disabled={apply.isPending} onPress={back}
+            style={({ pressed }) => ({ width: 44, height: 44, alignItems: "center", justifyContent: "center", opacity: pressed ? 0.65 : 1 })}>
+            <AppIcon name="back" size={theme.layout.iconMedium} />
+          </Pressable>
+          <AppText variant="heading">{copy.title}</AppText>
+        </View>
+        <AppText tone="muted">{copy.scope}</AppText>
         {problem ? <View style={{ gap: theme.spacing.sm }}>
           <AppText accessibilityRole="alert" tone="error">{problem}</AppText>
           {request && !conflict && !(error instanceof ApiError && ["DRAFT_003", "DRAFT_005"].includes(error.code)) ? <AppButton variant="outline" disabled={pending} onPress={() => void generate()}>{copy.retry}</AppButton> : null}

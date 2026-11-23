@@ -5,8 +5,8 @@ export const planningTag = z.enum(planningTags);
 const time = z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/);
 export const planningOrigin = z.object({
   name: z.string().trim().min(1).max(160),
-  latitude: z.number().min(15.8).max(16.3),
-  longitude: z.number().min(107.9).max(108.4),
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
 });
 export const planningPreferences = z.object({
   destination: z.string().min(1).max(160), numberOfDays: z.number().int().min(1).max(2),
