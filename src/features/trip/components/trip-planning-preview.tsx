@@ -12,12 +12,13 @@ import { TripStopRow } from "./trip-stop-row";
 import { planningTime } from "../utils/planning-time";
 
 export function TripPlanningPreview({ draft }: { draft: PlanningDraft }) {
-  const { copy, locale } = usePlanningCopy();
+  const { copy } = usePlanningCopy();
   const theme = useAppTheme();
   const { height: viewportHeight } = useWindowDimensions();
   const [index, setIndex] = useState(0);
   const [focused, setFocused] = useState<string>();
   const proposal = draft.proposal;
+  const blockingIssues = [...new Set(proposal.issues.filter(issue => issue.blocking).map(issue => issue.message))];
   const day = proposal.days[index] ?? proposal.days[0];
   const stops: TripStop[] = day?.stops.map(stop => ({
     id: stop.place.placeId, placeId: stop.place.placeId, time: stop.visitStart.slice(11, 16),
@@ -55,18 +56,24 @@ export function TripPlanningPreview({ draft }: { draft: PlanningDraft }) {
     </View>
     {proposal.days.length > 1 ? <View accessibilityRole="tablist" style={{ flexDirection: "row", padding: theme.spacing.xxs, borderRadius: theme.radius.md, backgroundColor: theme.colors.surfaceVariant }}>
       {proposal.days.map((d, i) => <Pressable key={d.date} accessibilityRole="tab" accessibilityState={{ selected: i === index }}
-        style={({ pressed }) => ({ flex: 1, minHeight: 60, alignItems: "center", justifyContent: "center", gap: theme.spacing.xxs, borderRadius: theme.radius.sm,
+        style={({ pressed }) => ({ flex: 1, minHeight: 72, alignItems: "center", justifyContent: "center", gap: theme.spacing.xxs, paddingHorizontal: theme.spacing.xs, borderRadius: theme.radius.sm,
           backgroundColor: i === index ? theme.colors.surface : "transparent", opacity: pressed ? theme.motion.pressOpacity : 1 })}
         onPress={() => { setIndex(i); setFocused(undefined); }}>
-        <AppText variant="label" tone={i === index ? "primary" : "muted"}>{`${copy.day} ${i + 1}`}</AppText>
-        <AppText variant="caption" tone="muted">{new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${d.date}T12:00:00Z`))}</AppText>
+        <AppText variant="label" tone={i === index ? "primary" : "muted"} numberOfLines={1} style={{ textAlign: "center" }}>
+          {`${copy.day} ${i + 1} - ${formatDayMonth(d.date)}`}
+        </AppText>
+        <AppText variant="caption" tone="muted" numberOfLines={2} style={{ textAlign: "center" }}>
+          {dayThemeTitle(d.title) || `${copy.day} ${i + 1}`}
+        </AppText>
       </Pressable>)}
     </View> : null}
     {day ? <>
       {proposal.days.length === 1 ? <View style={{ flexDirection: "row", alignItems: "center", gap: theme.spacing.sm }}>
         <AppIcon name="calendar" size={theme.layout.iconSmall} color={theme.colors.primaryText} />
-        <AppText variant="sectionTitle">{copy.day} 1</AppText>
-        <AppText variant="body" tone="muted">{day.date}</AppText>
+        <View style={{ flex: 1, gap: theme.spacing.xxs }}>
+          <AppText variant="sectionTitle">{`${copy.day} 1 - ${formatDayMonth(day.date)}`}</AppText>
+          <AppText variant="body" tone="muted">{dayThemeTitle(day.title) || `${copy.day} 1`}</AppText>
+        </View>
       </View> : null}
       {day.stops.length ? <View style={{ flexDirection: "row", flexWrap: "wrap", rowGap: theme.spacing.md, padding: theme.spacing.md, borderRadius: theme.radius.md, backgroundColor: theme.colors.surfaceVariant }}>
         <Metric icon="clock" value={`${planningTime(day.start, day.date)}–${planningTime(day.finish, day.date)}`} />
@@ -109,14 +116,25 @@ export function TripPlanningPreview({ draft }: { draft: PlanningDraft }) {
           : p.reason === "REMOVED_TO_RESOLVE_CONFLICT" || p.reason === "REQUIRED_TIME_LOWER_BOUND" ? copy.unassignedConflict : copy.unassignedOther
       }</AppText>)}
     </View> : null}
-    {!draft.canApply ? <AppText accessibilityRole="alert" tone="error">{copy.blocked}</AppText> : null}
+    {blockingIssues.length ? <View accessibilityRole="alert" style={{ gap: theme.spacing.xs }}>
+      <AppText variant="label" tone="error">{copy.blocked}</AppText>
+      {blockingIssues.map(message => <AppText key={message} variant="body" tone="error">{message}</AppText>)}
+    </View> : !draft.canApply ? <AppText accessibilityRole="alert" tone="error">{copy.blocked}</AppText> : null}
   </View>;
+}
+
+function formatDayMonth(date: string) {
+  return `${date.slice(8, 10)}/${date.slice(5, 7)}`;
+}
+
+function dayThemeTitle(title: string) {
+  return title.replace(/^Ngày\s+\d+\s*[—-]\s*/, "").trim();
 }
 
 function Metric({ icon, value }: { icon: "clock" | "pin" | "route"; value: string }) {
   const theme = useAppTheme();
   return <View style={{ width: "50%", flexDirection: "row", alignItems: "center", gap: theme.spacing.xs, paddingRight: theme.spacing.sm }}>
     <AppIcon name={icon} size={theme.layout.iconSmall} color={theme.colors.primaryText} />
-    <AppText variant="label" style={{ fontFamily: theme.typography.fontFamily.medium }}>{value}</AppText>
+    <AppText variant="label">{value}</AppText>
   </View>;
 }

@@ -35,8 +35,10 @@ export function TripMapboxView({
 
   useEffect(() => {
     let current: MapboxMap | undefined;
+    let mapContainer: HTMLDivElement | undefined;
     let observer: ResizeObserver | undefined;
     let controls: HTMLDivElement | undefined;
+    let mapPointerDown: ((event: PointerEvent) => void) | undefined;
     let cancelled = false;
     const fail = () => {
       if (!cancelled) onUnavailable();
@@ -44,6 +46,7 @@ export function TripMapboxView({
     void import("mapbox-gl-web")
       .then(({ default: mapbox }) => {
         if (cancelled || !container.current) return;
+        mapContainer = container.current;
         if (!mapbox.supported()) {
           fail();
           return;
@@ -51,12 +54,15 @@ export function TripMapboxView({
         const first = firstPin();
         const view = new mapbox.Map({
           accessToken: token,
-          container: container.current,
+          container: mapContainer,
           style: TRIP_MAP_STYLE,
           center: first
             ? [first.longitude, first.latitude]
             : TRIP_MAP_DEFAULT_CENTER,
           zoom: first ? 14 : TRIP_MAP_DEFAULT_ZOOM,
+          // Keep the map's left-button drag available inside the surrounding
+          // React Native scroll/gesture handlers.
+          dragPan: true,
           dragRotate: false,
           pitchWithRotate: false,
           scrollZoom: false,
@@ -64,6 +70,10 @@ export function TripMapboxView({
         });
         current = view;
         module.current = mapbox;
+        // The enclosing FlatList uses a native gesture handler on web. Keep its
+        // pointer manager from capturing a drag that started inside Mapbox.
+        mapPointerDown = (event) => event.stopPropagation();
+        mapContainer.addEventListener("pointerdown", mapPointerDown);
         view.addControl(
           new mapbox.AttributionControl({ compact: true }),
           "bottom-left",
@@ -80,14 +90,14 @@ export function TripMapboxView({
           alignItems: "center",
           gap: `${inset.gap}px`,
         });
-        container.current.appendChild(controls);
+        mapContainer.appendChild(controls);
         const mapControls = [
           new mapbox.NavigationControl({ showCompass: false }),
           new mapbox.GeolocateControl(),
         ];
         for (const control of mapControls) {
           view.addControl(control, "bottom-right");
-          const element = container.current.querySelector<HTMLDivElement>(
+          const element = mapContainer.querySelector<HTMLDivElement>(
             ".mapboxgl-ctrl-bottom-right > .mapboxgl-ctrl-group",
           );
           if (element) {
@@ -102,12 +112,14 @@ export function TripMapboxView({
           if (!view.isStyleLoaded()) fail();
         });
         observer = new ResizeObserver(() => view.resize());
-        observer.observe(container.current);
+        observer.observe(mapContainer);
       })
       .catch(fail);
     return () => {
       cancelled = true;
       observer?.disconnect();
+      if (mapPointerDown && mapContainer)
+        mapContainer.removeEventListener("pointerdown", mapPointerDown);
       current?.remove();
       controls?.remove();
       module.current = null;
@@ -209,5 +221,16 @@ export function TripMapboxView({
     };
   }, [map, pins, path, focusedId, reducedMotion, theme]);
 
-  return <div ref={container} style={{ width: "100%", height: "100%" }} />;
+  return (
+    <div
+      ref={container}
+      style={{
+        width: "100%",
+        height: "100%",
+        touchAction: "none",
+        userSelect: "none",
+        WebkitUserSelect: "none",
+      }}
+    />
+  );
 }

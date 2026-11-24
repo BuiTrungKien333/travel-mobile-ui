@@ -9,7 +9,7 @@ export const planningOrigin = z.object({
   longitude: z.number().min(-180).max(180),
 });
 export const planningPreferences = z.object({
-  destination: z.string().min(1).max(160), numberOfDays: z.number().int().min(1).max(2),
+  destination: z.string().min(1).max(160), numberOfDays: z.number().int().min(1).max(3),
   interests: z.array(planningTag).max(10), excludedTags: z.array(planningTag).max(10),
   dailyStartTime: time, dailyEndTime: time,
   travelPace: z.enum(["RELAXED", "BALANCED", "ACTIVE"]).nullish(),
@@ -18,10 +18,13 @@ export const planningPreferences = z.object({
 }).refine(p => p.dailyEndTime > p.dailyStartTime);
 export const planningInput = z.object({
   text: z.string().trim().min(1).max(1000).nullable().optional(),
+  additionalText: z.string().trim().max(600).nullable().optional(),
   startDate: z.iso.date(), origin: planningOrigin,
   roundTrip: z.boolean(), restMinutes: z.number().int().min(0).max(90),
   preferences: planningPreferences.nullable().optional(),
-}).refine(input => Boolean(input.text) !== Boolean(input.preferences));
+}).refine(input => input.preferences
+  ? !input.text?.trim()
+  : Boolean(input.text?.trim()) && !input.additionalText?.trim());
 export const createPlanningDraftSchema = z.object({
   clientRequestId: z.guid(), expectedTripVersion: z.number().int().nonnegative(), input: planningInput,
 });
@@ -47,7 +50,7 @@ export const planningDraftSchema = z.object({
       pauses: z.array(z.object({ type: z.string(), start: localTime, end: localTime })),
       returnToOrigin: z.object({ arrival: localTime, minutes: z.number() }).nullable(),
       issues: z.array(problem),
-    })).max(2),
+    })).max(3),
     unassignedPlaces: z.array(z.object({ place: candidate, reason: z.string() })), issues: z.array(problem),
     weather: z.object({ status: z.string(), days: z.array(z.object({
       date: z.iso.date(), minTemperature: z.number().nullable(), maxTemperature: z.number().nullable(),

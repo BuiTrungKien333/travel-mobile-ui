@@ -16,6 +16,7 @@ import { usePlanningCopy } from "../i18n/planning-copy";
 import { supportsAiPlanning } from "../utils/planning-eligibility";
 import { TripPlanningForm } from "../components/trip-planning-form";
 import { TripPlanningPreview } from "../components/trip-planning-preview";
+import { TripPlanningErrorCard, TripPlanningLoadingCard } from "../components/trip-planning-feedback";
 
 export function TripPlanningScreen({ tripId }: { tripId?: string }) {
   const theme = useAppTheme();
@@ -32,13 +33,13 @@ export function TripPlanningScreen({ tripId }: { tripId?: string }) {
   const serverPending = latest.error instanceof ApiError && latest.error.code === "DRAFT_003";
   const busy = !!tripId && (trip.isPending || itinerary.isPending || latest.isPending || serverPending);
   const error = failure ?? trip.error ?? itinerary.error ?? latest.error;
-  const problem = error instanceof ApiError ? error.code === "TRIP_008" || error.code === "TRIP_002" ? copy.conflict
-    : error.code === "DRAFT_002" ? copy.expired : error.code === "DRAFT_003" ? undefined : error.code === "DRAFT_005" ? copy.failed
-    : error.code === "DRAFT_004" ? copy.unsupported : error.code === "AI_003" ? copy.limited
-    : error.status === 404 ? copy.unavailable : copy.generic : error ? copy.generic : undefined;
+  const problem = planningProblem(error, copy);
   const empty = itinerary.data?.days.every(day => day.stops.length === 0) === true;
   const eligible = trip.data && supportsAiPlanning(trip.data.trip) && empty;
   const conflict = error instanceof ApiError && ["TRIP_008", "TRIP_002", "DRAFT_002"].includes(error.code);
+  const errorCode = error instanceof ApiError ? error.code : undefined;
+  const canRetryRequest = !!request && !conflict && !["DRAFT_003", "DRAFT_004", "DRAFT_005", "AI_003"].includes(errorCode ?? "");
+  const loadError = !failure && (!!trip.error || !!itinerary.error || !!latest.error) && (!trip.data || !itinerary.data);
   const back = () => {
     if (apply.isPending) return;
     if (router.canGoBack()) router.back();
@@ -55,6 +56,17 @@ export function TripPlanningScreen({ tripId }: { tripId?: string }) {
     catch (e) { setFailure(e); }
     finally { lock.current = false; }
   }
+  async function applyDraft() {
+    if (lock.current || !draft) return;
+    lock.current = true; setFailure(undefined);
+    try { await apply.mutateAsync(draft.id); back(); }
+    catch (e) { setFailure(e); }
+    finally { lock.current = false; }
+  }
+  function reload() {
+    setFailure(undefined); setRequest(undefined);
+    void Promise.all([trip.refetch(), itinerary.refetch(), latest.refetch()]);
+  }
   return <ScreenSafeArea style={{ flex: 1, backgroundColor: theme.colors.background }}>
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: theme.spacing.lg, gap: theme.spacing.md, paddingBottom: theme.spacing.xl }}>
@@ -63,30 +75,54 @@ export function TripPlanningScreen({ tripId }: { tripId?: string }) {
             style={({ pressed }) => ({ width: 44, height: 44, alignItems: "center", justifyContent: "center", opacity: pressed ? 0.65 : 1 })}>
             <AppIcon name="back" size={theme.layout.iconMedium} />
           </Pressable>
-          <AppText variant="heading">{copy.title}</AppText>
+          <AppText variant="title">{copy.title}</AppText>
         </View>
-        <AppText tone="muted">{copy.scope}</AppText>
-        {problem ? <View style={{ gap: theme.spacing.sm }}>
-          <AppText accessibilityRole="alert" tone="error">{problem}</AppText>
-          {request && !conflict && !(error instanceof ApiError && ["DRAFT_003", "DRAFT_005"].includes(error.code)) ? <AppButton variant="outline" disabled={pending} onPress={() => void generate()}>{copy.retry}</AppButton> : null}
-          <AppButton variant="outline" disabled={pending} onPress={() => {
-            setFailure(undefined); setRequest(undefined);
-            void Promise.all([trip.refetch(), itinerary.refetch(), latest.refetch()]);
-          }}>{copy.reload}</AppButton>
-        </View> : null}
-        {busy ? <AppText accessibilityLiveRegion="polite">{serverPending ? copy.generating : copy.loading}</AppText> : !eligible ? <AppText>{copy.unsupported}</AppText> : <>
+        <AppText variant="body" tone="muted">{copy.scope(trip.data?.trip.dayCount)}</AppText>
+        {problem ? <TripPlanningErrorCard title={copy.errorTitle} message={problem}>
+          {canRetryRequest ? <AppButton variant="outline" disabled={pending} onPress={() => void generate()}>{copy.retry}</AppButton> : null}
+          {failure && !request && draft?.canApply ? <AppButton variant="outline" disabled={pending} onPress={() => void applyDraft()}>{copy.retryApply}</AppButton> : null}
+          {failure && request && errorCode === "DRAFT_005" ? <AppButton variant="outline" disabled={pending} onPress={() => {
+            setFailure(undefined); setRequest(undefined); setEditing(true);
+          }}>{copy.newRequest}</AppButton> : null}
+          {!failure && errorCode !== "DRAFT_003" ? <AppButton variant="outline" disabled={pending} onPress={reload}>{copy.reload}</AppButton> : null}
+        </TripPlanningErrorCard> : null}
+        {busy ? <TripPlanningLoadingCard title={serverPending ? copy.pendingTitle : copy.loadingTitle}
+          message={serverPending ? copy.pendingMessage : copy.loadingMessage} /> : loadError ? null : !eligible ? <AppText variant="body">
+          {trip.data && trip.data.trip.dayCount > 3 ? copy.tooManyDays(trip.data.trip.dayCount) : copy.unsupported}
+        </AppText> : <>
           {draft && !editing ? <>
             <TripPlanningPreview key={draft.id} draft={draft} />
-            <AppButton loading={apply.isPending} disabled={!draft.canApply || conflict}
-              onPress={() => {
-                if (lock.current) return;
-                lock.current = true; setFailure(undefined);
-                void apply.mutateAsync(draft.id).then(back).catch(setFailure).finally(() => { lock.current = false; });
-              }}>{copy.apply}</AppButton>
-            <AppButton variant="outline" disabled={pending} onPress={() => { setEditing(true); setFailure(undefined); }}>{draft.proposal.status === "NEEDS_STRUCTURED_INPUT" ? copy.formMode : copy.edit}</AppButton>
-          </> : trip.data ? <TripPlanningForm key={draft?.id ?? "new"} trip={trip.data.trip} initial={draft?.input} preferStructured={draft?.proposal.status === "NEEDS_STRUCTURED_INPUT"} pending={create.isPending} onSubmit={generate} /> : null}
+            <AppButton loading={apply.isPending} disabled={!draft.canApply || conflict || !!failure} onPress={() => void applyDraft()}>{copy.apply}</AppButton>
+            {apply.isPending ? <TripPlanningLoadingCard title={copy.applyingTitle} message={copy.applyingMessage} /> : null}
+            <AppButton variant="outline" disabled={pending} onPress={() => { setEditing(true); setFailure(undefined); }}>{copy.edit}</AppButton>
+          </> : trip.data ? <TripPlanningForm key={draft?.id ?? "new"} trip={trip.data.trip} initial={draft?.input} pending={create.isPending} onSubmit={generate} /> : null}
         </>}
       </ScrollView>
     </KeyboardAvoidingView>
   </ScreenSafeArea>;
+}
+
+function planningProblem(error: unknown, copy: ReturnType<typeof usePlanningCopy>["copy"]) {
+  if (!(error instanceof ApiError)) return error ? copy.generic : undefined;
+  switch (error.code) {
+    case "CANCELLED": return undefined;
+    case "TRIP_008":
+    case "TRIP_002": return copy.conflict;
+    case "DRAFT_001": return copy.notFound;
+    case "DRAFT_002": return copy.expired;
+    case "DRAFT_003": return undefined;
+    case "DRAFT_004": return copy.unsupported;
+    case "DRAFT_005": return copy.failed;
+    case "AI_003": return copy.limited;
+    case "AI_001":
+    case "AI_004":
+    case "AI_005": return copy.aiUnavailable;
+    case "NETWORK": return copy.network;
+    case "TIMEOUT": return copy.timeout;
+    case "SERVER": return copy.server;
+    default:
+      if (error.status === 404) return copy.notFound;
+      if (error.status !== undefined && error.status >= 500) return copy.server;
+      return copy.generic;
+  }
 }

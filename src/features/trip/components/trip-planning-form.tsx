@@ -17,25 +17,20 @@ import { TripOriginOption } from "./trip-origin-option";
 import { TripStartTimeField } from "./trip-start-time-field";
 import { tagLabels, usePlanningCopy } from "../i18n/planning-copy";
 import { planningTextContext } from "../utils/planning-text-context";
+import { TripPlanningLoadingCard } from "./trip-planning-feedback";
 
-const namesValid = (text: string) => {
-  const names = text.split(";").map(n => n.trim()).filter(Boolean);
-  return names.length <= 10 && names.every(n => n.length <= 160);
-};
 const formSchema = z.object({
   originName: z.string().max(160), origin: planningOrigin.nullable(),
   start: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/), end: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/),
   pace: z.enum(["RELAXED", "BALANCED", "ACTIVE"]), interests: z.array(planningTag).max(10), excluded: z.array(planningTag).max(10),
-  must: z.string().max(1600).refine(namesValid), avoid: z.string().max(1600).refine(namesValid),
-  textMode: z.boolean(), text: z.string().max(600), roundTrip: z.boolean(),
+  additionalText: z.string().max(600), roundTrip: z.boolean(),
 }).refine(v => !!v.origin, { path: ["origin"] })
   .refine(v => v.end > v.start, { path: ["end"] })
-  .refine(v => v.textMode || v.interests.length > 0 || v.must.trim().length > 0, { path: ["interests"] })
-  .refine(v => !v.textMode || v.text.trim().length > 0, { path: ["text"] });
+  .refine(v => v.interests.length > 0 || v.additionalText.trim().length > 0, { path: ["interests"] });
 type Values = z.infer<typeof formSchema>;
 
-export function TripPlanningForm({ trip, initial, pending, onSubmit, preferStructured = false }: {
-  trip: TripDetailDto; initial?: PlanningInput; pending: boolean; onSubmit: (input: PlanningInput) => Promise<void>; preferStructured?: boolean;
+export function TripPlanningForm({ trip, initial, pending, onSubmit }: {
+  trip: TripDetailDto; initial?: PlanningInput; pending: boolean; onSubmit: (input: PlanningInput) => Promise<void>;
 }) {
   const theme = useAppTheme();
   const { copy, locale } = usePlanningCopy();
@@ -44,7 +39,7 @@ export function TripPlanningForm({ trip, initial, pending, onSubmit, preferStruc
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const [locating, setLocating] = useState(false);
   const [locationError, setLocationError] = useState(false);
-  const [advanced, setAdvanced] = useState(Boolean(initial?.preferences?.excludedTags.length || initial?.preferences?.mustVisitNames.length || initial?.preferences?.excludedPlaceNames.length));
+  const [advanced, setAdvanced] = useState(Boolean(initial?.preferences?.excludedTags.length));
   const initialInterests = trip.preferences.flatMap(p => ({
     culture: ["CULTURE"], relaxation: ["RELAX"], shopping: ["SHOPPING"], beach: ["BEACH"],
   }[p as "culture" | "relaxation" | "shopping" | "beach"] ?? []));
@@ -55,21 +50,22 @@ export function TripPlanningForm({ trip, initial, pending, onSubmit, preferStruc
       start: initial?.preferences?.dailyStartTime ?? originalText.start ?? "08:00", end: initial?.preferences?.dailyEndTime ?? originalText.end ?? "17:00",
       pace: initial?.preferences?.travelPace ?? originalText.pace ?? "BALANCED",
       interests: initial?.preferences?.interests ?? initialInterests.filter((v): v is z.infer<typeof planningTag> => planningTag.safeParse(v).success),
-      excluded: initial?.preferences?.excludedTags ?? [], must: initial?.preferences?.mustVisitNames.join("; ") ?? "",
-      avoid: initial?.preferences?.excludedPlaceNames.join("; ") ?? "", textMode: Boolean(initial?.text) && !preferStructured,
-      text: originalText.text, roundTrip: initial?.roundTrip ?? true,
+      excluded: initial?.preferences?.excludedTags ?? [],
+      additionalText: initial?.additionalText ?? originalText.text, roundTrip: initial?.roundTrip ?? true,
     },
   });
-  const textMode = useWatch({ control, name: "textMode" });
+  const values = useWatch({ control });
+  const interests = values.interests ?? [];
+  const excluded = values.excluded ?? [];
+  const additionalText = values.additionalText ?? "";
   const selectedOrigin = useWatch({ control, name: "origin" });
   const searchTerm = originSearch.trim().length > 1 ? originSearch : suggestionsOpen ? (locale === "vi" ? "Đà Nẵng" : "Da Nang") : "";
   const { query: search, isDebouncing } = usePlaceDiscovery({ tripId: trip.id }, searchTerm, locale, searchTerm.length > 1);
   const matches = !isDebouncing ? search.data?.pages.flatMap(page => page.content.map(discoveryStop)).slice(0, 4) ?? [] : [];
-  const splitNames = (value: string) => [...new Set(value.split(";").map(n => n.trim()).filter(Boolean))];
-  const field = (name: "must" | "avoid" | "text", label: string, helper?: string) => (
+  const field = (name: "additionalText", label: string, helper?: string) => (
     <Controller key={name} control={control} name={name} render={({ field: input }) => (
       <AppInput label={label} value={input.value} onChangeText={input.onChange} onBlur={input.onBlur}
-        editable={!pending} helperText={helper} multiline={name === "text"} maxLength={name === "text" ? 600 : 1600}
+        editable={!pending} helperText={helper} multiline={name === "additionalText"} maxLength={name === "additionalText" ? 600 : 1600}
         error={errors[name] ? copy.invalid : undefined} />
     )} />
   );
@@ -122,11 +118,7 @@ export function TripPlanningForm({ trip, initial, pending, onSubmit, preferStruc
         <TripStartTimeField compact label={copy.end} value={input.value} onChange={input.onChange} onBlur={input.onBlur} error={errors.end ? copy.timeError : undefined} />
       } /></View>
     </View>
-    <Controller control={control} name="textMode" render={({ field: input }) => <Pressable accessibilityRole="button" disabled={pending}
-      onPress={() => input.onChange(!input.value)} style={({ pressed }) => ({ minHeight: theme.layout.touchTarget, alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: theme.spacing.xs, opacity: pressed ? theme.motion.pressOpacity : 1 })}>
-      <AppIcon name="sparkles" size={theme.layout.iconSmall} color={theme.colors.primary} /><AppText variant="label" tone="primary">{input.value ? copy.formMode : copy.textMode}</AppText>
-    </Pressable>} />
-    {textMode ? field("text", copy.text, copy.textHint) : <>
+    <>
       {(["interests", "excluded"] as const).filter(name => name === "interests" || advanced).map(name => <View key={name} style={{ gap: theme.spacing.sm }}>
         <AppText variant="label">{name === "interests" ? copy.interests : copy.excluded}</AppText>
         <Controller control={control} name={name} render={({ field: input }) => <View style={{ flexDirection: "row", flexWrap: "wrap", gap: theme.spacing.xs }}>
@@ -149,8 +141,8 @@ export function TripPlanningForm({ trip, initial, pending, onSubmit, preferStruc
         style={({ pressed }) => ({ minHeight: theme.layout.touchTarget, alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: theme.spacing.xs, opacity: pressed ? theme.motion.pressOpacity : 1 })}>
         <AppIcon name="tune" size={theme.layout.iconSmall} color={theme.colors.primary} /><AppText variant="label" tone="primary">{advanced ? copy.less : copy.advanced}</AppText>
       </Pressable>
-      {advanced ? <>{field("must", copy.must, copy.namesHint)}{field("avoid", copy.avoid, copy.namesHint)}</> : null}
-    </>}
+    </>
+    {field("additionalText", copy.additionalText, copy.additionalTextHint)}
     <AppText variant="label">{copy.pace}</AppText>
     <Controller control={control} name="pace" render={({ field: input }) => <View accessibilityRole="radiogroup" style={{ flexDirection: "row", padding: theme.spacing.xxs, borderRadius: theme.radius.md, backgroundColor: theme.colors.surfaceVariant }}>
       {(["RELAXED", "BALANCED", "ACTIVE"] as const).map(pace => <Pressable key={pace} disabled={pending} accessibilityRole="radio" accessibilityState={{ checked: input.value === pace }}
@@ -163,15 +155,22 @@ export function TripPlanningForm({ trip, initial, pending, onSubmit, preferStruc
     <Controller control={control} name="roundTrip" render={({ field: input }) => <View style={{ flexDirection: "row", alignItems: "center", gap: theme.spacing.sm }}>
       <AppText style={{ flex: 1 }}>{copy.return}</AppText><Switch accessibilityLabel={copy.return} disabled={pending} value={input.value} onValueChange={input.onChange} />
     </View>} />
-    {pending ? <AppText accessibilityLiveRegion="polite">{copy.generating}</AppText> : null}
+    <View accessibilityLabel={copy.review} style={{ gap: theme.spacing.xs, paddingVertical: theme.spacing.sm }}>
+      <AppText variant="label">{copy.review}</AppText>
+      <AppText variant="body" tone="muted">{trip.destination.name} · {trip.dayCount} ngày · {trip.startDate} · {values.originName ?? ""} · {values.start ?? "08:00"}–{values.end ?? "17:00"} · {values.pace === "RELAXED" ? copy.relaxed : values.pace === "ACTIVE" ? copy.active : copy.balanced}</AppText>
+      {values.roundTrip === false ? <AppText variant="body" tone="muted">{copy.reviewOneWay}</AppText> : null}
+      {interests.length ? <AppText variant="body" tone="muted">{copy.reviewInterests}: {interests.map(tag => tagLabels[tag][locale === "en" ? 1 : 0]).join(", ")}</AppText> : null}
+      {excluded.length ? <AppText variant="body" tone="muted">{copy.reviewExcluded}: {excluded.map(tag => tagLabels[tag][locale === "en" ? 1 : 0]).join(", ")}</AppText> : null}
+      {additionalText.trim() ? <AppText variant="body" tone="muted" numberOfLines={2}>{copy.reviewExtra}: {additionalText.trim()}</AppText> : null}
+    </View>
+    {pending ? <TripPlanningLoadingCard title={copy.generatingTitle} message={copy.generatingMessage} /> : null}
     <AppButton loading={pending} disabled={locating} onPress={() => { void handleSubmit(async values => {
       if (!values.origin || !trip.startDate) return;
       Keyboard.dismiss();
       const common = { origin: values.origin, startDate: trip.startDate, roundTrip: values.roundTrip, restMinutes: 45 };
-      await onSubmit(values.textMode ? { ...common, text: `Tôi đi ${trip.destination.name} ${trip.dayCount} ngày, mỗi ngày từ ${values.start} đến ${values.end}. Nhịp độ ${values.pace === "RELAXED" ? "thong thả" : values.pace === "ACTIVE" ? "năng động" : "vừa phải"}.\n\n${values.text}` }
-        : { ...common, preferences: { destination: trip.destination.name, numberOfDays: trip.dayCount,
+      await onSubmit({ ...common, ...(values.additionalText.trim() ? { additionalText: values.additionalText.trim() } : {}), preferences: { destination: trip.destination.name, numberOfDays: trip.dayCount,
           dailyStartTime: values.start, dailyEndTime: values.end, interests: values.interests, excludedTags: values.excluded,
-          travelPace: values.pace, mustVisitNames: splitNames(values.must), excludedPlaceNames: splitNames(values.avoid) } });
-    })(); }}>{copy.generate}</AppButton>
+          travelPace: values.pace, mustVisitNames: [], excludedPlaceNames: [] } });
+    })(); }}>{pending ? copy.generateLoading : copy.generate}</AppButton>
   </View>;
 }
