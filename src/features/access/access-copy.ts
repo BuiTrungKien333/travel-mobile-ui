@@ -1,5 +1,10 @@
 const vi = {
   explore: "Khám phá điểm đến", guest: "Bạn đang ở chế độ khám phá. Đăng nhập để tạo chuyến đi, lưu kỷ niệm và dùng AI.",
+  guestTitle: "Khám phá với tư cách khách", publicExplore: "Kho điểm đến công khai", publicExploreHint: "Duyệt các tỉnh thành và địa điểm đã được công khai.", openApp: "Vào ứng dụng",
+  destinationHint: "Khám phá địa điểm nổi bật", openDestination: "Mở điểm đến", openDestinationHint: "Xem danh sách địa điểm tại tỉnh thành này.", openPlace: "Xem chi tiết địa điểm", openPlaceHint: "Mở thông tin và giờ hoạt động.",
+  emptyHint: "Các địa điểm công khai sẽ xuất hiện tại đây khi được cập nhật.", page: (current: number, total: number) => `Trang ${current} / ${total}`,
+  placeInformation: "Thông tin địa điểm", address: "Địa chỉ", addressUnknown: "Chưa có địa chỉ xác nhận", environment: "Không gian", indoor: "Trong nhà", outdoor: "Ngoài trời", hybrid: "Trong nhà và ngoài trời", environmentUnknown: "Chưa phân loại",
+  openingHours: "Giờ hoạt động", admission: "Vé vào cửa", openNow: "Đang mở cửa", closedNow: "Đang đóng cửa", hoursUnknown: "Chưa rõ trạng thái", dataNotice: "Giờ hoạt động và thông tin có thể thay đổi. Vui lòng kiểm tra với địa điểm trước khi ghé thăm.", checkedAt: "Cập nhật",
   login: "Đăng nhập / Đăng ký", logout: "Đăng xuất", back: "Quay lại", retry: "Thử lại", next: "Trang sau", previous: "Trang trước",
   empty: "Chưa có dữ liệu công khai đã duyệt tại đây.", loading: "Đang tải…", failed: "Không tải được dữ liệu. Kiểm tra kết nối và thử lại.",
   admin: "Quản trị hệ thống", users: "Tài khoản", catalog: "Catalog", history: "Lịch sử quản trị", search: "Tìm tên hoặc email", find: "Tìm",
@@ -15,6 +20,11 @@ const vi = {
 };
 const en: typeof vi = {
   explore: "Explore destinations", guest: "You are exploring as a guest. Sign in to create trips, save memories and use AI.",
+  guestTitle: "Explore as a guest", publicExplore: "Public destination guide", publicExploreHint: "Browse published provinces and places.", openApp: "Open app",
+  destinationHint: "Explore featured places", openDestination: "Open destination", openDestinationHint: "View places in this province.", openPlace: "View place details", openPlaceHint: "Open place information and hours.",
+  emptyHint: "Published places will appear here as the catalog is updated.", page: (current: number, total: number) => `Page ${current} of ${total}`,
+  placeInformation: "Place information", address: "Address", addressUnknown: "No verified address available", environment: "Setting", indoor: "Indoor", outdoor: "Outdoor", hybrid: "Indoor and outdoor", environmentUnknown: "Not classified",
+  openingHours: "Opening hours", admission: "Admission", openNow: "Open now", closedNow: "Closed now", hoursUnknown: "Status unknown", dataNotice: "Opening hours and place details can change. Check with the venue before visiting.", checkedAt: "Updated",
   login: "Sign in / Register", logout: "Sign out", back: "Back", retry: "Retry", next: "Next page", previous: "Previous page",
   empty: "No approved public data here yet.", loading: "Loading…", failed: "Could not load data. Check your connection and try again.",
   admin: "System administration", users: "Accounts", catalog: "Catalog", history: "Administration history", search: "Search name or email", find: "Search",
