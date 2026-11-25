@@ -701,7 +701,12 @@ export function ConnectedTripDetailsScreen({
       style={{ flex: 1, backgroundColor: theme.colors.background }}
     >
       <View
-        style={{ flex: 1 }}
+        style={{
+          flex: 1,
+          width: "100%",
+          maxWidth: theme.layout.contentMaxWidth,
+          alignSelf: "center",
+        }}
         onLayout={(event) => setViewport(event.nativeEvent.layout.height)}
       >
         <GestureDetector gesture={pullRefresh}>

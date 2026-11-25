@@ -134,6 +134,9 @@ export function TripPlanningScreen({ tripId }: { tripId?: string }) {
         <ScrollView
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{
+            width: "100%",
+            maxWidth: theme.layout.contentMaxWidth,
+            alignSelf: "center",
             padding: theme.spacing.lg,
             gap: theme.spacing.md,
             paddingBottom: theme.spacing.xl,

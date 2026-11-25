@@ -43,7 +43,7 @@ export const layout = {
   tripTimelineDeleteWidth: 64,
   tripTimelineConnectorWidth: 1.5,
   tripDateTabWidth: 88,
-  contentMaxWidth: 560,
+  contentMaxWidth: 720,
   authContentMaxWidth: 480,
   authDescriptionMaxWidth: 340,
   authLogoWidth: 144,

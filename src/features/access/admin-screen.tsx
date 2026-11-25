@@ -225,139 +225,148 @@ export function AdminScreen() {
     <ScreenSafeArea
       style={{ flex: 1, backgroundColor: theme.colors.background }}
     >
-      {tab === "users" ? (
-        <FlatList
-          data={accounts.data?.content ?? []}
-          keyExtractor={(a) => a.id}
-          ListHeaderComponent={header}
-          ListFooterComponent={footer}
-          keyboardShouldPersistTaps="handled"
-          renderItem={({ item }) => (
-            <View style={spacing}>
-              <AppText variant="label">{item.fullName}</AppText>
-              <AppText>{item.email}</AppText>
-              <AppText>
-                {roleName(item.role)} ·{" "}
-                {item.locked ? copy.locked : copy.active}
-              </AppText>
-              {!item.verified ? (
-                <AppText tone="muted">{copy.unverified}</AppText>
-              ) : null}
-              {item.id === user?.id ? (
-                <AppText tone="muted">{copy.self}</AppText>
-              ) : (
-                <>
-                  <AppButton
-                    variant="outline"
-                    disabled={mutation.isPending}
-                    onPress={() =>
-                      select({
-                        kind: "account",
-                        account: item,
-                        role: item.role,
-                        locked: !item.locked,
-                      })
-                    }
-                  >
-                    {item.locked ? copy.unlock : copy.lock}
-                  </AppButton>
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      flexWrap: "wrap",
-                      gap: theme.spacing.sm,
-                    }}
-                  >
-                    {(["GUEST", "USER", "ADMIN"] as const)
-                      .filter((role) => role !== item.role)
-                      .map((role) => (
-                        <AppButton
-                          key={role}
-                          size="small"
-                          variant="outline"
-                          disabled={
-                            mutation.isPending ||
-                            (role === "ADMIN" && !item.verified)
-                          }
-                          onPress={() =>
-                            select({
-                              kind: "account",
-                              account: item,
-                              role,
-                              locked: item.locked,
-                            })
-                          }
-                        >
-                          {copy.role}: {roleName(role)}
-                        </AppButton>
-                      ))}
-                  </View>
-                </>
-              )}
-            </View>
-          )}
-        />
-      ) : tab === "catalog" ? (
-        <FlatList
-          data={catalog.data?.content ?? []}
-          keyExtractor={(a) => a.id}
-          ListHeaderComponent={header}
-          ListFooterComponent={footer}
-          renderItem={({ item }) => (
-            <View style={spacing}>
-              <AppText variant="label">{item.name}</AppText>
-              <AppText>
-                {item.approved ? copy.approved : copy.unpublished}
-              </AppText>
-              <AppText tone="muted">{item.sourceUrl}</AppText>
-              <AppText tone="muted">
-                {copy.scope}: {item.verificationScope}
-              </AppText>
-              <AppButton
-                variant="outline"
-                disabled={
-                  mutation.isPending ||
-                  (!item.approved &&
-                    item.verificationScope ===
-                      "DEV_DEMO_ONLY_NOT_FACT_VERIFIED")
-                }
-                onPress={() =>
-                  select({
-                    kind: "catalog",
-                    id: item.id,
-                    name: item.name,
-                    approved: !item.approved,
-                    version: item.version,
-                  })
-                }
-              >
-                {item.approved ? copy.withdraw : copy.approve}
-              </AppButton>
-            </View>
-          )}
-        />
-      ) : (
-        <FlatList
-          data={events.data?.content ?? []}
-          keyExtractor={(a) => a.id}
-          ListHeaderComponent={header}
-          ListFooterComponent={footer}
-          renderItem={({ item }) => (
-            <View style={spacing}>
-              <AppText>
-                {new Date(item.createdAt).toLocaleString(locale)}
-              </AppText>
-              <AppText>
-                {roleName(item.oldRole)} → {roleName(item.newRole)} ·{" "}
-                {item.isLocked ? copy.locked : copy.active}
-              </AppText>
-              <AppText tone="muted">
-                {item.actorEmail} → {item.targetEmail}
-              </AppText>
-            </View>
-          )}
-        />
-      )}
+      <View
+        style={{
+          flex: 1,
+          width: "100%",
+          maxWidth: theme.layout.contentMaxWidth,
+          alignSelf: "center",
+        }}
+      >
+        {tab === "users" ? (
+          <FlatList
+            data={accounts.data?.content ?? []}
+            keyExtractor={(a) => a.id}
+            ListHeaderComponent={header}
+            ListFooterComponent={footer}
+            keyboardShouldPersistTaps="handled"
+            renderItem={({ item }) => (
+              <View style={spacing}>
+                <AppText variant="label">{item.fullName}</AppText>
+                <AppText>{item.email}</AppText>
+                <AppText>
+                  {roleName(item.role)} ·{" "}
+                  {item.locked ? copy.locked : copy.active}
+                </AppText>
+                {!item.verified ? (
+                  <AppText tone="muted">{copy.unverified}</AppText>
+                ) : null}
+                {item.id === user?.id ? (
+                  <AppText tone="muted">{copy.self}</AppText>
+                ) : (
+                  <>
+                    <AppButton
+                      variant="outline"
+                      disabled={mutation.isPending}
+                      onPress={() =>
+                        select({
+                          kind: "account",
+                          account: item,
+                          role: item.role,
+                          locked: !item.locked,
+                        })
+                      }
+                    >
+                      {item.locked ? copy.unlock : copy.lock}
+                    </AppButton>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        flexWrap: "wrap",
+                        gap: theme.spacing.sm,
+                      }}
+                    >
+                      {(["GUEST", "USER", "ADMIN"] as const)
+                        .filter((role) => role !== item.role)
+                        .map((role) => (
+                          <AppButton
+                            key={role}
+                            size="small"
+                            variant="outline"
+                            disabled={
+                              mutation.isPending ||
+                              (role === "ADMIN" && !item.verified)
+                            }
+                            onPress={() =>
+                              select({
+                                kind: "account",
+                                account: item,
+                                role,
+                                locked: item.locked,
+                              })
+                            }
+                          >
+                            {copy.role}: {roleName(role)}
+                          </AppButton>
+                        ))}
+                    </View>
+                  </>
+                )}
+              </View>
+            )}
+          />
+        ) : tab === "catalog" ? (
+          <FlatList
+            data={catalog.data?.content ?? []}
+            keyExtractor={(a) => a.id}
+            ListHeaderComponent={header}
+            ListFooterComponent={footer}
+            renderItem={({ item }) => (
+              <View style={spacing}>
+                <AppText variant="label">{item.name}</AppText>
+                <AppText>
+                  {item.approved ? copy.approved : copy.unpublished}
+                </AppText>
+                <AppText tone="muted">{item.sourceUrl}</AppText>
+                <AppText tone="muted">
+                  {copy.scope}: {item.verificationScope}
+                </AppText>
+                <AppButton
+                  variant="outline"
+                  disabled={
+                    mutation.isPending ||
+                    (!item.approved &&
+                      item.verificationScope ===
+                        "DEV_DEMO_ONLY_NOT_FACT_VERIFIED")
+                  }
+                  onPress={() =>
+                    select({
+                      kind: "catalog",
+                      id: item.id,
+                      name: item.name,
+                      approved: !item.approved,
+                      version: item.version,
+                    })
+                  }
+                >
+                  {item.approved ? copy.withdraw : copy.approve}
+                </AppButton>
+              </View>
+            )}
+          />
+        ) : (
+          <FlatList
+            data={events.data?.content ?? []}
+            keyExtractor={(a) => a.id}
+            ListHeaderComponent={header}
+            ListFooterComponent={footer}
+            renderItem={({ item }) => (
+              <View style={spacing}>
+                <AppText>
+                  {new Date(item.createdAt).toLocaleString(locale)}
+                </AppText>
+                <AppText>
+                  {roleName(item.oldRole)} → {roleName(item.newRole)} ·{" "}
+                  {item.isLocked ? copy.locked : copy.active}
+                </AppText>
+                <AppText tone="muted">
+                  {item.actorEmail} → {item.targetEmail}
+                </AppText>
+              </View>
+            )}
+          />
+        )}
+      </View>
     </ScreenSafeArea>
   );
 }
