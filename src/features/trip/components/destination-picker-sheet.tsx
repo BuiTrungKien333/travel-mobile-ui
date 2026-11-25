@@ -50,6 +50,7 @@ const popularDestinations = [
   { name: "Hà Nội", city: "Hà Nội" },
   { name: "Quy Nhơn, Bình Định", city: "Quy Nhơn" },
 ];
+
 type DestinationItem = {
   name: string;
   city: string;
@@ -76,6 +77,7 @@ function DestinationPickerSession({
     customInput,
     !UI_PREVIEW_ENABLED,
   );
+
   const catalogRows = useMemo(
     () => catalog.data?.pages.flatMap((page) => page.content) ?? [],
     [catalog.data],
@@ -104,6 +106,7 @@ function DestinationPickerSession({
             name: item.name,
             city: item.name,
           }));
+
       return q ? [{ name: q, city: q, custom: true }, ...items] : items;
     }
     if (!q) return popularDestinations;
@@ -113,12 +116,15 @@ function DestinationPickerSession({
         d.name.toLowerCase().includes(lower) ||
         d.city.toLowerCase().includes(lower),
     );
+
     const hasExactMatch = popularDestinations.some(
       (d) => d.name.toLowerCase() === lower || d.city.toLowerCase() === lower,
     );
+
     if (!hasExactMatch) {
       return [{ name: q, city: q }, ...matched];
     }
+
     return matched;
   }, [customInput, catalogRows, isDebouncing]);
 
@@ -344,6 +350,7 @@ function DestinationPickerSession({
                       .includes(item.city.toLowerCase()) ||
                     currentDestination.toLowerCase() ===
                       item.name.toLowerCase();
+
                 return (
                   <Pressable
                     accessibilityRole="button"
@@ -416,10 +423,12 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
   },
+
   backdrop: {
     flex: 1,
     justifyContent: "flex-end",
   },
+
   sheet: {
     width: "100%",
     maxHeight: "85%",
@@ -436,6 +445,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginBottom: spacing.lg,
   },
+
   input: {
     flex: 1,
     minWidth: 0,
@@ -444,6 +454,7 @@ const styles = StyleSheet.create({
     minHeight: layout.compactTouchTarget,
     paddingVertical: spacing.sm,
   },
+
   clearButton: {
     width: 28,
     height: 28,
@@ -452,12 +463,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginLeft: spacing.xs,
   },
+
   sectionLabel: {
     marginBottom: spacing.sm,
   },
+
   list: {
     maxHeight: layout.pickerListMaxHeight,
   },
+
   item: {
     flexDirection: "row",
     alignItems: "center",
@@ -465,6 +479,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
+
   itemLeft: {
     flexDirection: "row",
     alignItems: "center",
@@ -472,6 +487,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
+
   itemText: {
     fontSize: typography.fontSize.md,
     lineHeight: typography.lineHeight.md,

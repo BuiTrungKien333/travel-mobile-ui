@@ -26,4 +26,5 @@ export const localMemorySchema = z.object({
     mimeType: z.string().max(100).optional(),
   }),
 });
+
 export type LocalMemory = z.infer<typeof localMemorySchema>;

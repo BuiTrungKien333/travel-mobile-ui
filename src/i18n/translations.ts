@@ -277,7 +277,8 @@ export const translations = {
       "Too many requests. Please wait a moment and try again.",
     "auth.error.fieldInvalid":
       "Some information is invalid. Please check your entries.",
-    "auth.error.forbidden": "You do not have permission to perform this action.",
+    "auth.error.forbidden":
+      "You do not have permission to perform this action.",
     "auth.error.generic": "Cannot complete this action. Please try again.",
     "validation.emailMax": "Email must not exceed 255 characters.",
     "validation.fullNameMax": "Full name must not exceed 100 characters.",

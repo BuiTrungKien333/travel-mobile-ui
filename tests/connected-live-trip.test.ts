@@ -143,13 +143,30 @@ function fixture(
       },
     },
     "react/jsx-runtime": {
-      jsx: (type: unknown, props: Record<string, unknown>) => typeof type === "function" && ["ConnectedTripSchedulePanels"].includes(type.name) ? type(props) : ({ type, props }),
-      jsxs: (type: unknown, props: Record<string, unknown>) => typeof type === "function" && ["ConnectedTripSchedulePanels"].includes(type.name) ? type(props) : ({ type, props }),
+      jsx: (type: unknown, props: Record<string, unknown>) =>
+        typeof type === "function" &&
+        ["ConnectedTripSchedulePanels"].includes(type.name)
+          ? type(props)
+          : { type, props },
+      jsxs: (type: unknown, props: Record<string, unknown>) =>
+        typeof type === "function" &&
+        ["ConnectedTripSchedulePanels"].includes(type.name)
+          ? type(props)
+          : { type, props },
     },
-    "react-native": { View: "View", Modal: "Modal", Linking: {
-      openURL: async (url: string) => { directionUrls.push(url); },
-    } },
-    "react-native-gesture-handler": { Gesture: { Native: () => ({}) }, GestureDetector: "GestureDetector" },
+    "react-native": {
+      View: "View",
+      Modal: "Modal",
+      Linking: {
+        openURL: async (url: string) => {
+          directionUrls.push(url);
+        },
+      },
+    },
+    "react-native-gesture-handler": {
+      Gesture: { Native: () => ({}) },
+      GestureDetector: "GestureDetector",
+    },
     "react-native-reanimated": {
       __esModule: true,
       default: { FlatList: "FlatList" },
@@ -459,7 +476,11 @@ test("live detail reuses the map/date/timeline layout, highlights the next stop 
   assert.equal(f.shows, 0);
   const route = new URL(f.directionUrls[0]);
   assert.equal(route.searchParams.get("destination"), "11.94,108.44");
-  assert.equal(route.searchParams.get("origin"), null, "Maps uses current GPS rather than a saved trip origin");
+  assert.equal(
+    route.searchParams.get("origin"),
+    null,
+    "Maps uses current GPS rather than a saved trip origin",
+  );
   assert.equal(route.searchParams.get("dir_action"), "navigate");
   assert.equal(nodes(rendered, "NextStopCard").length, 0);
 });

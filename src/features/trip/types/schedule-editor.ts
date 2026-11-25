@@ -11,6 +11,7 @@ export type ScheduleEdit =
   | { kind: "assign"; stops: TripStop[] }
   | { kind: "reorder"; date: string; stops: TripStop[] }
   | { kind: "optimize"; date: string; stops: TripStop[]; route?: DayRoute };
+
 export type ScheduleEditor = ScheduleEdit & {
   base: ItineraryResponse;
   tripVersion: number;

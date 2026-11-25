@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { tripModuleLoader } from "./helpers/load-trip-module.ts";
-import type { Memory, Trip, TripStop } from "../src/features/home/types/home-types.ts";
+import type {
+  Memory,
+  Trip,
+  TripStop,
+} from "../src/features/home/types/home-types.ts";
 import type { ServerMemory } from "../src/features/memories/api/memory-api.ts";
 
 test("memory calendar round-trips Vietnam midnight independently of device time zone", () => {
@@ -25,27 +29,64 @@ test("merging photos preserves first trip/place matches, stable media order and 
     typeof import("../src/features/memories/utils/server-memories.ts")
   >("src/features/memories/utils/server-memories.ts");
   const first: TripStop = {
-    id: "membership", placeId: "place", time: "", name: { vi: "Đầu tiên", en: "First" }, kind: { vi: "", en: "" },
+    id: "membership",
+    placeId: "place",
+    time: "",
+    name: { vi: "Đầu tiên", en: "First" },
+    kind: { vi: "", en: "" },
   };
-  const trip: Trip = { id: "trip", destination: "Đà Nẵng", status: "planned", days: [
-    { date: "2026-10-22", stops: [first] },
-    { date: "2026-10-23", stops: [{ ...first, name: { vi: "Sau", en: "Later" } }] },
-  ] };
+  const trip: Trip = {
+    id: "trip",
+    destination: "Đà Nẵng",
+    status: "planned",
+    days: [
+      { date: "2026-10-22", stops: [first] },
+      {
+        date: "2026-10-23",
+        stops: [{ ...first, name: { vi: "Sau", en: "Later" } }],
+      },
+    ],
+  };
   const media = (id: string, displayOrder: number) => ({
-    id, displayOrder, url: `https://example.com/${id}.jpg`, mimeType: null, width: null, height: null,
+    id,
+    displayOrder,
+    url: `https://example.com/${id}.jpg`,
+    mimeType: null,
+    width: null,
+    height: null,
   });
   const remote: ServerMemory = {
-    id: "memory", userId: "owner", version: 2, tripId: "trip", placeId: "place", note: "Saved",
-    experiencedAt: "2026-10-21T17:05:00Z", coverImageUrl: null, mediaCount: 3,
+    id: "memory",
+    userId: "owner",
+    version: 2,
+    tripId: "trip",
+    placeId: "place",
+    note: "Saved",
+    experiencedAt: "2026-10-21T17:05:00Z",
+    coverImageUrl: null,
+    mediaCount: 3,
     media: [media("last", 2), media("first", 0), media("tied", 0)],
   };
-  const inputs = { remote: [remote, { ...remote, id: "unknown", tripId: "unknown", media: [media("other", 0)] }],
-    trips: [trip, { ...trip, destination: "Ignored duplicate", days: [] }] };
+  const inputs = {
+    remote: [
+      remote,
+      {
+        ...remote,
+        id: "unknown",
+        tripId: "unknown",
+        media: [media("other", 0)],
+      },
+    ],
+    trips: [trip, { ...trip, destination: "Ignored duplicate", days: [] }],
+  };
   const snapshot = JSON.stringify(inputs);
 
   const photos = mergeMemories(inputs.remote, [], inputs.trips, "owner");
 
-  assert.deepEqual(Array.from(photos, (photo) => photo.id), ["first", "tied", "last", "other"]);
+  assert.deepEqual(
+    Array.from(photos, (photo) => photo.id),
+    ["first", "tied", "last", "other"],
+  );
   assert.equal(photos[0].destination, "Đà Nẵng");
   assert.equal(photos[0].place, first.name);
   assert.equal(photos[0].date, "2026-10-22");
@@ -59,17 +100,69 @@ test("merging drafts distinguishes an empty server memory from an uploaded photo
   const { mergeMemories } = tripModuleLoader()<
     typeof import("../src/features/memories/utils/server-memories.ts")
   >("src/features/memories/utils/server-memories.ts");
-  const draft = (id: string, serverId?: string, userId = "owner", uploaded = false): Memory => ({
-    id, photo: "file:///photo.jpg", text: "", destination: "",
-    local: { capturedAt: "2026-10-21T17:05:00Z", deviceSaved: false, userId, serverId, uploaded },
+  const draft = (
+    id: string,
+    serverId?: string,
+    userId = "owner",
+    uploaded = false,
+  ): Memory => ({
+    id,
+    photo: "file:///photo.jpg",
+    text: "",
+    destination: "",
+    local: {
+      capturedAt: "2026-10-21T17:05:00Z",
+      deviceSaved: false,
+      userId,
+      serverId,
+      uploaded,
+    },
   });
-  const remote: ServerMemory = { id: "empty", userId: "owner", version: 0, tripId: null, placeId: null,
-    note: null, experiencedAt: "2026-10-21T17:05:00Z", coverImageUrl: null, mediaCount: 0, media: [] };
-  const photos = mergeMemories([remote, { ...remote, id: "saved", mediaCount: 1, media: [
-    { id: "remote-photo", url: "https://example.com/a.jpg", displayOrder: 0, mimeType: null, width: null, height: null },
-  ] }], [draft("new"), draft("retry", "empty"), draft("duplicate", "saved"),
-    draft("other-account", undefined, "other"), draft("deleted-backup", "missing", "owner", true)], [], "owner");
-  assert.deepEqual(Array.from(photos, (photo) => photo.id), ["new", "retry", "remote-photo"]);
+  const remote: ServerMemory = {
+    id: "empty",
+    userId: "owner",
+    version: 0,
+    tripId: null,
+    placeId: null,
+    note: null,
+    experiencedAt: "2026-10-21T17:05:00Z",
+    coverImageUrl: null,
+    mediaCount: 0,
+    media: [],
+  };
+  const photos = mergeMemories(
+    [
+      remote,
+      {
+        ...remote,
+        id: "saved",
+        mediaCount: 1,
+        media: [
+          {
+            id: "remote-photo",
+            url: "https://example.com/a.jpg",
+            displayOrder: 0,
+            mimeType: null,
+            width: null,
+            height: null,
+          },
+        ],
+      },
+    ],
+    [
+      draft("new"),
+      draft("retry", "empty"),
+      draft("duplicate", "saved"),
+      draft("other-account", undefined, "other"),
+      draft("deleted-backup", "missing", "owner", true),
+    ],
+    [],
+    "owner",
+  );
+  assert.deepEqual(
+    Array.from(photos, (photo) => photo.id),
+    ["new", "retry", "remote-photo"],
+  );
 });
 
 test("server photos use the trip calendar and local drafts cannot leak between accounts", () => {

@@ -15,6 +15,7 @@ export function useTripTimelineScroll<T>(selectionKey: string, viewOffset = 0) {
     },
     [selectionKey],
   );
+
   function jump(index: number) {
     if (timer.current) clearTimeout(timer.current);
     pending.current = { index, retries: 0 };
@@ -25,6 +26,7 @@ export function useTripTimelineScroll<T>(selectionKey: string, viewOffset = 0) {
       viewOffset,
     });
   }
+
   function onScrollToIndexFailed(info: {
     index: number;
     averageItemLength: number;
@@ -40,6 +42,7 @@ export function useTripTimelineScroll<T>(selectionKey: string, viewOffset = 0) {
       offset: info.averageItemLength * info.index,
       animated: false,
     });
+
     timer.current = setTimeout(() => {
       if (pending.current)
         list.current?.scrollToIndex({
@@ -50,5 +53,6 @@ export function useTripTimelineScroll<T>(selectionKey: string, viewOffset = 0) {
         });
     }, 120);
   }
+
   return { list, jump, onScrollToIndexFailed };
 }

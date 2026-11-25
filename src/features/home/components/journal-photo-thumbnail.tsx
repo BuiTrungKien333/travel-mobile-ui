@@ -44,6 +44,7 @@ export function JournalPhotoThumbnail({
     width: number;
     height: number;
   } | null>(null);
+
   const readSelection = useCallback((): PhotoSelection | null => {
     const rect = frame.current?.getBoundingClientRect();
     if (
@@ -54,6 +55,7 @@ export function JournalPhotoThumbnail({
       rect.height <= 0
     )
       return null;
+
     return {
       id: memory.id,
       uri: photoInfo.uri,
@@ -61,11 +63,13 @@ export function JournalPhotoThumbnail({
       origin: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
     };
   }, [memory.id, photoInfo, imageFailed]);
+
   useEffect(
     () => registerPhoto(memory.id, readSelection),
     [registerPhoto, memory.id, readSelection],
   );
   const unavailable = !memory.photo || imageFailed;
+
   return (
     <Pressable
       accessibilityRole="button"

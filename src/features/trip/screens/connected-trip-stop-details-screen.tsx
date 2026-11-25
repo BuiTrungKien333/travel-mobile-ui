@@ -89,6 +89,7 @@ export function ConnectedTripStopDetailsScreen({
     () => (read ? toTrip(read.trip, places.data, itinerary.data) : undefined),
     [read, places.data, itinerary.data],
   );
+
   const stop = (
     day
       ? trip?.days.find((entry) => entry.date === day)?.stops
@@ -97,6 +98,7 @@ export function ConnectedTripStopDetailsScreen({
   const detail = usePlaceDetail(stop?.placeId, locale);
   const place = useMemo(() => {
     if (!stop) return undefined;
+
     return detail.data
       ? {
           ...discoveryStop(detail.data),
@@ -131,6 +133,7 @@ export function ConnectedTripStopDetailsScreen({
     !!stop?.tripPlaceId &&
     (read.trip.mode === "PLANNING" ||
       (read.trip.mode === "LIVE" && day >= read.context.evaluatedDate));
+
   const canVisit =
     ready &&
     !loadError &&
@@ -138,9 +141,11 @@ export function ConnectedTripStopDetailsScreen({
     !!day &&
     read.trip.mode === "LIVE" &&
     day <= read.context.evaluatedDate;
+
   const conflict =
     save.error instanceof ApiError &&
     ["TRIP_007", "TRIP_008"].includes(save.error.code);
+
   const problem =
     save.error instanceof ApiError
       ? ({
@@ -152,6 +157,7 @@ export function ConnectedTripStopDetailsScreen({
       : save.error
         ? itineraryCopy.error
         : undefined;
+
   const back = () => {
     if (saving.current) return;
     if (router.canGoBack()) router.back();
@@ -165,17 +171,20 @@ export function ConnectedTripStopDetailsScreen({
       });
     else router.replace("/tabs/trips");
   };
+
   const reload = async () => {
     const refreshed = await Promise.all([
       query.refetch(),
       places.refetch(),
       itinerary.refetch(),
     ]);
+
     if (refreshed.every((result) => !result.isError)) {
       save.reset();
       setAction(undefined);
     }
   };
+
   const openAction = (kind: VisitAction["kind"]) => {
     if (!editable || !read || !itinerary.data || !stop) return;
     save.reset();
@@ -186,6 +195,7 @@ export function ConnectedTripStopDetailsScreen({
       stop,
     });
   };
+
   const persist = async (stops: SaveItineraryDayRequest["stops"]) => {
     if (!action || !day || saving.current || conflict) return;
     saving.current = true;
@@ -214,6 +224,7 @@ export function ConnectedTripStopDetailsScreen({
       saving.current = false;
     }
   };
+
   const toggleVisited = async () => {
     if (!canVisit || !stop?.placeId || visiting.current) return;
     visiting.current = true;
@@ -514,6 +525,7 @@ export function ConnectedTripStopDetailsScreen({
               void reload();
               return;
             }
+
             void persist(
               toDayStops(action.base, day).filter(
                 (entry) => entry.placeId !== action.stop.placeId,

@@ -77,6 +77,7 @@ const vi = {
   cancel: "Hủy",
   noteTooLong: "Lời nhắn tối đa 2000 ký tự.",
 };
+
 const en: typeof vi = {
   unassignedPhotos: "No trip selected",
   photoMode: "Photos",
@@ -154,6 +155,7 @@ const en: typeof vi = {
   cancel: "Cancel",
   noteTooLong: "Keep your note within 2000 characters.",
 };
+
 export function useMemoriesCopy() {
   const { locale } = useI18n();
   return { locale, copy: locale === "vi" ? vi : en };

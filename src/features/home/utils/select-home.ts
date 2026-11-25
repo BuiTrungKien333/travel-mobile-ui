@@ -1,12 +1,14 @@
 import type { HomeSelection, Trip } from "../types/home-types.ts";
 
 const DAY_MS = 86_400_000;
+
 export function isPastTrip(trip: Trip, today: string): boolean {
   return (
     trip.status === "completed" ||
     (trip.status === "planned" && Boolean(trip.endDate && trip.endDate < today))
   );
 }
+
 export function dayDistance(from: string, to: string): number {
   return Math.round(
     (Date.parse(`${to}T12:00:00Z`) - Date.parse(`${from}T12:00:00Z`)) / DAY_MS,
@@ -21,6 +23,7 @@ export function selectHome(
   const active = trips.filter(
     (trip) => trip.status !== "cancelled" && trip.status !== "completed",
   );
+
   const ongoing = active
     .filter(
       (trip) =>
@@ -35,12 +38,14 @@ export function selectHome(
         (b.startDate ?? "").localeCompare(a.startDate ?? "") ||
         a.id.localeCompare(b.id),
     )[0];
+
   if (ongoing)
     return {
       kind: "ongoing",
       trip: ongoing,
       dayIndex: dayDistance(ongoing.startDate ?? today, today),
     };
+
   const upcoming = active
     .filter((trip) => trip.startDate && trip.startDate >= today)
     .sort(
@@ -50,6 +55,7 @@ export function selectHome(
     )[0];
   if (upcoming) return { kind: "upcoming", trip: upcoming };
   const hasTravelled = trips.some((trip) => isPastTrip(trip, today));
+
   return { kind: hasTravelled ? "returning" : "new" };
 }
 
@@ -67,5 +73,6 @@ export function formatTripDates(trip: Trip, locale: "vi" | "en"): string {
     month: "short",
     timeZone: "UTC",
   });
+
   return `${format.format(new Date(`${trip.startDate}T12:00:00Z`))} – ${format.format(new Date(`${trip.endDate}T12:00:00Z`))}`;
 }

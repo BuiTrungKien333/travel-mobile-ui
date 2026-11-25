@@ -71,6 +71,7 @@ export function TripForecastDetails({
           },
         ],
       };
+
   return (
     <TravelWeatherDetails
       weather={forecast}

@@ -19,10 +19,12 @@ export function useJournalPhotoGallery() {
     },
     [],
   );
+
   const getSelection = useCallback(
     (id: string) => readers.current.get(id)?.() ?? null,
     [],
   );
+
   const openPhoto = useCallback(
     (selection: PhotoSelection, memories: Memory[]) => {
       setActivePhotoId(selection.id);
@@ -30,10 +32,12 @@ export function useJournalPhotoGallery() {
     },
     [],
   );
+
   const closePhoto = useCallback(() => {
     setOpened(null);
     setActivePhotoId(null);
   }, []);
+
   return {
     opened,
     activePhotoId,

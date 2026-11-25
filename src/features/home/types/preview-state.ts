@@ -15,11 +15,13 @@ export type PreviewPanel =
         "scenarios" | "create" | "sample" | "capture-start" | "notifications";
     }
   | { kind: "plan"; tripId: string; dayIndex?: number };
+
 export type JourneyPanel =
   | { kind: "camera"; tripId: string; date: string; stopId?: string }
   | { kind: "journal"; tripId: string; date?: string }
   | { kind: "current-weather"; tripId: string }
   | { kind: "trip-details"; tripId: string };
+
 export type PreviewState = {
   scenario: HomeScenario;
   trips: Trip[];

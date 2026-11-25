@@ -173,30 +173,37 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderCurve: "continuous",
   },
+
   contentRow: {
     flexDirection: "row",
     alignItems: "stretch",
   },
+
   infoColumn: {
     flex: 1,
     minWidth: 0,
     justifyContent: "space-between",
     gap: spacing.xs,
   },
+
   badgeRow: {
     marginBottom: spacing.xxs,
   },
+
   title: {
     letterSpacing: -0.2,
   },
+
   metaRow: {
     flexDirection: "row",
     alignItems: "center",
   },
+
   metaText: {
     flex: 1,
     minWidth: 0,
   },
+
   imageWrapper: {
     width: layout.tripCardImageWidth,
     height: layout.tripCardImageHeight,

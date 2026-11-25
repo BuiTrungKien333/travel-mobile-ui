@@ -23,5 +23,6 @@ export function CaptureScreenRedirect({
       },
     });
   }, [panel.tripId, panel.date, panel.stopId, onClose]);
+
   return null;
 }

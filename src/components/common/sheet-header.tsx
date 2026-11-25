@@ -17,6 +17,7 @@ export function SheetHeader({
   gesture: ReturnType<typeof useSheetMotion>["dragGesture"];
 }) {
   const theme = useAppTheme();
+
   return (
     <GestureDetector gesture={gesture}>
       <View collapsable={false}>

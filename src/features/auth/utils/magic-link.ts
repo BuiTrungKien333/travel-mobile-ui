@@ -18,6 +18,7 @@ export function readMagicLinkToken(
     const entries = [...fragment.entries()];
     if (entries.length !== 1 || entries[0][0] !== "token") return null;
     const token = entries[0][1];
+
     return /^[A-Za-z0-9_-]{43}$/.test(token) ? token : null;
   } catch {
     return null;

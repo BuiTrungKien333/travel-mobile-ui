@@ -60,6 +60,7 @@ export function ConnectedHomeScreen() {
     : actions.visit.isError
       ? tripApiErrorMessage(actions.visit.error, errors)
       : undefined;
+
   const refresh = () => {
     if (!actions.visit.isPending) actions.visit.reset();
     if (
@@ -70,6 +71,7 @@ export function ConnectedHomeScreen() {
     }
     void query.refetch();
   };
+
   const notice = error ? (
     <View style={{ gap: theme.spacing.sm }}>
       <AppText accessibilityRole="alert">{error}</AppText>
@@ -78,6 +80,7 @@ export function ConnectedHomeScreen() {
       </AppButton>
     </View>
   ) : null;
+
   if (!data)
     return (
       <HomePage showHeader>
@@ -88,6 +91,7 @@ export function ConnectedHomeScreen() {
         )}
       </HomePage>
     );
+
   if (data.selectedTrip === null)
     return (
       <NewUserHomeScreen
@@ -107,6 +111,7 @@ export function ConnectedHomeScreen() {
       pathname: "/memories/[tripId]",
       params: { tripId: trip.id },
     });
+
   const camera = (stop?: TripStop) =>
     router.navigate({
       pathname: "/trip/camera",
@@ -116,10 +121,12 @@ export function ConnectedHomeScreen() {
         stopId: stop?.tripPlaceId ?? stop?.id ?? "",
       },
     });
+
   const remove = async (memory: Memory) => {
     if (memory.local) await memoryActions.remove.mutateAsync(memory);
     else await actions.removePhoto.mutateAsync(memory.id);
   };
+
   const weatherSheet =
     weatherTripId === trip.id ? (
       <TripWeatherModal
@@ -129,6 +136,7 @@ export function ConnectedHomeScreen() {
         onClose={() => setWeatherTripId(undefined)}
       />
     ) : null;
+
   if (data.state === "LIVE")
     return (
       <>
@@ -165,6 +173,7 @@ export function ConnectedHomeScreen() {
                   tripId: trip.id,
                   placeId: stop.placeId,
                 });
+
                 return true;
               } catch {
                 return false;
@@ -177,6 +186,7 @@ export function ConnectedHomeScreen() {
     );
   const preparing = data.state === "UPCOMING" || data.state === "PLANNING";
   const completion = data.firstEmptyDay;
+
   return (
     <>
       <HomePage showHeader onRefresh={refresh} refreshing={query.isRefetching}>

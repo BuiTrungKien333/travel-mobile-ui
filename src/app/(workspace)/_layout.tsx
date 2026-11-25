@@ -11,6 +11,7 @@ export { RouteErrorScreen as ErrorBoundary } from "@/components/common/route-err
 export default function WorkspaceLayout() {
   const theme = useAppTheme();
   const user = useAuthStore((state) => state.user);
+
   return (
     <TripPreviewProvider>
       <Stack
@@ -20,7 +21,9 @@ export default function WorkspaceLayout() {
         }}
       >
         <Stack.Screen name="tabs" />
-        <Stack.Protected guard={canAdminister(user)}><Stack.Screen name="admin" /></Stack.Protected>
+        <Stack.Protected guard={canAdminister(user)}>
+          <Stack.Screen name="admin" />
+        </Stack.Protected>
         <Stack.Screen name="trip/[tripId]" />
         <Stack.Screen name="trip/add-places" />
         <Stack.Screen name="trip/planning" />

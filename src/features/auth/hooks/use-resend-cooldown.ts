@@ -11,8 +11,10 @@ export function useResendCooldown(initialSeconds: number) {
       setNow(current);
       if (current >= until) clearInterval(timer);
     }, 1000);
+
     return () => clearInterval(timer);
   }, [until]);
+
   return {
     remaining,
     start: (seconds: number) => {

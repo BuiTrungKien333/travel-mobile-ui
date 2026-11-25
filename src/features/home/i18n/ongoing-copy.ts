@@ -78,6 +78,7 @@ const vi = {
   photoUnavailable: "Chưa hiển thị được ảnh",
   noTrip: "Chuyến đi không còn trong phiên xem thử.",
 };
+
 const en: typeof vi = {
   liveBadge: "IN PROGRESS",
   admission: "Admission",
@@ -157,6 +158,7 @@ const en: typeof vi = {
   photoUnavailable: "Photo couldn't be displayed",
   noTrip: "This trip is no longer in the preview session.",
 };
+
 export function useOngoingCopy() {
   const { locale } = useI18n();
   return { copy: locale === "vi" ? vi : en, locale };

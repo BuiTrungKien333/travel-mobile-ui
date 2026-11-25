@@ -56,6 +56,7 @@ export function AppButton({
         `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100" preserveAspectRatio="none"><defs><linearGradient id="action" x1="0%" y1="0%" x2="100%" y2="0%"><stop stop-color="${theme.colors.gradientActionStart}"/><stop offset="1" stop-color="${theme.colors.gradientActionEnd}"/></linearGradient></defs><rect width="100" height="100" fill="url(#action)"/></svg>`,
       )
     : undefined;
+
   const backgroundColor = isGradient
     ? theme.colors.gradientActionStart
     : isRaised
@@ -67,6 +68,7 @@ export function AppButton({
           : isPrimary
             ? theme.colors.primary
             : theme.colors.surface;
+
   const foregroundColor = isGradient
     ? theme.colors.onGradientAction
     : isRaised
@@ -209,12 +211,14 @@ const styles = StyleSheet.create({
   clipped: { overflow: "hidden" },
   fullWidth: { width: "100%" },
   raisedTrailing: { position: "absolute", right: 0 },
+
   button: {
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
     borderCurve: "continuous",
   },
+
   content: {
     maxWidth: "100%",
     flexDirection: "row",

@@ -26,6 +26,7 @@ export function CreateTripStopsCard({
 }: Props) {
   const theme = useAppTheme();
   const { copy, locale } = useTripCopy();
+
   return (
     <View
       style={[

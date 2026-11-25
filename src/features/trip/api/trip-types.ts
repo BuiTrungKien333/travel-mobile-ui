@@ -25,6 +25,7 @@ export const tripPlaceResponseSchema = z.object({
   createdAt: instant,
   updatedAt: instant,
 });
+
 export type TripPlaceResponse = z.infer<typeof tripPlaceResponseSchema>;
 
 export const addTripPlaceRequestSchema = z
@@ -48,6 +49,7 @@ export const addTripPlaceRequestSchema = z
         value.latitude !== undefined &&
         value.longitude !== undefined),
   );
+
 export type AddTripPlaceRequest = z.infer<typeof addTripPlaceRequestSchema>;
 
 export const updateTripPlaceRequestSchema = z.object({
@@ -57,6 +59,7 @@ export const updateTripPlaceRequestSchema = z.object({
   plannedOrder: z.number().int().min(0).max(1000000).optional(),
   visited: z.boolean().optional(),
 });
+
 export type UpdateTripPlaceRequest = z.infer<
   typeof updateTripPlaceRequestSchema
 >;
@@ -65,6 +68,7 @@ export const tripPlacesEnvelopeSchema = z.object({
   success: z.literal(true),
   data: z.array(tripPlaceResponseSchema),
 });
+
 export const tripPlaceEnvelopeSchema = z.object({
   success: z.literal(true),
   data: tripPlaceResponseSchema,

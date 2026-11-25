@@ -71,6 +71,7 @@ function PreviewTripStopDetailsScreen({
       ? trip?.days.find((entry) => entry.date === day)?.stops
       : trip?.unscheduledStops
   )?.find((entry) => entry.id === stopId);
+
   if (!trip || !stop)
     return (
       <ScreenSafeArea
@@ -82,6 +83,7 @@ function PreviewTripStopDetailsScreen({
         </View>
       </ScreenSafeArea>
     );
+
   return (
     <StopDetailsContent
       key={`${trip.id}:${day ?? "pool"}:${stop.id}`}
@@ -133,8 +135,10 @@ function StopDetailsContent({
       else if (mutation.kind === "stop" && mutation.targetDate !== date)
         router.setParams({ day: mutation.targetDate ?? undefined });
     }
+
     return success;
   }
+
   return (
     <GestureHandlerRootView style={styles.fill}>
       <ScreenSafeArea

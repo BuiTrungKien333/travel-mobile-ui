@@ -34,6 +34,7 @@ import { useLocalMemories, useMemoryActions } from "../hooks/use-memories";
 import type { LocalMemory } from "../schemas/local-memory-schema";
 
 type Selection = { tripId: string; day: string; stopId: string };
+
 type Action = {
   id: string;
   kind: "assign" | "upload" | "export";
@@ -131,10 +132,12 @@ export function SavedLaterScreen() {
       setNotice({ text: copy.assignmentError, error: true });
       return;
     }
+
     const timestamp = travelDateTime(
       selection.day,
       memory.time ?? "00:00",
     ).getTime();
+
     if (!Number.isFinite(timestamp) || timestamp > Date.now()) {
       Alert.alert(cameraCopy.futureDate);
       return;

@@ -38,7 +38,11 @@ export function tripModuleLoader(
           if (id in mocks) return mocks[id];
           if (id.startsWith(".")) {
             const target = resolve(dirname(filename), id).replaceAll("\\", "/");
-            const entry = Object.keys(mocks).find((key) => key.startsWith(".") && target.endsWith("/" + key.replace(/^(\.\.?\/)+/, "")));
+            const entry = Object.keys(mocks).find(
+              (key) =>
+                key.startsWith(".") &&
+                target.endsWith("/" + key.replace(/^(\.\.?\/)+/, "")),
+            );
             if (entry) return mocks[entry];
           }
           if (id.startsWith("@/assets/")) return id;

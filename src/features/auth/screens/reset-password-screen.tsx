@@ -41,6 +41,7 @@ function ResetPasswordForm({ token }: { token: string | null }) {
     resolver: zodResolver(resetPasswordSchema),
     mode: "onTouched",
   });
+
   const submit = handleSubmit(async ({ password }) => {
     if (!token || mutation.isPending) return;
     Keyboard.dismiss();
@@ -51,6 +52,7 @@ function ResetPasswordForm({ token }: { token: string | null }) {
       /* Render translated mutation error. */
     }
   });
+
   return (
     <AuthScaffold
       title={t("auth.reset.title")}

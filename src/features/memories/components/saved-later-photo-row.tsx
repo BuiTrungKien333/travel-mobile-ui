@@ -44,6 +44,7 @@ export function SavedLaterPhotoRow({
         timeZone: "UTC",
       }).format(new Date(`${memory.date}T12:00:00Z`))
     : copy.noDate;
+
   return (
     <View
       style={{

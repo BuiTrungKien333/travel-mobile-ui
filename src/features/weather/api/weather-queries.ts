@@ -3,8 +3,10 @@ import { useProfile } from "@/features/auth/hooks/use-auth";
 import { weatherApi } from "./weather-api";
 
 import { weatherQueryKeys } from "./weather-query-keys";
+
 export function useTripWeather(tripId: string | undefined, date?: string) {
   const owner = useProfile().data?.id;
+
   return useQuery({
     queryKey: weatherQueryKeys.trip(owner, tripId, date),
     enabled: !!owner && !!tripId,

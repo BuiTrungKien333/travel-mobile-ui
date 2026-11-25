@@ -26,6 +26,7 @@ export function MemoryIconButton({
   disabled?: boolean;
 }) {
   const theme = useAppTheme();
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -69,6 +70,7 @@ export function MemoryPage({
 }) {
   const theme = useAppTheme();
   const { copy } = useMemoriesCopy();
+
   return (
     <ScreenSafeArea
       style={[styles.flex, { backgroundColor: theme.colors.background }]}
@@ -124,6 +126,7 @@ export function MemoryEmpty({
   children?: ReactNode;
 }) {
   const theme = useAppTheme();
+
   return (
     <View
       style={{
@@ -175,6 +178,7 @@ export function MemoryPicture({
   const { copy } = useMemoriesCopy();
   const [state, setState] = useState<"loading" | "loaded" | "error">("loading");
   const [attempt, setAttempt] = useState(0);
+
   return (
     <View
       style={{
@@ -252,11 +256,13 @@ export function MemoryPicture({
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+
   header: {
     flexDirection: "row",
     alignItems: "center",
     width: "100%",
     alignSelf: "center",
   },
+
   center: { textAlign: "center" },
 });

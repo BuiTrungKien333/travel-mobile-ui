@@ -30,6 +30,7 @@ export function EmailRequestScreen({
     email: string;
     resendAfterSeconds: number;
   } | null>(null);
+
   const {
     control,
     handleSubmit,
@@ -39,6 +40,7 @@ export function EmailRequestScreen({
     resolver: zodResolver(emailRequestSchema),
     mode: "onTouched",
   });
+
   const submit = handleSubmit(async ({ email }) => {
     if (request.isPending) return;
     Keyboard.dismiss();
@@ -48,6 +50,7 @@ export function EmailRequestScreen({
       /* Render mutation error without exposing the raw server message. */
     }
   });
+
   return (
     <AuthScaffold
       title={t(

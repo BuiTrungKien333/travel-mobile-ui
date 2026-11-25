@@ -50,6 +50,7 @@ export function TripMapboxView({
         if (active) onUnavailable();
       },
     );
+
     return () => {
       active = false;
     };
@@ -110,6 +111,7 @@ export function TripMapboxView({
       animationDuration: reduceMotion ? 0 : theme.motion.tabTransitionDuration,
     });
   };
+
   const locate = async () => {
     try {
       if (
@@ -128,6 +130,7 @@ export function TripMapboxView({
       centerOnLocation.current = false;
     }
   };
+
   return (
     <View style={{ flex: 1 }}>
       <MapView

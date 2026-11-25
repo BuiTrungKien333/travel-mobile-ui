@@ -13,6 +13,7 @@ import type { TripStop } from "../types/home-types";
 import { homeStyles } from "./home-primitives";
 
 type ItineraryStop = TripStop & { image?: ImageSource | string | number };
+
 type LiveTimeline = {
   visitedIds: ReadonlySet<string>;
   nextStopId?: string;
@@ -29,6 +30,7 @@ export function ItineraryStopList({
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useOngoingCopy();
+
   return (
     <View>
       {stops.map((stop, index) => {
@@ -39,11 +41,13 @@ export function ItineraryStopList({
           : next
             ? copy.nextShort
             : copy.upcoming;
+
         const statusColor = visited
           ? theme.colors.onSuccessSurface
           : next
             ? theme.colors.primaryText
             : theme.colors.textSecondary;
+
         const content = (
           <>
             <View style={{ width: theme.layout.sampleStopNumberSize }}>
@@ -194,10 +198,12 @@ export function ItineraryStopList({
             </View>
           </>
         );
+
         const rowStyle = [
           styles.stop,
           { gap: theme.spacing.md, minHeight: theme.layout.touchTarget },
         ];
+
         return (
           <Animated.View
             key={stop.id}
@@ -235,11 +241,13 @@ export function ItineraryStopList({
 const styles = StyleSheet.create({
   stop: { flexDirection: "row", alignItems: "stretch" },
   marker: { alignItems: "center", justifyContent: "center" },
+
   connector: {
     position: "absolute",
     left: "50%",
     width: StyleSheet.hairlineWidth,
   },
+
   photo: {
     flexShrink: 0,
     overflow: "hidden",

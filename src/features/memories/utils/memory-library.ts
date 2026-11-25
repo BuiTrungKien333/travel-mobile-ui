@@ -11,7 +11,9 @@ export type MemoryAlbum = {
   photoCount: number;
   sample: boolean;
 };
+
 const samplePrefix = "library-sample:";
+
 export function isSampleMemory(memory: Memory) {
   return memory.id.startsWith(samplePrefix);
 }
@@ -39,6 +41,7 @@ export function buildMemoryAlbums(
     bucket.push(memory);
     grouped.set(memory.tripId, bucket);
   }
+
   return [...trips]
     .sort(
       (a, b) =>
@@ -51,6 +54,7 @@ export function buildMemoryAlbums(
           `${a.date ?? ""} ${a.time ?? ""}`,
         ),
       );
+
       return {
         trip,
         photos: photos.length ? photos : sampleTripPhotos(trip),
@@ -85,5 +89,6 @@ export function memoryThumbnail(
   );
   if (!match) return photo;
   const size = Math.ceil(pixels);
+
   return `${match[1]}f_auto,q_auto,c_limit,w_${size},h_${size}/${match[2]}`;
 }

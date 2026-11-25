@@ -8,6 +8,7 @@ export default function AddTripPlacesRoute() {
     tripId: params.tripId,
     day: params.day,
   });
+
   return (
     <TripPlacePickerScreen
       tripId={parsed.success ? parsed.data.tripId : undefined}

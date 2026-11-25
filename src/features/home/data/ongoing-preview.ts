@@ -37,6 +37,7 @@ export const captureSamples = [
     credit: samplePhotoCredits[2],
   },
 ] as const;
+
 export type CapturePhotoId = (typeof captureSamples)[number]["id"];
 
 export const ongoingMemories: Memory[] = [

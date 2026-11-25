@@ -1,4 +1,5 @@
 import { useI18n } from "@/hooks/use-i18n";
+
 const vi = {
   loadingPlaces: "Đang tải địa điểm…",
   catalogSearch: "Tìm trong các địa điểm gợi ý",
@@ -95,6 +96,7 @@ const vi = {
     "Chưa lấy được lộ trình. Kiểm tra cấu hình Maps trên backend.",
   liveMapLabel: "Bản đồ trực tiếp",
 };
+
 const en: typeof vi = {
   loadingPlaces: "Loading places…",
   catalogSearch: "Search suggested places",
@@ -192,6 +194,7 @@ const en: typeof vi = {
     "Route unavailable. Check Maps configuration on the backend.",
   liveMapLabel: "Live map",
 };
+
 export function usePlaceSearchCopy() {
   const { locale } = useI18n();
   return { locale, copy: locale === "vi" ? vi : en };

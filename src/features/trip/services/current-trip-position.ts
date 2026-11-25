@@ -8,6 +8,7 @@ export async function currentTripPosition(name: string): Promise<TripStop> {
   const position = await location.getCurrentPositionAsync({
     accuracy: location.Accuracy.Balanced,
   });
+
   return {
     id: "current-origin",
     name: { vi: name, en: name },

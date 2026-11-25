@@ -71,6 +71,7 @@ export function TripPlanningMap({
     const timer = setTimeout(() => setLocationNotice(false), noticeDuration);
     return () => clearTimeout(timer);
   }, [locationNotice, noticeDuration]);
+
   const { collapsed, expanded: maximum } = getPlanningMapBounds({
     screenHeight,
     viewportHeight: viewportHeight || screenHeight,
@@ -89,6 +90,7 @@ export function TripPlanningMap({
     duration: theme.motion.tripMapSnapDuration,
     reduceMotion: ReduceMotion.System,
   };
+
   useEffect(() => {
     const restored = previouslyHidden.current && !collapsedByScroll;
     previouslyHidden.current = collapsedByScroll;
@@ -98,6 +100,7 @@ export function TripPlanningMap({
       height.set(collapsed);
     }
   }, [collapsedByScroll, collapsed, targetExpanded, height]);
+
   useEffect(() => {
     onGeometryChange?.({
       height: expanded ? maximum : collapsed,
@@ -105,16 +108,19 @@ export function TripPlanningMap({
       expanded,
     });
   }, [collapsed, maximum, expanded, headerHeight, onGeometryChange]);
+
   useEffect(() => {
     // Rotation/font scaling changes the available pane, not the selected day or scroll.
     cancelAnimation(height);
     height.set(targetExpanded.get() ? maximum : collapsed);
+
     return () => {
       cancelAnimation(height);
       cancelAnimation(resizeLock);
       resizeLock.set(0);
     };
   }, [collapsed, maximum, height, targetExpanded, resizeLock]);
+
   function releaseResizeLock() {
     "worklet";
     resizeLock.set(
@@ -125,6 +131,7 @@ export function TripPlanningMap({
       ),
     );
   }
+
   useEffect(() => {
     if (handledExpandRequest.current === expandRequest) return;
     handledExpandRequest.current = expandRequest;
@@ -197,6 +204,7 @@ export function TripPlanningMap({
           reduceMotion: ReduceMotion.Never,
         }),
       );
+
       if (!success)
         height.set(
           withTiming(
@@ -208,6 +216,7 @@ export function TripPlanningMap({
           ),
         );
     });
+
   function toggle() {
     if (suppressTap.get() > 0) return;
     cancelAnimation(resizeLock);
@@ -221,6 +230,7 @@ export function TripPlanningMap({
       }),
     );
   }
+
   return (
     <Animated.View
       aria-hidden={collapsedByScroll}

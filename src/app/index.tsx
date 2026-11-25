@@ -10,7 +10,16 @@ export default function IndexRoute() {
   if (UI_PREVIEW_ENABLED) return <Redirect href="/tabs" />;
   if (status === "restoring" || status === "restore-error")
     return <SessionGate failed={status === "restore-error"} />;
+
   return (
-    <Redirect href={status === "authenticated" ? (canUseWorkspace(user) ? "/tabs" : "/explore") : "/(auth)/login"} />
+    <Redirect
+      href={
+        status === "authenticated"
+          ? canUseWorkspace(user)
+            ? "/tabs"
+            : "/explore"
+          : "/(auth)/login"
+      }
+    />
   );
 }

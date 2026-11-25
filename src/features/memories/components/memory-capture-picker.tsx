@@ -50,6 +50,7 @@ export function MemoryCapturePicker({
         title: stop.name[locale],
       })),
     ]);
+
   return (
     <Modal
       visible

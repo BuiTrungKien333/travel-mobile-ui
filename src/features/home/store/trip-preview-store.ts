@@ -40,6 +40,7 @@ export function createPreviewStore() {
   let loadingPhotos: Promise<void> | undefined;
   const exportedPhotos = new Set<string>();
   const exportsInProgress = new Map<string, Promise<void>>();
+
   return createStore<PreviewState>((set, get) => ({
     ...scenarioSnapshot("returning"),
     today: MOCK_TODAY,
@@ -66,6 +67,7 @@ export function createPreviewStore() {
             loadingPhotos = undefined;
             set({ localPhotoStatus: "error" });
           });
+
       return loadingPhotos;
     },
     saveLocalPhoto: async ({
@@ -88,11 +90,13 @@ export function createPreviewStore() {
               (item) => item.id === tripId && item.status !== "cancelled",
             )
           : undefined);
+
       const day = trip
         ? getMemoryCaptureDays(trip, todayCalendarDate()).find(
             (item) => item.date === date,
           )
         : undefined;
+
       if (
         tripId &&
         (!trip ||
@@ -116,6 +120,7 @@ export function createPreviewStore() {
         local: { ...local, capturedAt: now.toISOString(), deviceSaved: false },
       });
       set((state) => ({ memories: [memory, ...state.memories] }));
+
       return memory;
     },
     persistLocalPhoto: async (memory) => {
@@ -149,12 +154,14 @@ export function createPreviewStore() {
         exportsInProgress.delete(id);
       });
       exportsInProgress.set(id, operation);
+
       return operation;
     },
     markLocalPhotoSaved: async (id) => {
       const memory = localMemorySchema.parse(
         get().memories.find((item) => item.id === id),
       );
+
       const updated = {
         ...memory,
         local: { ...memory.local, deviceSaved: true },
@@ -172,22 +179,26 @@ export function createPreviewStore() {
       const memory = localMemorySchema.parse(
         get().memories.find((item) => item.id === id),
       );
+
       if (
         memory.tripId ||
         memory.local.clientRequestId ||
         memory.local.serverId
       )
         throw new Error("Photo is already assigned; retry its existing upload");
+
       const trip =
         remoteTrip ??
         get().trips.find(
           (item) => item.id === values.tripId && item.status !== "cancelled",
         );
+
       const day = trip
         ? getMemoryCaptureDays(trip, todayCalendarDate()).find(
             (item) => item.date === values.day,
           )
         : undefined;
+
       if (
         !trip ||
         trip.id !== values.tripId ||
@@ -196,6 +207,7 @@ export function createPreviewStore() {
         (values.stopId && !day.stops.some((item) => item.id === values.stopId))
       )
         throw new Error("Invalid photo destination");
+
       const updated = {
         ...memory,
         tripId: trip.id,
@@ -218,6 +230,7 @@ export function createPreviewStore() {
           item.id === id ? updated : item,
         ),
       }));
+
       return updated;
     },
     panel: null,
@@ -249,17 +262,20 @@ export function createPreviewStore() {
         duration > tripFormLimits.days
       )
         return false;
+
       const days = Array.from(
         { length: dayDistance(values.startDate, values.endDate) + 1 },
         (_, index) => {
           const date = new Date(`${values.startDate}T12:00:00Z`);
           date.setUTCDate(date.getUTCDate() + index);
+
           return {
             date: date.toISOString().slice(0, 10),
             stops: [],
           };
         },
       );
+
       const trip: Trip = {
         destination: values.destination,
         title: values.title,
@@ -278,10 +294,12 @@ export function createPreviewStore() {
         status: "draft",
         days,
       };
+
       set((current) => ({
         trips: [trip, ...current.trips],
         panel: { kind: "plan", tripId: trip.id },
       }));
+
       return true;
     },
     linkTrip: async (tripId, serverId) => {
@@ -294,6 +312,7 @@ export function createPreviewStore() {
           localMemorySchema.parse({ ...memory, tripId: serverId }),
         );
       }
+
       set((current) => ({
         trips: current.trips.map((trip) =>
           trip.id === tripId ? { ...trip, id: serverId } : trip,
@@ -326,6 +345,7 @@ export function createPreviewStore() {
       set({
         trips: state.trips.map((item) => (item.id === tripId ? updated : item)),
       });
+
       return true;
     },
     deleteTrip: (tripId) =>
@@ -372,6 +392,7 @@ export function createPreviewStore() {
         state.memories.length >= PREVIEW_ENTRY_LIMIT
       )
         return null;
+
       const memory: Memory = {
         id: `photo-${++nextId}`,
         tripId,
@@ -386,6 +407,7 @@ export function createPreviewStore() {
         text: "",
       };
       set({ memories: [memory, ...state.memories] });
+
       return memory;
     },
     updateMemoryNote: async (id, text) => {
@@ -395,6 +417,7 @@ export function createPreviewStore() {
           await import("@/features/memories/services/local-memory-storage");
         await writeLocalMemory(localMemorySchema.parse({ ...memory, text }));
       }
+
       set((state) => ({
         memories: state.memories.map((memory) =>
           memory.id === id ? { ...memory, text } : memory,
@@ -414,6 +437,7 @@ export function createPreviewStore() {
         state.memories.length >= PREVIEW_ENTRY_LIMIT
       )
         return null;
+
       const memory: Memory = {
         id: `photo-${++nextId}`,
         tripId,
@@ -425,6 +449,7 @@ export function createPreviewStore() {
         text: "",
       };
       set({ memories: [memory, ...state.memories] });
+
       return memory;
     },
     removeMemory: async (id) => {
@@ -434,6 +459,7 @@ export function createPreviewStore() {
           await import("@/features/memories/services/local-memory-storage");
         await deleteLocalMemory(localMemorySchema.parse(memory));
       }
+
       set((state) => ({
         memories: state.memories.filter((memory) => memory.id !== id),
       }));

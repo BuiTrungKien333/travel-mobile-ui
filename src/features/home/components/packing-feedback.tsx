@@ -21,6 +21,7 @@ export function PackingProgress({
   const fillStyle = useAnimatedStyle(() => ({
     transform: [{ scaleX: progress.value }],
   }));
+
   return (
     <View
       accessible
@@ -96,8 +97,10 @@ function ConfettiParticle({
     theme.colors.softActionPressed,
     theme.colors.primaryText,
   ];
+
   const animatedStyle = useAnimatedStyle(() => {
     const phase = progress.value;
+
     return {
       opacity: phase > 0 && phase < 1 ? Math.sin(phase * Math.PI) : 0,
       transform: [
@@ -111,6 +114,7 @@ function ConfettiParticle({
       ],
     };
   });
+
   return (
     <Animated.View
       style={[

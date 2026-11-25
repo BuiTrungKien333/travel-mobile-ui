@@ -31,6 +31,7 @@ export const memoryApi = {
       },
       signal,
     });
+
     return parse(memoriesEnvelopeSchema, response.data);
   },
 };

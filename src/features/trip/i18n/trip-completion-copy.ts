@@ -9,6 +9,7 @@ const vi = {
   suggestion:
     "Bạn có thể tiếp tục trải nghiệm hoặc kết thúc chuyến đi khi sẵn sàng.",
 };
+
 const en: typeof vi = {
   action: "End trip",
   title: "End this trip?",

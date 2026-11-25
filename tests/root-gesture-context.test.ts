@@ -41,8 +41,12 @@ test("the root navigator remains inside a full-height gesture root for signed-in
       MagicLinkProvider: "MagicLinkProvider",
     },
     "@/features/auth/services/auth-session": { authSession: {} },
-    "@/components/common/route-error-screen": { RouteErrorScreen: "RouteErrorScreen" },
-    "@/services/api/server-connection": { restoreServerConnection: async () => {} },
+    "@/components/common/route-error-screen": {
+      RouteErrorScreen: "RouteErrorScreen",
+    },
+    "@/services/api/server-connection": {
+      restoreServerConnection: async () => {},
+    },
     "@/services/api/query-client": { queryClient: {} },
     "@/store/use-auth-store": {
       useAuthStore: (select: (state: { status: string }) => unknown) =>

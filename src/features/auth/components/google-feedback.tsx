@@ -22,6 +22,7 @@ export function GoogleFeedback({
       </AppText>
     );
   if (outcome?.status !== "VERIFICATION_REQUIRED") return null;
+
   return (
     <View style={{ gap: theme.spacing.sm }}>
       <AppText variant="bodyLarge" accessibilityLiveRegion="polite">

@@ -7,6 +7,7 @@ export type ImportSource = {
   height: number;
   mimeType?: string;
 };
+
 export type PhotoImportItem = {
   id: string;
   source: ImportSource;
@@ -34,6 +35,7 @@ export async function importPhotos(
     options.onChange(item);
     return item;
   };
+
   for (const item of items) {
     if (item.state === "uploaded" || item.state === "saved") continue;
     let current = item;
@@ -80,6 +82,7 @@ export async function importPhotos(
       }
     }
   }
+
   await Promise.all(
     Array.from(
       { length: Math.min(MEMORY_UPLOAD_CONCURRENCY, pending.length) },

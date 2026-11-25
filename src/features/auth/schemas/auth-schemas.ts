@@ -6,7 +6,9 @@ const emailSchema = z
   .trim()
   .min(1, "validation.emailRequired")
   .email("validation.emailInvalid");
+
 const boundedEmailSchema = emailSchema.max(255, "validation.emailMax");
+
 const boundedPasswordSchema = z
   .string()
   .max(50, "validation.passwordMax")
@@ -41,6 +43,7 @@ export type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export const emailRequestSchema = z.object({ email: boundedEmailSchema });
 export type EmailRequestFormValues = z.infer<typeof emailRequestSchema>;
+
 export const resetPasswordSchema = z
   .object({
     password: registerSchema.shape.password,
@@ -50,4 +53,5 @@ export const resetPasswordSchema = z
     path: ["confirmPassword"],
     message: "validation.passwordMismatch",
   });
+
 export type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;

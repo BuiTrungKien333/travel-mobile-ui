@@ -23,6 +23,7 @@ export function OngoingWeatherDetails({
       : undefined;
   if (!weather)
     return <AppText tone="muted">{copy.weatherUnavailable}</AppText>;
+
   return (
     <TravelWeatherDetails
       weather={weather}

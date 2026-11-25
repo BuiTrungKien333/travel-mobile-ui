@@ -82,6 +82,7 @@ export function HomeHeader() {
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "center" },
   grow: { flex: 1, minWidth: 0 },

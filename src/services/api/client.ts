@@ -14,10 +14,12 @@ type AuthTransport = {
   refresh: () => Promise<unknown>;
   expire: () => Promise<void>;
 };
+
 type AuthConfig = InternalAxiosRequestConfig & {
   authRetried?: boolean;
   authVersion?: number;
 };
+
 let authTransport: AuthTransport | undefined;
 
 export function configureAuthTransport(transport: AuthTransport) {
@@ -40,6 +42,7 @@ const baseURL = resolveDeviceApiUrl(process.env.EXPO_PUBLIC_API_URL, {
   isDevice,
   metroHost: Constants.expoConfig?.hostUri,
 });
+
 export const apiClient = create({ baseURL, timeout: 15000 });
 
 apiClient.interceptors.request.use((config: AuthConfig) => {
@@ -52,6 +55,7 @@ apiClient.interceptors.request.use((config: AuthConfig) => {
     const token = authTransport.getAccessToken();
     if (token) config.headers.set("Authorization", `Bearer ${token}`);
   }
+
   return config;
 });
 
@@ -80,11 +84,13 @@ apiClient.interceptors.response.use(
         // Nếu request khác đã refresh, chỉ gửi lại với access token mới.
         if (!currentToken || sentToken === `Bearer ${currentToken}`)
           await authTransport.refresh();
+
         return apiClient.request({
           ...config,
           authRetried: true,
         } as AuthConfig);
       }
+
       if (
         failure.status === 401 &&
         failure.code === "AUTH_001" &&

@@ -69,6 +69,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+
   action: { maxWidth: "100%", justifyContent: "center" },
   centered: { textAlign: "center", flexShrink: 0 },
 });

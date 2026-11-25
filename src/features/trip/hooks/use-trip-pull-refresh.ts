@@ -22,6 +22,7 @@ export function useTripPullRefresh({
   const eligible = useSharedValue(false);
   const hold = theme.motion.tripPullRefreshHoldDuration;
   const distance = theme.motion.tripPullRefreshDistance;
+
   return Gesture.Pan()
     .simultaneousWithExternalGesture(scrollGesture)
     .maxPointers(1)

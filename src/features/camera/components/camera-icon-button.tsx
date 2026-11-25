@@ -30,6 +30,7 @@ export function CameraIconButton({
       : size === "large"
         ? theme.layout.cameraActionSize
         : theme.layout.cameraIconButtonSize;
+
   const surfaceSize =
     size === "tiny"
       ? theme.layout.cameraTinyControlSurface
@@ -40,6 +41,7 @@ export function CameraIconButton({
           : size === "large"
             ? theme.layout.cameraActionSurfaceSize
             : targetSize;
+
   const iconSize =
     size === "tiny"
       ? theme.layout.cameraTinyControlIcon
@@ -48,6 +50,7 @@ export function CameraIconButton({
         : size === "large"
           ? theme.layout.cameraActionIconSize
           : theme.layout.iconMedium;
+
   return (
     <Pressable
       accessibilityRole="button"

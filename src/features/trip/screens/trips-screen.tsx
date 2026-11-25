@@ -171,26 +171,32 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
   },
+
   content: {
     width: "100%",
     alignSelf: "center",
     flexGrow: 1,
   },
+
   headerContainer: {
     marginBottom: spacing.xs + spacing.xxs,
   },
+
   screenHeading: {
     fontSize: typography.fontSize.lg,
     lineHeight: typography.lineHeight.md,
     letterSpacing: -0.2,
   },
+
   createButtonWrapper: {
     width: "100%",
     alignItems: "center",
   },
+
   largeCreateButton: {
     width: "100%",
   },
+
   emptyCard: {
     alignItems: "center",
     justifyContent: "center",
@@ -198,6 +204,7 @@ const styles = StyleSheet.create({
     borderCurve: "continuous",
     marginVertical: spacing.md,
   },
+
   emptyIconCircle: {
     width: 60,
     height: 60,
@@ -205,9 +212,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: spacing.xs,
   },
+
   emptyTitle: {
     textAlign: "center",
   },
+
   emptyHint: {
     textAlign: "center",
     maxWidth: 280,

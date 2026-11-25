@@ -22,6 +22,7 @@ export function getMemoryCaptureDays(trip: Trip, today: string): Trip["days"] {
       ...(trip.unscheduledStops ?? []),
     ].map((stop) => [stop.id, stop]),
   );
+
   return [{ date: today, stops: [...stops.values()] }];
 }
 
@@ -48,5 +49,6 @@ export function getMemoryCaptureTarget(
       ? day.stops.find((item) => item.id === params.stopId)
       : day.stops[0];
   if (params.stopId && !stop) return null;
+
   return { trip, day, stop };
 }

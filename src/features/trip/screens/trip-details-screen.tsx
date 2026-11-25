@@ -69,6 +69,7 @@ type TimelineRow =
       number: number;
     }
   | { kind: "backlog"; key: string; stop: TripStop; date: string | null };
+
 type Row =
   | TimelineRow
   | { kind: "planning-days"; key: string }
@@ -139,6 +140,7 @@ function PreviewTripDetailsScreen({
         </View>
       </ScreenSafeArea>
     );
+
   return (
     <TripDetailsContent
       key={trip.id}
@@ -197,9 +199,11 @@ function TripDetailsContent({
       headerHeight:
         theme.layout.compactTouchTarget + theme.spacing.xxl + theme.spacing.sm,
     });
+
   const [selectorHeight, setSelectorHeight] = useState<number>(
     theme.layout.touchTarget,
   );
+
   const [undo, setUndo] = useState<{
     snapshot: TripScheduleSnapshot;
     message: string;
@@ -231,12 +235,14 @@ function TripDetailsContent({
         });
     },
   });
+
   const { list, jump, onScrollToIndexFailed } = useTripTimelineScroll<Row>(
     selectionKey,
     mapFirstLayout
       ? planningMapGeometry.headerHeight + selectorHeight + theme.spacing.lg
       : 0,
   );
+
   const progress = getDayProgress(
     timedStops,
     visited[`${trip.id}:${day?.date}`] ?? [],
@@ -245,16 +251,19 @@ function TripDetailsContent({
   const dayMemories = day
     ? tripMemories.filter((memory) => memory.date === day.date)
     : tripMemories;
+
   const mapHeight = availableHeight
     ? Math.min(
         theme.layout.tripMapPreviewHeight,
         availableHeight * theme.layout.tripMapHeightRatio,
       )
     : theme.layout.tripMapMinimumHeight;
+
   const showMap =
     !backlog &&
     !!day &&
     (mode === "planning" || mode === "live" || editHistory);
+
   const planningScroll = usePlanningMapCollapse<Row>({
     enabled: mapFirstLayout && showMap,
     selectionKey,
@@ -262,6 +271,7 @@ function TripDetailsContent({
     list,
     resizeLock: mapResizeLock,
   });
+
   const rows: TimelineRow[] = backlog
     ? unscheduled.map((entry) => ({ ...entry, kind: "backlog" }))
     : day
@@ -278,6 +288,7 @@ function TripDetailsContent({
           })),
         ]
       : [];
+
   const listRows: Row[] = mapFirstLayout
     ? [
         { kind: "planning-days", key: "planning-days" },
@@ -312,8 +323,10 @@ function TripDetailsContent({
       }
       setSheet(null);
     }
+
     return success;
   }
+
   function openStop(stop: TripStop, date: string | null = day?.date ?? null) {
     setUndo(null);
     router.push({
@@ -325,12 +338,15 @@ function TripDetailsContent({
       },
     });
   }
+
   function openJournal() {
     openPanel({ kind: "journal", tripId: trip.id });
   }
+
   function addPlace() {
     openPlacePicker(backlog ? null : (day?.date ?? null));
   }
+
   function openPlacePicker(date: string | null) {
     setUndo(null);
     router.push({
@@ -338,11 +354,13 @@ function TripDetailsContent({
       params: { tripId: trip.id, ...(date ? { day: date } : {}) },
     });
   }
+
   function selectDate(date: string | null) {
     if (date === null ? !backlog : backlog || date !== day?.date) setUndo(null);
     setBacklog(date === null);
     if (date) router.setParams({ day: date });
   }
+
   function addDay() {
     const range = appendTripDayRange(trip);
     if (!range) {
@@ -351,6 +369,7 @@ function TripDetailsContent({
     }
     if (commit({ kind: "dates", ...range })) selectDate(range.endDate);
   }
+
   function selectStop(stop: TripStop) {
     if (!day) return;
     setHighlight({ date: day.date, id: stop.id });
@@ -359,6 +378,7 @@ function TripDetailsContent({
     );
     if (index >= 0) jump(index);
   }
+
   const header = (
     <TripDetailsHeader
       trip={trip}
@@ -379,6 +399,7 @@ function TripDetailsContent({
           onPress={() => openStop(item.stop, item.date)}
         />
       );
+
     if (item.kind === "start")
       return (
         <TripStartNode
@@ -392,6 +413,7 @@ function TripDetailsContent({
           onPress={() => setSheet({ kind: "day" })}
         />
       );
+
     return (
       <TripStopRow
         stop={item.stop}
@@ -558,6 +580,7 @@ function TripDetailsContent({
           </View>
         </View>
       );
+
     if (item.kind === "summary")
       return (
         <View
@@ -576,6 +599,7 @@ function TripDetailsContent({
           ) : null}
         </View>
       );
+
     return (
       <View
         style={{
@@ -780,8 +804,10 @@ function TripDetailsContent({
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   fill: { flex: 1 },
+
   frame: {
     width: "100%",
     maxWidth: layout.contentMaxWidth,

@@ -157,6 +157,7 @@ export function ConnectedTripDetailsScreen({
     height: 0,
     headerHeight: 0,
   });
+
   const [selectorHeight, setSelectorHeight] = useState<number>(
     theme.layout.touchTarget,
   );
@@ -181,6 +182,7 @@ export function ConnectedTripDetailsScreen({
   const scheduledEntries = itinerary.data?.days.find(
     (day) => day.date === activeDate,
   )?.stops;
+
   const storedSettings = itinerary.data?.days.find(
     (entry) => entry.date === activeDate,
   )?.settings;
@@ -195,6 +197,7 @@ export function ConnectedTripDetailsScreen({
         : null,
       returnToStart: storedSettings?.returnToStart ?? false,
     });
+
   const routeQuery = useTripDayRoute({
     tripId,
     date: activeDate,
@@ -227,6 +230,7 @@ export function ConnectedTripDetailsScreen({
   const canEditDay = (dayDate: string) =>
     read?.trip.mode === "PLANNING" ||
     (read?.trip.mode === "LIVE" && dayDate >= read.context.evaluatedDate);
+
   const timeline = useConnectedTimelineActions({
     selectionKey,
     date: activeDate,
@@ -254,6 +258,7 @@ export function ConnectedTripDetailsScreen({
         : rows,
     [rows, read?.trip.mode, activeDate, today],
   );
+
   const timelineDrag = useTripTimelineDrag({
     stops: dragStops,
     selectionKey,
@@ -266,6 +271,7 @@ export function ConnectedTripDetailsScreen({
     selectionKey,
     selectorHeight,
   );
+
   const mapScroll = usePlanningMapCollapse({
     enabled: !!read,
     selectionKey,
@@ -273,6 +279,7 @@ export function ConnectedTripDetailsScreen({
     mapHeight: mapGeometry.height,
     resizeLock,
   });
+
   const pullRefresh = useTripPullRefresh({
     scrollGesture: mapScrollGesture,
     offset: mapScroll.offset,
@@ -290,10 +297,12 @@ export function ConnectedTripDetailsScreen({
       if (activeDate && rows.length >= 2) void routeQuery.refetch();
     },
   });
+
   const inferredSchedule = useMemo(
     () => inferredDaySchedule(itinerary.data, activeDate, read?.trip.version),
     [itinerary.data, activeDate, read?.trip.version],
   );
+
   const canCompleteSchedule =
     ready &&
     !!activeDate &&
@@ -336,6 +345,7 @@ export function ConnectedTripDetailsScreen({
     completeSchedule,
     completion.error,
   ]);
+
   if (!read || !trip)
     return (
       <ScreenSafeArea
@@ -367,6 +377,7 @@ export function ConnectedTripDetailsScreen({
         </View>
       </ScreenSafeArea>
     );
+
   const nextStop =
     read.trip.mode === "LIVE" && activeDate === read.context.evaluatedDate
       ? rows.find((stop) => !stop.visited)?.id
@@ -378,9 +389,11 @@ export function ConnectedTripDetailsScreen({
     editor?.kind === "day" || modeOpen
       ? daySchedule.error
       : (save.error ?? completion.error);
+
   const isConflict =
     mutationError instanceof ApiError &&
     ["TRIP_006", "TRIP_007", "TRIP_008"].includes(mutationError.code);
+
   const scheduleError =
     mutationError instanceof ApiError
       ? ({
@@ -406,9 +419,11 @@ export function ConnectedTripDetailsScreen({
       tripVersion: read.trip.version,
     });
   };
+
   const closeEditor = () => {
     if (!saving.current && !optimizing.current) setEditor(null);
   };
+
   const refreshSchedule = async () => {
     if (saving.current || timelineDrag.draggedId) return;
     const result = await Promise.all([
@@ -416,6 +431,7 @@ export function ConnectedTripDetailsScreen({
       places.refetch(),
       query.refetch(),
     ]);
+
     if (result.every((entry) => !entry.isError)) {
       completedRevision.current = null;
       completion.reset();
@@ -426,6 +442,7 @@ export function ConnectedTripDetailsScreen({
       setModeOpen(false);
     }
   };
+
   const persistDay = async (
     targetDate: string,
     stops: DayStops,
@@ -456,6 +473,7 @@ export function ConnectedTripDetailsScreen({
       saving.current = false;
     }
   };
+
   const persistSchedule = async (
     targetDate: string,
     base: ItineraryResponse,
@@ -480,6 +498,7 @@ export function ConnectedTripDetailsScreen({
       saving.current = false;
     }
   };
+
   const mode = {
     PLANNING: "planning",
     LIVE: "live",
@@ -497,10 +516,12 @@ export function ConnectedTripDetailsScreen({
           (stop) => !!stop.location,
         )
       : false;
+
   const returnOriginReady =
     !storedSettings?.returnToStart ||
     (storedSettings.origin?.latitude != null &&
       storedSettings.origin.longitude != null);
+
   const canOptimize =
     !!activeDate &&
     ready &&
@@ -532,6 +553,7 @@ export function ConnectedTripDetailsScreen({
               : !route
                 ? itineraryCopy.routeUnavailable
                 : null;
+
   const selectDate = (nextDate: string | null) => {
     if (saving.current || timelineDrag.draggedId) return;
     timeline.clear();
@@ -540,6 +562,7 @@ export function ConnectedTripDetailsScreen({
     setFocus(undefined);
     setDate(nextDate);
   };
+
   const openPlacePicker = () => {
     if (saving.current || timelineDrag.draggedId) return;
     timeline.clear();
@@ -567,6 +590,7 @@ export function ConnectedTripDetailsScreen({
           : "car",
     );
   };
+
   const markVisited = async (stop = next, value = true) => {
     if (
       mode !== "live" ||
@@ -592,6 +616,7 @@ export function ConnectedTripDetailsScreen({
       visiting.current = false;
     }
   };
+
   const requestOptimization = async () => {
     if (
       !canOptimize ||
@@ -612,6 +637,7 @@ export function ConnectedTripDetailsScreen({
       optimizing.current = false;
     }
   };
+
   const persistOrder = (
     edit: Extract<ScheduleEditor, { kind: "reorder" | "optimize" }>,
     ids: string[],
@@ -621,6 +647,7 @@ export function ConnectedTripDetailsScreen({
     const placeById = new Map(
       edit.stops.map((stop) => [stop.id, stop.placeId]),
     );
+
     const ordered = reorderDayStops(
       stops,
       ids.flatMap((id) => {
@@ -632,6 +659,7 @@ export function ConnectedTripDetailsScreen({
     if (ordered && ids.length === stops.length)
       void persistDay(edit.date, ordered, visitedPlaceIds);
   };
+
   const listRows: Row[] = [
     { kind: "days", key: "days" },
     { kind: "summary", key: "summary" },
@@ -644,11 +672,13 @@ export function ConnectedTripDetailsScreen({
         }))
       : []),
   ];
+
   const openActions = () => {
     if (saving.current || timelineDrag.draggedId) return;
     timeline.clear();
     setActionsOpen(true);
   };
+
   const header = (
     <TripDetailsHeader
       trip={trip}
@@ -659,6 +689,7 @@ export function ConnectedTripDetailsScreen({
       onMenu={openActions}
     />
   );
+
   return (
     <ScreenSafeArea
       edges={["top", "left", "right"]}
@@ -794,6 +825,7 @@ export function ConnectedTripDetailsScreen({
                       </View>
                     </View>
                   );
+
                 if (item.kind === "summary")
                   return (
                     <View
@@ -802,8 +834,19 @@ export function ConnectedTripDetailsScreen({
                         padding: theme.spacing.lg,
                       }}
                     >
-                      {supportsAiPlanning(read.trip) && itinerary.data?.days.every(day => day.stops.length === 0) ? (
-                        <AppButton variant="soft" onPress={() => router.push({ pathname: "/trip/planning", params: { tripId: trip.id } })}>
+                      {supportsAiPlanning(read.trip) &&
+                      itinerary.data?.days.every(
+                        (day) => day.stops.length === 0,
+                      ) ? (
+                        <AppButton
+                          variant="soft"
+                          onPress={() =>
+                            router.push({
+                              pathname: "/trip/planning",
+                              params: { tripId: trip.id },
+                            })
+                          }
+                        >
                           {planningCopy.title}
                         </AppButton>
                       ) : null}
@@ -955,6 +998,7 @@ export function ConnectedTripDetailsScreen({
                                 const ids = pool
                                   .filter((stop) => !!stop.placeId)
                                   .map((stop) => stop.id);
+
                                 setBacklogSelection(
                                   selectedBacklog.length === ids.length
                                     ? []
@@ -1057,9 +1101,11 @@ export function ConnectedTripDetailsScreen({
                       : route?.legs.length === rows.length - 1
                         ? route.legs[index - 1]
                         : undefined;
+
                   const entry = timeline.pending
                     ? undefined
                     : scheduledEntries?.[index];
+
                   const savedLeg = leg
                     ? {
                         km: leg.distanceMeters / 1000,
@@ -1073,6 +1119,7 @@ export function ConnectedTripDetailsScreen({
                           minutes: entry.travelMinutesFromPrevious,
                         }
                       : undefined;
+
                   return (
                     <View style={{ paddingHorizontal: theme.spacing.lg }}>
                       <TripStopRow
@@ -1136,6 +1183,7 @@ export function ConnectedTripDetailsScreen({
                     </View>
                   );
                 }
+
                 return (
                   <View style={{ paddingHorizontal: theme.spacing.lg }}>
                     <TripBacklogRow
@@ -1317,6 +1365,7 @@ export function ConnectedTripDetailsScreen({
           ) : null}
           {(["DRIVE", "WALK", "BICYCLE"] as const).map((value) => {
             const isSelected = routeMode === value;
+
             return (
               <AppButton
                 key={value}
@@ -1339,6 +1388,7 @@ export function ConnectedTripDetailsScreen({
                     saving.current
                   )
                     return;
+
                   void persistSchedule(
                     activeDate,
                     itinerary.data,

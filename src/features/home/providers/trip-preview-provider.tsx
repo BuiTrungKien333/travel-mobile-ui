@@ -25,9 +25,11 @@ export function TripPreviewProvider({ children }: { children: ReactNode }) {
       instance.setState({ trips: [], memories: [], visited: {}, panel: null });
     return instance;
   });
+
   useEffect(() => {
     void store.getState().loadLocalPhotos();
   }, [store]);
+
   return (
     <PreviewContext.Provider value={store}>{children}</PreviewContext.Provider>
   );

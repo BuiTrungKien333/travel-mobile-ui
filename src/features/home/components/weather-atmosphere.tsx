@@ -22,6 +22,7 @@ export function WeatherAtmosphere() {
       <ellipse cx="330" cy="580" rx="300" ry="230" fill="url(#amber)"/>
     </svg>`,
   );
+
   return (
     <View pointerEvents="none" aria-hidden style={StyleSheet.absoluteFill}>
       <Image

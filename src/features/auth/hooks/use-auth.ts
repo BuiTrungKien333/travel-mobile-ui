@@ -14,20 +14,25 @@ export function useLogin() {
       authSession.authenticate(() => authApi.login(values)),
   });
 }
+
 export function useRegister() {
   return useMutation({ mutationFn: authApi.register });
 }
+
 export function useLogout() {
   return useMutation({ mutationFn: authSession.logout });
 }
+
 export function useEmailRequest(purpose: "verify" | "reset") {
   return useMutation({
     mutationFn: (email: string) => authApi.requestEmail(email, purpose),
   });
 }
+
 export function useVerifyEmail() {
   return useMutation({ mutationFn: authApi.verifyEmail });
 }
+
 export function useResetPassword() {
   return useMutation({
     mutationFn: async (values: { token: string; password: string }) => {
@@ -36,10 +41,12 @@ export function useResetPassword() {
     },
   });
 }
+
 export function useProfile() {
   const authenticated = useAuthStore(
     (state) => state.status === "authenticated",
   );
+
   return useQuery({
     queryKey: authQueryKeys.profile,
     queryFn: ({ signal }) => authApi.profile(signal),
@@ -49,6 +56,7 @@ export function useProfile() {
 
 export function useUpdateProfile() {
   const client = useQueryClient();
+
   return useMutation({
     mutationFn: async (values: UpdateProfile) => {
       const version = authSession.getVersion();

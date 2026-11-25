@@ -125,8 +125,15 @@ function harness() {
         if (callback) springs.push(callback);
         return target;
       },
-      withTiming: (target: number, config: { duration: number }, callback?: (finished: boolean) => void): Timer | number => {
-        if (callback) { springs.push(callback); return target; }
+      withTiming: (
+        target: number,
+        config: { duration: number },
+        callback?: (finished: boolean) => void,
+      ): Timer | number => {
+        if (callback) {
+          springs.push(callback);
+          return target;
+        }
         return { target, delay: config.duration };
       },
       withDelay: (delay: number, timer: Timer): Timer => ({

@@ -23,7 +23,7 @@ test("mobile memory HTTP flow matches the backend contract and safely retries pa
     const module = { exports: {} };
     runInNewContext(
       readFileSync(
-        new URL("../postman/mocks/memory-backend/default.js", import.meta.url),
+        new URL("./helpers/memory-backend-mock.js", import.meta.url),
         "utf8",
       ),
       {

@@ -66,6 +66,7 @@ export function usePlanningMapCollapse<T>({
         animated: !reduceMotion,
       });
   }
+
   function show() {
     collapsed.set(false);
     target.set(0);
@@ -73,6 +74,7 @@ export function usePlanningMapCollapse<T>({
     setHidden(false);
     list.current?.scrollToOffset({ offset: 0, animated: !reduceMotion });
   }
+
   const onScroll = useAnimatedScrollHandler({
     onBeginDrag: (event) => {
       dragging.set(true);
@@ -123,5 +125,6 @@ export function usePlanningMapCollapse<T>({
       }
     },
   });
+
   return { hidden, onScroll, show, offset };
 }

@@ -18,6 +18,7 @@ export function TripOriginOption({
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
+
   return (
     <Pressable
       accessibilityRole="button"

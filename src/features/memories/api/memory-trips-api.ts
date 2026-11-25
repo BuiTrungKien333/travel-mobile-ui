@@ -23,6 +23,7 @@ export async function loadMemoryTrips(
     summaries.push(...result.content);
     if (page + 1 >= result.totalPages) break;
   }
+
   return Promise.all(
     summaries.map(async (summary) => {
       const places = includePlaces
@@ -42,6 +43,7 @@ export async function loadMemoryTrips(
             .slice(0, 10);
         }
       }
+
       return { ...tripViewModel(summary), days, unscheduledStops: stops };
     }),
   );

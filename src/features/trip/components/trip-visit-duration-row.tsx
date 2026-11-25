@@ -31,6 +31,7 @@ export function TripVisitDurationRow({
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
   const [custom, setCustom] = useState(!presets.includes(value));
+
   return (
     <View
       style={{
@@ -96,6 +97,7 @@ export function TripVisitDurationRow({
             {[...presets, "other"].map((option) => {
               const selected =
                 option === "other" ? custom : !custom && value === option;
+
               return (
                 <Pressable
                   key={option}

@@ -4,6 +4,7 @@ import { apiClient, resolveApiUrl } from "./client";
 
 const key = "wego.server-origin";
 const preferenceFile = "wego-server-origin.json";
+
 export const canConfigureServer =
   __DEV__ || process.env.EXPO_PUBLIC_LAN_DEMO === "true";
 

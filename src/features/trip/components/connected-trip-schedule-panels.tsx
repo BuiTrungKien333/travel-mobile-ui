@@ -72,6 +72,7 @@ export function ConnectedTripSchedulePanels({
 }: Props) {
   const { copy: detailCopy } = useTripDetailsCopy();
   const { copy: itineraryCopy } = useItineraryCopy();
+
   return (
     <>
       {editor?.kind === "assign" ? (
@@ -130,6 +131,7 @@ export function ConnectedTripSchedulePanels({
                 : draft.time
                   ? `${draft.date}T${draft.time}:00`
                   : null;
+
             const stop = {
               placeId,
               sequence: index < 0 ? stops.length : index,
@@ -215,6 +217,7 @@ export function ConnectedTripSchedulePanels({
                   editor.stops.find((stop) => stop.placeId === placeId)?.id ??
                   [],
               ) ?? [];
+
             if (
               proposal &&
               ids.length === editor.stops.length &&
@@ -237,10 +240,12 @@ export function ConnectedTripSchedulePanels({
                     0) / 60,
                 ),
               };
+
               const after = {
                 km: proposal.distanceMeters / 1000,
                 minutes: Math.ceil(proposal.durationSeconds / 60),
               };
+
               return (
                 <TripOptimizationSheet
                   day={{
@@ -274,6 +279,7 @@ export function ConnectedTripSchedulePanels({
                 />
               );
             }
+
             return (
               <TripDetailsSheet
                 title={detailCopy.optimizeTitle}

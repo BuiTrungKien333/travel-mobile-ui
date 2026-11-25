@@ -9,6 +9,7 @@ import {
 import type { TripDetailsCopy } from "../i18n/trip-details-copy";
 
 export const clockPattern = /^([01]\d|2[0-3]):[0-5]\d$/;
+
 export function tripInfoSchema(copy: TripDetailsCopy) {
   return z.object({
     destinationProvinceId: z.guid().nullable().default(null),
@@ -33,6 +34,7 @@ export function tripInfoSchema(copy: TripDetailsCopy) {
     preferences: z.array(z.enum(tripPreferenceIds)),
   });
 }
+
 export function tripEditSchema(copy: TripDetailsCopy) {
   return tripInfoSchema(copy)
     .extend({
@@ -76,6 +78,7 @@ export function stopDetailsSchema(copy: TripDetailsCopy) {
     targetDate: z.string().nullable(),
   });
 }
+
 export function daySettingsSchema(copy: TripDetailsCopy) {
   return z.object({
     startLocation: z.string().trim().max(200, copy.invalidText),

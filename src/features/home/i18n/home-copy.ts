@@ -106,7 +106,9 @@ const vi = {
   mockDate: "Ngày minh họa: 21/10/2026",
   capacity: "Bản xem trước đã đủ 20 mục. Đổi trạng thái để bắt đầu lại.",
 };
+
 type HomeCopy = { [K in keyof typeof vi]: string };
+
 const en: HomeCopy = {
   dashboardLoading: "Getting your journey ready…",
   planningSubtitle: "Make room for your next adventure.",
@@ -213,6 +215,7 @@ const en: HomeCopy = {
   capacity:
     "This preview has reached 20 entries. Switch scenarios to start again.",
 };
+
 export function useHomeCopy() {
   const { locale } = useI18n();
   return { copy: locale === "vi" ? vi : en, locale };

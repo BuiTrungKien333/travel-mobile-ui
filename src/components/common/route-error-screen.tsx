@@ -47,12 +47,14 @@ export function RouteErrorScreen({ retry }: ErrorBoundaryProps) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.colors.background },
+
   content: {
     flexGrow: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: theme.spacing.xl,
   },
+
   message: {
     width: "100%",
     maxWidth: theme.layout.sessionContentMaxWidth,

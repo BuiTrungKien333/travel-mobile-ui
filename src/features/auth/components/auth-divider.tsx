@@ -27,6 +27,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
+
   line: {
     flex: 1,
     height: StyleSheet.hairlineWidth,

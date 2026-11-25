@@ -98,6 +98,7 @@ export function TripDayScheduleForm({
       sum + (Number.isInteger(value) && value >= 5 && value <= 480 ? value : 0)
     );
   }, 0);
+
   const totalText =
     total >= 60
       ? `${Math.floor(total / 60)} ${copy.timeHour.toLocaleLowerCase(locale)}${total % 60 ? ` ${total % 60} ${copy.minutes}` : ""}`
@@ -114,10 +115,12 @@ export function TripDayScheduleForm({
       ].map((place) => [place.id, place]),
     ).values(),
   );
+
   const matches =
     searching && query.length > 1
       ? searchPlaces(candidates, query).slice(0, 4)
       : [];
+
   function choosePlace(name: string, place?: TripStop) {
     setValue("startCoordinate", place?.location);
     setValue("startAddress", place?.address?.[locale]);
@@ -132,6 +135,7 @@ export function TripDayScheduleForm({
     integration?.onSearch("");
     Keyboard.dismiss();
   }
+
   const options: {
     id: "current" | "home" | "stay";
     icon: AppIconName;
@@ -157,6 +161,7 @@ export function TripDayScheduleForm({
       shortLabel: copy.originStayShort,
     },
   ];
+
   async function chooseShortcut(id: (typeof options)[number]["id"]) {
     setSearching(false);
     setDayChoicesOpen(false);
@@ -174,9 +179,11 @@ export function TripDayScheduleForm({
         } finally {
           setLocating(false);
         }
+
         return;
       }
       setFocus("startLocation");
+
       return;
     }
     setShortcut(id);
@@ -189,11 +196,13 @@ export function TripDayScheduleForm({
     if (id === "stay" && trip.accommodation) Keyboard.dismiss();
     else setFocus("startLocation");
   }
+
   function originName(place: TripStop) {
     return place.locationType === "address"
       ? (place.address?.[locale] ?? place.name[locale])
       : place.name[locale];
   }
+
   function isChosenOrigin(place: TripStop) {
     return (
       location === originName(place) &&
@@ -201,9 +210,11 @@ export function TripDayScheduleForm({
       coordinate?.longitude === place.location?.longitude
     );
   }
+
   function chooseOrigin(place: TripStop) {
     choosePlace(originName(place), place);
   }
+
   return (
     <>
       <View style={{ gap: theme.spacing.md }}>
@@ -652,8 +663,10 @@ export function TripDayScheduleForm({
               } catch {
                 setError("root", { message: copy.stopUpdateError });
               }
+
               return;
             }
+
             if (
               !onCommit?.({
                 kind: "day",

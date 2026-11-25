@@ -3,6 +3,7 @@ import { homeImages } from "@/features/home/data/home-mocks";
 import { getPlaceDetailsPreview } from "./place-details-preview";
 
 const text = (vi: string, en: string): LocalizedText => ({ vi, en });
+
 // Editorial UI examples only, not verified amenities or live opening states.
 const entries: Record<
   string,
@@ -112,6 +113,7 @@ export function getPlaceEditorialPreview(place: TripStop) {
   const entry =
     place.locationType === "address" ? undefined : entries[place.id];
   const { photo } = getPlaceDetailsPreview(place);
+
   return {
     entry,
     // These are explicitly labelled as the place AND its surrounding area.

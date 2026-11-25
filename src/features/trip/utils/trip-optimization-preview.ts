@@ -18,6 +18,7 @@ export function getOptimizationComparison(
   const before = getDayTravel(day);
   const after = getDayTravel({ ...day, stops });
   if (!before.complete || !after.complete) return null;
+
   return {
     before,
     after,

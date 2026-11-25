@@ -27,5 +27,6 @@ export function TripDetailsRedirect({
       params: { tripId, ...(date ? { day: date } : {}) },
     });
   }, [tripId, date, onClose]);
+
   return null;
 }

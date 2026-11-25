@@ -5,6 +5,7 @@ export const TRIP_MAP_STYLE = "mapbox://styles/mapbox/streets-v12";
 // Initial view around central Da Lat until the itinerary provides coordinates.
 export const TRIP_MAP_DEFAULT_CENTER: [number, number] = [108.4419, 11.9404];
 export const TRIP_MAP_DEFAULT_ZOOM = 13;
+
 export const tripMapToken = /^pk\.[\w.-]+$/.test(
   process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN?.trim() ?? "",
 )
@@ -17,8 +18,10 @@ export type TripMapPin = PlaceCoordinate & {
   label?: "S";
   name: string;
 };
+
 export type TripMapPosition = [number, number];
 export type TripMapBounds = [TripMapPosition, TripMapPosition];
+
 export type TripMapViewProps = {
   token: string;
   pins: TripMapPin[];
@@ -42,6 +45,7 @@ export function tripMapPins(
       Math.abs(p.longitude) > 180
     )
       return [];
+
     return [{ ...p, id: stop.id, name: stop.name[locale], number: index + 1 }];
   });
 }
@@ -63,6 +67,7 @@ export function tripMapBounds(
     ne[0] = Math.max(ne[0], lon);
     ne[1] = Math.max(ne[1], lat);
   }
+
   return [sw, ne];
 }
 
@@ -92,6 +97,7 @@ export function tripStaticMapUri(
   const samePoint = pins.every(
     (p) => p.latitude === first.latitude && p.longitude === first.longitude,
   );
+
   const viewport = samePoint
     ? `${first.longitude},${first.latitude},15`
     : "auto";
@@ -105,5 +111,6 @@ export function tripStaticMapUri(
     if (full.length <= 8192) return full;
   }
   const markersOnly = makeUrl(markers);
+
   return markersOnly.length <= 8192 ? markersOnly : undefined;
 }

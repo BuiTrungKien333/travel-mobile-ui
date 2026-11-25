@@ -3,6 +3,7 @@ import { useProfile } from "@/features/auth/hooks/use-auth";
 import { useDebouncedValue } from "../hooks/use-debounced-value";
 import { placeDiscoveryApi, type PlaceScope } from "./place-discovery-api";
 import { placeDiscoveryKeys } from "./place-discovery-query-keys";
+
 export function usePlaceDiscovery(
   scope: PlaceScope,
   search: string,
@@ -21,10 +22,13 @@ export function usePlaceDiscovery(
     getNextPageParam: (page) =>
       page.page + 1 < page.totalPages ? page.page + 1 : undefined,
   });
+
   return { query, isDebouncing: search.trim() !== q };
 }
+
 export function usePlaceDetail(id: string | undefined, locale: "vi" | "en") {
   const owner = useProfile().data?.id;
+
   return useQuery({
     queryKey: placeDiscoveryKeys.detail(owner, id, locale),
     enabled: !!owner && !!id,

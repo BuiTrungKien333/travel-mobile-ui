@@ -29,5 +29,6 @@ export function useTripDirections() {
       setBusy(false);
     }
   }
+
   return { open, busy, error };
 }

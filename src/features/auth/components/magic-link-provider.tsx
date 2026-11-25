@@ -9,6 +9,7 @@ import {
 import { Platform } from "react-native";
 
 type LinkState = { url: string | null; isLoading: boolean };
+
 const MagicLinkContext = createContext<LinkState>({
   url: null,
   isLoading: true,
@@ -36,6 +37,7 @@ export function MagicLinkProvider({ children }: { children: ReactNode }) {
         );
       }
     };
+
     const subscription = addEventListener("url", (event) => {
       receivedEvent = true;
       receive(event.url);
@@ -56,6 +58,7 @@ export function MagicLinkProvider({ children }: { children: ReactNode }) {
       .catch(() => {
         if (!receivedEvent) receive(null);
       });
+
     return () => {
       active = false;
       subscription.remove();
@@ -63,6 +66,7 @@ export function MagicLinkProvider({ children }: { children: ReactNode }) {
       browser?.removeEventListener("popstate", receiveBrowserLink);
     };
   }, []);
+
   return (
     <MagicLinkContext.Provider value={state}>
       {children}

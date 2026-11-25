@@ -25,6 +25,7 @@ const vi = {
   NAVIGATION:
     "Đã lưu kết nối nhưng chưa mở được màn đăng nhập. Hãy mở lại ứng dụng.",
 };
+
 const en: typeof vi = {
   title: "Server connection",
   subtitle:
@@ -48,6 +49,7 @@ const en: typeof vi = {
   NAVIGATION:
     "Connection saved, but sign-in could not be opened. Reopen the app.",
 };
+
 export function useConnectionCopy() {
   const { locale } = useI18n();
   return locale === "vi" ? vi : en;

@@ -75,11 +75,13 @@ export function WeatherPackingChecklist({
       reminderOpacity *
       (0.5 + 0.5 * Math.sin(animationProgress.value * Math.PI * 4)),
   }));
+
   const luggageStyle = useAnimatedStyle(() => {
     // A short, soft shake every six seconds; the icon rests between reminders.
     const phase = ((animationProgress.value * 2) % 1) / shakeWindow;
     const shake =
       phase < 1 ? Math.sin(phase * Math.PI * 6) * Math.sin(phase * Math.PI) : 0;
+
     return {
       transform: [
         { translateX: canAnimate && notStarted ? shake * drift : 0 },
@@ -105,6 +107,7 @@ export function WeatherPackingChecklist({
       duration: progressDuration,
       reduceMotion: ReduceMotion.System,
     });
+
     return () => cancelAnimation(progress);
   }, [ratio, progressDuration, progress]);
 
@@ -119,6 +122,7 @@ export function WeatherPackingChecklist({
       burst.value = 0;
     }
     wasComplete.current = complete;
+
     return () => cancelAnimation(burst);
   }, [complete, reduceMotion, burstDuration, burst]);
 

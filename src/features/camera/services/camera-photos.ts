@@ -49,6 +49,7 @@ export async function prepareCameraPhoto(
         format: SaveFormat.JPEG,
         compress: layout.cameraPhotoQuality,
       });
+
       return { ...result, mimeType: "image/jpeg" };
     } finally {
       rendered.release();

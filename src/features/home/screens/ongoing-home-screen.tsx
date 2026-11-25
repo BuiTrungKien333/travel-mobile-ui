@@ -20,6 +20,7 @@ import {
   getTripCoverImage,
   getSampleImage,
 } from "@/features/trip/utils/trip-images";
+
 export function OngoingHomeScreen({
   trip,
   dayIndex,
@@ -83,23 +84,28 @@ export function OngoingHomeScreen({
   const progress = runtime
     ? { nextStop: runtime.nextStop }
     : getDayProgress(stops, visited[`${trip.id}:${today}`] ?? []);
+
   const todayMemories =
     runtime?.memories ??
     memories.filter(
       (memory) => memory.tripId === trip.id && memory.date === today,
     );
+
   const dateLabel = new Intl.DateTimeFormat(
     locale === "vi" ? "vi-VN" : "en-GB",
     { weekday: "short", day: "2-digit", month: "2-digit", timeZone: "UTC" },
   ).format(new Date(`${today}T12:00:00Z`));
+
   const openJournal = () =>
     runtime
       ? runtime.onJournal()
       : openPanel({ kind: "journal", tripId: trip.id, date: today });
+
   const openPlan = () =>
     runtime
       ? runtime.onPlan()
       : openPanel({ kind: "plan", tripId: trip.id, dayIndex });
+
   const handleVisit = async (id: string, value: boolean) => {
     if (runtime) {
       if (visiting.current || runtime.busy || !runtime.nextStop) return;
@@ -110,6 +116,7 @@ export function OngoingHomeScreen({
       } finally {
         visiting.current = false;
       }
+
       return;
     }
     setVisited(trip.id, today, id, value);
@@ -201,6 +208,7 @@ export function OngoingHomeScreen({
               setCheckedInStop(null);
               return;
             }
+
             openPanel({
               kind: "camera",
               tripId: trip.id,

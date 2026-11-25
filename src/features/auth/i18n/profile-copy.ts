@@ -43,6 +43,7 @@ const vi = {
   },
   vehicleLabels: { motorcycle: "Xe máy", car: "Ô tô", walk: "Đi bộ" },
 };
+
 const en: typeof vi = {
   settings: "Settings",
   close: "Close",
@@ -86,6 +87,7 @@ const en: typeof vi = {
   },
   vehicleLabels: { motorcycle: "Motorbike", car: "Car", walk: "Walking" },
 };
+
 export function useProfileCopy() {
   const { locale } = useI18n();
   return { copy: locale === "vi" ? vi : en, locale };

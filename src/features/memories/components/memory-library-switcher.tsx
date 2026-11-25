@@ -7,6 +7,7 @@ import { useAppTheme } from "@/hooks/use-app-theme";
 import { useMemoriesCopy } from "../i18n/memories-copy";
 
 export type MemoryLibraryMode = "photos" | "albums";
+
 export function MemoryLibrarySwitcher({
   mode,
   onChange,
@@ -18,6 +19,7 @@ export function MemoryLibrarySwitcher({
 }) {
   const theme = useAppTheme();
   const { copy } = useMemoriesCopy();
+
   return (
     <View
       style={{

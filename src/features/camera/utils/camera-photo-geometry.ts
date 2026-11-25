@@ -9,6 +9,7 @@ export function cameraPhotoCrop(width: number, height: number, zoom = 1) {
   )
     throw new Error("Invalid photo dimensions");
   const size = Math.max(1, Math.floor(Math.min(width, height) / zoom));
+
   return {
     originX: Math.floor((width - size) / 2),
     originY: Math.floor((height - size) / 2),

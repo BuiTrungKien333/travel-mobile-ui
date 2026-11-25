@@ -23,6 +23,7 @@ export function BacklogSelectionToolbar({
     justifyContent: "center" as const,
     opacity: pressed ? theme.motion.pressOpacity : 1,
   });
+
   return (
     <View
       style={{

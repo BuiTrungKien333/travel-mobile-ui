@@ -216,17 +216,22 @@ function AchievementStat({
 
 const styles = StyleSheet.create({
   card: { overflow: "hidden", borderCurve: "continuous" },
+
   watermark: {
     position: "absolute",
     opacity: 0.06,
     transform: [{ rotate: "-12deg" }],
   },
+
   stat: { flex: 1, minWidth: 0, alignItems: "center" },
+
   medal: {
     flexShrink: 0,
     borderWidth: StyleSheet.hairlineWidth,
   },
+
   medalCenter: { flex: 1, alignItems: "center", justifyContent: "center" },
+
   divider: {
     alignSelf: "stretch",
     overflow: "hidden",

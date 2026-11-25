@@ -12,17 +12,22 @@ function motionHarness(dismissDisabled = false) {
     (event: { translationY: number; velocityY: number }) => void
   > = {};
   const gesture = Object.fromEntries(
-    ["enabled", "activeOffsetY", "failOffsetX", "onUpdate", "onEnd", "onFinalize"].map(
-      (key) => [
-        key,
-        (value: unknown) => {
-          if (key === "enabled") gestureEnabled = value === true;
-          if (typeof value === "function")
-            handlers[key] = value as (typeof handlers)[string];
-          return gesture;
-        },
-      ],
-    ),
+    [
+      "enabled",
+      "activeOffsetY",
+      "failOffsetX",
+      "onUpdate",
+      "onEnd",
+      "onFinalize",
+    ].map((key) => [
+      key,
+      (value: unknown) => {
+        if (key === "enabled") gestureEnabled = value === true;
+        if (typeof value === "function")
+          handlers[key] = value as (typeof handlers)[string];
+        return gesture;
+      },
+    ]),
   );
   const load = tripModuleLoader({
     react: {
@@ -79,9 +84,19 @@ function motionHarness(dismissDisabled = false) {
   const { usePickerSheetMotion } = load<
     typeof import("../src/features/trip/hooks/use-picker-sheet-motion.ts")
   >("src/features/trip/hooks/use-picker-sheet-motion.ts");
-  const motion = usePickerSheetMotion(() => events.push("close"),dismissDisabled);
+  const motion = usePickerSheetMotion(
+    () => events.push("close"),
+    dismissDisabled,
+  );
   const cleanup = effects[0]();
-  return { motion, completions, events, handlers, cleanup, isGestureEnabled: () => gestureEnabled };
+  return {
+    motion,
+    completions,
+    events,
+    handlers,
+    cleanup,
+    isGestureEnabled: () => gestureEnabled,
+  };
 }
 
 test("a pending server mutation disables swipe and prevents closing the sheet", () => {

@@ -214,11 +214,20 @@ test("trip adapter preserves the first matching day's settings and empty days", 
   const date = trip.days[0].date;
   const settings = {
     origin: { name: "Hotel", address: null, latitude: 16, longitude: 108 },
-    departureTime: "08:30:00", returnToStart: true, travelMode: "DRIVE" as const,
+    departureTime: "08:30:00",
+    returnToStart: true,
+    travelMode: "DRIVE" as const,
   };
   const itinerary = {
-    id: null, tripId: trip.id, name: "Main", status: "DRAFT", updatedAt: null,
-    days: [{ date, stops: [], settings }, { date, stops: [], settings: { ...settings, departureTime: "10:00:00" } }],
+    id: null,
+    tripId: trip.id,
+    name: "Main",
+    status: "DRAFT",
+    updatedAt: null,
+    days: [
+      { date, stops: [], settings },
+      { date, stops: [], settings: { ...settings, departureTime: "10:00:00" } },
+    ],
   };
   const before = JSON.stringify(itinerary);
 

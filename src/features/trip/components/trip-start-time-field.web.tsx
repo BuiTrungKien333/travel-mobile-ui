@@ -10,6 +10,7 @@ import type { TripStartTimeFieldProps } from "./trip-start-time-field";
 const hours = Array.from({ length: 24 }, (_, index) =>
   String(index).padStart(2, "0"),
 );
+
 const minutes = Array.from({ length: 60 }, (_, index) =>
   String(index).padStart(2, "0"),
 );
@@ -44,6 +45,7 @@ export function TripStartTimeField({
     outlineColor: theme.colors.focus,
     cursor: "pointer",
   };
+
   return (
     <View style={{ gap: compact ? theme.spacing.xs : theme.spacing.sm }}>
       <AppText variant="label">{label ?? copy.startTime}</AppText>

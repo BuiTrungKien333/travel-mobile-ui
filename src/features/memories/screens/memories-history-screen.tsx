@@ -51,10 +51,12 @@ export function MemoriesHistoryScreen({
         : buildMemoryAlbums(library.trips, library.memories),
     [library.trips, library.memories, library.isPending, library.isError],
   );
+
   const photos = useMemo(
     () => albums.flatMap((album) => album.photos),
     [albums],
   );
+
   const sections = useMemo(
     () =>
       albums.map((album) => ({
@@ -64,10 +66,12 @@ export function MemoriesHistoryScreen({
       })),
     [albums],
   );
+
   const contentWidth = Math.min(
     width - insets.left - insets.right,
     theme.layout.contentMaxWidth,
   );
+
   const size =
     (contentWidth -
       theme.layout.memoryGridGap * (theme.layout.memoryPhotoColumns - 1)) /
@@ -88,6 +92,7 @@ export function MemoriesHistoryScreen({
         </MemoryEmpty>
       </View>
     ) : null;
+
   const content = (
     <>
       <View
@@ -212,6 +217,7 @@ export function MemoriesHistoryScreen({
       ) : null}
     </>
   );
+
   return embedded ? (
     <ScreenSafeArea
       edges={["top", "left", "right"]}

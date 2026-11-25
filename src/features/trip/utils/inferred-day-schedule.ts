@@ -20,6 +20,7 @@ export function inferredDaySchedule(
     !day.stops.slice(1).some((stop) => !stop.arrivalTime)
   )
     return null;
+
   return {
     expectedTripVersion: tripVersion,
     expectedUpdatedAt: itinerary.updatedAt,

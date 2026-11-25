@@ -2,6 +2,7 @@ import * as SecureStore from "expo-secure-store";
 import { ApiError } from "@/services/api/api-error";
 
 const key = "tripzy.auth.refresh-token";
+
 // Isolate authentication keys from the default keychain used by older builds.
 const options: SecureStore.SecureStoreOptions = {
   keychainService: "wego.auth.session",

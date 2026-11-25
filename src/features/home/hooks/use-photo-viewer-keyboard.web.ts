@@ -18,6 +18,7 @@ export function usePhotoViewerKeyboard({
         event.defaultPrevented
       )
         return;
+
       if (event.key === "Escape") {
         event.preventDefault();
         onBack();
@@ -39,6 +40,7 @@ export function usePhotoViewerKeyboard({
       }
     }
     window.addEventListener("keydown", handleKey);
+
     return () => window.removeEventListener("keydown", handleKey);
   }, [blocked, onBack, onPrevious, onNext, onToggleControls]);
 }

@@ -38,6 +38,7 @@ export function CreateTripOptionsCard({
   const [isBudgetFocused, setIsBudgetFocused] = useState(false);
   const theme = useAppTheme();
   const { copy } = useTripCopy();
+
   return (
     <View
       style={[
@@ -200,6 +201,7 @@ export function CreateTripOptionsCard({
             <View style={styles.chipsContainer}>
               {tripPreferenceIds.map((chip) => {
                 const isSelected = selectedTags.includes(chip);
+
                 return (
                   <Pressable
                     key={copy.preferences[chip]}

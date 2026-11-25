@@ -29,6 +29,7 @@ export function CreateTripNameCard({
   const [isTitleFocused, setIsTitleFocused] = useState(false);
   const theme = useAppTheme();
   const { copy } = useTripCopy();
+
   return (
     <View
       style={[

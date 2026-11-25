@@ -27,6 +27,7 @@ async function encryptionKey(db: IDBDatabase) {
     false,
     ["encrypt", "decrypt"],
   );
+
   return new Promise<CryptoKey>((resolve, reject) => {
     const transaction = db.transaction("keys", "readwrite");
     const store = transaction.objectStore("keys");
@@ -60,6 +61,7 @@ export async function readLocalMemories(): Promise<LocalMemory[]> {
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
+
     return Promise.all(
       records.map(async (record) => {
         const data = await crypto.subtle.decrypt(
@@ -67,6 +69,7 @@ export async function readLocalMemories(): Promise<LocalMemory[]> {
           key,
           record.data,
         );
+
         return localMemorySchema.parse(
           JSON.parse(new TextDecoder().decode(data)),
         );
@@ -83,6 +86,7 @@ export async function writeLocalMemory(memory: LocalMemory) {
       key,
       new TextEncoder().encode(JSON.stringify(localMemorySchema.parse(memory))),
     );
+
     await new Promise<void>((resolve, reject) => {
       const transaction = db.transaction("photos", "readwrite");
       transaction.objectStore("photos").put({ id: memory.id, iv, data });
@@ -112,6 +116,7 @@ export async function createLocalMemory(
   });
   const memory = localMemorySchema.parse({ ...metadata, photo });
   await writeLocalMemory(memory);
+
   return memory;
 }
 

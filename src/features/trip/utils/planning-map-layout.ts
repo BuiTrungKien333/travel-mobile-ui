@@ -17,15 +17,18 @@ export function getPlanningMapBounds({
     screenHeight * layout.tripPlanningMapExpandedRatio,
     available,
   );
+
   const minimum =
     headerHeight +
     layout.touchTarget * 2 +
     spacing.xxl +
     layout.compactTouchTarget;
+
   const collapsed = Math.min(
     expanded,
     Math.max(minimum, screenHeight * layout.tripPlanningMapCollapsedRatio),
     Math.max(0, available - layout.touchTarget),
   );
+
   return { collapsed, expanded };
 }

@@ -79,9 +79,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 1,
   },
+
   touchArea: {
     padding: 6,
   },
+
   option: {
     minWidth: 36,
     minHeight: 32,

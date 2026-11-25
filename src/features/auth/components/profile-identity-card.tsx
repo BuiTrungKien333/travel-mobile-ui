@@ -22,6 +22,7 @@ export function ProfileIdentityCard({
       : user.role === "GUEST"
         ? "auth.profile.guestRole"
         : "auth.profile.memberRole";
+
   const initials = user.fullName
     .trim()
     .split(/\s+/)
@@ -30,6 +31,7 @@ export function ProfileIdentityCard({
     .map((part) => part[0])
     .join("")
     .toUpperCase();
+
   return (
     <View
       style={{

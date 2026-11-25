@@ -21,48 +21,51 @@ function harness(enabled = true, reduceMotion = false) {
       resizeValue = value;
     },
   };
-  const load = tripModuleLoader({
-    react: {
-      useState: (initial: boolean) => [
-        initial,
-        (next: boolean) => changes.push(next),
-      ],
-      useEffect: (effect: () => void) => effects.push(effect),
-    },
-    "react-native-reanimated": {
-      useReducedMotion: () => reduceMotion,
-      useSharedValue: (initial: unknown) => {
-        let value = initial;
-        return {
-          get: () => value,
-          set: (next: unknown) => {
-            value = next;
-          },
-        };
+  const load = tripModuleLoader(
+    {
+      react: {
+        useState: (initial: boolean) => [
+          initial,
+          (next: boolean) => changes.push(next),
+        ],
+        useEffect: (effect: () => void) => effects.push(effect),
       },
-      useAnimatedScrollHandler: (value: ScrollHandlers) => {
-        handlers = value;
-        return value;
-      },
-    },
-    "react-native-worklets": {
-      scheduleOnRN: (
-        callback: (...args: unknown[]) => void,
-        ...args: unknown[]
-      ) => callback(...args),
-    },
-    "@/hooks/use-app-theme": {
-      useAppTheme: () => ({
-        layout: { tripPlanningMapAutoHideDistance: 48 },
-        spacing: { sm: 8 },
-        motion: {
-          tripMapScrollIntentDuration: 180,
-          tripMapRestoreDistance: 96,
-          tripMapScrollSettleDuration: 600,
+      "react-native-reanimated": {
+        useReducedMotion: () => reduceMotion,
+        useSharedValue: (initial: unknown) => {
+          let value = initial;
+          return {
+            get: () => value,
+            set: (next: unknown) => {
+              value = next;
+            },
+          };
         },
-      }),
+        useAnimatedScrollHandler: (value: ScrollHandlers) => {
+          handlers = value;
+          return value;
+        },
+      },
+      "react-native-worklets": {
+        scheduleOnRN: (
+          callback: (...args: unknown[]) => void,
+          ...args: unknown[]
+        ) => callback(...args),
+      },
+      "@/hooks/use-app-theme": {
+        useAppTheme: () => ({
+          layout: { tripPlanningMapAutoHideDistance: 48 },
+          spacing: { sm: 8 },
+          motion: {
+            tripMapScrollIntentDuration: 180,
+            tripMapRestoreDistance: 96,
+            tripMapScrollSettleDuration: 600,
+          },
+        }),
+      },
     },
-  }, { Date: { now: () => now } });
+    { Date: { now: () => now } },
+  );
   const { usePlanningMapCollapse } = load<{
     usePlanningMapCollapse: (options: {
       enabled: boolean;
@@ -90,7 +93,9 @@ function harness(enabled = true, reduceMotion = false) {
     scrolls,
     handlers,
     resizeLock,
-    advance: (milliseconds: number) => { now += milliseconds; },
+    advance: (milliseconds: number) => {
+      now += milliseconds;
+    },
     event: (y: number) => ({ contentOffset: { y } }),
   };
 }

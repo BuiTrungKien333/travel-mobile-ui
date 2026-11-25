@@ -45,6 +45,7 @@ export function OngoingTripHeader({
       minimumOpacity +
       ((1 - minimumOpacity) * (1 + Math.cos(progress.value * Math.PI * 4))) / 2,
   }));
+
   const weather =
     liveWeather ??
     (preview &&
@@ -200,6 +201,7 @@ export function OngoingTripHeader({
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   badge: { alignSelf: "flex-start", maxWidth: "100%", overflow: "hidden" },
   weather: { overflow: "hidden", flexShrink: 1 },

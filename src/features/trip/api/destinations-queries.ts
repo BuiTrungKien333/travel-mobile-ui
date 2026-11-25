@@ -17,5 +17,6 @@ export function useDestinationsQuery(search: string, enabled: boolean) {
     getNextPageParam: (page) =>
       page.page + 1 < page.totalPages ? page.page + 1 : undefined,
   });
+
   return { query, isDebouncing: normalized !== debounced };
 }

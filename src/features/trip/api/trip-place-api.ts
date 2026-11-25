@@ -11,6 +11,7 @@ import {
 } from "./trip-types";
 
 const base = "/api/v1/trips";
+
 function parse<T>(
   schema: {
     safeParse(value: unknown): { success: boolean; data?: { data: T } };
@@ -37,10 +38,12 @@ export const tripPlacesApi = {
       )
     )
       throw new ApiError("INVALID_PLACE");
+
     const response = await apiClient.post<unknown>(
       `${base}/${encodeURIComponent(tripId)}/places/batch`,
       { placeIds, ...(date ? { date } : {}) },
     );
+
     return parse(tripPlacesEnvelopeSchema, response.data);
   },
   async listPlaces(
@@ -51,6 +54,7 @@ export const tripPlacesApi = {
       `${base}/${encodeURIComponent(tripId)}/places`,
       { signal },
     );
+
     return parse(tripPlacesEnvelopeSchema, response.data);
   },
   async addPlace(
@@ -63,6 +67,7 @@ export const tripPlacesApi = {
       `${base}/${encodeURIComponent(tripId)}/places`,
       body.data,
     );
+
     return parse(tripPlaceEnvelopeSchema, response.data);
   },
   async updatePlace(
@@ -76,6 +81,7 @@ export const tripPlacesApi = {
       `${base}/${encodeURIComponent(tripId)}/places/${encodeURIComponent(placeId)}`,
       body.data,
     );
+
     return parse(tripPlaceEnvelopeSchema, response.data);
   },
   async removePlace(tripId: string, placeId: string): Promise<void> {

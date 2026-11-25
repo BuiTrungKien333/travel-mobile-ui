@@ -79,9 +79,11 @@ export function JournalPhotoViewer({
   >({
     [selection.id]: { uri: selection.uri, size: selection.size },
   });
+
   const [selections, setSelections] = useState<Record<string, PhotoSelection>>({
     [selection.id]: selection,
   });
+
   const [photoStates, setPhotoStates] = useState<
     Record<string, "loaded" | "failed">
   >({});
@@ -112,29 +114,35 @@ export function JournalPhotoViewer({
       active.current = false;
     };
   }, []);
+
   useEffect(() => {
     if (!notice) return;
     const timer = setTimeout(
       () => setNotice(null),
       theme.motion.photoViewerNoticeDuration,
     );
+
     return () => clearTimeout(timer);
   }, [notice, theme.motion.photoViewerNoticeDuration]);
+
   useEffect(() => {
     if (!loading) {
       setShowSpinner(false);
       return;
     }
+
     const timer = setTimeout(
       () => setShowSpinner(true),
       theme.motion.enterDuration,
     );
+
     return () => clearTimeout(timer);
   }, [loading, theme.motion.enterDuration]);
 
   function toggleControls() {
     setControls((value) => !value);
   }
+
   function changePage(next: number) {
     const photo = getSelection(memories[next].id);
     if (photo) setSelections((old) => ({ ...old, [photo.id]: photo }));
@@ -142,6 +150,7 @@ export function JournalPhotoViewer({
     onActiveChange(memories[next].id);
     setNotice(null);
   }
+
   const motion = usePhotoViewerMotion({
     origin: currentSelection?.origin ?? selection.origin,
     size: info?.size ?? viewport,
@@ -252,6 +261,7 @@ export function JournalPhotoViewer({
         const measured: Record<string, PhotoSelection> = {
           [selection.id]: selection,
         };
+
         for (const photo of memories) {
           const value = getSelection(photo.id);
           if (value) measured[photo.id] = value;
@@ -339,6 +349,7 @@ export function JournalPhotoViewer({
                   const selected = page === index;
                   const metadata = photoInfo[photo.id] ?? selections[photo.id];
                   const fitted = fitPhoto(metadata?.size ?? viewport, viewport);
+
                   return (
                     <View
                       key={photo.id}
@@ -398,6 +409,7 @@ export function JournalPhotoViewer({
                                         },
                                       },
                                 );
+
                               setPhotoStates((old) =>
                                 old[photo.id] === "loaded"
                                   ? old

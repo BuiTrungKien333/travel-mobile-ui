@@ -17,11 +17,13 @@ export function useNavigationCapture() {
     visited: state.visited,
     openPanel: state.openPanel,
   }));
+
   return () => {
     if (!UI_PREVIEW_ENABLED) {
       const home = client.getQueryData<HomeDashboard>(
         tripQueryKeys.dashboard(owner),
       );
+
       if (home?.state === "LIVE" && home.selectedTrip) {
         router.push({
           pathname: "/trip/camera",
@@ -30,9 +32,11 @@ export function useNavigationCapture() {
             day: home.context.evaluatedDate,
           },
         });
+
         return;
       }
       router.push("/memories/quick-capture");
+
       return;
     }
     const selection = selectHome(trips, today);
@@ -46,6 +50,7 @@ export function useNavigationCapture() {
       stops,
       visited[`${trip.id}:${today}`] ?? [],
     );
+
     openPanel({
       kind: "camera",
       tripId: trip.id,

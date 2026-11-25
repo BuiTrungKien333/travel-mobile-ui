@@ -42,6 +42,7 @@ export function BacklogScheduleSheet({
       submitting.current = false;
     }
   }
+
   return (
     <TripDetailsSheet
       title={copy.assignTitle}
@@ -81,6 +82,7 @@ export function BacklogScheduleSheet({
           const checked = day.date === date;
           const disabled = pending || day.stopCount + count > 100;
           const label = `${copy.dayLabel} ${day.dayNumber} · ${new Intl.DateTimeFormat(locale, { weekday: "short", day: "2-digit", month: "2-digit", timeZone: "UTC" }).format(new Date(`${day.date}T12:00:00Z`))}`;
+
           return (
             <Pressable
               key={day.date}

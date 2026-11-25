@@ -25,6 +25,7 @@ export function ConnectedTripsScreen() {
   const query = useTripsQuery();
   const [creating, setCreating] = useState(false);
   const rows = query.data?.pages.flatMap((page) => page.content) ?? [];
+
   return (
     <ScreenSafeArea
       edges={["top", "left", "right"]}

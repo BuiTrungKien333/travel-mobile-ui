@@ -57,6 +57,7 @@ export const authApi = {
     );
     const parsed = profileEnvelope.safeParse(response.data);
     if (!parsed.success) throw new ApiError("INVALID_RESPONSE");
+
     return parsed.data.data;
   },
   async googleChallenge(signal?: AbortSignal) {
@@ -67,6 +68,7 @@ export const authApi = {
     );
     const parsed = googleChallengeEnvelope.safeParse(response.data);
     if (!parsed.success) throw new ApiError("INVALID_RESPONSE");
+
     return parsed.data.data;
   },
 
@@ -77,6 +79,7 @@ export const authApi = {
     );
     const parsed = googleLoginEnvelope.safeParse(response.data);
     if (!parsed.success) throw new ApiError("INVALID_RESPONSE");
+
     return parsed.data.data;
   },
 
@@ -87,6 +90,7 @@ export const authApi = {
     );
     const parsed = authEnvelope.safeParse(response.data);
     if (!parsed.success) throw new ApiError("INVALID_RESPONSE");
+
     return parsed.data.data;
   },
 
@@ -104,6 +108,7 @@ export const authApi = {
     );
     const parsed = registrationEnvelope.safeParse(response.data);
     if (!parsed.success) throw new ApiError("INVALID_RESPONSE");
+
     return parsed.data.data;
   },
 
@@ -113,6 +118,7 @@ export const authApi = {
     });
     const parsed = authEnvelope.safeParse(response.data);
     if (!parsed.success) throw new ApiError("INVALID_RESPONSE");
+
     return parsed.data.data;
   },
 
@@ -126,6 +132,7 @@ export const authApi = {
     });
     const parsed = profileEnvelope.safeParse(response.data);
     if (!parsed.success) throw new ApiError("INVALID_RESPONSE");
+
     return parsed.data.data;
   },
 
@@ -137,6 +144,7 @@ export const authApi = {
     const response = await apiClient.post<unknown>(endpoint, { email });
     const parsed = emailEnvelope.safeParse(response.data);
     if (!parsed.success) throw new ApiError("INVALID_RESPONSE");
+
     return parsed.data.data;
   },
 

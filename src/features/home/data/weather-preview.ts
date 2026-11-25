@@ -1,6 +1,7 @@
 export type WeatherCondition = "sun" | "cloud" | "rain";
 export type WeatherExperience = "mist" | "walk" | "cafe" | "photo";
 export type PackingItem = "layer" | "umbrella" | "sun" | "shoes";
+
 export type ForecastHour = {
   time: string;
   temperature: number;
@@ -8,6 +9,7 @@ export type ForecastHour = {
   condition: WeatherCondition;
   experience?: WeatherExperience;
 };
+
 export type ForecastDay = {
   date: string;
   low: number;
@@ -188,5 +190,6 @@ export function suggestedPacking(
   if (rainy) items.push("umbrella");
   if (days.some((day) => day.uv !== undefined && day.uv > 5)) items.push("sun");
   if (rainy && outdoorWalking) items.push("shoes");
+
   return items;
 }

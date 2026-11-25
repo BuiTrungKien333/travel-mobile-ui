@@ -72,6 +72,7 @@ export function AppBottomSheet({
       }}
     />
   );
+
   return (
     <Modal
       transparent
@@ -218,9 +219,11 @@ export function AppBottomSheet({
     </Modal>
   );
 }
+
 const styles = StyleSheet.create({
   fill: { flex: 1 },
   backdrop: { flex: 1, justifyContent: "flex-end", alignItems: "center" },
+
   sheet: {
     width: "100%",
     maxHeight: "100%",

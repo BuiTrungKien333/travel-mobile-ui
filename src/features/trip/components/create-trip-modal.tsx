@@ -131,6 +131,7 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
     if (isDirty) confirmDiscard(copy, onClose);
     else onClose();
   };
+
   const handleSelectDestination = (
     newDest: string,
     provinceId: string | null = null,
@@ -141,32 +142,38 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
       setValue("initialStops", [], { shouldDirty: true });
       setNotice(copy.destinationChanged);
     }
+
     setValue("destination", newDest, {
       shouldDirty: true,
       shouldValidate: true,
     });
+
     setValue("destinationProvinceId", provinceId, {
       shouldDirty: true,
       shouldValidate: true,
     });
+
     if (!titleEdited.current)
       setValue(
         "title",
         generateDefaultTitle(newDest, startDate, endDate, copy),
       );
   };
+
   const handleApplyDateRange = (start: string, end: string) => {
     setValue("startDate", start, { shouldDirty: true, shouldValidate: true });
     setValue("endDate", end, { shouldDirty: true, shouldValidate: true });
     if (!titleEdited.current)
       setValue("title", generateDefaultTitle(destination, start, end, copy));
   };
+
   const handleRemoveStop = (id: string) =>
     setValue(
       "initialStops",
       selectedStops.filter((stop) => stop.id !== id),
       { shouldDirty: true },
     );
+
   const toggleTag = (tag: TripPreference) =>
     setValue(
       "preferences",
@@ -239,12 +246,15 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
             )
               setError("budget", { message: integrationCopy.invalid });
           }
+
           setError("root", {
             message: tripApiErrorMessage(failure, integrationCopy),
           });
         }
+
         return;
       }
+
       const success = createDraft({
         ...values,
         title:
@@ -269,6 +279,7 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
         setIsAccordionOpen(true);
         requestAnimationFrame(() => setFocus("budget"));
       }
+
       if (
         fieldErrors.destination ||
         fieldErrors.startDate ||

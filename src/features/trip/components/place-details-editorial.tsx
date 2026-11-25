@@ -18,6 +18,7 @@ export function PlaceClassification({
   const theme = useAppTheme();
   const { copy, locale } = usePlaceSearchCopy();
   const { entry } = getPlaceEditorialPreview(place);
+
   return (
     <View style={{ gap: theme.spacing.xs, marginTop: theme.spacing.xs }}>
       <AppText variant="caption" tone="primary">
@@ -58,6 +59,7 @@ export function PlaceAmenities({ place }: { place: TripStop }) {
   const theme = useAppTheme();
   const { copy, locale } = usePlaceSearchCopy();
   const { entry } = getPlaceEditorialPreview(place);
+
   return (
     <View style={{ gap: theme.spacing.sm }}>
       <AppText variant="label">{copy.amenitiesAndTips}</AppText>
@@ -117,6 +119,7 @@ export function PlaceIntroduction({
   const { copy, locale } = usePlaceSearchCopy();
   const { entry, photos: previewPhotos } = getPlaceEditorialPreview(place);
   const photos = samplePhotos ?? previewPhotos;
+
   return (
     <View style={{ gap: theme.spacing.md }}>
       <AppText variant="label">{copy.introduction}</AppText>

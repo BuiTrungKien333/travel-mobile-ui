@@ -16,6 +16,7 @@ export function GoogleLinkScreen() {
   if (isLoading) return <MagicLinkLoading />;
   return <GoogleLinkConfirmation key={token ?? "missing"} token={token} />;
 }
+
 function GoogleLinkConfirmation({ token }: { token: string | null }) {
   const theme = useAppTheme();
   const { t } = useI18n();
@@ -29,6 +30,7 @@ function GoogleLinkConfirmation({ token }: { token: string | null }) {
       /* Translated mutation error below. */
     }
   };
+
   return (
     <AuthScaffold
       title={t("auth.google.confirmTitle")}

@@ -42,5 +42,6 @@ export function authErrorMessage(
     /^SECURE_(READ|WRITE|DELETE)_[A-Z_]{1,64}$/.test(failure.diagnostic)
   )
     return `${message} (${failure.diagnostic})`;
+
   return message;
 }

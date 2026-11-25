@@ -43,6 +43,7 @@ export function TripMapboxView({
     const fail = () => {
       if (!cancelled) onUnavailable();
     };
+
     void import("mapbox-gl-web")
       .then(({ default: mapbox }) => {
         if (cancelled || !container.current) return;
@@ -95,19 +96,23 @@ export function TripMapboxView({
           new mapbox.NavigationControl({ showCompass: false }),
           new mapbox.GeolocateControl(),
         ];
+
         for (const control of mapControls) {
           view.addControl(control, "bottom-right");
           const element = mapContainer.querySelector<HTMLDivElement>(
             ".mapboxgl-ctrl-bottom-right > .mapboxgl-ctrl-group",
           );
+
           if (element) {
             element.style.margin = "0";
             controls.appendChild(element);
           }
         }
+
         view.once("load", () => {
           if (!cancelled) setMap(view);
         });
+
         view.on("error", () => {
           if (!view.isStyleLoaded()) fail();
         });
@@ -115,6 +120,7 @@ export function TripMapboxView({
         observer.observe(mapContainer);
       })
       .catch(fail);
+
     return () => {
       cancelled = true;
       observer?.disconnect();
@@ -150,6 +156,7 @@ export function TripMapboxView({
         background: "transparent",
         cursor: "pointer",
       });
+
       Object.assign(badge.style, {
         width: `${theme.layout.tripMapMarkerSize}px`,
         height: `${theme.layout.tripMapMarkerSize}px`,
@@ -173,15 +180,18 @@ export function TripMapboxView({
         event.stopPropagation();
         select(pin.id);
       });
+
       return new mapbox.Marker({ element: button })
         .setLngLat([pin.longitude, pin.latitude])
         .addTo(map);
     });
+
     if (path.length > 1) {
       map.addSource("trip-route", {
         type: "geojson",
         data: { type: "LineString", coordinates: path },
       });
+
       map.addLayer({
         id: "trip-route-line",
         type: "line",
@@ -211,6 +221,7 @@ export function TripMapboxView({
         zoom: TRIP_MAP_DEFAULT_ZOOM,
         duration,
       });
+
     return () => {
       markers.forEach((marker) => marker.remove());
       // The mount effect can remove the map before this cleanup runs.

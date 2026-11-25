@@ -25,7 +25,12 @@ const errorCode = compile(errorUrl);
 const anchor = { x: 0, y: 0, width: 48, height: 48 };
 
 function fixture({
-  modules = ["FileSystem", "ExpoMediaLibraryNext", "ExpoSharing", "ExpoImageManipulator"],
+  modules = [
+    "FileSystem",
+    "ExpoMediaLibraryNext",
+    "ExpoSharing",
+    "ExpoImageManipulator",
+  ],
   os = "android",
   version = 35,
   granted = true,
@@ -42,7 +47,9 @@ function fixture({
   const events: string[] = [];
   const loaded: string[] = [];
   let finishCopy = () => {};
-  const copyGate = new Promise<void>((resolve) => { finishCopy = resolve; });
+  const copyGate = new Promise<void>((resolve) => {
+    finishCopy = resolve;
+  });
   const errorModule = { exports: {} };
   runInNewContext(errorCode, {
     exports: errorModule.exports,
@@ -73,8 +80,17 @@ function fixture({
         ? `${typeof base === "string" ? base : base.uri}/${name}`
         : String(base);
     }
-    async copy() { events.push("file:copy"); if (deferCopy) { await copyGate; events.push("file:copied"); } }
-    delete() { events.push("file:delete"); this.exists = false; }
+    async copy() {
+      events.push("file:copy");
+      if (deferCopy) {
+        await copyGate;
+        events.push("file:copied");
+      }
+    }
+    delete() {
+      events.push("file:delete");
+      this.exists = false;
+    }
   }
   const optional: Record<string, { nativeName: string; value: unknown }> = {
     "expo-file-system": {
@@ -133,10 +149,15 @@ function fixture({
           requireOptionalNativeModule: (id: string) =>
             modules.includes(id) ? {} : null,
         };
-      if (name === "expo-image") return { Image: { loadAsync: async (uri: string) => {
-        events.push(`decode:${uri}`);
-        return { release: () => events.push("decoded:release") };
-      } } };
+      if (name === "expo-image")
+        return {
+          Image: {
+            loadAsync: async (uri: string) => {
+              events.push(`decode:${uri}`);
+              return { release: () => events.push("decoded:release") };
+            },
+          },
+        };
       if (name === "react-native")
         return { Platform: { OS: os, Version: version } };
       if (name === "./photo-action-error") return errorModule.exports;
@@ -241,7 +262,6 @@ test("sharing retains the temporary file while the recipient may still need it",
   assert.equal(events.length, 3);
 });
 
-
 test("bundled Android assets export pixels to PNG instead of copying a non-file URI", async () => {
   const { actions, events } = fixture();
   await actions.saveJournalPhoto("asset:/sample.jpg");
@@ -252,7 +272,10 @@ test("bundled Android assets export pixels to PNG instead of copying a non-file 
   assert.ok(events.includes("rendered:release"));
   assert.ok(events.includes("context:release"));
   assert.ok(events.includes("decoded:release"));
-  assert.match(events.find((event) => event.startsWith("save:")) ?? "", /WeGo-\d+\.png$/);
+  assert.match(
+    events.find((event) => event.startsWith("save:")) ?? "",
+    /WeGo-\d+\.png$/,
+  );
   assert.equal(events.at(-1), "directory:delete");
 });
 
@@ -263,25 +286,32 @@ test("Android 10 requests add-only access before the legacy media writer runs", 
   assert.equal(events.at(-1), "directory:delete");
 });
 
-
 test("sample exports decode the original bundled source rather than the renderer's event URL", async () => {
   const { actions, events } = fixture();
   await actions.saveJournalPhoto("res:/2131234", 321);
   assert.ok(events.includes("decode:321"));
   assert.ok(!events.includes("decode:res:/2131234"));
-  assert.match(events.find((event) => event.startsWith("save:")) ?? "", /WeGo-\d+\.png$/);
+  assert.match(
+    events.find((event) => event.startsWith("save:")) ?? "",
+    /WeGo-\d+\.png$/,
+  );
 });
-
 
 test("gallery creation and temporary deletion wait for the SDK's asynchronous file copy", async () => {
   const { actions, events, finishCopy } = fixture({ deferCopy: true });
   const saving = actions.saveJournalPhoto("res:/2131234", 321);
   await new Promise<void>((resolve) => setImmediate(resolve));
   assert.ok(events.includes("file:copy"));
-  assert.ok(!events.includes("file:delete"), "never delete a source while it is still copying");
+  assert.ok(
+    !events.includes("file:delete"),
+    "never delete a source while it is still copying",
+  );
   assert.ok(!events.some((event) => event.startsWith("save:")));
   finishCopy();
   await saving;
   assert.ok(events.indexOf("file:copied") < events.indexOf("file:delete"));
-  assert.ok(events.indexOf("file:copied") < events.findIndex((event) => event.startsWith("save:")));
+  assert.ok(
+    events.indexOf("file:copied") <
+      events.findIndex((event) => event.startsWith("save:")),
+  );
 });

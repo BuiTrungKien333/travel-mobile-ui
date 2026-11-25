@@ -22,6 +22,7 @@ export function TripBacklogRow({
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
+
   return (
     <Pressable
       accessibilityRole={selected === undefined ? "button" : "checkbox"}

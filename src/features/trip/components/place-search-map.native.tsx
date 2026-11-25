@@ -10,5 +10,6 @@ export function PlaceSearchMap(props: ComponentProps<typeof FallbackMap>) {
   )
     return <FallbackMap {...props} />;
   const native: typeof import("./live-place-search-map.native") = require("./live-place-search-map.native");
+
   return <native.PlaceSearchMap {...props} />;
 }

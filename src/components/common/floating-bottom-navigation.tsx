@@ -38,6 +38,7 @@ export function FloatingBottomNavigation({
   ...props
 }: FloatingBottomNavigationProps) {
   const onHeightChange = useContext(BottomTabBarHeightCallbackContext);
+
   return (
     <FloatingNavigation
       {...props}
@@ -48,6 +49,7 @@ export function FloatingBottomNavigation({
       onHeightChange={onHeightChange}
       items={state.routes.map((route, index) => {
         const options = descriptors[route.key].options;
+
         return {
           key: route.key,
           label:
@@ -111,10 +113,12 @@ export function FloatingNavigation({
       Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
       () => setKeyboardVisible(true),
     );
+
     const hide = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
       () => setKeyboardVisible(false),
     );
+
     return () => {
       show.remove();
       hide.remove();
@@ -226,6 +230,7 @@ export function FloatingNavigation({
                   const color = focused
                     ? theme.colors.navigationActive
                     : theme.colors.navigationInactive;
+
                   return (
                     <Pressable
                       key={route.key}
@@ -297,15 +302,18 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: "center",
   },
+
   frame: { width: "100%", position: "relative" },
   camera: { position: "absolute" },
   row: { position: "relative" },
+
   group: {
     position: "absolute",
     top: 0,
     flexDirection: "row",
     alignItems: "center",
   },
+
   tab: { flexShrink: 0, alignItems: "center", justifyContent: "center" },
   icon: { alignItems: "center", justifyContent: "center" },
   indicator: { position: "absolute", left: 0, pointerEvents: "none" },

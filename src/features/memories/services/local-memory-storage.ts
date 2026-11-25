@@ -17,6 +17,7 @@ export async function readLocalMemories(): Promise<LocalMemory[]> {
       (entry) =>
         entry instanceof File && /^local-[\w-]+\.jpg$/.test(entry.name),
     );
+
   const records = await Promise.all(
     files.map(async (file) => {
       const value = await getItemAsync(key(file.name.slice(0, -4)));
@@ -25,6 +26,7 @@ export async function readLocalMemories(): Promise<LocalMemory[]> {
         : null;
     }),
   );
+
   return records.filter((record) => record !== null);
 }
 

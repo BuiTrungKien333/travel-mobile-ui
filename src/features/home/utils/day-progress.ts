@@ -9,5 +9,6 @@ export function getDayProgress(
   const ordered = [...stops].sort((a, b) => a.time.localeCompare(b.time));
   const visitedStops = ordered.filter((stop) => visited.has(stop.id));
   const remainingStops = ordered.filter((stop) => !visited.has(stop.id));
+
   return { ordered, visitedStops, remainingStops, nextStop: remainingStops[0] };
 }

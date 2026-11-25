@@ -19,6 +19,7 @@ export function CreateTripDestinationCard({
 }: Props) {
   const theme = useAppTheme();
   const { copy } = useTripCopy();
+
   return (
     <Pressable
       accessibilityRole="button"

@@ -41,12 +41,14 @@ export function TripPlanningDaySelector({
     ...(showBacklog ? [{ key: "backlog", kind: "backlog" } as const] : []),
     ...(onAddDay ? [{ key: "add", kind: "add" } as const] : []),
   ];
+
   const current = Math.max(
     0,
     selectedDate
       ? trip.days.findIndex((day) => day.date === selectedDate)
       : trip.days.length,
   );
+
   return (
     <FlatList
       horizontal
@@ -87,8 +89,10 @@ export function TripPlanningDaySelector({
               />
             </Pressable>
           );
+
         if (item.kind === "backlog") {
           const selected = selectedDate === undefined;
+
           return (
             <Pressable
               accessibilityRole="tab"
@@ -124,6 +128,7 @@ export function TripPlanningDaySelector({
         }
         const selected = item.date === selectedDate;
         const date = new Date(`${item.date}T12:00:00Z`);
+
         return (
           <Pressable
             accessibilityRole="tab"

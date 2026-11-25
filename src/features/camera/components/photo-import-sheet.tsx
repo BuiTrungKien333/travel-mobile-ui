@@ -71,6 +71,7 @@ export function PhotoImportSheet({
       mounted.current = false;
     };
   }, []);
+
   function assertSession() {
     if (
       !mounted.current ||
@@ -79,6 +80,7 @@ export function PhotoImportSheet({
     )
       throw new ApiError("CANCELLED");
   }
+
   async function execute(selected: readonly PhotoImportItem[]) {
     if (operation.current) return;
     operation.current = true;
@@ -92,6 +94,7 @@ export function PhotoImportSheet({
           ? { ...item, memory: localMemorySchema.parse(stored) }
           : item;
       });
+
       await importPhotos(current, {
         assertSession,
         save: async (source) => {
@@ -99,6 +102,7 @@ export function PhotoImportSheet({
           // Preserve gallery aspect ratio; prepare one bitmap at a time, never all ten.
           const photo = await prepareCameraPhoto(source, 1, false);
           assertSession();
+
           return save({
             uri: photo.uri,
             tripId: trip?.id,
@@ -120,6 +124,7 @@ export function PhotoImportSheet({
           trip && !UI_PREVIEW_ENABLED
             ? async (memory, onProgress) => {
                 assertSession();
+
                 return upload.mutateAsync({
                   memory,
                   onProgress,
@@ -146,6 +151,7 @@ export function PhotoImportSheet({
       if (mounted.current) setRunning(false);
     }
   }
+
   function errorLabel(item: PhotoImportItem) {
     if (item.error instanceof ApiError) {
       if (item.error.code === "CANCELLED") return copy.importSessionChanged;
@@ -154,6 +160,7 @@ export function PhotoImportSheet({
       if (item.error.code === "UPLOAD_008") return copy.imageTooLarge;
       if (item.error.code === "MEMORY_FUTURE_DATE") return copy.futureDate;
     }
+
     return item.memory ? copy.importUploadFailed : copy.importSaveFailed;
   }
   const saved = items.filter((item) => item.memory).length;
@@ -162,6 +169,7 @@ export function PhotoImportSheet({
   const close = () => {
     if (!operation.current && !running) onClose();
   };
+
   return (
     <Modal
       visible

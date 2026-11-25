@@ -26,10 +26,13 @@ export function useHomeDashboard() {
     const timer = setTimeout(() => {
       void refetch();
     }, nextHomeRefreshDelay({ evaluatedDate, serverTime }));
+
     return () => clearTimeout(timer);
   }, [evaluatedDate, serverTime, refetch]);
+
   return query;
 }
+
 export function useHomeActions() {
   const client = useQueryClient();
   const owner = useProfile().data?.id;
@@ -64,6 +67,7 @@ export function useHomeActions() {
         }),
       ]),
   });
+
   const removePhoto = useMutation({
     retry: false,
     mutationFn: async (id: string) => {
@@ -77,5 +81,6 @@ export function useHomeActions() {
         client.invalidateQueries({ queryKey: [memoryQueryKeys.all[0], owner] }),
       ]),
   });
+
   return { visit, removePhoto };
 }

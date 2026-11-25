@@ -127,6 +127,7 @@ export function SessionGate({ failed }: { failed: boolean }) {
     </ScreenSafeArea>
   );
 }
+
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { flexGrow: 1, alignItems: "center", justifyContent: "center" },

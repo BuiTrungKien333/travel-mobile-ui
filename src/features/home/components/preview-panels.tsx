@@ -46,14 +46,17 @@ export function PreviewPanels() {
         onClose={closePanel}
       />
     );
+
   if (panel.kind === "create") {
     return <CreateTripModal visible onClose={closePanel} />;
   }
+
   if (panel.kind === "journal" || panel.kind === "current-weather") {
     return (
       <OngoingTripPanels key={`${panel.kind}:${panel.tripId}`} panel={panel} />
     );
   }
+
   const titles = {
     scenarios: copy.previewTitle,
     create: copy.create,
@@ -62,6 +65,7 @@ export function PreviewPanels() {
     "capture-start": copy.capture,
     notifications: copy.notifications,
   };
+
   return (
     <Modal
       transparent
@@ -275,12 +279,14 @@ function ScenarioPicker() {
     scenario: state.scenario,
     changeScenario: state.changeScenario,
   }));
+
   const options: { value: HomeScenario; title: string }[] = [
     { value: "new", title: copy.scenarioNew },
     { value: "upcoming", title: copy.scenarioUpcoming },
     { value: "ongoing", title: copy.scenarioOngoing },
     { value: "returning", title: copy.scenarioReturning },
   ];
+
   return (
     <>
       <AppText tone="muted">{copy.previewHint}</AppText>

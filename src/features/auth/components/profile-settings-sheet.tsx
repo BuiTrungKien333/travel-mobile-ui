@@ -17,6 +17,7 @@ export function ProfileSettingsSheet({
 }) {
   const theme = useAppTheme();
   const { copy } = useProfileCopy();
+
   return (
     <AppBottomSheet
       title={copy[panel]}

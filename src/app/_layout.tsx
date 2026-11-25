@@ -39,8 +39,10 @@ export default function RootLayout() {
     const subscription = AppState.addEventListener("change", (state) =>
       focusManager.setFocused(state === "active"),
     );
+
     return () => subscription.remove();
   }, []);
+
   const [fontsLoaded, fontError] = useFonts({
     Roboto_400Regular,
     Roboto_500Medium,
@@ -80,7 +82,10 @@ export default function RootLayout() {
                   <Stack.Screen name="(auth)" />
                 </Stack.Protected>
                 <Stack.Protected
-                  guard={UI_PREVIEW_ENABLED || (status === "authenticated" && canUseWorkspace(user))}
+                  guard={
+                    UI_PREVIEW_ENABLED ||
+                    (status === "authenticated" && canUseWorkspace(user))
+                  }
                 >
                   <Stack.Screen name="(workspace)" />
                 </Stack.Protected>

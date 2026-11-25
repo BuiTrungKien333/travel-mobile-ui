@@ -245,6 +245,7 @@ const vi = {
   savedPoolHint:
     "Các địa điểm được lưu vào Chưa xếp lịch để bạn tự chọn ngày và giờ.",
 };
+
 const en: typeof vi = {
   shortWeekdays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
   expandMap: "Expand map",
@@ -500,7 +501,9 @@ const en: typeof vi = {
   savedPoolHint:
     "Places are saved to Not scheduled so you can choose their days and times.",
 };
+
 export type TripDetailsCopy = typeof vi;
+
 export function useTripDetailsCopy() {
   const { locale } = useI18n();
   return { copy: locale === "vi" ? vi : en, locale };

@@ -189,6 +189,7 @@ const navigationAssets = {
     solid: require("@/assets/icons/navigation/person-solid.svg"),
   },
 };
+
 const lightAssets = {
   daySchedule: require("@/assets/icons/navigation/day-schedule.svg"),
   cameraGallery: require("@/assets/icons/camera/gallery.svg"),
@@ -212,6 +213,7 @@ const lightAssets = {
   heartFilled: require("@/assets/icons/photo/heart-filled.svg"),
   info: require("@/assets/icons/photo/info.svg"),
 };
+
 function isLightIcon(name: AppIconName): name is keyof typeof lightAssets {
   return (
     name === "daySchedule" ||
@@ -237,6 +239,7 @@ function isLightIcon(name: AppIconName): name is keyof typeof lightAssets {
     name === "info"
   );
 }
+
 function isNavigationIcon(
   name: AppIconName,
 ): name is keyof typeof navigationAssets {
@@ -262,6 +265,7 @@ export function AppIcon({
   variant?: "outline" | "solid" | "light";
 }) {
   const theme = useAppTheme();
+
   return (
     <View
       aria-hidden

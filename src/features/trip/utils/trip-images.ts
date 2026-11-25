@@ -38,5 +38,6 @@ function sampleIndex(id: string) {
   for (let index = 0; index < id.length; index++) {
     hash = Math.imul(hash ^ id.charCodeAt(index), 16777619);
   }
+
   return (hash >>> 0) % sampleCovers.length;
 }

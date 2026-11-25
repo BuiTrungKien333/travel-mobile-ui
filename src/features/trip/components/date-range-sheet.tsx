@@ -64,6 +64,7 @@ function DateRangeSession({
     for (let i = 0; i < firstDayIndex; i++) {
       days.push(null);
     }
+
     for (let d = 1; d <= totalDays; d++) {
       const monthStr = String(month + 1).padStart(2, "0");
       const dayStr = String(d).padStart(2, "0");
@@ -72,6 +73,7 @@ function DateRangeSession({
         dayNum: d,
       });
     }
+
     return days;
   }, [currentMonth]);
 
@@ -126,10 +128,12 @@ function DateRangeSession({
     locale === "vi" ? "vi-VN" : "en-US",
     { month: "long", year: "numeric", timeZone: "UTC" },
   ).format(currentMonth);
+
   const weekHeaders =
     locale === "vi"
       ? ["T2", "T3", "T4", "T5", "T6", "T7", "CN"]
       : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
   const handleApply = () => {
     if (!selectedStart) return;
     const finalStart = selectedStart;
@@ -425,10 +429,12 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
   },
+
   backdrop: {
     flex: 1,
     justifyContent: "flex-end",
   },
+
   sheet: {
     width: "100%",
     maxHeight: "90%",
@@ -444,20 +450,24 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     marginBottom: spacing.lg,
   },
+
   bannerColumn: {
     flex: 1,
     minWidth: 0,
     alignItems: "center",
     gap: spacing.xxs,
   },
+
   bannerDivider: {
     width: StyleSheet.hairlineWidth,
     height: 28,
   },
+
   bannerDate: {
     fontSize: typography.fontSize.sm,
     lineHeight: typography.lineHeight.sm,
   },
+
   monthNavRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -465,6 +475,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     paddingHorizontal: spacing.sm,
   },
+
   navArrow: {
     minWidth: layout.compactTouchTarget,
     minHeight: layout.compactTouchTarget,
@@ -472,45 +483,54 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: spacing.xs + spacing.xxs,
   },
+
   monthLabel: {
     fontSize: typography.fontSize.md,
     lineHeight: typography.lineHeight.md,
   },
+
   weekdayRow: {
     flexDirection: "row",
     marginBottom: spacing.sm,
   },
+
   weekdayCell: {
     flex: 1,
     textAlign: "center",
     fontSize: typography.fontSize.xs,
     lineHeight: typography.lineHeight.xs,
   },
+
   daysGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     marginBottom: spacing.lg,
   },
+
   dayCell: {
     width: "14.285%",
     height: layout.compactTouchTarget,
     alignItems: "center",
     justifyContent: "center",
   },
+
   dayCircle: {
     width: 32,
     height: 32,
     alignItems: "center",
     justifyContent: "center",
   },
+
   dayText: {
     fontSize: typography.fontSize.sm,
     lineHeight: typography.lineHeight.sm,
   },
+
   durationRow: {
     alignItems: "center",
     marginBottom: spacing.md,
   },
+
   durationText: {
     fontSize: typography.fontSize.sm,
     lineHeight: typography.lineHeight.sm,

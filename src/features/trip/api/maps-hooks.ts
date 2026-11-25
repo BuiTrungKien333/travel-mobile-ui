@@ -11,11 +11,13 @@ export function usePlaceRouteQuery(
   const pointsKey = points
     .map(({ latitude, longitude }) => `${latitude},${longitude}`)
     .join(";");
+
   return useQuery({
     queryKey: ["places", owner, "route", pointsKey],
     queryFn: ({ signal }) => {
       if (points.length < 2 || points.length > 25)
         throw new ApiError("INVALID_ROUTE");
+
       return mapsApi.route(
         {
           origin: points[0],

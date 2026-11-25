@@ -45,6 +45,7 @@ export function ServerConnectionScreen() {
         failure instanceof ServerConnectionError
           ? failure
           : new ServerConnectionError("NETWORK");
+
       setError(
         `${copy[problem.code]} (CONNECT_${problem.code}${problem.httpStatus ? ` · HTTP ${problem.httpStatus}` : ""})`,
       );
@@ -53,6 +54,7 @@ export function ServerConnectionScreen() {
       setBusy(false);
     }
   };
+
   return (
     <AuthScaffold
       title={copy.title}

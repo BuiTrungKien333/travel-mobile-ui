@@ -30,11 +30,13 @@ export function normalizeApiError(error: unknown): ApiError {
       );
     }
     const parsed = errorSchema.safeParse(error.response.data);
+
     return new ApiError(
       parsed.success ? parsed.data.code : "SERVER",
       error.response.status,
       parsed.success ? parsed.data.errors : undefined,
     );
   }
+
   return new ApiError("UNKNOWN");
 }

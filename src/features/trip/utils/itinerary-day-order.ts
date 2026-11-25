@@ -27,5 +27,6 @@ export function reorderDayStops(
         : stops[sequence].arrivalTime,
     });
   }
+
   return ordered;
 }

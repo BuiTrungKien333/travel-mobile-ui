@@ -34,6 +34,7 @@ export function JournalAlbum({
   const { copy } = useOngoingCopy();
   const gallery = useJournalPhotoGallery();
   const { remove } = useMemoryActions();
+
   return (
     <View style={{ gap: theme.spacing.sm }}>
       <View style={[homeStyles.row, { gap: theme.spacing.sm }]}>
@@ -59,6 +60,7 @@ export function JournalAlbum({
             },
             (_, row) => {
               const pair = photos.slice(row * 2, row * 2 + 2);
+
               return (
                 <View
                   key={pair[0].id}

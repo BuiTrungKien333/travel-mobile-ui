@@ -68,7 +68,8 @@ function cameraFixture(quick = false) {
         return [
           states[index],
           (value: unknown) => {
-            states[index] = typeof value === "function" ? value(states[index]) : value;
+            states[index] =
+              typeof value === "function" ? value(states[index]) : value;
           },
         ];
       },
@@ -241,7 +242,11 @@ test("flipping cameras changes the facing of one mounted native session", () => 
   f.render().props.onFlip();
   const front = f.preview();
   assert.ok(front);
-  assert.equal(front.key, back.key, "Android must not unbind a new session through a removed view");
+  assert.equal(
+    front.key,
+    back.key,
+    "Android must not unbind a new session through a removed view",
+  );
   assert.equal((front.props as { facing?: string }).facing, "front");
   f.render().props.onFlip();
   const rear = f.preview();

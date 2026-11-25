@@ -16,6 +16,7 @@ function uniquePlaces(stops: TripStop[]) {
       places.set(stop.id, { ...previous, note: notes || undefined });
     }
   }
+
   return [...places.values()];
 }
 
@@ -41,10 +42,12 @@ export function applyTripMutation(
       count > tripFormLimits.days
     )
       return null;
+
     const days = Array.from({ length: count }, (_, index) => {
       const date = new Date(`${startDate}T12:00:00Z`);
       date.setUTCDate(date.getUTCDate() + index);
       const key = date.toISOString().slice(0, 10);
+
       return (
         trip.days.find((day) => day.date === key) ?? { date: key, stops: [] }
       );
@@ -53,6 +56,7 @@ export function applyTripMutation(
     const displaced = trip.days
       .filter((day) => !retained.has(day.date))
       .flatMap((day) => day.stops);
+
     return {
       ...trip,
       startDate,
@@ -82,9 +86,11 @@ export function applyTripMutation(
       )
     )
       return null;
+
     const byId = new Map(
       durations.map((entry) => [entry.stopId, entry.durationMinutes]),
     );
+
     return {
       ...trip,
       days: trip.days.map((item) =>
@@ -104,6 +110,7 @@ export function applyTripMutation(
       ),
     };
   }
+
   if (mutation.kind === "add") {
     const existing = mutation.date === null ? pool : (day?.stops ?? []);
     const additions = uniquePlaces(mutation.stops)
@@ -114,6 +121,7 @@ export function applyTripMutation(
         durationMinutes: stop.durationMinutes ?? 45,
         pinned: false,
       }));
+
     return mutation.date === null
       ? { ...trip, unscheduledStops: [...pool, ...additions] }
       : {
@@ -128,6 +136,7 @@ export function applyTripMutation(
           ),
         };
   }
+
   if (mutation.kind === "reorder") {
     if (
       !day ||
@@ -135,9 +144,11 @@ export function applyTripMutation(
       new Set(mutation.ids).size !== day.stops.length
     )
       return null;
+
     const reordered = mutation.ids.map((id) =>
       day.stops.find((stop) => stop.id === id),
     );
+
     if (
       reordered.some((stop) => !stop) ||
       day.stops.some(
@@ -151,6 +162,7 @@ export function applyTripMutation(
       if (!stop) return null;
       stops.push({ ...stop, time: day.stops[index].time });
     }
+
     return {
       ...trip,
       days: trip.days.map((item) => (item === day ? { ...item, stops } : item)),
@@ -165,6 +177,7 @@ export function applyTripMutation(
       !trip.days.some((item) => item.date === mutation.targetDate)
     )
       return null;
+
     if (mutation.targetDate !== mutation.date) {
       const target =
         mutation.targetDate === null
@@ -180,6 +193,7 @@ export function applyTripMutation(
       );
       return date === mutation.targetDate ? [...rest, updated] : rest;
     };
+
     // Editing in place preserves order; moving to another day appends deliberately.
     if (mutation.date === mutation.targetDate)
       return mutation.date === null
@@ -202,6 +216,7 @@ export function applyTripMutation(
                 : item,
             ),
           };
+
     return {
       ...trip,
       days: trip.days.map((item) => ({
@@ -211,6 +226,7 @@ export function applyTripMutation(
       unscheduledStops: transform(pool, null),
     };
   }
+
   return mutation.date === null
     ? { ...trip, unscheduledStops: pool.filter((item) => item.id !== stop.id) }
     : {

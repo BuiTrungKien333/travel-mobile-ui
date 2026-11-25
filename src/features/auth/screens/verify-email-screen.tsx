@@ -33,6 +33,7 @@ function VerifyEmailConfirmation({ token }: { token: string }) {
       /* Mutation error appears below. GET/link preview never redeems the token. */
     }
   };
+
   return (
     <AuthScaffold
       title={t("auth.verify.title")}

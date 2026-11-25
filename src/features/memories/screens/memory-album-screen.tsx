@@ -43,6 +43,7 @@ export function MemoryAlbumScreen({ tripId }: { tripId?: string }) {
     width - insets.left - insets.right,
     theme.layout.contentMaxWidth,
   );
+
   const photoSize =
     (contentWidth -
       theme.layout.memoryGridGap * (theme.layout.memoryPhotoColumns - 1)) /
@@ -77,6 +78,7 @@ export function MemoryAlbumScreen({ tripId }: { tripId?: string }) {
       : actual.length
         ? actual
         : sampleTripPhotos(trip);
+
   const places = [
     ...new Set(photos.map((item) => item.place?.[locale] ?? copy.noPlace)),
   ];
@@ -86,11 +88,13 @@ export function MemoryAlbumScreen({ tripId }: { tripId?: string }) {
         (item) => (item.place?.[locale] ?? copy.noPlace) === selectedPlace,
       )
     : photos;
+
   const capture = () =>
     router.dismissTo({
       pathname: "/memories/quick-capture",
       params: { tripId: trip.id, day: captureDay?.date, stopId: "" },
     });
+
   return (
     <MemoryPage
       title={getTripTitle(trip, locale)}

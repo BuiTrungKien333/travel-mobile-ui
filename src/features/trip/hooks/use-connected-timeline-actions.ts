@@ -9,6 +9,7 @@ import type {
 import { reorderDayStops } from "../utils/itinerary-day-order";
 
 type DayStops = SaveItineraryDayRequest["stops"];
+
 type Snapshot = {
   key: string;
   date: string;
@@ -16,6 +17,7 @@ type Snapshot = {
   stops: TripStop[];
   request: SaveItineraryDayRequest;
 };
+
 type Operation = Snapshot & { kind: "change" | "undo" };
 
 export function useConnectedTimelineActions({
@@ -65,6 +67,7 @@ export function useConnectedTimelineActions({
     if (!editable || !date || !itinerary || tripVersion === undefined)
       return null;
     const before = toDayStops(itinerary, date);
+
     return {
       key: selectionKey,
       date,
@@ -96,6 +99,7 @@ export function useConnectedTimelineActions({
         date: operation.date,
         request: operation.request,
       });
+
       if (operation.kind === "change")
         setUndo({
           ...operation,
@@ -131,6 +135,7 @@ export function useConnectedTimelineActions({
       )
     )
       return;
+
     void commit({
       ...base,
       kind: "change",
@@ -161,6 +166,7 @@ export function useConnectedTimelineActions({
         const stop =
           byPlace.get(entry.placeId) ??
           activePending.stops.find((s) => s.placeId === entry.placeId);
+
         return stop
           ? [{ ...stop, time: entry.arrivalTime?.slice(11, 16) ?? "" }]
           : [];

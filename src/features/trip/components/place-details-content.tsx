@@ -86,6 +86,7 @@ export function PlaceDetailsContent({
       {mapAction}
     </View>
   );
+
   const info = [
     {
       icon: "clock" as const,
@@ -106,6 +107,7 @@ export function PlaceDetailsContent({
           : copy.unavailable,
     },
   ];
+
   return (
     <View
       style={styles.fill}
@@ -202,16 +204,27 @@ export function PlaceDetailsContent({
         {suppliedDetails?.photos?.length ? (
           <View style={{ gap: theme.spacing.sm }}>
             <AppText variant="label">{copy.placePhotos}</AppText>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: theme.spacing.sm }}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ gap: theme.spacing.sm }}
+            >
               {suppliedDetails.photos.map((url, index) => (
                 <Image
                   key={url}
                   source={url}
                   accessible
-                  accessibilityLabel={copy.photoLabel.replace("{index}", String(index + 1))}
+                  accessibilityLabel={copy.photoLabel.replace(
+                    "{index}",
+                    String(index + 1),
+                  )}
                   contentFit="cover"
                   cachePolicy="memory-disk"
-                  style={{ width: theme.layout.journalThumbnailSize, aspectRatio: theme.layout.journalPhotoAspectRatio, borderRadius: theme.radius.sm }}
+                  style={{
+                    width: theme.layout.journalThumbnailSize,
+                    aspectRatio: theme.layout.journalPhotoAspectRatio,
+                    borderRadius: theme.radius.sm,
+                  }}
                 />
               ))}
             </ScrollView>
@@ -276,6 +289,7 @@ export function PlaceDetailsContent({
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   fill: { flex: 1, minHeight: 0, minWidth: 0 },
   row: { flexDirection: "row", alignItems: "center" },

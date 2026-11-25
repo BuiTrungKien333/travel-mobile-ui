@@ -77,6 +77,7 @@ export function TripDetailsPanels({
         dates: copy.dates,
       }[sheet.kind]
     : "";
+
   return (
     <>
       {sheet && sheet.kind !== "optimize" ? (
@@ -188,6 +189,7 @@ export function TripDetailsPanels({
             <>
               {tripTransportModes.map((transport) => {
                 const isSelected = transport === (day.transport ?? "car");
+
                 return (
                   <AppButton
                     key={transport}
@@ -287,6 +289,7 @@ function DeleteTripButton({ onDelete }: { onDelete: () => void }) {
   const theme = useAppTheme();
   const { copy } = useTripDetailsCopy();
   const [confirmVisible, setConfirmVisible] = useState(false);
+
   return (
     <>
       <Pressable

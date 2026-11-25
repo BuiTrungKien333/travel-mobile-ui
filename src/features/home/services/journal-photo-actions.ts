@@ -47,6 +47,7 @@ async function withLocalPhoto(
       let rendered:
         | Awaited<ReturnType<NonNullable<typeof context>["renderAsync"]>>
         | undefined;
+
       try {
         stage = "render";
         context = ImageManipulator.manipulate(decoded);
@@ -127,6 +128,7 @@ export async function saveJournalPhoto(
     const permission = await requestPermissionsAsync(true, []);
     if (!permission.granted) throw new PhotoActionError("permission");
   }
+
   await withLocalPhoto(
     uri,
     async (file) => {

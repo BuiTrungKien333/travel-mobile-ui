@@ -36,6 +36,7 @@ export function TripMapPreview({
     Math.max(1, stops.length + (showStart ? 1 : 0)) *
       theme.layout.tripMapNodeSpacing,
   );
+
   const nodes = [
     ...(showStart
       ? [{ id: "start", label: "S", name: startLabel, stop: null }]
@@ -47,23 +48,28 @@ export function TripMapPreview({
       stop,
     })),
   ];
+
   const graphHeight = fitContainer
     ? 100
     : Math.max(
         theme.layout.touchTarget * 2,
         (height ?? theme.layout.tripMapMinimumHeight) - theme.spacing.xxl,
       );
+
   const points = nodes.map((node, index) => ({
     ...node,
     x: (graphWidth * (index + 0.5)) / nodes.length,
     y: graphHeight * (index % 2 ? 0.65 : 0.35),
   }));
+
   const path = points
     .map((point, index) => `${index ? "L" : "M"}${point.x} ${point.y}`)
     .join(" ");
+
   const source = svgDataUri(
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${graphWidth} ${graphHeight}" preserveAspectRatio="none"><path d="${path}" fill="none" stroke="${theme.colors.primary}" stroke-width="2" stroke-dasharray="4 5" vector-effect="non-scaling-stroke" /></svg>`,
   );
+
   return (
     <View
       onLayout={(event) => setWidth(event.nativeEvent.layout.width)}

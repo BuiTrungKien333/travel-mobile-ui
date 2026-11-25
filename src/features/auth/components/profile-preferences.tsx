@@ -20,10 +20,12 @@ const interestIds = [
   "adventure",
   "shopping",
 ] as const;
+
 type Interest = (typeof interestIds)[number];
 const vehicles = ["motorcycle", "car", "walk"] as const;
 type Vehicle = (typeof vehicles)[number];
 type PreferencePanel = "address" | "interests" | "vehicle";
+
 const addressPresets = [
   "Gò Vấp, TP. Hồ Chí Minh",
   "Quận 1, TP. Hồ Chí Minh",
@@ -55,6 +57,7 @@ export function ProfilePreferences() {
         : [...current, id],
     );
   }
+
   const optionStyle = (selected: boolean, pressed: boolean) => ({
     minHeight: theme.layout.touchTarget,
     flexDirection: "row" as const,
@@ -67,6 +70,7 @@ export function ProfilePreferences() {
     backgroundColor: selected ? theme.colors.surfaceTint : theme.colors.surface,
     opacity: pressed ? theme.motion.pressOpacity : 1,
   });
+
   return (
     <>
       <ProfileSection title={copy.travel}>

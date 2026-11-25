@@ -29,6 +29,7 @@ export function CheckEmail({
       /* Mutation error is displayed below. */
     }
   };
+
   return (
     <View style={{ gap: theme.spacing.lg }}>
       <AppText variant="bodyLarge" accessibilityLiveRegion="polite">

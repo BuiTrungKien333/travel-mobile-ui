@@ -77,6 +77,7 @@ export function NativeTripCamera(
   const previewMotion = useAnimatedStyle(() => ({
     transform: [{ scale: previewScale.get() }],
   }));
+
   useEffect(() => {
     previewScale.set(
       withTiming(zoom, {
@@ -100,6 +101,7 @@ export function NativeTripCamera(
     height?: number;
     mimeType?: string;
   } | null>(null);
+
   const [foreground, setForeground] = useState(
     AppState.currentState !== "background" &&
       AppState.currentState !== "inactive",
@@ -153,20 +155,24 @@ export function NativeTripCamera(
     requesting,
     request,
   ]);
+
   useEffect(() => {
     mounted.current = true;
     const subscription = AppState.addEventListener("change", (value) => {
       setForeground(value === "active");
     });
+
     return () => {
       mounted.current = false;
       subscription.remove();
     };
   }, []);
+
   const handleCameraRef = useCallback((instance: CameraView | null) => {
     camera.current = instance;
     if (!instance) setReady(false);
   }, []);
+
   useEffect(() => {
     if (!active || !permission?.granted || pending || ready || mountError)
       return;
@@ -174,16 +180,20 @@ export function NativeTripCamera(
       () => setMountError(true),
       CAMERA_READY_TIMEOUT_MS,
     );
+
     return () => clearTimeout(timer);
   }, [active, permission?.granted, pending, ready, mountError]);
+
   useEffect(() => {
     if (!saved) return;
     const timer = setTimeout(
       () => setSaved(false),
       theme.motion.photoViewerNoticeDuration,
     );
+
     return () => clearTimeout(timer);
   }, [saved, theme.motion.photoViewerNoticeDuration]);
+
   async function run(task: () => Promise<void>) {
     if (operation.current) return;
     operation.current = true;
@@ -209,6 +219,7 @@ export function NativeTripCamera(
       if (mounted.current) setBusy(false);
     }
   }
+
   async function persistPhoto(photo: {
     uri: string;
     id?: string;
@@ -224,6 +235,7 @@ export function NativeTripCamera(
     const existing = photo.id
       ? memories.find((item) => item.id === photo.id)
       : undefined;
+
     const memory =
       existing ??
       (await savePhoto({
@@ -262,6 +274,7 @@ export function NativeTripCamera(
         if (mounted.current) setWarning(copy.libraryCopyError);
       }
     }
+
     if (mounted.current) {
       setDeviceSaved(exported);
       setPending({ uri: memory.photo, id: memory.id, deviceSaved: exported });
@@ -280,6 +293,7 @@ export function NativeTripCamera(
         },
       });
     }
+
     if (mounted.current) {
       setPending(null);
       setReady(false);
@@ -287,6 +301,7 @@ export function NativeTripCamera(
       setError("");
     }
   }
+
   function capture() {
     if (pending) {
       void run(() => persistPhoto(pending));
@@ -308,6 +323,7 @@ export function NativeTripCamera(
       }
     });
   }
+
   function pick() {
     void run(async () => {
       // Mobile browsers require the picker to open directly from the press event.
@@ -341,11 +357,13 @@ export function NativeTripCamera(
       setReady(false);
     });
   }
+
   function retake() {
     setPending(null);
     setReady(false);
     setError("");
   }
+
   const notice = (
     title: string,
     hint: string,
@@ -389,6 +407,7 @@ export function NativeTripCamera(
       ) : null}
     </View>
   );
+
   const frame = pending ? (
     <Image
       accessible
@@ -474,6 +493,7 @@ export function NativeTripCamera(
       ) : null}
     </>
   );
+
   return (
     <CameraLayout
       {...props}

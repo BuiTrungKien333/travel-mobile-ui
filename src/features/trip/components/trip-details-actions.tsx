@@ -40,6 +40,7 @@ export function TripDetailsActions({
   const { copy } = useTripDetailsCopy();
   const { copy: ongoingCopy } = useOngoingCopy();
   if (mode === "planning" && !canOptimize) return null;
+
   return (
     <View
       style={{
@@ -135,6 +136,7 @@ export function TripDetailsActions({
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   grow: { flex: 1, flexBasis: 0, minWidth: 0 },
 });

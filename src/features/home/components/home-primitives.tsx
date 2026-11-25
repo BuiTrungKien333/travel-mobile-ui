@@ -32,6 +32,7 @@ export function HomePage({
 }) {
   const theme = useAppTheme();
   const tabBarHeight = useBottomTabBarHeight();
+
   return (
     <ScreenSafeArea
       edges={["top", "left", "right"]}
@@ -91,6 +92,7 @@ export function EnterSection({
   const entering = FadeInDown.duration(theme.motion.enterDuration).reduceMotion(
     ReduceMotion.System,
   );
+
   return (
     <Animated.View entering={entering} style={style}>
       {children}
@@ -106,6 +108,7 @@ export function SurfaceCard({
   tinted?: boolean;
 }) {
   const theme = useAppTheme();
+
   return (
     <View
       style={[
@@ -139,6 +142,7 @@ export function SectionHeading({
 }) {
   const theme = useAppTheme();
   const isEyebrow = variant === "eyebrow";
+
   return (
     <View style={[styles.row, { gap: theme.spacing.sm }]}>
       <AppText
@@ -180,6 +184,7 @@ export function TextAction({
   compact?: boolean;
 }) {
   const theme = useAppTheme();
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -229,6 +234,7 @@ export function Badge({
   icon?: AppIconName;
 }) {
   const theme = useAppTheme();
+
   return (
     <View
       style={[
@@ -270,6 +276,7 @@ export function PreviewNotice() {
   const { openPanel } = useTripPreview((state) => ({
     openPanel: state.openPanel,
   }));
+
   return (
     <View style={[styles.row, { gap: theme.spacing.sm, flexWrap: "wrap" }]}>
       <View style={styles.grow}>
@@ -293,6 +300,7 @@ export const homeStyles = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "center" },
   grow: { flex: 1, minWidth: 0 },
 });
+
 const styles = StyleSheet.create({
   ...homeStyles,
   flex: { flex: 1 },
@@ -300,6 +308,7 @@ const styles = StyleSheet.create({
   width: { width: "100%" },
   section: { width: "100%", flexShrink: 0 },
   card: { borderWidth: StyleSheet.hairlineWidth, borderCurve: "continuous" },
+
   badge: {
     flexDirection: "row",
     alignItems: "center",

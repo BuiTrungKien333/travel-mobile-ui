@@ -30,6 +30,7 @@ export function timelineDropTarget(
     }
     top += slots[index].height;
   }
+
   return target;
 }
 
@@ -47,6 +48,7 @@ export function moveTimelineStop(
     stops[from].pinned
   )
     return null;
+
   if (
     stops
       .slice(Math.min(from, to), Math.max(from, to) + 1)
@@ -56,5 +58,6 @@ export function moveTimelineStop(
   const ids = stops.map((stop) => stop.id);
   const [moved] = ids.splice(from, 1);
   ids.splice(to, 0, moved);
+
   return ids;
 }

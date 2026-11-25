@@ -103,6 +103,7 @@ const vi = {
   savedInbox: "Đã lưu vào thư viện thiết bị và Xem sau",
   savedDownload: "Đã lưu trong ứng dụng và gửi ảnh đến trình tải xuống",
 };
+
 const en: typeof vi = {
   networkError:
     "Cannot reach the server. Your photo is kept in the app; check Wi-Fi and the server address, then retry.",
@@ -210,6 +211,7 @@ const en: typeof vi = {
   savedInbox: "Saved to your photo library and Saved for later",
   savedDownload: "Saved in the app and sent to your downloads",
 };
+
 export function useCameraCopy() {
   const { locale } = useI18n();
   return { locale, copy: locale === "vi" ? vi : en };

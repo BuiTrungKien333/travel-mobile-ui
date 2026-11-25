@@ -25,6 +25,7 @@ import type { AuthUser } from "../types/auth-types";
 import { authErrorMessage } from "../utils/auth-error-message";
 
 const logoLeftInsetRatio = 307 / 2172;
+
 const previewUser: AuthUser = {
   id: "profile-preview",
   fullName: "Kiên Bùi Trung",
@@ -129,7 +130,11 @@ export function ProfileScreen({
           <AppText accessibilityRole="header" variant="subheading">
             {t("auth.profile.title")}
           </AppText>
-          {!isPreview && canAdminister(user) ? <AppButton variant="outline" onPress={() => router.push("/admin")}>{accessCopy(locale).admin}</AppButton> : null}
+          {!isPreview && canAdminister(user) ? (
+            <AppButton variant="outline" onPress={() => router.push("/admin")}>
+              {accessCopy(locale).admin}
+            </AppButton>
+          ) : null}
           {!isPreview && profile.isLoading ? (
             <View
               style={{

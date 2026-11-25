@@ -16,6 +16,7 @@ export const tripPreferenceIds: readonly TripPreference[] = [
   "shopping",
   "beach",
 ];
+
 export const tripFormLimits = {
   title: 120,
   destination: 120,

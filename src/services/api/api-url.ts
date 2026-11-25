@@ -16,6 +16,7 @@ function isPrivateIpv4(host: string): boolean {
   )
     return false;
   const [first, second] = parts.map(Number);
+
   return (
     first === 10 ||
     (first === 172 && second >= 16 && second <= 31) ||
@@ -35,11 +36,13 @@ export function resolveApiUrl(
       (environment.platform === "android" || environment.platform === "web") &&
       (isPrivateIpv4(url.hostname) ||
         (environment.platform === "web" && loopbackHosts.has(url.hostname)));
+
     if (
       url.protocol !== "https:" &&
       (url.protocol !== "http:" || (!environment.development && !lanDemo))
     )
       return undefined;
+
     if (
       url.username ||
       url.password ||
@@ -64,6 +67,7 @@ export function resolveApiUrl(
         url.hostname = metro.hostname;
       }
     }
+
     return url.origin;
   } catch {
     return undefined;

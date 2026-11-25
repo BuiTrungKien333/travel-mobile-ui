@@ -77,6 +77,7 @@ export function usePhotoViewerMotion({
     ...motion.photoViewerSpring,
     reduceMotion: ReduceMotion.System,
   };
+
   const zoomSpring = {
     ...motion.photoViewerZoomSpring,
     reduceMotion: ReduceMotion.System,
@@ -193,6 +194,7 @@ export function usePhotoViewerMotion({
         viewport.width,
         resistance,
       );
+
       y.value = rubberBand(
         event.focalY - viewport.height / 2 - anchorY.value * next,
         -bounds.y,
@@ -230,6 +232,7 @@ export function usePhotoViewerMotion({
         panNeedsReset.value = true;
         return;
       }
+
       // Continue panning with the remaining finger after a pinch, without a centroid jump.
       if (panNeedsReset.value) {
         startX.value = x.value;
@@ -250,6 +253,7 @@ export function usePhotoViewerMotion({
           viewport.width,
           resistance,
         );
+
         y.value = rubberBand(
           startY.value + dy,
           -bounds.y,
@@ -261,6 +265,7 @@ export function usePhotoViewerMotion({
         if (direction.value === 0 && Math.max(Math.abs(dx), Math.abs(dy)) > 0) {
           direction.value = Math.abs(dx) > Math.abs(dy) ? 1 : 2;
         }
+
         if (direction.value === 1) {
           pageX.value = rubberBand(
             pageStart.value + dx,
@@ -281,6 +286,7 @@ export function usePhotoViewerMotion({
         settleZoom();
         return;
       }
+
       if (direction.value === 1) {
         const displacement = pageX.value + currentPage.value * viewport.width;
         const target = photoPageDestination(
@@ -294,6 +300,7 @@ export function usePhotoViewerMotion({
           layout.photoViewerMinimumFlingDistance,
         );
         goToPage(target);
+
         return;
       }
       pageX.value = withSpring(-currentPage.value * viewport.width, spring);
@@ -333,6 +340,7 @@ export function usePhotoViewerMotion({
       ),
       zoomSpring,
     );
+
     y.value = withSpring(
       clampPhoto(
         zoomOffset(focalY, viewport.height / 2, y.value, scale.value, target),
@@ -351,12 +359,14 @@ export function usePhotoViewerMotion({
     .onEnd((event, success) => {
       if (success) zoomToPoint(event.x, event.y);
     });
+
   const singleTap = Gesture.Tap()
     .enabled(!blocked)
     .maxDistance(theme.spacing.sm)
     .onEnd((_event, success) => {
       if (success && !closing.value) scheduleOnRN(onToggleControls);
     });
+
   const gesture = Gesture.Race(
     Gesture.Simultaneous(pan, pinch),
     Gesture.Exclusive(doubleTap, singleTap),
@@ -370,6 +380,7 @@ export function usePhotoViewerMotion({
       1 -
       Math.min(1, Math.max(0, dragY.value) / viewport.height) *
         (1 - layout.photoViewerMinimumDismissScale);
+
     return {
       transform: [
         {
@@ -389,25 +400,30 @@ export function usePhotoViewerMotion({
       ],
     };
   });
+
   // Counter-scale inside the clipping frame: cover thumbnail -> uncropped original, without stretching pixels.
   const contentStyle = useAnimatedStyle(() => {
     const p = clampPhoto(progress.value, 0, 1);
     const sx = (origin.width / fitted.width) * (1 - p) + p;
     const sy = (origin.height / fitted.height) * (1 - p) + p;
     const cover = Math.max(sx, sy);
+
     return { transform: [{ scaleX: cover / sx }, { scaleY: cover / sy }] };
   });
+
   const backdropStyle = useAnimatedStyle(() => ({
     opacity:
       clampPhoto(progress.value, 0, 1) *
       (1 - clampPhoto(dragY.value / (viewport.height / 2), 0, 1)),
   }));
+
   const controlsStyle = useAnimatedStyle(() => ({
     opacity:
       chrome.value *
       clampPhoto(progress.value, 0, 1) *
       (1 - clampPhoto(dragY.value / dismissDistance, 0, 1)),
   }));
+
   const carouselStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: pageX.value }],
   }));

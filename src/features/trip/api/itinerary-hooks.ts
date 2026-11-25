@@ -13,6 +13,7 @@ import type {
 
 export function useTripItineraryQuery(tripId: string | undefined) {
   const owner = useProfile().data?.id;
+
   return useQuery({
     queryKey: tripQueryKeys.itinerary(owner, tripId),
     enabled: !!owner && !!tripId,
@@ -22,15 +23,18 @@ export function useTripItineraryQuery(tripId: string | undefined) {
     },
   });
 }
+
 export function useSaveItineraryDayMutation(tripId: string) {
   return useDayWrite<SaveItineraryDayRequest>(tripId, itineraryApi.saveDay);
 }
+
 export function useUpdateDayScheduleMutation(tripId: string) {
   return useDayWrite<UpdateDayScheduleRequest>(
     tripId,
     itineraryApi.updateSchedule,
   );
 }
+
 function useDayWrite<Request>(
   tripId: string,
   write: (
@@ -42,6 +46,7 @@ function useDayWrite<Request>(
   const client = useQueryClient();
   const owner = useProfile().data?.id;
   const key = tripQueryKeys.itinerary(owner, tripId);
+
   return useMutation({
     retry: false,
     mutationFn: async ({
@@ -67,6 +72,7 @@ function useDayWrite<Request>(
           queryKey: weatherQueryKeys.forTrip(owner, tripId),
         }),
       ]);
+
       return result;
     },
   });

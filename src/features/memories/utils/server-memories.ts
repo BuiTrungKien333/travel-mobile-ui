@@ -33,6 +33,7 @@ export function mergeMemories(
     const experienced = new Date(memory.experiencedAt);
     const date = todayCalendarDate(experienced);
     const time = travelClockTime(experienced);
+
     return [...memory.media]
       .sort((a, b) => a.displayOrder - b.displayOrder)
       .map((media) => ({
@@ -51,11 +52,13 @@ export function mergeMemories(
         },
       }));
   });
+
   const remoteWithPhotos = new Set(
     remote
       .filter((memory) => memory.media.length > 0)
       .map((memory) => memory.id),
   );
+
   const drafts = local.filter(
     (memory) =>
       memory.local &&
@@ -65,5 +68,6 @@ export function mergeMemories(
       (memory.local.serverId === undefined ||
         !remoteWithPhotos.has(memory.local.serverId)),
   );
+
   return [...drafts, ...photos];
 }

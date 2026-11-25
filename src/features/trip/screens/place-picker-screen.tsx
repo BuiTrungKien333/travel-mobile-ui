@@ -79,6 +79,7 @@ export function PlacePickerScreen({
     focus?.locationType === "address"
       ? getPlaceMapRegion(previewPlaces)
       : region;
+
   const [coordinate, setCoordinate] = useState<PlaceCoordinate | null>(
     region ? { latitude: region.latitude, longitude: region.longitude } : null,
   );
@@ -95,15 +96,18 @@ export function PlacePickerScreen({
       }),
     ),
   });
+
   const existing = trip
     ? [
         ...trip.days.flatMap((day) => day.stops),
         ...(trip.unscheduledStops ?? []),
       ]
     : [];
+
   const chosen = selected.filter(
     (stop) => !existing.some((entry) => entry.id === stop.id),
   );
+
   const available = [
     ...catalog,
     ...(deferredQuery.trim()
@@ -115,6 +119,7 @@ export function PlacePickerScreen({
       (stop) => !catalog.some((entry) => entry.id === stop.id),
     ),
   ];
+
   const results = searchPlaces(
     (selectedOnly ? chosen : available).filter(
       (stop) => !existing.some((entry) => entry.id === stop.id),
@@ -132,6 +137,7 @@ export function PlacePickerScreen({
         : [...stops, place],
     );
   }
+
   function openPreview(place: TripStop | null) {
     Keyboard.dismiss();
     if (place && !place.location) {
@@ -143,11 +149,13 @@ export function PlacePickerScreen({
       const saved = selected.find((stop) => stop.id === place.id);
       reset({ name: saved?.name.vi ?? "" });
     }
+
     if (!place && region) {
       reset({ name: "" });
       setCoordinate({ latitude: region.latitude, longitude: region.longitude });
     }
   }
+
   const chooseCustom = handleSubmit(({ name }) => {
     if (!coordinate) return;
     const stop: TripStop = {
@@ -167,6 +175,7 @@ export function PlacePickerScreen({
     setQuery("");
     setFocus(undefined);
   });
+
   function confirmPlace() {
     if (focus?.locationType === "address") {
       void handleSubmit(({ name }) => {
@@ -180,8 +189,10 @@ export function PlacePickerScreen({
         setFocus(undefined);
         Keyboard.dismiss();
       })();
+
       return;
     }
+
     if (!focus) {
       void chooseCustom();
       return;
@@ -190,6 +201,7 @@ export function PlacePickerScreen({
       setSelected((stops) => [...stops, focus]);
     setFocus(undefined);
   }
+
   function apply() {
     if (!canApply) return;
     Keyboard.dismiss();
@@ -215,6 +227,7 @@ export function PlacePickerScreen({
       )}
     />
   );
+
   return (
     <GestureHandlerRootView style={styles.fill}>
       <ScreenSafeArea
@@ -459,6 +472,7 @@ export function PlacePickerScreen({
                 }
                 renderItem={({ item }) => {
                   const checked = chosen.some((stop) => stop.id === item.id);
+
                   return (
                     <PlaceSearchResultRow
                       place={item}
@@ -553,6 +567,7 @@ export function PlacePickerScreen({
     </GestureHandlerRootView>
   );
 }
+
 const styles = StyleSheet.create({
   fill: { flex: 1, minWidth: 0 },
   row: { flexDirection: "row", alignItems: "center" },

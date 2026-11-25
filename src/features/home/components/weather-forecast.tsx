@@ -27,6 +27,7 @@ export function WeatherDateSelector({
   const theme = useAppTheme();
   const { copy, locale } = useWeatherCopy();
   const inModal = variant === "modal";
+
   return (
     <ScrollView
       horizontal
@@ -35,6 +36,7 @@ export function WeatherDateSelector({
     >
       {days.map((day) => {
         const selected = day.date === selectedDate;
+
         return (
           <Pressable
             key={day.date}
@@ -94,6 +96,7 @@ export function HourlyForecast({ day }: { day: ForecastDay }) {
   const theme = useAppTheme();
   const { copy } = useWeatherCopy();
   const { fontScale } = useWindowDimensions();
+
   return (
     <View style={{ gap: theme.spacing.sm }}>
       <AppText accessibilityRole="header" variant="label">

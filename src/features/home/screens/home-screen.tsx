@@ -59,11 +59,13 @@ export function HomeScreen() {
       ),
     ),
   ).size;
+
   const subtitles = {
     upcoming: copy.upcomingSubtitle,
     ongoing: copy.ongoingSubtitle,
     returning: copy.returningSubtitle,
   };
+
   return (
     <HomePage showHeader>
       <View style={{ gap: theme.spacing.xs }}>

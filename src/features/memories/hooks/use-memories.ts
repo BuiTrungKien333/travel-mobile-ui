@@ -27,6 +27,7 @@ import { mergeMemories } from "../utils/server-memories";
 export function useLocalMemories() {
   const profile = useProfile();
   const local = useTripPreview((state) => state.memories);
+
   return local.filter(
     (memory) =>
       memory.local &&
@@ -49,6 +50,7 @@ export function useMemoryTrips(includePlaces = true) {
   const isError = profile.isError || query.isError;
   const remote = query.data ?? [];
   const trips = UI_PREVIEW_ENABLED ? localTrips : remote;
+
   return {
     ...query,
     trips,
@@ -67,6 +69,7 @@ export function useMemories(includePlaces = true) {
     queryFn: ({ signal }) => memoryApi.list(signal),
     enabled: !UI_PREVIEW_ENABLED && !!profile.data,
   });
+
   const memories = useMemo(
     () =>
       UI_PREVIEW_ENABLED
@@ -80,6 +83,7 @@ export function useMemories(includePlaces = true) {
     [query.data, local, tripsQuery.trips, profile.data?.id],
   );
   const isError = query.isError || tripsQuery.isError;
+
   return {
     ...query,
     memories,
@@ -112,6 +116,7 @@ export function useMemoryActions() {
     void client.invalidateQueries({ queryKey: homeMemoryQueryKeys.all });
     void client.invalidateQueries({ queryKey: tripQueryKeys.root });
   }
+
   function accept(memory: ServerMemory, refreshQueries = true) {
     client.setQueryData<ServerMemory[]>(queryKey, (old = []) => [
       memory,
@@ -119,14 +124,17 @@ export function useMemoryActions() {
     ]);
     if (refreshQueries) refresh();
   }
+
   function protectSession(memory: Memory) {
     const version = authSession.getVersion();
     if (memory.local?.userId && memory.local.userId !== profile.data?.id)
       throw new ApiError("CANCELLED");
+
     return () => {
       if (version !== authSession.getVersion()) throw new ApiError("CANCELLED");
     };
   }
+
   const upload = useMutation({
     mutationKey: ["memory-upload"],
     retry: false,
@@ -150,6 +158,7 @@ export function useMemoryActions() {
         throw new ApiError("CANCELLED");
       assertSession();
       if (!onlineManager.isOnline()) throw new ApiError("NETWORK");
+
       return uploadLocalMemory(
         photo,
         profile.data.id,
@@ -164,6 +173,7 @@ export function useMemoryActions() {
         void client.invalidateQueries({ queryKey });
     },
   });
+
   const update = useMutation({
     retry: false,
     mutationFn: async ({ memory, text }: { memory: Memory; text: string }) => {
@@ -199,6 +209,7 @@ export function useMemoryActions() {
       void client.invalidateQueries({ queryKey });
     },
   });
+
   const remove = useMutation({
     retry: false,
     mutationFn: async (memory: Memory) => {
@@ -211,6 +222,7 @@ export function useMemoryActions() {
             item.local?.serverId === memory.remote?.memoryId &&
             item.local?.uploaded,
         );
+
         for (const backup of backups) {
           assertSession();
           await removeLocal(backup.id);
@@ -232,5 +244,6 @@ export function useMemoryActions() {
       void client.invalidateQueries({ queryKey: tripQueryKeys.root });
     },
   });
+
   return { upload, update, remove, refresh };
 }

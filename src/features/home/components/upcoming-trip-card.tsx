@@ -171,5 +171,6 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderCurve: "continuous",
   },
+
   countdownPosition: { position: "absolute", maxWidth: "70%" },
 });

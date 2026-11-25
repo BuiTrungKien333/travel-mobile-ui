@@ -60,6 +60,7 @@ const vi = {
   optimizeUnavailable:
     "Chưa có gợi ý tuyến đường. Bạn có thể sắp xếp thủ công.",
 };
+
 const en: typeof vi = {
   selectMultiple: "Select multiple",
   selectAll: "Select all",
@@ -122,6 +123,7 @@ const en: typeof vi = {
   optimizeUnavailable:
     "No route suggestion is available. You can reorder stops manually.",
 };
+
 export function useItineraryCopy() {
   const { locale } = useI18n();
   return { copy: locale === "vi" ? vi : en, locale };

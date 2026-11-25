@@ -7,6 +7,7 @@ import { placeDiscoveryKeys } from "./place-discovery-query-keys";
 import { tripQueryKeys } from "./trip-query-keys";
 import { weatherQueryKeys } from "@/features/weather/api/weather-query-keys";
 import type { UpdateTripPlaceRequest } from "./trip-types";
+
 export {
   useTripsQuery,
   useTripQuery,
@@ -15,6 +16,7 @@ export {
 
 export function useTripPlacesQuery(tripId: string | undefined) {
   const owner = useProfile().data?.id;
+
   return useQuery({
     queryKey: tripQueryKeys.places(owner, tripId),
     enabled: !!owner && !!tripId,
@@ -24,9 +26,11 @@ export function useTripPlacesQuery(tripId: string | undefined) {
     },
   });
 }
+
 export function useAddTripPlacesMutation(tripId: string, date?: string) {
   const owner = useProfile().data?.id;
   const client = useQueryClient();
+
   return useMutation({
     mutationFn: async (placeIds: string[]) => {
       const version = authSession.getVersion();
@@ -56,9 +60,11 @@ export function useAddTripPlacesMutation(tripId: string, date?: string) {
     },
   });
 }
+
 export function useUpdateTripPlaceMutation(tripId: string) {
   const client = useQueryClient();
   const owner = useProfile().data?.id;
+
   return useMutation({
     retry: false,
     mutationFn: async ({
@@ -75,6 +81,7 @@ export function useUpdateTripPlaceMutation(tripId: string) {
         request,
       );
       if (version !== authSession.getVersion()) throw new ApiError("CANCELLED");
+
       return response;
     },
     onSuccess: () =>

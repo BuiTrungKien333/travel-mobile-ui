@@ -56,6 +56,7 @@ export function PhotoViewerToolbar({
   const [favorites, setFavorites] = useState<Set<string>>(() => new Set());
   const favorite = favorites.has(memory.id);
   const disabled = !visible || busy !== null;
+
   return (
     <Animated.View
       pointerEvents={visible ? "box-none" : "none"}
@@ -212,6 +213,7 @@ function PhotoIconButton({
   surface?: "circle" | "none";
 }) {
   const theme = useAppTheme();
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -262,6 +264,7 @@ export function PhotoInfoPanel({
   const theme = useAppTheme();
   const insets = useScreenInsets();
   const { copy, locale } = usePhotoViewerCopy();
+
   return (
     <View
       style={[
@@ -388,6 +391,7 @@ export function PhotoDeleteConfirmation({
       )}
     </Pressable>
   );
+
   return (
     <View
       style={[
@@ -449,6 +453,7 @@ export function PhotoDeleteConfirmation({
 
 const styles = StyleSheet.create({
   header: { position: "absolute", flexDirection: "row", alignItems: "center" },
+
   footer: {
     position: "absolute",
     bottom: 0,
@@ -456,9 +461,11 @@ const styles = StyleSheet.create({
     right: 0,
     alignItems: "center",
   },
+
   actions: {
     flexDirection: "row",
     justifyContent: "space-between",
   },
+
   confirmation: { alignItems: "center", justifyContent: "center" },
 });

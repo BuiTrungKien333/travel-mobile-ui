@@ -39,6 +39,7 @@ const vi = {
   dateUnknown: "Chưa có ngày chụp",
   timeUnknown: "Chưa có giờ chụp",
 };
+
 const en: typeof vi = {
   back: "Back to album",
   previous: "Previous photo",
@@ -78,6 +79,7 @@ const en: typeof vi = {
   dateUnknown: "Capture date unavailable",
   timeUnknown: "Capture time unavailable",
 };
+
 export function usePhotoViewerCopy() {
   const { locale } = useI18n();
   return { copy: locale === "vi" ? vi : en, locale };

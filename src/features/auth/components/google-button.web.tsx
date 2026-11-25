@@ -16,6 +16,7 @@ const credentialResponse = z.object({
   credential: z.string().min(1).max(8192),
   state: z.string(),
 });
+
 // Uniform scaling preserves the official Google button's proportions.
 const googleLargeButtonHeight = 40;
 const googleMaxWidth = 400;
@@ -52,6 +53,7 @@ export function GoogleButton({
       setReady(false);
       setAttempt((value) => value + 1);
     }
+
     async function prepare() {
       const requestedAt = Date.now();
       try {
@@ -72,6 +74,7 @@ export function GoogleButton({
               clickedVersion !== authSession.getVersion()
             )
               return;
+
             // Mutation feedback owns request errors; renew the consumed nonce for a manual retry.
             void exchange(challenge.challengeId, response)
               .catch(() => {})
@@ -126,6 +129,7 @@ export function GoogleButton({
       }
     }
     void prepare();
+
     return () => {
       active = false;
       abort.abort();

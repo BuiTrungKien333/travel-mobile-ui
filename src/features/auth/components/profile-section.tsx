@@ -13,6 +13,7 @@ export function ProfileSection({
   children: ReactNode;
 }) {
   const theme = useAppTheme();
+
   return (
     <View style={{ gap: theme.spacing.sm }}>
       <AppText variant="caption" tone="muted" accessibilityRole="header">
@@ -85,6 +86,7 @@ export function ProfileMenuRow({
         ) : null)}
     </View>
   );
+
   return onPress ? (
     <Pressable
       accessibilityRole="button"

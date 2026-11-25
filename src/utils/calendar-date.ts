@@ -4,6 +4,7 @@ const travelDateFormatter = new Intl.DateTimeFormat("en-GB", {
   month: "2-digit",
   day: "2-digit",
 });
+
 const travelTimeFormatter = new Intl.DateTimeFormat("en-GB", {
   timeZone: "Asia/Ho_Chi_Minh",
   hour: "2-digit",
@@ -14,6 +15,7 @@ const travelTimeFormatter = new Intl.DateTimeFormat("en-GB", {
 export function isCalendarDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const date = new Date(`${value}T12:00:00Z`);
+
   return (
     Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value
   );

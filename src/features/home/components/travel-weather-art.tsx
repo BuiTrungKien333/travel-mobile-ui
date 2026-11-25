@@ -28,8 +28,10 @@ export function TravelWeatherArt({
       { rotate: `${Math.sin(progress.value * Math.PI * 4) * 2}deg` },
     ],
   }));
+
   const rainStyle = useAnimatedStyle(() => {
     const phase = (progress.value * 8) % 1;
+
     return {
       opacity: 1 - phase,
       transform: [{ translateY: phase * drift * 2 }],

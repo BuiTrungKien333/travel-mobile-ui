@@ -3,6 +3,7 @@ import { resolveApiUrl } from "@/services/api/client";
 import { authSession } from "./auth-session";
 
 export type ConnectionStage = "probe" | "session" | "preference";
+
 export type ConnectionFailure =
   | "INVALID_URL"
   | "NETWORK"
@@ -12,6 +13,7 @@ export type ConnectionFailure =
   | "SESSION"
   | "PREFERENCE"
   | "NAVIGATION";
+
 export class ServerConnectionError extends Error {
   constructor(
     readonly code: ConnectionFailure,
@@ -56,6 +58,7 @@ export async function connectServer(
         response.status,
       );
     }
+
     if (
       !health ||
       typeof health !== "object" ||
@@ -79,5 +82,6 @@ export async function connectServer(
   } catch {
     throw new ServerConnectionError("PREFERENCE");
   }
+
   return origin;
 }

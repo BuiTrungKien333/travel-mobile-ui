@@ -33,5 +33,6 @@ export function cameraApiErrorMessage(error: ApiError, copy: CameraErrorCopy) {
   const code = /^[A-Z][A-Z0-9_]{0,60}$/.test(error.code)
     ? error.code
     : "UNKNOWN";
+
   return `${message} (${code}${error.status ? ` · HTTP ${error.status}` : ""})`;
 }

@@ -26,6 +26,7 @@ export function toDayStops(
 
 export function toTripStop(value: TripPlaceResponse): TripStop {
   const place = value.place;
+
   return {
     id: value.id,
     tripPlaceId: value.id,
@@ -47,6 +48,7 @@ export function toTripStop(value: TripPlaceResponse): TripStop {
     plannedOrder: value.plannedOrder,
   };
 }
+
 export function toTrip(
   value: TripDetailDto,
   places: TripPlaceResponse[] = [],
@@ -61,10 +63,12 @@ export function toTrip(
   for (const day of itinerary?.days ?? []) {
     if (!daysByDate.has(day.date)) daysByDate.set(day.date, day);
   }
+
   return {
     ...base,
     days: base.days.map((day) => {
       const schedule = daysByDate.get(day.date);
+
       return {
         ...day,
         ...daySettings(schedule?.settings),
@@ -79,6 +83,7 @@ export function toTrip(
               : undefined,
           };
           scheduled.add(entry.placeId);
+
           return {
             ...stop,
             itineraryItemId: entry.id,
@@ -98,6 +103,7 @@ export function toTrip(
 
 function daySettings(settings: ItineraryResponse["days"][number]["settings"]) {
   if (!settings) return {};
+
   return {
     startLocation: settings.origin?.name,
     startAddress: settings.origin?.address ?? undefined,
@@ -118,6 +124,7 @@ function daySettings(settings: ItineraryResponse["days"][number]["settings"]) {
           : ("car" as const),
   };
 }
+
 export function toSaveItineraryRequest(trip: Trip): SaveItineraryRequest {
   const days = trip.days
     .filter((day) => day.stops.length > 0)
@@ -125,6 +132,7 @@ export function toSaveItineraryRequest(trip: Trip): SaveItineraryRequest {
       date: day.date,
       stops: day.stops.map((stop, sequence) => {
         if (!stop.placeId) throw new ApiError("INVALID_ITINERARY");
+
         return {
           placeId: stop.placeId,
           sequence,
@@ -138,5 +146,6 @@ export function toSaveItineraryRequest(trip: Trip): SaveItineraryRequest {
     }));
   const parsed = saveItineraryRequestSchema.safeParse({ days });
   if (!parsed.success) throw new ApiError("INVALID_ITINERARY");
+
   return parsed.data;
 }

@@ -18,6 +18,7 @@ export function SharePlaceButton({ place }: { place: TripStop }) {
     const query = place.location
       ? `${place.location.latitude},${place.location.longitude}`
       : (place.address?.[locale] ?? place.name[locale]);
+
     try {
       await Share.share({
         title: place.name[locale],
@@ -35,6 +36,7 @@ export function SharePlaceButton({ place }: { place: TripStop }) {
       setSharing(false);
     }
   }
+
   return (
     <View
       style={{

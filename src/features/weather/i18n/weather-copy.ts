@@ -1,4 +1,5 @@
 import { useI18n } from "@/hooks/use-i18n";
+
 const vi = {
   title: "Thời tiết chuyến đi",
   open: "Xem dự báo",
@@ -47,6 +48,7 @@ const vi = {
     UNKNOWN: "Chưa xác định",
   },
 };
+
 const en: typeof vi = {
   title: "Trip weather",
   open: "View forecast",
@@ -96,6 +98,7 @@ const en: typeof vi = {
     UNKNOWN: "Unknown",
   },
 };
+
 export function useLiveWeatherCopy() {
   const { locale } = useI18n();
   return { copy: locale === "vi" ? vi : en, locale };

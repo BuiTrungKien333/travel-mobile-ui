@@ -42,6 +42,7 @@ export function TripDetailsHeader({
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
   const days = tripDuration(trip);
+
   return (
     <View
       style={{
@@ -178,6 +179,7 @@ export function DetailIconButton({
   const surfaceSize = compact
     ? theme.layout.compactIconButtonSurfaceSize
     : theme.layout.compactTouchTarget;
+
   return (
     <Pressable
       accessibilityRole="button"

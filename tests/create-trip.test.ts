@@ -112,13 +112,11 @@ test("initial places stay unscheduled and are copied before choosing a trip day"
   assert.equal(stops.map((stop) => stop.id).join(","), original);
   stops.pop();
   assert.equal(trip.unscheduledStops?.length, 4);
-  store
-    .getState()
-    .mutateTrip(trip.id, {
-      kind: "add",
-      date: trip.days[1].date,
-      stops: getPlacesForDestination("Đà Nẵng").slice(0, 1),
-    });
+  store.getState().mutateTrip(trip.id, {
+    kind: "add",
+    date: trip.days[1].date,
+    stops: getPlacesForDestination("Đà Nẵng").slice(0, 1),
+  });
   assert.ok(store.getState().trips[0].days[1].stops[0].id.startsWith("dn-"));
 });
 

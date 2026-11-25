@@ -8,6 +8,7 @@ async function photoFile(uri: string) {
   if (!blob.type.startsWith("image/")) throw new Error("Invalid photo file");
   const extension =
     blob.type === "image/jpeg" ? "jpg" : blob.type.split("/")[1];
+
   return new File([blob], `wego-photo.${extension}`, { type: blob.type });
 }
 

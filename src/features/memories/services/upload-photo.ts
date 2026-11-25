@@ -46,12 +46,14 @@ export async function photoFormData(
         value: { uri: string; name: string; type: string },
       ): void;
     };
+
     nativeBody.append("file", {
       uri: file.uri,
       name: `${memory.id}.${mimeType.split("/")[1]}`,
       type: mimeType,
     });
   }
+
   return body;
 }
 
@@ -75,6 +77,7 @@ export function uploadLocalMemory(
     onProgress,
   ).finally(() => uploads.delete(key));
   uploads.set(key, operation);
+
   return operation;
 }
 
@@ -134,5 +137,6 @@ async function performUpload(
   if (!result.media.length) throw new ApiError("INVALID_RESPONSE");
   await persist({ ...draft, local: { ...draft.local, uploaded: true } });
   assertSession();
+
   return result;
 }

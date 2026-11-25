@@ -41,6 +41,7 @@ export function TripDayMap({
     width: number;
     height: number;
   }>();
+
   const resizeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined,
   );
@@ -61,11 +62,14 @@ export function TripDayMap({
         latitude: origin.latitude,
         longitude: origin.longitude,
       });
+
     return points;
   }, [stops, locale, origin]);
+
   const path = useMemo(
     () =>
-      pathCoordinates ?? (polyline
+      pathCoordinates ??
+      (polyline
         ? decodeRoutePolyline(polyline).map((point): TripMapPosition => [
             point.longitude,
             point.latitude,
@@ -95,6 +99,7 @@ export function TripDayMap({
       theme.colors.primaryText,
       imageSize,
     );
+
   if (uri && failedImage !== uri)
     return (
       <View

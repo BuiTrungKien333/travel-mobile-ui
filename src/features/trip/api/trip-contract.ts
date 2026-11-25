@@ -4,6 +4,7 @@ import type { Trip } from "@/features/home/types/home-types";
 const id = z.guid();
 const calendarDate = z.iso.date();
 const count = z.number().int().nonnegative().safe();
+
 export const tripPreferenceSchema = z.enum([
   "nature",
   "food",
@@ -14,6 +15,7 @@ export const tripPreferenceSchema = z.enum([
   "shopping",
   "beach",
 ]);
+
 export const tripSummarySchema = z.object({
   id,
   title: z.string(),
@@ -36,6 +38,7 @@ export const tripSummarySchema = z.object({
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
 });
+
 export const tripDetailSchema = tripSummarySchema.extend({
   budget: z
     .object({
@@ -52,11 +55,14 @@ export const tripDetailSchema = tripSummarySchema.extend({
     )
     .max(365),
 });
+
 const context = z.object({
   serverTime: z.iso.datetime(),
   evaluatedDate: calendarDate,
 });
+
 export const tripReadSchema = z.object({ trip: tripDetailSchema, context });
+
 export const tripPageSchema = z.object({
   content: z.array(tripSummarySchema).max(100),
   page: count,
@@ -65,9 +71,11 @@ export const tripPageSchema = z.object({
   totalPages: count,
   context,
 });
+
 export type TripSummaryDto = z.infer<typeof tripSummarySchema>;
 export type TripDetailDto = z.infer<typeof tripDetailSchema>;
 export type TripReadDto = z.infer<typeof tripReadSchema>;
+
 const mutationFields = {
   title: z.string().trim().min(1).max(120).optional(),
   destination: z
@@ -95,6 +103,7 @@ const mutationFields = {
   accommodation: z.string().trim().max(200).nullable().optional(),
   notes: z.string().trim().max(1000).nullable().optional(),
 };
+
 export const updateTripSchema = z
   .object({
     version: count,
@@ -114,6 +123,7 @@ export const updateTripSchema = z
         (Date.parse(value.endDate) - Date.parse(value.startDate)) / 86400000 <
           365),
   );
+
 export const datePreviewRequestSchema = z
   .object({ version: count, startDate: calendarDate, endDate: calendarDate })
   .strict()
@@ -123,6 +133,7 @@ export const datePreviewRequestSchema = z
       (Date.parse(value.endDate) - Date.parse(value.startDate)) / 86400000 <
         365,
   );
+
 export const dateImpactSchema = z.object({
   baseVersion: count,
   startDate: calendarDate,
@@ -133,9 +144,11 @@ export const dateImpactSchema = z.object({
   movedToPoolCount: count,
   requiresAcknowledgement: z.boolean(),
 });
+
 export type UpdateTripPayload = z.infer<typeof updateTripSchema>;
 export type DatePreviewRequest = z.infer<typeof datePreviewRequestSchema>;
 export type TripDateImpact = z.infer<typeof dateImpactSchema>;
+
 export type CreateTripPayload = {
   clientRequestId: string;
   title?: string;
@@ -185,6 +198,7 @@ export function tripLocalToday(now = new Date()): string {
     month: "2-digit",
     day: "2-digit",
   }).formatToParts(now);
+
   return ["year", "month", "day"]
     .map((type) => parts.find((part) => part.type === type)?.value)
     .join("-");
@@ -194,6 +208,7 @@ export function tripLocalToday(now = new Date()): string {
 export function createTripRequestId(): string {
   if (typeof globalThis.crypto?.randomUUID === "function")
     return globalThis.crypto.randomUUID();
+
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (letter) => {
     const n = Math.floor(Math.random() * 16);
     return (letter === "x" ? n : (n & 3) | 8).toString(16);

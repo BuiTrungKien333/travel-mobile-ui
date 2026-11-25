@@ -48,6 +48,7 @@ export function TravelWeatherDetails({
       { rotate: `${Math.sin(progress.value * Math.PI * 2) * tilt}deg` },
     ],
   }));
+
   return (
     <>
       <View
@@ -159,6 +160,7 @@ export function TravelWeatherDetails({
         >
           {weather.hours.map((hour) => {
             const rainy = hour.condition === "rain";
+
             return (
               <View
                 key={hour.time}
@@ -394,6 +396,7 @@ export function TravelWeatherDetails({
     </>
   );
 }
+
 const styles = StyleSheet.create({
   card: { overflow: "hidden", borderCurve: "continuous" },
   hourColumn: { flexGrow: 1, flexShrink: 0, alignItems: "center" },

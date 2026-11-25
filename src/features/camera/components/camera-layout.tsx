@@ -93,10 +93,12 @@ export function CameraLayout({
   const shutterMotion = useAnimatedStyle(() => ({
     transform: [{ scale: scale.get() }],
   }));
+
   const spring = {
     ...theme.motion.photoViewerSpring,
     reduceMotion: ReduceMotion.System,
   };
+
   return (
     <ScreenSafeArea
       edges={embedded ? ["top", "left", "right"] : undefined}

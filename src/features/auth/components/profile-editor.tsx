@@ -32,6 +32,7 @@ export function ProfileEditor({
     resolver: zodResolver(updateProfileSchema),
     defaultValues: { fullName: user.fullName, avatarUrl: user.avatarUrl ?? "" },
   });
+
   return (
     <View style={{ gap: theme.spacing.md }}>
       <Controller

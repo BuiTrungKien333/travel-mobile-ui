@@ -10,6 +10,7 @@ type TripDetailsSheetProps = Omit<
 
 export function TripDetailsSheet(props: TripDetailsSheetProps) {
   const { copy } = useTripDetailsCopy();
+
   return (
     <AppBottomSheet
       {...props}

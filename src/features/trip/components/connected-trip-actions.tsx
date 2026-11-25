@@ -66,6 +66,7 @@ export function ConnectedTripActions({
   function failed(failure: unknown) {
     setError(failure);
   }
+
   async function save(payload: UpdateTripPayload) {
     try {
       await update.mutateAsync(payload);
@@ -77,6 +78,7 @@ export function ConnectedTripActions({
       return false;
     }
   }
+
   async function commit(mutation: TripMutation) {
     if (busy) return false;
     setError(null);
@@ -88,17 +90,20 @@ export function ConnectedTripActions({
           startDate: payload.startDate,
           endDate: payload.endDate,
         });
+
         if (impact.requiresAcknowledgement) {
           setConfirmation({ payload, impact });
           return false;
         }
       }
+
       return await save(payload);
     } catch (failure) {
       failed(failure);
       return false;
     }
   }
+
   async function reload() {
     if (busy) return;
     setReloading(true);
@@ -114,6 +119,7 @@ export function ConnectedTripActions({
       setReloading(false);
     }
   }
+
   async function deleteTrip() {
     if (busy) return;
     setError(null);
@@ -135,6 +141,7 @@ export function ConnectedTripActions({
         onCancel={() => setSheet("menu")}
       />
     );
+
   if (sheet === "delete")
     return (
       <TripDeleteAlert
@@ -152,6 +159,7 @@ export function ConnectedTripActions({
         cancelLabel={detailCopy.deleteNo}
       />
     );
+
   return (
     <>
       <TripDetailsSheet

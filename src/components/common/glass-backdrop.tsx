@@ -47,6 +47,7 @@ export function GlassBackdrop({
           : clock
             ? theme.colors.glassClockTint
             : theme.colors.glassTint;
+
   const fallback = camera
     ? cameraNavigation
       ? theme.colors.cameraNavigationSurface
@@ -62,6 +63,7 @@ export function GlassBackdrop({
           : clock
             ? theme.colors.glassClockFallback
             : theme.colors.glassFallback;
+
   const style = [
     StyleSheet.absoluteFill,
     {

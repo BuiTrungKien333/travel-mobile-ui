@@ -28,6 +28,7 @@ export function PlaceTargetSelector({
     { date: null, label: copy.pool },
   ];
   const selected = options.find((item) => item.date === date);
+
   return (
     <View
       style={{
@@ -134,6 +135,7 @@ export function PlaceSearchResultRow({
 }) {
   const theme = useAppTheme();
   const { copy, locale } = usePlaceSearchCopy();
+
   return (
     <View
       style={[
@@ -219,6 +221,7 @@ export function PlaceSearchResultRow({
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   fill: { flex: 1, minWidth: 0 },
   row: { flexDirection: "row", alignItems: "center" },

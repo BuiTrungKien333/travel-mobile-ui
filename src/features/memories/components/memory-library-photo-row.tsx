@@ -22,6 +22,7 @@ export const MemoryLibraryPhotoRow = memo(function MemoryLibraryPhotoRow({
 }) {
   const theme = useAppTheme();
   const { copy } = useMemoriesCopy();
+
   return (
     <View style={{ flexDirection: "row", gap: theme.layout.memoryGridGap }}>
       {photos.map((photo) => (

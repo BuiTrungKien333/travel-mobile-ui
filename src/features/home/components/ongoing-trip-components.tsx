@@ -55,6 +55,7 @@ export function NextStopCard({
         </AppButton>
       </JourneyCard>
     );
+
   return (
     <JourneyCard cover={cover}>
       <View style={[homeStyles.row, { gap: theme.spacing.sm }]}>

@@ -100,12 +100,14 @@ export function ConnectedPlacePickerScreen({
       setSaving(false);
     }
   };
+
   const back = () => {
     if (!lock.current) {
       if (focus) setFocus(undefined);
       else onClose();
     }
   };
+
   return (
     <GestureHandlerRootView style={styles.fill}>
       <ScreenSafeArea
@@ -125,7 +127,9 @@ export function ConnectedPlacePickerScreen({
                   region={getPlaceMapRegion([focus])}
                   onBack={back}
                   suppliedDetails={{
-                    photo: detail.data.photos[0] ? { uri: detail.data.photos[0].url } : null,
+                    photo: detail.data.photos[0]
+                      ? { uri: detail.data.photos[0].url }
+                      : null,
                     photos: detail.data.photos.map((item) => item.url),
                     hours: detail.data.openingHours?.displayLines.join(" · "),
                     admission: detail.data.admission
@@ -403,6 +407,7 @@ const styles = StyleSheet.create({
   fill: { flex: 1 },
   content: { flex: 1, width: "100%", alignSelf: "center" },
   row: { flexDirection: "row", alignItems: "center" },
+
   between: {
     flexDirection: "row",
     alignItems: "center",

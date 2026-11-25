@@ -35,6 +35,7 @@ export function useSheetMotion(onClose: () => void, dismissDisabled = false) {
         reduceMotion: ReduceMotion.System,
       }),
     );
+
     return () => cancelAnimation(translateY);
   }, [enterDuration, translateY]);
 
@@ -45,6 +46,7 @@ export function useSheetMotion(onClose: () => void, dismissDisabled = false) {
     apply?.();
     onClose();
   }
+
   function close(afterClose?: () => void) {
     if (dismissDisabled) return;
     if (closing.get()) return;
@@ -61,12 +63,15 @@ export function useSheetMotion(onClose: () => void, dismissDisabled = false) {
       ),
     );
   }
+
   const sheetMotion = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.get() }],
   }));
+
   const backdropMotion = useAnimatedStyle(() => ({
     opacity: Math.max(0, Math.min(1, 1 - translateY.get() / fadeDistance)),
   }));
+
   const dragGesture = Gesture.Pan()
     .enabled(!dismissDisabled)
     .activeOffsetY(theme.spacing.sm)
@@ -108,5 +113,6 @@ export function useSheetMotion(onClose: () => void, dismissDisabled = false) {
           }),
         );
     });
+
   return { sheetMotion, backdropMotion, dragGesture, close, reduceMotion };
 }

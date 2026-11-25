@@ -148,6 +148,7 @@ const styles = StyleSheet.create({
     borderCurve: "continuous",
     overflow: "hidden",
   },
+
   warmGlow: { position: "absolute", opacity: 0.35 },
   action: { alignItems: "flex-end" },
 });

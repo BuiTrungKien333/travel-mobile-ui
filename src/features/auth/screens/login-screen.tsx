@@ -69,13 +69,15 @@ export function LoginScreen() {
     <AuthScaffold
       footer={
         <View style={{ gap: theme.spacing.md }}>
-        <AppButton variant="outline" onPress={() => router.push("/explore")}>{accessCopy(locale).explore}</AppButton>
-      <AuthFooterLink
-          action={t("auth.login.register")}
-          label={t("auth.login.noAccount")}
-          disabled={isSubmitting || google.isPending}
-          onPress={() => router.push("/(auth)/register")}
-        />
+          <AppButton variant="outline" onPress={() => router.push("/explore")}>
+            {accessCopy(locale).explore}
+          </AppButton>
+          <AuthFooterLink
+            action={t("auth.login.register")}
+            label={t("auth.login.noAccount")}
+            disabled={isSubmitting || google.isPending}
+            onPress={() => router.push("/(auth)/register")}
+          />
         </View>
       }
       showLogo
@@ -221,6 +223,7 @@ const styles = StyleSheet.create({
     alignSelf: "flex-end",
     justifyContent: "center",
   },
+
   pressed: {
     opacity: 0.62,
   },

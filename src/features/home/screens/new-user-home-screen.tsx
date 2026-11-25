@@ -26,6 +26,7 @@ export function NewUserHomeScreen({
 }) {
   const theme = useAppTheme();
   const { copy } = useHomeCopy();
+
   return (
     <HomePage showHeader onRefresh={onRefresh} refreshing={refreshing}>
       {notice}

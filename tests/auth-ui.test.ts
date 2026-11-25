@@ -100,8 +100,20 @@ function harness() {
       },
     },
     "react/jsx-runtime": {
-      jsx: (type: unknown, props: Element["props"]) => typeof type === "function" && ["ProfileIdentityCard", "ProfileMenuRow", "ProfileSection"].includes(type.name) ? type(props) : ({ type, props }),
-      jsxs: (type: unknown, props: Element["props"]) => typeof type === "function" && ["ProfileIdentityCard", "ProfileMenuRow", "ProfileSection"].includes(type.name) ? type(props) : ({ type, props }),
+      jsx: (type: unknown, props: Element["props"]) =>
+        typeof type === "function" &&
+        ["ProfileIdentityCard", "ProfileMenuRow", "ProfileSection"].includes(
+          type.name,
+        )
+          ? type(props)
+          : { type, props },
+      jsxs: (type: unknown, props: Element["props"]) =>
+        typeof type === "function" &&
+        ["ProfileIdentityCard", "ProfileMenuRow", "ProfileSection"].includes(
+          type.name,
+        )
+          ? type(props)
+          : { type, props },
     },
     "react-native": {
       View: "View",
@@ -112,8 +124,12 @@ function harness() {
       Keyboard: { dismiss: () => {} },
       StyleSheet: { create: (value: unknown) => value, hairlineWidth: 1 },
     },
-    "../components/profile-preferences": { ProfilePreferences: "ProfilePreferences" },
-    "../components/profile-settings-sheet": { ProfileSettingsSheet: "ProfileSettingsSheet" },
+    "../components/profile-preferences": {
+      ProfilePreferences: "ProfilePreferences",
+    },
+    "../components/profile-settings-sheet": {
+      ProfileSettingsSheet: "ProfileSettingsSheet",
+    },
     "@/services/api/server-connection": { canConfigureServer: false },
     "expo-image": { Image: "Image" },
     "react-native-reanimated": {
@@ -157,7 +173,9 @@ function harness() {
       authSession: {
         getVersion: () => state.version,
         getRestoreError: () => null,
-        restore: async () => { state.restoreCalls++; },
+        restore: async () => {
+          state.restoreCalls++;
+        },
       },
     },
     "../utils/auth-error-message": { authErrorMessage: () => "safe-error" },
@@ -242,7 +260,9 @@ test("Profile preserves the account name and routes password recovery to the exi
   assert.ok(nodes(tree).some((node) => node.props.children === user.fullName));
   assert.ok(
     nodes(tree).some(
-      (node) => typeof node.props.children === "string" && node.props.children.includes("auth.profile.memberRole"),
+      (node) =>
+        typeof node.props.children === "string" &&
+        node.props.children.includes("auth.profile.memberRole"),
     ),
   );
   press(
@@ -390,11 +410,14 @@ test("Session recovery announces indeterminate loading and offers an explicit re
 
   const failed = h.render(() => SessionGate({ failed: true }));
   assert.equal(
-    nodes(failed).some((node) => node.props.accessibilityRole === "progressbar"),
+    nodes(failed).some(
+      (node) => node.props.accessibilityRole === "progressbar",
+    ),
     false,
   );
   assert.equal(
-    nodes(failed).find((node) => node.props.accessibilityRole === "alert")?.props.children,
+    nodes(failed).find((node) => node.props.accessibilityRole === "alert")
+      ?.props.children,
     "safe-error",
   );
   assert.equal(h.state.restoreCalls, 0);

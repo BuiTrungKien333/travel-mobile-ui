@@ -335,7 +335,10 @@ test("picker retains selection after an error and locks double submit/back while
   event(save, "onPress");
   event(save, "onPress");
   tree = h.render();
-  event(tree.find((n) => n.type === "DetailIconButton")!, "onPress");
+  event(
+    tree.find((n) => n.type === "DetailIconButton")!,
+    "onPress",
+  );
   assert.equal(h.calls(), 1);
   assert.equal(h.closed(), 0);
   reject(new Error("offline"));
@@ -362,7 +365,7 @@ test("real place detail is passed explicit unknown content and never sample pric
   assert.ok(content);
   assert.equal(
     JSON.stringify(content.props.suppliedDetails),
-    JSON.stringify({ photo: null }),
+    JSON.stringify({ photo: null, photos: [] }),
   );
   assert.equal(
     (content.props.place as { durationMinutes?: number }).durationMinutes,

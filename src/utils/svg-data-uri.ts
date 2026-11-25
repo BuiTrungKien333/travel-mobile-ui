@@ -17,5 +17,6 @@ export function svgDataUri(svg: string): string {
       (index + 1 < bytes.length ? alphabet[((b & 15) << 2) | (c >> 6)] : "=") +
       (index + 2 < bytes.length ? alphabet[c & 63] : "=");
   }
+
   return `data:image/svg+xml;base64,${encoded}`;
 }

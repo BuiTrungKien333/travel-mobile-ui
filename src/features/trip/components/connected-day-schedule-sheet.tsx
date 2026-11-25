@@ -47,6 +47,7 @@ export function ConnectedDayScheduleSheet({
     locale,
     search.trim().length > 1,
   );
+
   const candidates = [
     ...trip.days.flatMap((entry) => entry.stops),
     ...(trip.unscheduledStops ?? []),
@@ -61,6 +62,7 @@ export function ConnectedDayScheduleSheet({
     month: "2-digit",
     timeZone: "UTC",
   }).format(new Date(`${day.date}T12:00:00Z`));
+
   return (
     <TripDetailsSheet
       title={`${copy.daySettings} ${dayNumber} (${displayDate})`}
@@ -103,11 +105,13 @@ export function ConnectedDayScheduleSheet({
             const stops = new Map(
               day.stops.map((stop) => [stop.id, stop.placeId]),
             );
+
             const durations = draft.durations.map((duration) => {
               const placeId = stops.get(duration.stopId);
               if (!placeId) throw new Error("INVALID_ITINERARY");
               return { placeId, minutes: duration.minutes };
             });
+
             await onSave({
               settings: {
                 origin: draft.startLocation

@@ -51,9 +51,11 @@ export function TripOptimizeSlider({ onOptimize }: { onOptimize: () => void }) {
         setScreenReader(enabled);
       },
     );
+
     void AccessibilityInfo.isScreenReaderEnabled().then((enabled) => {
       if (mounted && !changed) setScreenReader(enabled);
     });
+
     return () => {
       mounted = false;
       subscription.remove();
@@ -69,6 +71,7 @@ export function TripOptimizeSlider({ onOptimize }: { onOptimize: () => void }) {
       }),
     );
   }
+
   function activate() {
     if (completing.get()) return;
     completing.set(true);
@@ -110,9 +113,11 @@ export function TripOptimizeSlider({ onOptimize }: { onOptimize: () => void }) {
     .onFinalize((_event, success) => {
       if (!success && !completing.get()) offset.set(withSpring(0, spring));
     });
+
   const thumbStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: offset.get() }],
   }));
+
   const labelStyle = useAnimatedStyle(() => ({
     opacity:
       maximum.get() > 0 ? Math.max(0, 1 - offset.get() / maximum.get()) : 1,
@@ -214,6 +219,7 @@ const styles = StyleSheet.create({
   track: { flex: 1, minWidth: 0, borderWidth: StyleSheet.hairlineWidth },
   label: { justifyContent: "center" },
   centerText: { textAlign: "center" },
+
   thumb: {
     position: "absolute",
     top: "50%",

@@ -12,6 +12,7 @@ export function useGoogleLogin() {
           if (credential) return authApi.googleLogin(credential);
           const challenge = await authApi.googleChallenge();
           const idToken = await getGoogleIdToken(challenge);
+
           return authApi.googleLogin({
             challengeId: challenge.challengeId,
             idToken,

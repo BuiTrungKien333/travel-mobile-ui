@@ -8,35 +8,59 @@ function fixture(saved: string | null = null, development = true) {
   let value = saved;
   let fail = false;
   let fileValue: string | null = null;
-  const load = tripModuleLoader({
-    "expo-secure-store": {
-      getItemAsync: async () => value,
-      setItemAsync: async (_key: string, next: string) => {
-        if (fail) throw new Error("STORAGE");
-        value = next;
-      },
-    },
-    "react-native": { Platform: { OS: "android" } },
-    "expo-file-system": {
-      Paths: { document: "file:///documents/" },
-      File: class {
-        get exists() { return fileValue !== null; }
-        async text() { return fileValue; }
-        async write(next: string) {
+  const load = tripModuleLoader(
+    {
+      "expo-secure-store": {
+        getItemAsync: async () => value,
+        setItemAsync: async (_key: string, next: string) => {
           if (fail) throw new Error("STORAGE");
-          fileValue = next;
-        }
+          value = next;
+        },
+      },
+      "react-native": { Platform: { OS: "android" } },
+      "expo-file-system": {
+        Paths: { document: "file:///documents/" },
+        File: class {
+          get exists() {
+            return fileValue !== null;
+          }
+          async text() {
+            return fileValue;
+          }
+          async write(next: string) {
+            if (fail) throw new Error("STORAGE");
+            fileValue = next;
+          }
+        },
+      },
+      "./client": {
+        apiClient: client,
+        resolveApiUrl: (input: string) =>
+          resolveApiUrl(input, {
+            development,
+            platform: "web",
+            isDevice: false,
+          }),
       },
     },
-    "./client": {
-      apiClient: client,
-      resolveApiUrl: (input: string) => resolveApiUrl(input, { development, platform: "web", isDevice: false }),
+    { __DEV__: development, process: { env: {} } },
+  );
+  const service = load<
+    typeof import("../src/services/api/server-connection.ts")
+  >("src/services/api/server-connection.ts");
+  return {
+    service,
+    client,
+    failStorage: () => {
+      fail = true;
     },
-  }, { __DEV__: development, process: { env: {} } });
-  const service = load<typeof import("../src/services/api/server-connection.ts")>("src/services/api/server-connection.ts");
-  return { service, client, failStorage: () => { fail = true; },
-    setFile: (next: string) => { fileValue = next; },
-    get saved() { return fileValue === null ? value : JSON.parse(fileValue); } };
+    setFile: (next: string) => {
+      fileValue = next;
+    },
+    get saved() {
+      return fileValue === null ? value : JSON.parse(fileValue);
+    },
+  };
 }
 
 test("demo server preference restores an origin and persists only its normalized URL", async () => {
@@ -52,7 +76,9 @@ test("invalid stored origins and failed writes never replace the active API serv
   const f = fixture("https://user:secret@other.example");
   await f.service.restoreServerConnection();
   assert.equal(f.service.getServerOrigin(), "https://original.example");
-  await assert.rejects(f.service.saveServerConnection("https://other.example/path"));
+  await assert.rejects(
+    f.service.saveServerConnection("https://other.example/path"),
+  );
   f.failStorage();
   await assert.rejects(f.service.saveServerConnection("https://other.example"));
   assert.equal(f.service.getServerOrigin(), "https://original.example");

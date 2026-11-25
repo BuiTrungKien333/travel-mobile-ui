@@ -9,6 +9,7 @@ export function tripDirectionsUrl(
   const target = stop.location
     ? `${stop.location.latitude},${stop.location.longitude}`
     : `${stop.name.vi}, ${destination}, Vietnam`;
+
   const travelmode =
     mode === "walk"
       ? "walking"
@@ -17,5 +18,6 @@ export function tripDirectionsUrl(
         : mode === "motorcycle"
           ? "two-wheeler"
           : "driving";
+
   return `${MAP_DIRECTIONS_URL}&destination=${encodeURIComponent(target)}&travelmode=${travelmode}&dir_action=navigate`;
 }

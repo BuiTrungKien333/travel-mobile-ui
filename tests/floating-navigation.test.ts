@@ -235,7 +235,8 @@ test("web and Android use identical measured icon/dot/camera coordinates, while 
     near(
       style(cameraContainer.props.style).top as number,
       (floatingNavigationLayout(379.43, tokens.layout).barHeight -
-        tokens.layout.tabBarCameraSize) / 2,
+        tokens.layout.tabBarCameraSize) /
+        2,
     );
     assert.equal(camera.props.accessibilityLabel, "Capture");
     call(camera, "onPress");
@@ -332,7 +333,10 @@ test("Android navigation hides underlying content while web and iOS retain glass
       tokens.layout.tabBarHeight / 2,
     );
     if (platform === "android") {
-      assert.equal(style(tree.props.style).backgroundColor, lightColors.surface);
+      assert.equal(
+        style(tree.props.style).backgroundColor,
+        lightColors.surface,
+      );
       assert.ok(!lightColors.surface.startsWith("rgba"));
       assert.equal(nodes(tree, "Glass").length, 0);
     } else {
@@ -400,7 +404,9 @@ test("camera ambient animation only changes the halo, with an explicit gradient 
     assert.equal(disk.backgroundColor, lightColors.primary);
     const image = nodes(tree, "Image")[0];
     const source = image.props.source as { uri: string };
-    const svg = Buffer.from(source.uri.split(",")[1], "base64").toString("utf8");
+    const svg = Buffer.from(source.uri.split(",")[1], "base64").toString(
+      "utf8",
+    );
     assert.ok(svg.includes('gradientUnits="userSpaceOnUse"'));
     assert.ok(svg.includes(`x2="${disk.width}" y2="${disk.height}"`));
     assert.ok(svg.includes(`stop-color="${lightColors.primary}"`));
