@@ -16,6 +16,7 @@ const vi = {
   noteConflict:
     "Lời nhắn đã thay đổi trên thiết bị khác. Hãy hủy chỉnh sửa và mở lại để xem bản mới.",
   later: "Xem sau",
+  unassignedPhotos: "Chưa chọn chuyến",
   localOnly: "Chỉ lưu trên thiết bị",
   pendingUploadTitle: "Chờ đồng bộ vào chuyến",
   pendingUploadHint:
@@ -34,6 +35,9 @@ const vi = {
   saveDevice: "Lưu vào thiết bị",
   savedPrivate: "Đã giữ trong ứng dụng · Chưa lưu vào thư viện thiết bị",
   title: "Kỷ niệm",
+  photoMode: "Ảnh",
+  albumMode: "Album",
+  samplePhotos: "Ảnh mẫu",
   history: "Lịch sử",
   historyHint: "Chọn chuyến đi để xem ảnh theo từng địa điểm.",
   chooseTrip: "Chọn chuyến đi",
@@ -73,7 +77,12 @@ const vi = {
   cancel: "Hủy",
   noteTooLong: "Lời nhắn tối đa 2000 ký tự.",
 };
+
 const en: typeof vi = {
+  unassignedPhotos: "No trip selected",
+  photoMode: "Photos",
+  albumMode: "Albums",
+  samplePhotos: "Sample photos",
   openAssignedAlbum: "Open trip album",
   loading: "Loading memories…",
   loadError:
@@ -146,6 +155,7 @@ const en: typeof vi = {
   cancel: "Cancel",
   noteTooLong: "Keep your note within 2000 characters.",
 };
+
 export function useMemoriesCopy() {
   const { locale } = useI18n();
   return { locale, copy: locale === "vi" ? vi : en };

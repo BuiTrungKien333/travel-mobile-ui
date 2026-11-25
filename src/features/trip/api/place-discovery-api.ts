@@ -4,12 +4,15 @@ import { ApiError } from "@/services/api/api-error";
 import type { TripStop } from "@/features/home/types/home-types";
 
 const source = z.enum(["INTERNAL", "USER"]);
+
 const location = z.object({
   latitude: z.number().min(-90).max(90),
   longitude: z.number().min(-180).max(180),
 });
+
 const category = z.object({ code: z.string(), label: z.string() }).nullable();
 const reference = z.object({ kind: source, placeId: z.guid() });
+
 const fields = {
   id: z.guid(),
   reference,
@@ -20,9 +23,19 @@ const fields = {
   provinceId: z.guid().nullable(),
   category,
 };
+
+const photo = z.object({
+  url: z.url(),
+  source: z.string(),
+  attributions: z.array(
+    z.object({ kind: z.string(), label: z.string(), url: z.string() }),
+  ),
+});
+
 export const placeSummarySchema = z
-  .object({ ...fields, photo: z.null() })
+  .object({ ...fields, photo: photo.nullable() })
   .refine((p) => p.id === p.reference.placeId && p.source === p.reference.kind);
+
 export const placeDetailSchema = z
   .object({
     ...fields,
@@ -35,11 +48,13 @@ export const placeDetailSchema = z
       .nullable(),
     openingStatus: z.enum(["OPEN", "CLOSED", "UNKNOWN"]),
     admission: z.object({ text: z.string() }).nullable(),
-    photos: z.array(z.unknown()).max(0),
+    photos: z.array(photo).max(8),
     evaluatedAt: z.iso.datetime(),
   })
   .refine((p) => p.id === p.reference.placeId && p.source === p.reference.kind);
+
 const count = z.number().int().nonnegative().safe();
+
 export const placePageSchema = z.object({
   content: z.array(placeSummarySchema).max(100),
   page: count,
@@ -52,6 +67,7 @@ export const placePageSchema = z.object({
     evaluatedDate: z.iso.date(),
   }),
 });
+
 export type PlaceSummary = z.infer<typeof placeSummarySchema>;
 export type PlaceDetail = z.infer<typeof placeDetailSchema>;
 export type PlaceScope = { tripId?: string; provinceId?: string | null };
@@ -61,8 +77,10 @@ function parse<T>(schema: z.ZodType<T>, value: unknown): T {
     .object({ success: z.literal(true), data: schema })
     .safeParse(value);
   if (!result.success) throw new ApiError("INVALID_RESPONSE");
+
   return result.data.data;
 }
+
 export const placeDiscoveryApi = {
   async list(
     scope: PlaceScope,
@@ -80,6 +98,7 @@ export const placeDiscoveryApi = {
       (scope.provinceId && !z.guid().safeParse(scope.provinceId).success)
     )
       throw new ApiError("INVALID_PLACE");
+
     const response = await apiClient.get<unknown>(
       "/api/v1/places/suggestions",
       {
@@ -87,6 +106,7 @@ export const placeDiscoveryApi = {
         signal,
       },
     );
+
     return parse(placePageSchema, response.data);
   },
   async detail(id: string, locale: "vi" | "en", signal?: AbortSignal) {
@@ -95,6 +115,7 @@ export const placeDiscoveryApi = {
       `/api/v1/places/${encodeURIComponent(id)}`,
       { params: { locale }, signal },
     );
+
     return parse(placeDetailSchema, response.data);
   },
 };

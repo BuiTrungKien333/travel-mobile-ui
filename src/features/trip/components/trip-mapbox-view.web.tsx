@@ -35,15 +35,19 @@ export function TripMapboxView({
 
   useEffect(() => {
     let current: MapboxMap | undefined;
+    let mapContainer: HTMLDivElement | undefined;
     let observer: ResizeObserver | undefined;
     let controls: HTMLDivElement | undefined;
+    let mapPointerDown: ((event: PointerEvent) => void) | undefined;
     let cancelled = false;
     const fail = () => {
       if (!cancelled) onUnavailable();
     };
+
     void import("mapbox-gl-web")
       .then(({ default: mapbox }) => {
         if (cancelled || !container.current) return;
+        mapContainer = container.current;
         if (!mapbox.supported()) {
           fail();
           return;
@@ -51,12 +55,15 @@ export function TripMapboxView({
         const first = firstPin();
         const view = new mapbox.Map({
           accessToken: token,
-          container: container.current,
+          container: mapContainer,
           style: TRIP_MAP_STYLE,
           center: first
             ? [first.longitude, first.latitude]
             : TRIP_MAP_DEFAULT_CENTER,
           zoom: first ? 14 : TRIP_MAP_DEFAULT_ZOOM,
+          // Keep the map's left-button drag available inside the surrounding
+          // React Native scroll/gesture handlers.
+          dragPan: true,
           dragRotate: false,
           pitchWithRotate: false,
           scrollZoom: false,
@@ -64,6 +71,10 @@ export function TripMapboxView({
         });
         current = view;
         module.current = mapbox;
+        // The enclosing FlatList uses a native gesture handler on web. Keep its
+        // pointer manager from capturing a drag that started inside Mapbox.
+        mapPointerDown = (event) => event.stopPropagation();
+        mapContainer.addEventListener("pointerdown", mapPointerDown);
         view.addControl(
           new mapbox.AttributionControl({ compact: true }),
           "bottom-left",
@@ -80,34 +91,41 @@ export function TripMapboxView({
           alignItems: "center",
           gap: `${inset.gap}px`,
         });
-        container.current.appendChild(controls);
+        mapContainer.appendChild(controls);
         const mapControls = [
           new mapbox.NavigationControl({ showCompass: false }),
           new mapbox.GeolocateControl(),
         ];
+
         for (const control of mapControls) {
           view.addControl(control, "bottom-right");
-          const element = container.current.querySelector<HTMLDivElement>(
+          const element = mapContainer.querySelector<HTMLDivElement>(
             ".mapboxgl-ctrl-bottom-right > .mapboxgl-ctrl-group",
           );
+
           if (element) {
             element.style.margin = "0";
             controls.appendChild(element);
           }
         }
+
         view.once("load", () => {
           if (!cancelled) setMap(view);
         });
+
         view.on("error", () => {
           if (!view.isStyleLoaded()) fail();
         });
         observer = new ResizeObserver(() => view.resize());
-        observer.observe(container.current);
+        observer.observe(mapContainer);
       })
       .catch(fail);
+
     return () => {
       cancelled = true;
       observer?.disconnect();
+      if (mapPointerDown && mapContainer)
+        mapContainer.removeEventListener("pointerdown", mapPointerDown);
       current?.remove();
       controls?.remove();
       module.current = null;
@@ -122,7 +140,10 @@ export function TripMapboxView({
       button.type = "button";
       const badge = document.createElement("span");
       badge.textContent = String(pin.label ?? pin.number);
-      button.setAttribute("aria-label", `${pin.label ?? pin.number}. ${pin.name}`);
+      button.setAttribute(
+        "aria-label",
+        `${pin.label ?? pin.number}. ${pin.name}`,
+      );
       button.setAttribute("aria-pressed", String(pin.id === focusedId));
       Object.assign(button.style, {
         width: `${theme.layout.touchTarget}px`,
@@ -135,6 +156,7 @@ export function TripMapboxView({
         background: "transparent",
         cursor: "pointer",
       });
+
       Object.assign(badge.style, {
         width: `${theme.layout.tripMapMarkerSize}px`,
         height: `${theme.layout.tripMapMarkerSize}px`,
@@ -158,15 +180,18 @@ export function TripMapboxView({
         event.stopPropagation();
         select(pin.id);
       });
+
       return new mapbox.Marker({ element: button })
         .setLngLat([pin.longitude, pin.latitude])
         .addTo(map);
     });
+
     if (path.length > 1) {
       map.addSource("trip-route", {
         type: "geojson",
         data: { type: "LineString", coordinates: path },
       });
+
       map.addLayer({
         id: "trip-route-line",
         type: "line",
@@ -196,6 +221,7 @@ export function TripMapboxView({
         zoom: TRIP_MAP_DEFAULT_ZOOM,
         duration,
       });
+
     return () => {
       markers.forEach((marker) => marker.remove());
       // The mount effect can remove the map before this cleanup runs.
@@ -206,5 +232,16 @@ export function TripMapboxView({
     };
   }, [map, pins, path, focusedId, reducedMotion, theme]);
 
-  return <div ref={container} style={{ width: "100%", height: "100%" }} />;
+  return (
+    <div
+      ref={container}
+      style={{
+        width: "100%",
+        height: "100%",
+        touchAction: "none",
+        userSelect: "none",
+        WebkitUserSelect: "none",
+      }}
+    />
+  );
 }

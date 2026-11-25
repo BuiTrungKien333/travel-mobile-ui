@@ -14,53 +14,58 @@ function harness(enabled = true, reduceMotion = false) {
   const effects: (() => void)[] = [];
   let handlers: ScrollHandlers | undefined;
   let resizeValue = 0;
+  let now = 1000;
   const resizeLock = {
     get: () => resizeValue,
     set: (value: number) => {
       resizeValue = value;
     },
   };
-  const load = tripModuleLoader({
-    react: {
-      useState: (initial: boolean) => [
-        initial,
-        (next: boolean) => changes.push(next),
-      ],
-      useEffect: (effect: () => void) => effects.push(effect),
-    },
-    "react-native-reanimated": {
-      useReducedMotion: () => reduceMotion,
-      useSharedValue: (initial: unknown) => {
-        let value = initial;
-        return {
-          get: () => value,
-          set: (next: unknown) => {
-            value = next;
-          },
-        };
+  const load = tripModuleLoader(
+    {
+      react: {
+        useState: (initial: boolean) => [
+          initial,
+          (next: boolean) => changes.push(next),
+        ],
+        useEffect: (effect: () => void) => effects.push(effect),
       },
-      useAnimatedScrollHandler: (value: ScrollHandlers) => {
-        handlers = value;
-        return value;
-      },
-    },
-    "react-native-worklets": {
-      scheduleOnRN: (
-        callback: (...args: unknown[]) => void,
-        ...args: unknown[]
-      ) => callback(...args),
-    },
-    "@/hooks/use-app-theme": {
-      useAppTheme: () => ({
-        layout: { tripPlanningMapAutoHideDistance: 48 },
-        spacing: { sm: 8 },
-        motion: {
-          tripMapRestoreVelocity: 700,
-          tripMapScrollSettleDuration: 600,
+      "react-native-reanimated": {
+        useReducedMotion: () => reduceMotion,
+        useSharedValue: (initial: unknown) => {
+          let value = initial;
+          return {
+            get: () => value,
+            set: (next: unknown) => {
+              value = next;
+            },
+          };
         },
-      }),
+        useAnimatedScrollHandler: (value: ScrollHandlers) => {
+          handlers = value;
+          return value;
+        },
+      },
+      "react-native-worklets": {
+        scheduleOnRN: (
+          callback: (...args: unknown[]) => void,
+          ...args: unknown[]
+        ) => callback(...args),
+      },
+      "@/hooks/use-app-theme": {
+        useAppTheme: () => ({
+          layout: { tripPlanningMapAutoHideDistance: 48 },
+          spacing: { sm: 8 },
+          motion: {
+            tripMapScrollIntentDuration: 180,
+            tripMapRestoreDistance: 96,
+            tripMapScrollSettleDuration: 600,
+          },
+        }),
+      },
     },
-  });
+    { Date: { now: () => now } },
+  );
   const { usePlanningMapCollapse } = load<{
     usePlanningMapCollapse: (options: {
       enabled: boolean;
@@ -88,12 +93,17 @@ function harness(enabled = true, reduceMotion = false) {
     scrolls,
     handlers,
     resizeLock,
+    advance: (milliseconds: number) => {
+      now += milliseconds;
+    },
     event: (y: number) => ({ contentOffset: { y } }),
   };
 }
 
 test("scrolling down collapses once and ignores the resulting native scroll animation", () => {
-  const { handlers, changes, scrolls, event } = harness();
+  const { handlers, changes, scrolls, event, advance } = harness();
+  handlers.onBeginDrag(event(0));
+  advance(200);
   handlers.onScroll(event(12));
   assert.equal(changes.length, 0);
   handlers.onScroll(event(64));
@@ -106,11 +116,14 @@ test("scrolling down collapses once and ignores the resulting native scroll anim
   );
 });
 
-test("a fast upward gesture restores the map and doesn't immediately re-collapse during the return", () => {
-  const { handlers, changes, scrolls, event } = harness();
+test("a sustained upward gesture restores the map and doesn't immediately re-collapse during the return", () => {
+  const { handlers, changes, scrolls, event, advance } = harness();
+  handlers.onBeginDrag(event(0));
+  advance(200);
   handlers.onScroll(event(64));
   handlers.onScroll(event(256));
   handlers.onBeginDrag(event(400));
+  advance(200);
   handlers.onScroll(event(250));
   handlers.onScroll(event(120));
   handlers.onScroll(event(0));
@@ -139,6 +152,7 @@ test("resizing the map cannot trigger auto-collapse; scrolling works again after
   h.handlers.onScroll(h.event(180));
   assert.equal(h.changes.length, 0);
   h.handlers.onBeginDrag(h.event(180));
+  h.advance(200);
   h.handlers.onScroll(h.event(240));
   assert.deepEqual(h.changes, [true]);
 });

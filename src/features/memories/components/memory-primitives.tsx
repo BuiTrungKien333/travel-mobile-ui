@@ -26,6 +26,7 @@ export function MemoryIconButton({
   disabled?: boolean;
 }) {
   const theme = useAppTheme();
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -39,11 +40,17 @@ export function MemoryIconButton({
         alignItems: "center",
         justifyContent: "center",
         borderRadius: theme.radius.full,
-        backgroundColor: theme.colors.surfaceTint,
+        backgroundColor:
+          icon === "back" ? "transparent" : theme.colors.surfaceTint,
         opacity: disabled || pressed ? theme.motion.pressOpacity : 1,
       })}
     >
-      <AppIcon name={icon} variant="light" color={theme.colors.primaryText} />
+      <AppIcon
+        name={icon}
+        variant="light"
+        size={theme.layout.iconMedium}
+        color={theme.colors.primaryText}
+      />
     </Pressable>
   );
 }
@@ -63,6 +70,7 @@ export function MemoryPage({
 }) {
   const theme = useAppTheme();
   const { copy } = useMemoriesCopy();
+
   return (
     <ScreenSafeArea
       style={[styles.flex, { backgroundColor: theme.colors.background }]}
@@ -71,8 +79,11 @@ export function MemoryPage({
         style={[
           styles.header,
           {
-            gap: theme.spacing.md,
+            gap: theme.spacing.sm,
             padding: theme.spacing.lg,
+            paddingTop: theme.spacing.xs,
+            paddingBottom: theme.spacing.sm,
+            marginBottom: theme.spacing.xs,
             maxWidth: theme.layout.contentMaxWidth,
           },
         ]}
@@ -88,8 +99,8 @@ export function MemoryPage({
                 : router.replace("/tabs/memories"))
           }
         />
-        <View style={styles.flex}>
-          <AppText accessibilityRole="header" variant="heading">
+        <View style={[styles.flex, { gap: theme.spacing.xs }]}>
+          <AppText accessibilityRole="header" variant="subheading">
             {title}
           </AppText>
           {subtitle ? (
@@ -115,6 +126,7 @@ export function MemoryEmpty({
   children?: ReactNode;
 }) {
   const theme = useAppTheme();
+
   return (
     <View
       style={{
@@ -136,7 +148,7 @@ export function MemoryEmpty({
           size={theme.layout.iconLarge}
         />
       </View>
-      <AppText variant="heading" style={styles.center}>
+      <AppText variant="subheading" style={styles.center}>
         {title}
       </AppText>
       <AppText tone="muted" style={styles.center}>
@@ -166,6 +178,7 @@ export function MemoryPicture({
   const { copy } = useMemoriesCopy();
   const [state, setState] = useState<"loading" | "loaded" | "error">("loading");
   const [attempt, setAttempt] = useState(0);
+
   return (
     <View
       style={{
@@ -243,11 +256,13 @@ export function MemoryPicture({
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+
   header: {
     flexDirection: "row",
     alignItems: "center",
     width: "100%",
     alignSelf: "center",
   },
+
   center: { textAlign: "center" },
 });

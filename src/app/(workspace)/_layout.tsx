@@ -1,11 +1,17 @@
+import { canAdminister } from "@/features/auth/utils/authorization";
+import { useAuthStore } from "@/store/use-auth-store";
 import { Stack } from "expo-router";
 import { PreviewPanels } from "@/features/home/components/preview-panels";
 import { TripPreviewProvider } from "@/features/home/providers/trip-preview-provider";
 import { useAppTheme } from "@/hooks/use-app-theme";
 
+export { RouteErrorScreen as ErrorBoundary } from "@/components/common/route-error-screen";
+
 /** One session store across the tabs and pushed trip screens, inside the auth guard. */
 export default function WorkspaceLayout() {
   const theme = useAppTheme();
+  const user = useAuthStore((state) => state.user);
+
   return (
     <TripPreviewProvider>
       <Stack
@@ -15,8 +21,12 @@ export default function WorkspaceLayout() {
         }}
       >
         <Stack.Screen name="tabs" />
+        <Stack.Protected guard={canAdminister(user)}>
+          <Stack.Screen name="admin" />
+        </Stack.Protected>
         <Stack.Screen name="trip/[tripId]" />
         <Stack.Screen name="trip/add-places" />
+        <Stack.Screen name="trip/planning" />
         <Stack.Screen name="trip/place-details" />
         <Stack.Screen name="memories/history" />
         <Stack.Screen

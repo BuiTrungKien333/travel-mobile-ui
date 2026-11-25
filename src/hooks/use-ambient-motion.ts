@@ -32,6 +32,7 @@ export function useAmbientMotion(
     );
     return () => subscription.remove();
   }, []);
+
   useEffect(() => {
     if (!enabled || !appActive || reduceMotion) return;
     progress.set(
@@ -45,10 +46,12 @@ export function useAmbientMotion(
         reverse,
       ),
     );
+
     return () => {
       cancelAnimation(progress);
       progress.set(0);
     };
   }, [enabled, appActive, reduceMotion, duration, reverse, progress]);
+
   return progress;
 }

@@ -13,6 +13,7 @@ function goBack() {
   if (router.canGoBack()) router.back();
   else router.replace("/tabs/trips");
 }
+
 export function TripPlacePickerScreen({
   tripId,
   date,
@@ -38,6 +39,7 @@ export function TripPlacePickerScreen({
         </View>
       </ScreenSafeArea>
     );
+
   return (
     <PlacePickerScreen
       key={trip.id}
@@ -53,6 +55,7 @@ export function TripPlacePickerScreen({
           stops,
         });
         if (success) goBack();
+
         return success;
       }}
     />

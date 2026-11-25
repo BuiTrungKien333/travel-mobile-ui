@@ -80,9 +80,11 @@ test("small phones, Pixel width and tablet cap keep symmetric non-overlapping 44
       tokens.layout.tabBarCameraSize / 2;
     near(leftGap, rightGap);
     assert.ok(leftGap >= 16, `Camera clearance at ${viewport}: ${leftGap}`);
+    const cameraTop = (g.barHeight - tokens.layout.tabBarCameraSize) / 2;
+    assert.ok(cameraTop >= tokens.layout.tabBarPadding);
     assert.ok(
-      tokens.layout.tabBarPadding + tokens.layout.tabBarCameraSize <=
-        tokens.layout.tabBarCameraRise + g.barHeight,
+      cameraTop + tokens.layout.tabBarCameraSize <=
+        g.barHeight - tokens.layout.tabBarPadding,
     );
   }
 });
@@ -162,7 +164,7 @@ function harness(platform: string) {
       useAppTheme: () => ({ ...tokens, colors: lightColors }),
     },
     "./navigation-camera-button": { NavigationCameraButton: "Camera" },
-    "./notched-navigation-backdrop": { NotchedNavigationBackdrop: "Backdrop" },
+    "./navigation-bar-surface": { NavigationBarSurface: "Backdrop" },
   });
   const { FloatingBottomNavigation } = load<{
     FloatingBottomNavigation: (props: Record<string, unknown>) => Node | null;
@@ -226,6 +228,16 @@ test("web and Android use identical measured icon/dot/camera coordinates, while 
     const tabs = nodes(tree, "Pressable");
     assert.equal(tabs.length, 4);
     const camera = nodes(tree, "Camera")[0];
+    const cameraContainer = nodes(tree, "View").find(
+      (node) => node.props.children === camera,
+    );
+    assert.ok(cameraContainer);
+    near(
+      style(cameraContainer.props.style).top as number,
+      (floatingNavigationLayout(379.43, tokens.layout).barHeight -
+        tokens.layout.tabBarCameraSize) /
+        2,
+    );
     assert.equal(camera.props.accessibilityLabel, "Capture");
     call(camera, "onPress");
     assert.equal(h.captures(), 1);
@@ -290,46 +302,48 @@ test("tab events, prevented navigation and keyboard hiding keep working after la
   assert.ok(h.render());
 });
 
-test("native and web share the same translucent SVG face without decoder-specific shadow filters", () => {
-  const load = tripModuleLoader({
-    "react/jsx-runtime": { jsx: element, jsxs: element },
-    "react-native": {
-      View: "View",
-      StyleSheet: { create: (v: unknown) => v, absoluteFill: {} },
-    },
-    "expo-image": { Image: "Image" },
-    "@/hooks/use-app-theme": {
-      useAppTheme: () => ({ ...tokens, colors: lightColors }),
-    },
-  });
-  const native = load<{
-    NotchedNavigationBackdrop: (props: {
-      width: number;
-      height: number;
-    }) => Node;
-  }>("src/components/common/notched-navigation-backdrop.tsx");
-  const web = load<{
-    NotchedNavigationBackdrop: (props: {
-      width: number;
-      height: number;
-    }) => Node;
-  }>("src/components/common/notched-navigation-backdrop.web.tsx");
-  const props = { width: 379.43, height: 60 };
-  const nativeTree = native.NotchedNavigationBackdrop(props);
-  const webRoot = web.NotchedNavigationBackdrop(props);
-  const webTree = (webRoot.type as (props: unknown) => Node)(webRoot.props);
-  const nativeSource = nodes(nativeTree, "Image")[0].props.source as {
-    uri: string;
-  };
-  const webSource = nodes(webTree, "Image")[0].props.source as { uri: string };
-  assert.equal(nativeSource.uri, webSource.uri);
-  const svg = decodeURIComponent(
-    nativeSource.uri.split(",").slice(1).join(","),
-  );
-  assert.ok(svg.includes('fill-opacity="0.8"'));
-  assert.ok(!svg.includes("rgba("));
-  assert.ok(!svg.includes("<filter"));
-  assert.equal(nodes(webTree, "div").length, 1);
+test("Android navigation hides underlying content while web and iOS retain glass", () => {
+  for (const platform of ["android", "web", "ios"]) {
+    const load = tripModuleLoader({
+      "react/jsx-runtime": { jsx: element, jsxs: element },
+      "react-native": {
+        View: "View",
+        Platform: { OS: platform },
+        StyleSheet: { create: (v: unknown) => v, absoluteFill: {} },
+      },
+      "./glass-backdrop": { GlassBackdrop: "Glass" },
+      "@/hooks/use-app-theme": {
+        useAppTheme: () => ({ ...tokens, colors: lightColors }),
+      },
+    });
+    const { NavigationBarSurface } = load<{
+      NavigationBarSurface: (props: {
+        width: number;
+        height: number;
+      }) => Node | null;
+    }>("src/components/common/navigation-bar-surface.tsx");
+    const tree = NavigationBarSurface({
+      width: 379.43,
+      height: tokens.layout.tabBarHeight,
+    });
+    assert.ok(tree);
+    assert.equal(tree.props.pointerEvents, "none");
+    assert.equal(
+      style(tree.props.style).borderRadius,
+      tokens.layout.tabBarHeight / 2,
+    );
+    if (platform === "android") {
+      assert.equal(
+        style(tree.props.style).backgroundColor,
+        lightColors.surface,
+      );
+      assert.ok(!lightColors.surface.startsWith("rgba"));
+      assert.equal(nodes(tree, "Glass").length, 0);
+    } else {
+      assert.equal(nodes(tree, "Glass")[0].props.variant, "navigation");
+    }
+    assert.equal(NavigationBarSurface({ width: 0, height: 74 }), null);
+  }
 });
 
 test("camera ambient animation only changes the halo, with an explicit gradient and stable ring geometry", () => {
@@ -390,7 +404,9 @@ test("camera ambient animation only changes the halo, with an explicit gradient 
     assert.equal(disk.backgroundColor, lightColors.primary);
     const image = nodes(tree, "Image")[0];
     const source = image.props.source as { uri: string };
-    const svg = decodeURIComponent(source.uri.split(",").slice(1).join(","));
+    const svg = Buffer.from(source.uri.split(",")[1], "base64").toString(
+      "utf8",
+    );
     assert.ok(svg.includes('gradientUnits="userSpaceOnUse"'));
     assert.ok(svg.includes(`x2="${disk.width}" y2="${disk.height}"`));
     assert.ok(svg.includes(`stop-color="${lightColors.primary}"`));

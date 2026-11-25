@@ -8,7 +8,9 @@ export const placeSearchResultSchema = z.object({
   longitude: z.number().nullable(),
   category: z.string().nullable(),
 });
+
 export type PlaceSearchResult = z.infer<typeof placeSearchResultSchema>;
+
 export const placeSearchEnvelopeSchema = z.object({
   success: z.literal(true),
   data: z.array(placeSearchResultSchema),
@@ -25,6 +27,7 @@ const condition = z.enum([
   "THUNDERSTORM",
   "UNKNOWN",
 ]);
+
 const hourlyWeatherSchema = z.object({
   time: z.iso.datetime({ local: true }),
   temperature: z.number(),
@@ -34,6 +37,7 @@ const hourlyWeatherSchema = z.object({
   condition,
   riskLevel: z.string(),
 });
+
 export const weatherForecastSchema = z.object({
   latitude: z.number(),
   longitude: z.number(),
@@ -52,7 +56,9 @@ export const weatherForecastSchema = z.object({
     }),
   ),
 });
+
 export type WeatherForecastResponse = z.infer<typeof weatherForecastSchema>;
+
 export const weatherEnvelopeSchema = z.object({
   success: z.literal(true),
   data: weatherForecastSchema,

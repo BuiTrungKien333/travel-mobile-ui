@@ -18,6 +18,7 @@ function parse<T>(
   if (!parsed.success || !parsed.data) throw new ApiError("INVALID_RESPONSE");
   return parsed.data.data;
 }
+
 export const mapsApi = {
   async searchPlaces(
     query: string,
@@ -34,6 +35,7 @@ export const mapsApi = {
       },
       signal,
     });
+
     return parse(placeSearchEnvelopeSchema, response.data);
   },
   async forecast(
@@ -55,6 +57,7 @@ export const mapsApi = {
         signal,
       },
     );
+
     return parse(weatherEnvelopeSchema, response.data);
   },
   async route(

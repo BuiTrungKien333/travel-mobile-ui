@@ -64,6 +64,7 @@ export function ConnectedStopScheduleSheet({
       ),
     note: z.string().trim().max(2000, details.invalidText),
   });
+
   const { control, handleSubmit, setValue, formState } = useForm<StopDraft>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -83,6 +84,7 @@ export function ConnectedStopScheduleSheet({
       submitting.current = false;
     }
   };
+
   return (
     <TripDetailsSheet
       title={editable ? (date ? copy.edit : copy.schedule) : copy.details}

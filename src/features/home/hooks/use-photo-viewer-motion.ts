@@ -77,6 +77,7 @@ export function usePhotoViewerMotion({
     ...motion.photoViewerSpring,
     reduceMotion: ReduceMotion.System,
   };
+
   const zoomSpring = {
     ...motion.photoViewerZoomSpring,
     reduceMotion: ReduceMotion.System,
@@ -97,7 +98,7 @@ export function usePhotoViewerMotion({
 
   useEffect(() => {
     cancelAnimation(pageX);
-    pageX.value = -currentPage.value * viewport.width;
+    pageX.set(-currentPage.value * viewport.width);
   }, [viewport.width, pageX, currentPage]);
 
   function goToPage(index: number) {
@@ -105,75 +106,79 @@ export function usePhotoViewerMotion({
     if (closing.value) return;
     const target = clampPhoto(index, 0, pageCount - 1);
     const changed = target !== currentPage.value;
-    currentPage.value = target;
-    pageX.value = withSpring(-target * viewport.width, spring);
-    scale.value = 1;
-    x.value = 0;
-    y.value = 0;
+    currentPage.set(target);
+    pageX.set(withSpring(-target * viewport.width, spring));
+    scale.set(1);
+    x.set(0);
+    y.set(0);
     if (changed) scheduleOnRN(onPageChange, target);
   }
 
   function open() {
     if (opened.value) return;
-    opened.value = true;
-    progress.value = withSpring(1, spring);
+    opened.set(true);
+    progress.set(withSpring(1, spring));
   }
 
   function close() {
     if (closing.value) return;
-    closing.value = true;
-    pageX.value = withSpring(-currentPage.value * viewport.width, spring);
-    chrome.value = withTiming(0, {
-      duration: motion.shutterPressDuration,
-      reduceMotion: ReduceMotion.System,
-    });
-    scale.value = withSpring(1, spring);
-    x.value = withSpring(0, spring);
-    y.value = withSpring(0, spring);
-    dragX.value = withSpring(0, spring);
-    dragY.value = withSpring(0, spring);
-    progress.value = withSpring(0, spring, (finished) => {
-      if (finished) scheduleOnRN(onDismiss);
-    });
+    closing.set(true);
+    pageX.set(withSpring(-currentPage.value * viewport.width, spring));
+    chrome.set(
+      withTiming(0, {
+        duration: motion.shutterPressDuration,
+        reduceMotion: ReduceMotion.System,
+      }),
+    );
+    scale.set(withSpring(1, spring));
+    x.set(withSpring(0, spring));
+    y.set(withSpring(0, spring));
+    dragX.set(withSpring(0, spring));
+    dragY.set(withSpring(0, spring));
+    progress.set(
+      withSpring(0, spring, (finished) => {
+        if (finished) scheduleOnRN(onDismiss);
+      }),
+    );
   }
 
   function resetZoom() {
-    scale.value = withSpring(1, zoomSpring);
-    x.value = withSpring(0, zoomSpring);
-    y.value = withSpring(0, zoomSpring);
+    scale.set(withSpring(1, zoomSpring));
+    x.set(withSpring(0, zoomSpring));
+    y.set(withSpring(0, zoomSpring));
   }
 
   useEffect(() => {
     if (closing.value) return;
-    chrome.value = withTiming(controlsVisible ? 1 : 0, {
-      duration: motion.shutterPressDuration,
-      reduceMotion: ReduceMotion.System,
-    });
+    chrome.set(
+      withTiming(controlsVisible ? 1 : 0, {
+        duration: motion.shutterPressDuration,
+        reduceMotion: ReduceMotion.System,
+      }),
+    );
   }, [chrome, closing, controlsVisible, motion.shutterPressDuration]);
 
   function settleZoom() {
     "worklet";
     const target = clampPhoto(scale.value, 1, maximum);
     const bounds = panLimits(fitted, viewport, target);
-    scale.value = withSpring(target, zoomSpring);
-    x.value = withSpring(clampPhoto(x.value, -bounds.x, bounds.x), zoomSpring);
-    y.value = withSpring(clampPhoto(y.value, -bounds.y, bounds.y), zoomSpring);
+    scale.set(withSpring(target, zoomSpring));
+    x.set(withSpring(clampPhoto(x.value, -bounds.x, bounds.x), zoomSpring));
+    y.set(withSpring(clampPhoto(y.value, -bounds.y, bounds.y), zoomSpring));
   }
 
   const pinch = Gesture.Pinch()
     .enabled(!blocked)
     .onStart((event) => {
       if (closing.value) return;
-      pinching.value = true;
+      pinching.set(true);
       [scale, x, y, dragX, dragY, pageX].forEach(cancelAnimation);
-      pageX.value = -currentPage.value * viewport.width;
-      dragX.value = 0;
-      dragY.value = 0;
-      startScale.value = scale.value;
-      anchorX.value =
-        (event.focalX - viewport.width / 2 - x.value) / scale.value;
-      anchorY.value =
-        (event.focalY - viewport.height / 2 - y.value) / scale.value;
+      pageX.set(-currentPage.value * viewport.width);
+      dragX.set(0);
+      dragY.set(0);
+      startScale.set(scale.value);
+      anchorX.set((event.focalX - viewport.width / 2 - x.value) / scale.value);
+      anchorY.set((event.focalY - viewport.height / 2 - y.value) / scale.value);
     })
     .onUpdate((event) => {
       if (closing.value) return;
@@ -185,25 +190,30 @@ export function usePhotoViewerMotion({
         resistance,
       );
       const bounds = panLimits(fitted, viewport, next);
-      scale.value = next;
-      x.value = rubberBand(
-        event.focalX - viewport.width / 2 - anchorX.value * next,
-        -bounds.x,
-        bounds.x,
-        viewport.width,
-        resistance,
+      scale.set(next);
+      x.set(
+        rubberBand(
+          event.focalX - viewport.width / 2 - anchorX.value * next,
+          -bounds.x,
+          bounds.x,
+          viewport.width,
+          resistance,
+        ),
       );
-      y.value = rubberBand(
-        event.focalY - viewport.height / 2 - anchorY.value * next,
-        -bounds.y,
-        bounds.y,
-        viewport.height,
-        resistance,
+
+      y.set(
+        rubberBand(
+          event.focalY - viewport.height / 2 - anchorY.value * next,
+          -bounds.y,
+          bounds.y,
+          viewport.height,
+          resistance,
+        ),
       );
     })
     .onFinalize(() => {
       if (!pinching.value) return;
-      pinching.value = false;
+      pinching.set(false);
       if (!closing.value) settleZoom();
     });
 
@@ -213,65 +223,74 @@ export function usePhotoViewerMotion({
     .minDistance(layout.photoViewerMinimumPanDistance)
     .onStart(() => {
       if (closing.value) return;
-      panActive.value = true;
-      panNeedsReset.value = pinching.value;
+      panActive.set(true);
+      panNeedsReset.set(pinching.value);
       [x, y, dragX, dragY, pageX].forEach(cancelAnimation);
-      pageStart.value = pageX.value;
-      direction.value = 0;
-      startX.value = x.value;
-      startY.value = y.value;
-      translationStartX.value = 0;
-      translationStartY.value = 0;
-      panningZoom.value = scale.value > threshold;
+      pageStart.set(pageX.value);
+      direction.set(0);
+      startX.set(x.value);
+      startY.set(y.value);
+      translationStartX.set(0);
+      translationStartY.set(0);
+      panningZoom.set(scale.value > threshold);
     })
     .onUpdate((event) => {
       if (closing.value) return;
       if (pinching.value || event.numberOfPointers > 1) {
-        panNeedsReset.value = true;
+        panNeedsReset.set(true);
         return;
       }
+
       // Continue panning with the remaining finger after a pinch, without a centroid jump.
       if (panNeedsReset.value) {
-        startX.value = x.value;
-        startY.value = y.value;
-        translationStartX.value = event.translationX;
-        translationStartY.value = event.translationY;
-        panningZoom.value = scale.value > threshold;
-        panNeedsReset.value = false;
+        startX.set(x.value);
+        startY.set(y.value);
+        translationStartX.set(event.translationX);
+        translationStartY.set(event.translationY);
+        panningZoom.set(scale.value > threshold);
+        panNeedsReset.set(false);
       }
       const dx = event.translationX - translationStartX.value;
       const dy = event.translationY - translationStartY.value;
       if (panningZoom.value) {
         const bounds = panLimits(fitted, viewport, scale.value);
-        x.value = rubberBand(
-          startX.value + dx,
-          -bounds.x,
-          bounds.x,
-          viewport.width,
-          resistance,
+        x.set(
+          rubberBand(
+            startX.value + dx,
+            -bounds.x,
+            bounds.x,
+            viewport.width,
+            resistance,
+          ),
         );
-        y.value = rubberBand(
-          startY.value + dy,
-          -bounds.y,
-          bounds.y,
-          viewport.height,
-          resistance,
+
+        y.set(
+          rubberBand(
+            startY.value + dy,
+            -bounds.y,
+            bounds.y,
+            viewport.height,
+            resistance,
+          ),
         );
       } else {
         if (direction.value === 0 && Math.max(Math.abs(dx), Math.abs(dy)) > 0) {
-          direction.value = Math.abs(dx) > Math.abs(dy) ? 1 : 2;
+          direction.set(Math.abs(dx) > Math.abs(dy) ? 1 : 2);
         }
+
         if (direction.value === 1) {
-          pageX.value = rubberBand(
-            pageStart.value + dx,
-            -(pageCount - 1) * viewport.width,
-            0,
-            viewport.width,
-            resistance,
+          pageX.set(
+            rubberBand(
+              pageStart.value + dx,
+              -(pageCount - 1) * viewport.width,
+              0,
+              viewport.width,
+              resistance,
+            ),
           );
         } else {
-          dragX.value = dx * resistance;
-          dragY.value = dy >= 0 ? dy : dy * resistance;
+          dragX.set(dx * resistance);
+          dragY.set(dy >= 0 ? dy : dy * resistance);
         }
       }
     })
@@ -281,6 +300,7 @@ export function usePhotoViewerMotion({
         settleZoom();
         return;
       }
+
       if (direction.value === 1) {
         const displacement = pageX.value + currentPage.value * viewport.width;
         const target = photoPageDestination(
@@ -294,9 +314,10 @@ export function usePhotoViewerMotion({
           layout.photoViewerMinimumFlingDistance,
         );
         goToPage(target);
+
         return;
       }
-      pageX.value = withSpring(-currentPage.value * viewport.width, spring);
+      pageX.set(withSpring(-currentPage.value * viewport.width, spring));
       if (
         dragY.value > dismissDistance ||
         (dragY.value > layout.photoViewerMinimumFlingDistance &&
@@ -304,17 +325,17 @@ export function usePhotoViewerMotion({
       ) {
         scheduleOnRN(close);
       } else {
-        dragX.value = withSpring(0, zoomSpring);
-        dragY.value = withSpring(0, zoomSpring);
+        dragX.set(withSpring(0, zoomSpring));
+        dragY.set(withSpring(0, zoomSpring));
       }
     })
     .onFinalize((_event, success) => {
       if (!panActive.value) return;
-      panActive.value = false;
+      panActive.set(false);
       if (!success && !closing.value && !pinching.value) {
-        pageX.value = withSpring(-currentPage.value * viewport.width, spring);
-        dragX.value = withSpring(0, zoomSpring);
-        dragY.value = withSpring(0, zoomSpring);
+        pageX.set(withSpring(-currentPage.value * viewport.width, spring));
+        dragX.set(withSpring(0, zoomSpring));
+        dragY.set(withSpring(0, zoomSpring));
         settleZoom();
       }
     });
@@ -325,23 +346,28 @@ export function usePhotoViewerMotion({
     const target =
       scale.value > threshold ? 1 : layout.photoViewerDoubleTapScale;
     const bounds = panLimits(fitted, viewport, target);
-    x.value = withSpring(
-      clampPhoto(
-        zoomOffset(focalX, viewport.width / 2, x.value, scale.value, target),
-        -bounds.x,
-        bounds.x,
+    x.set(
+      withSpring(
+        clampPhoto(
+          zoomOffset(focalX, viewport.width / 2, x.value, scale.value, target),
+          -bounds.x,
+          bounds.x,
+        ),
+        zoomSpring,
       ),
-      zoomSpring,
     );
-    y.value = withSpring(
-      clampPhoto(
-        zoomOffset(focalY, viewport.height / 2, y.value, scale.value, target),
-        -bounds.y,
-        bounds.y,
+
+    y.set(
+      withSpring(
+        clampPhoto(
+          zoomOffset(focalY, viewport.height / 2, y.value, scale.value, target),
+          -bounds.y,
+          bounds.y,
+        ),
+        zoomSpring,
       ),
-      zoomSpring,
     );
-    scale.value = withSpring(target, zoomSpring);
+    scale.set(withSpring(target, zoomSpring));
   }
 
   const doubleTap = Gesture.Tap()
@@ -351,12 +377,14 @@ export function usePhotoViewerMotion({
     .onEnd((event, success) => {
       if (success) zoomToPoint(event.x, event.y);
     });
+
   const singleTap = Gesture.Tap()
     .enabled(!blocked)
     .maxDistance(theme.spacing.sm)
     .onEnd((_event, success) => {
       if (success && !closing.value) scheduleOnRN(onToggleControls);
     });
+
   const gesture = Gesture.Race(
     Gesture.Simultaneous(pan, pinch),
     Gesture.Exclusive(doubleTap, singleTap),
@@ -370,6 +398,7 @@ export function usePhotoViewerMotion({
       1 -
       Math.min(1, Math.max(0, dragY.value) / viewport.height) *
         (1 - layout.photoViewerMinimumDismissScale);
+
     return {
       transform: [
         {
@@ -389,25 +418,30 @@ export function usePhotoViewerMotion({
       ],
     };
   });
+
   // Counter-scale inside the clipping frame: cover thumbnail -> uncropped original, without stretching pixels.
   const contentStyle = useAnimatedStyle(() => {
     const p = clampPhoto(progress.value, 0, 1);
     const sx = (origin.width / fitted.width) * (1 - p) + p;
     const sy = (origin.height / fitted.height) * (1 - p) + p;
     const cover = Math.max(sx, sy);
+
     return { transform: [{ scaleX: cover / sx }, { scaleY: cover / sy }] };
   });
+
   const backdropStyle = useAnimatedStyle(() => ({
     opacity:
       clampPhoto(progress.value, 0, 1) *
       (1 - clampPhoto(dragY.value / (viewport.height / 2), 0, 1)),
   }));
+
   const controlsStyle = useAnimatedStyle(() => ({
     opacity:
       chrome.value *
       clampPhoto(progress.value, 0, 1) *
       (1 - clampPhoto(dragY.value / dismissDistance, 0, 1)),
   }));
+
   const carouselStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: pageX.value }],
   }));

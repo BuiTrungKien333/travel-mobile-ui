@@ -1,7 +1,4 @@
 export function getCameraEnvironmentIssue():
-  | "insecure"
-  | "unsupported"
-  | "embedded"
-  | null {
+  "insecure" | "unsupported" | "embedded" | null {
   return null;
 }

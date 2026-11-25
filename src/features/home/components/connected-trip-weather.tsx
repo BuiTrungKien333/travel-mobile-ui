@@ -27,6 +27,7 @@ export function WeatherQueryStatus({
         {copy.loading}
       </AppText>
     );
+
   if (query.isError)
     return (
       <View style={{ gap: theme.spacing.sm }}>
@@ -45,6 +46,7 @@ export function WeatherQueryStatus({
         </AppButton>
       </View>
     );
+
   return reason ? <AppText tone="muted">{copy[reason]}</AppText> : null;
 }
 
@@ -69,11 +71,13 @@ export function TripWeatherModal({
   const daily = data?.forecast?.dailySummaries.find(
     (d) => d.date === selected?.date,
   );
+
   const current =
     selected?.date === data?.today &&
     data?.current?.time.slice(0, 10) === selected?.date
       ? data?.current
       : null;
+
   const reference =
     current?.time.slice(11, 16) ??
     (data && selected?.date === data.today
@@ -84,15 +88,18 @@ export function TripWeatherModal({
           hourCycle: "h23",
         }).format(new Date(data.fetchedAt))
       : undefined);
+
   const future =
     daily?.hourlyForecasts.filter(
       (h) => !reference || h.time.slice(11, 16) >= reference,
     ) ?? [];
+
   const representative =
     current ??
     future.find((h) => h.time.slice(11, 13) === "12") ??
     future[0] ??
     daily?.hourlyForecasts.at(-1);
+
   const peak = future.reduce<(typeof future)[number] | undefined>(
     (max, h) =>
       !max || h.precipitationProbability > max.precipitationProbability
@@ -118,6 +125,7 @@ export function TripWeatherModal({
       icon: hot ? "sun" : "route",
       text: hot ? copy.water : copy.flexible,
     });
+
   const summary = risky
     ? copy.severe
     : current && current.rainMm > 0
@@ -133,6 +141,7 @@ export function TripWeatherModal({
             : representative?.condition === "UNKNOWN" || !future.length
               ? copy.flexible
               : copy.clear;
+
   return (
     <JourneySheet
       title={copy.title}

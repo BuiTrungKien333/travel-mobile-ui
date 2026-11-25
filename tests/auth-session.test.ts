@@ -3,29 +3,75 @@ import assert from "node:assert/strict";
 import { QueryClient } from "@tanstack/react-query";
 import { SessionManager } from "../src/features/auth/services/session-manager.ts";
 import { ApiError } from "../src/services/api/api-error.ts";
-import type { AuthData, AuthStatus } from "../src/features/auth/types/auth-types.ts";
+import type {
+  AuthData,
+  AuthStatus,
+} from "../src/features/auth/types/auth-types.ts";
 
-const user = { id: "00000000-0000-4000-8000-000000000001", email: "user@example.com", fullName: "Nguyễn Văn An", role: "USER" as const };
+const user = {
+  id: "00000000-0000-4000-8000-000000000001",
+  email: "user@example.com",
+  fullName: "Nguyễn Văn An",
+  role: "USER" as const,
+};
 function data(label = "new"): AuthData {
-  return { accessToken: `${label}.access`, refreshToken: `${label}.refresh`, tokenType: "Bearer", expiresIn: 1800000, user };
+  return {
+    accessToken: `${label}.access`,
+    refreshToken: `${label}.refresh`,
+    tokenType: "Bearer",
+    expiresIn: 1800000,
+    user,
+  };
 }
 function deferred<T>() {
-  let resolve: (value: T) => void = () => { throw new Error("Not initialized"); };
-  const promise = new Promise<T>((done) => { resolve = done; });
+  let resolve: (value: T) => void = () => {
+    throw new Error("Not initialized");
+  };
+  const promise = new Promise<T>((done) => {
+    resolve = done;
+  });
   return { promise, resolve };
 }
 function fixture(initial: string | null = null) {
-  const state: { token: string | null; statuses: AuthStatus[]; requests: number; revoked: string[]; users: string[]; cleared: number } =
-    { token: initial, statuses: [], requests: 0, revoked: [], users: [], cleared: 0 };
+  const state: {
+    token: string | null;
+    statuses: AuthStatus[];
+    requests: number;
+    revoked: string[];
+    users: string[];
+    cleared: number;
+  } = {
+    token: initial,
+    statuses: [],
+    requests: 0,
+    revoked: [],
+    users: [],
+    cleared: 0,
+  };
   const dependencies = {
     read: async () => state.token,
-    write: async (token: string) => { state.token = token; },
-    remove: async () => { state.token = null; },
-    requestRefresh: async (_token: string) => { state.requests++; return data(); },
-    requestLogout: async (token: string) => { state.revoked.push(token); },
-    onStatus: (status: AuthStatus) => { state.statuses.push(status); },
-    onUser: (value: typeof user) => { state.users.push(value.id); },
-    onClear: () => { state.cleared++; },
+    write: async (token: string) => {
+      state.token = token;
+    },
+    remove: async () => {
+      state.token = null;
+    },
+    requestRefresh: async (_token: string) => {
+      state.requests++;
+      return data();
+    },
+    requestLogout: async (token: string) => {
+      state.revoked.push(token);
+    },
+    onStatus: (status: AuthStatus) => {
+      state.statuses.push(status);
+    },
+    onUser: (value: typeof user) => {
+      state.users.push(value.id);
+    },
+    onClear: () => {
+      state.cleared++;
+    },
   };
   return { state, dependencies };
 }
@@ -84,7 +130,9 @@ test("native restore rotates stored refresh token and supplies current user", as
 });
 test("secure storage read failure identifies storage recovery error", async () => {
   const { state, dependencies } = fixture();
-  dependencies.read = async () => { throw new Error("storage locked"); };
+  dependencies.read = async () => {
+    throw new Error("storage locked");
+  };
   const session = new SessionManager(dependencies);
   await session.restore();
   assert.equal(session.getRestoreError()?.code, "STORAGE");
@@ -98,7 +146,9 @@ test("concurrent restore calls share one operation", async () => {
 });
 test("expired refresh token clears storage, query data and session", async () => {
   const { state, dependencies } = fixture("expired.refresh");
-  dependencies.requestRefresh = async () => { throw new ApiError("AUTH_005", 401); };
+  dependencies.requestRefresh = async () => {
+    throw new ApiError("AUTH_005", 401);
+  };
   const session = new SessionManager(dependencies);
   await session.restore();
   assert.equal(state.token, null);
@@ -108,7 +158,9 @@ test("expired refresh token clears storage, query data and session", async () =>
 });
 test("network failure retains stored credential and retry restores session", async () => {
   const { state, dependencies } = fixture("old.refresh");
-  dependencies.requestRefresh = async () => { throw new ApiError("NETWORK"); };
+  dependencies.requestRefresh = async () => {
+    throw new ApiError("NETWORK");
+  };
   const session = new SessionManager(dependencies);
   await session.restore();
   assert.equal(state.token, "old.refresh");
@@ -120,7 +172,10 @@ test("network failure retains stored credential and retry restores session", asy
 test("simultaneous 401 handlers cause only one refresh request", async () => {
   const { state, dependencies } = fixture();
   const pending = deferred<AuthData>();
-  dependencies.requestRefresh = async () => { state.requests++; return pending.promise; };
+  dependencies.requestRefresh = async () => {
+    state.requests++;
+    return pending.promise;
+  };
   const session = new SessionManager(dependencies);
   await session.authenticate(async () => data("initial"));
   const first = session.refresh();
@@ -138,7 +193,10 @@ test("late refresh response cannot sign user back in after logout", async () => 
   const session = new SessionManager(dependencies);
   await session.authenticate(async () => data("initial"));
   const refreshing = session.refresh();
-  const rejected = assert.rejects(refreshing, (error: unknown) => error instanceof ApiError && error.code === "CANCELLED");
+  const rejected = assert.rejects(
+    refreshing,
+    (error: unknown) => error instanceof ApiError && error.code === "CANCELLED",
+  );
   await session.logout();
   pending.resolve(data("late"));
   await rejected;
@@ -151,10 +209,17 @@ test("logout queued behind a credential write leaves storage empty", async () =>
   const { state, dependencies } = fixture();
   const writeStarted = deferred<void>();
   const writing = deferred<void>();
-  dependencies.write = async (token) => { writeStarted.resolve(); await writing.promise; state.token = token; };
+  dependencies.write = async (token) => {
+    writeStarted.resolve();
+    await writing.promise;
+    state.token = token;
+  };
   const session = new SessionManager(dependencies);
   const authenticating = session.authenticate(async () => data());
-  const rejected = assert.rejects(authenticating, (error: unknown) => error instanceof ApiError && error.code === "CANCELLED");
+  const rejected = assert.rejects(
+    authenticating,
+    (error: unknown) => error instanceof ApiError && error.code === "CANCELLED",
+  );
   await writeStarted.promise;
   const logout = session.logout();
   writing.resolve();
@@ -164,9 +229,14 @@ test("logout queued behind a credential write leaves storage empty", async () =>
 });
 test("storage write failure never grants authenticated UI and revokes issued token", async () => {
   const { state, dependencies } = fixture();
-  dependencies.write = async () => { throw new Error("storage locked"); };
+  dependencies.write = async () => {
+    throw new Error("storage locked");
+  };
   const session = new SessionManager(dependencies);
-  await assert.rejects(session.authenticate(async () => data()), (error: unknown) => error instanceof ApiError && error.code === "STORAGE");
+  await assert.rejects(
+    session.authenticate(async () => data()),
+    (error: unknown) => error instanceof ApiError && error.code === "STORAGE",
+  );
   assert.equal(session.getAccessToken(), null);
   assert.ok(!state.statuses.includes("authenticated"));
   assert.deepEqual(state.revoked, ["new.refresh"]);
@@ -175,8 +245,13 @@ test("failed storage deletion exposes recovery error instead of claiming logout 
   const { state, dependencies } = fixture();
   const session = new SessionManager(dependencies);
   await session.authenticate(async () => data());
-  dependencies.remove = async () => { throw new Error("storage unavailable"); };
-  await assert.rejects(session.logout(), (error: unknown) => error instanceof ApiError && error.code === "STORAGE");
+  dependencies.remove = async () => {
+    throw new Error("storage unavailable");
+  };
+  await assert.rejects(
+    session.logout(),
+    (error: unknown) => error instanceof ApiError && error.code === "STORAGE",
+  );
   assert.equal(session.getAccessToken(), null);
   assert.equal(state.statuses.at(-1), "restore-error");
   assert.deepEqual(state.revoked, ["new.refresh"]);
@@ -186,12 +261,17 @@ test("storage deletion failure remains visible when server revocation also fails
   const { state, dependencies } = fixture();
   const session = new SessionManager(dependencies);
   await session.authenticate(async () => data());
-  dependencies.remove = async () => { throw new Error("storage unavailable"); };
+  dependencies.remove = async () => {
+    throw new Error("storage unavailable");
+  };
   dependencies.requestLogout = async (token) => {
     state.revoked.push(token);
     throw new ApiError("NETWORK");
   };
-  await assert.rejects(session.logout(), (error: unknown) => error instanceof ApiError && error.code === "STORAGE");
+  await assert.rejects(
+    session.logout(),
+    (error: unknown) => error instanceof ApiError && error.code === "STORAGE",
+  );
   assert.deepEqual(state.revoked, ["new.refresh"]);
   assert.equal(session.getAccessToken(), null);
   assert.equal(session.getRestoreError()?.code, "STORAGE");
@@ -199,7 +279,9 @@ test("storage deletion failure remains visible when server revocation also fails
 });
 test("offline logout clears local credentials and reports unsuccessful server revocation", async () => {
   const { state, dependencies } = fixture();
-  dependencies.requestLogout = async () => { throw new ApiError("NETWORK"); };
+  dependencies.requestLogout = async () => {
+    throw new ApiError("NETWORK");
+  };
   const session = new SessionManager(dependencies);
   await session.authenticate(async () => data());
   assert.equal(await session.logout(), false);
@@ -211,7 +293,10 @@ test("older login response cannot replace newer authenticated session", async ()
   const oldResponse = deferred<AuthData>();
   const session = new SessionManager(dependencies);
   const oldLogin = session.authenticate(() => oldResponse.promise);
-  const rejected = assert.rejects(oldLogin, (error: unknown) => error instanceof ApiError && error.code === "CANCELLED");
+  const rejected = assert.rejects(
+    oldLogin,
+    (error: unknown) => error instanceof ApiError && error.code === "CANCELLED",
+  );
   await session.authenticate(async () => data("current"));
   oldResponse.resolve(data("old"));
   await rejected;

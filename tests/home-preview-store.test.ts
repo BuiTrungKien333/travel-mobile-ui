@@ -67,13 +67,11 @@ test("adding suggestions does not duplicate stops or mutate original scenario fi
   const day = trip.days[2];
   assert.equal(day.stops.length, 0);
   for (let i = 0; i < 5; i++)
-    store
-      .getState()
-      .mutateTrip(trip.id, {
-        kind: "add",
-        date: day.date,
-        stops: trip.days[1].stops,
-      });
+    store.getState().mutateTrip(trip.id, {
+      kind: "add",
+      date: day.date,
+      stops: trip.days[1].stops,
+    });
   const updated = store.getState().trips.find((item) => item.id === trip.id)
     ?.days[2];
   assert.equal(updated?.stops.length, 3);

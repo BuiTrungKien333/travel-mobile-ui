@@ -27,7 +27,7 @@ export function TripDayToolbar({
   routeSummary: string;
   routeMetrics?: { km: number; minutes: number };
   transportLabel?: string;
-  transportIcon?: "car" | "walk" | "route";
+  transportIcon?: "car" | "walk" | "bicycle" | "route";
   onSheetChange: (sheet: TripDetailsSheetState) => void;
   onEditDay?: () => void;
   actions?: ReactNode;
@@ -37,6 +37,7 @@ export function TripDayToolbar({
   const summary = routeMetrics
     ? `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(routeMetrics.km)} km (${routeMetrics.minutes} ${copy.minutes})`
     : routeSummary;
+
   return (
     <View style={{ gap: theme.spacing.sm, paddingBottom: theme.spacing.lg }}>
       <View
@@ -143,6 +144,7 @@ function ToolbarPill({
 }) {
   const theme = useAppTheme();
   const color = accent ? theme.colors.onPrimary : theme.colors.primaryText;
+
   return (
     <Pressable
       accessibilityRole="button"

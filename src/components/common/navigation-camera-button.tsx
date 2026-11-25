@@ -1,3 +1,4 @@
+import { svgDataUri } from "@/utils/svg-data-uri";
 import { Image } from "expo-image";
 import { Pressable, StyleSheet, View } from "react-native";
 import Animated, {
@@ -32,6 +33,7 @@ export function NavigationCameraButton({
     // Ambient motion belongs to the halo; the actual button keeps its diameter.
     transform: [{ scale: pressed.value }],
   }));
+
   const glowStyle = useAnimatedStyle(() => ({
     opacity:
       glowOpacity +
@@ -40,15 +42,20 @@ export function NavigationCameraButton({
       { scale: 1 + (1 - Math.cos(progress.value * Math.PI * 4)) * pulseScale },
     ],
   }));
+
   const setPressScale = (scale: number) => {
-    pressed.value = withTiming(scale, {
-      duration: theme.motion.shutterPressDuration,
-      reduceMotion: ReduceMotion.System,
-    });
+    pressed.set(
+      withTiming(scale, {
+        duration: theme.motion.shutterPressDuration,
+        reduceMotion: ReduceMotion.System,
+      }),
+    );
   };
-  const gradientUri = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
+
+  const gradientUri = svgDataUri(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${diskSize}" height="${diskSize}" viewBox="0 0 ${diskSize} ${diskSize}"><defs><linearGradient id="shutter" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="${diskSize}" y2="${diskSize}"><stop offset="0" stop-color="${theme.colors.primary}"/><stop offset="1" stop-color="${theme.colors.gradientActionEnd}"/></linearGradient></defs><rect width="${diskSize}" height="${diskSize}" fill="url(#shutter)"/></svg>`,
-  )}`;
+  );
+
   return (
     <Animated.View style={animatedStyle}>
       <Animated.View
@@ -131,6 +138,7 @@ export function NavigationCameraButton({
     </Animated.View>
   );
 }
+
 const styles = StyleSheet.create({
   disk: {
     position: "absolute",
@@ -138,6 +146,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     overflow: "hidden",
   },
+
   highlight: {
     position: "absolute",
     height: "50%",

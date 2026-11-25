@@ -6,6 +6,7 @@ import type { Memory, TripStop } from "../types/home-types";
 import { nextTravelDayRefreshDelay } from "@/utils/calendar-date";
 
 const count = z.number().int().nonnegative().safe();
+
 const photoSchema = z.object({
   id: z.guid(),
   memoryId: z.guid(),
@@ -18,6 +19,7 @@ const photoSchema = z.object({
   time: z.string().nullable(),
   experiencedAt: z.iso.datetime({ offset: true }).nullable(),
 });
+
 export const homeDashboardSchema = z
   .object({
     state: z.enum(["NEW", "PLANNING", "UPCOMING", "LIVE", "RETURNING"]),
@@ -66,27 +68,34 @@ export const homeDashboardSchema = z
         message: "Inconsistent home selection",
       });
   });
+
 export type HomeDashboard = z.infer<typeof homeDashboardSchema>;
+
 /** Re-evaluate at Vietnam midnight without polling or using the device's calendar. */
 export function nextHomeRefreshDelay(context: HomeDashboard["context"]) {
   return nextTravelDayRefreshDelay(context);
 }
+
 export const homeApi = {
   async get(signal?: AbortSignal) {
     const response = await apiClient.get<unknown>("/api/v1/home/dashboard", {
       signal,
     });
+
     const result = z
       .object({ success: z.literal(true), data: homeDashboardSchema })
       .safeParse(response.data);
     if (!result.success) throw new ApiError("INVALID_RESPONSE");
+
     return result.data.data;
   },
 };
+
 export function homeNextStop(
   stop: HomeDashboard["nextStop"],
 ): TripStop | undefined {
   if (!stop) return;
+
   return {
     id: stop.id,
     placeId: stop.placeId,
@@ -104,6 +113,7 @@ export function homeNextStop(
         : undefined,
   };
 }
+
 export function homeMemories(
   data: HomeDashboard,
   local: readonly Memory[],
@@ -119,6 +129,7 @@ export function homeMemories(
     time: p.time ?? undefined,
     place: p.placeName ? { vi: p.placeName, en: p.placeName } : undefined,
   }));
+
   const drafts = local.filter(
     (m) =>
       !!owner &&
@@ -129,6 +140,7 @@ export function homeMemories(
         (m.tripId === data.selectedTrip?.trip.id &&
           m.date === data.context.evaluatedDate)),
   );
+
   return [...drafts, ...remote]
     .sort((a, b) =>
       `${b.date ?? ""} ${b.time ?? ""}`.localeCompare(

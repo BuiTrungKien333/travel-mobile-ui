@@ -19,6 +19,7 @@ export function getTripDetailsMode(trip: Trip, today: string): TripDetailsMode {
     if (today > end) return "recap";
     return "live";
   }
+
   return trip.status === "completed" ? "recap" : "planning";
 }
 
@@ -35,6 +36,7 @@ export function getTripStartInfo(trip: Trip, day?: TripDay, live = false) {
     day.startTime && clockPattern.test(day.startTime)
       ? day.startTime
       : undefined;
+
   return { location, time };
 }
 
@@ -69,6 +71,7 @@ export function visitTimeRange(stop: TripStop) {
   if (!clockPattern.test(stop.time)) return null;
   const [hours, minutes] = stop.time.split(":").map(Number);
   const end = hours * 60 + minutes + (stop.durationMinutes ?? 45);
+
   return {
     label: `${stop.time} – ${String(Math.floor(end / 60) % 24).padStart(2, "0")}:${String(end % 60).padStart(2, "0")}`,
     nextDay: end >= 24 * 60,

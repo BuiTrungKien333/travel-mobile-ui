@@ -10,6 +10,11 @@ function nodes(value: unknown, type: string): Node[] {
   if (Array.isArray(value)) return value.flatMap((item) => nodes(item, type));
   if (!value || typeof value !== "object" || !("props" in value)) return [];
   const item = value as Node;
+  if (typeof item.type === "function")
+    return nodes(
+      (item.type as (props: Record<string, unknown>) => unknown)(item.props),
+      type,
+    );
   return [
     ...(item.type === type ? [item] : []),
     ...nodes(item.props.children, type),
@@ -132,6 +137,7 @@ function fixture(options: Options = {}) {
     "react-native": {
       ActivityIndicator: "Spinner",
       FlatList: "FlatList",
+      Pressable: "Pressable",
       View: "View",
       StyleSheet: { hairlineWidth: 1 },
       Platform: { OS: "android" },
@@ -144,6 +150,7 @@ function fixture(options: Options = {}) {
     "@/hooks/use-app-theme": { useAppTheme: () => ({ ...tokens, colors: {} }) },
     "@/hooks/use-i18n": { useI18n: () => ({ locale: "en" }) },
     "@/components/ui/app-text": { AppText: "AppText" },
+    "@/components/ui/app-icon": { AppIcon: "AppIcon" },
     "@/components/ui/app-button": { AppButton: "AppButton" },
     "@/features/auth/services/auth-session": {
       authSession: { getVersion: () => version },
@@ -286,7 +293,7 @@ test("assignment is tap guarded, uploads the exact persisted snapshot and keeps 
   );
   assert.ok(
     nodes(f.row("local-photo"), "AppText").some(
-      (node) => node.props.children === "Waiting to sync to a trip",
+      (node) => node.props.children === "Added to a trip · Not synced",
     ),
   );
 });

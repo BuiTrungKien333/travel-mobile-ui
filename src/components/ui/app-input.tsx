@@ -175,17 +175,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderCurve: "continuous",
   },
+
   input: {
     minWidth: 0,
     flex: 1,
     minHeight: 50,
   },
+
   passwordAction: {
     width: 48,
     minHeight: 48,
     alignItems: "center",
     justifyContent: "center",
   },
+
   pressed: {
     opacity: 0.62,
   },

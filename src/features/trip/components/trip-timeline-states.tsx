@@ -27,6 +27,7 @@ export function TripStartNode({
   const { copy } = useTripDetailsCopy();
   const start = getTripStartInfo(trip, day, live);
   if (!start) return null;
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -90,6 +91,7 @@ export function TripTimelineEmpty({
 }) {
   const theme = useAppTheme();
   const { copy } = useTripDetailsCopy();
+
   return (
     <View
       style={{
@@ -131,6 +133,7 @@ export function TripTimelineTail({
 }) {
   const theme = useAppTheme();
   const { copy } = useTripDetailsCopy();
+
   return (
     <View style={{ gap: theme.spacing.md, paddingTop: theme.spacing.lg }}>
       {day && empty ? (

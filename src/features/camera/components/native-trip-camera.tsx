@@ -41,6 +41,10 @@ import {
 import { useProfile } from "@/features/auth/hooks/use-auth";
 import { ApiError } from "@/services/api/api-error";
 import { authSession } from "@/features/auth/services/auth-session";
+import { MEMORY_IMPORT_LIMIT } from "@/features/memories/constants/memory-limits";
+import type { ImportSource } from "@/features/memories/services/import-photos";
+import { PhotoImportSheet } from "./photo-import-sheet";
+import { cameraApiErrorMessage } from "../utils/camera-error-message";
 
 const CAMERA_READY_TIMEOUT_MS = 15000;
 
@@ -63,6 +67,9 @@ export function NativeTripCamera(
   const operation = useRef(false);
   const requestedOnOpen = useRef(false);
   const [busy, setBusy] = useState(false);
+  const [importSources, setImportSources] = useState<ImportSource[] | null>(
+    null,
+  );
   const [facing, setFacing] = useState<CameraType>("back");
   const [flashOn, setFlashOn] = useState(false);
   const [zoom, setZoom] = useState(1);
@@ -70,6 +77,7 @@ export function NativeTripCamera(
   const previewMotion = useAnimatedStyle(() => ({
     transform: [{ scale: previewScale.get() }],
   }));
+
   useEffect(() => {
     previewScale.set(
       withTiming(zoom, {
@@ -93,23 +101,28 @@ export function NativeTripCamera(
     height?: number;
     mimeType?: string;
   } | null>(null);
+
   const [foreground, setForeground] = useState(
     AppState.currentState !== "background" &&
       AppState.currentState !== "inactive",
   );
   const focused = useIsFocused();
   const navigation = useNavigation();
-  usePreventRemove(busy || (!!pending && !pending.id), ({ data }) => {
-    if (operation.current) return;
-    Alert.alert(copy.unsavedTitle, copy.unsavedHint, [
-      { text: copy.keepPhoto, style: "cancel" },
-      {
-        text: copy.leavePhoto,
-        style: "destructive",
-        onPress: () => navigation.dispatch(data.action),
-      },
-    ]);
-  });
+  usePreventRemove(
+    busy || !!importSources || (!!pending && !pending.id),
+    ({ data }) => {
+      if (importSources) return;
+      if (operation.current) return;
+      Alert.alert(copy.unsavedTitle, copy.unsavedHint, [
+        { text: copy.keepPhoto, style: "cancel" },
+        {
+          text: copy.leavePhoto,
+          style: "destructive",
+          onPress: () => navigation.dispatch(data.action),
+        },
+      ]);
+    },
+  );
   const panelOpen = useTripPreview((state) => state.panel !== null);
   const savePhoto = useTripPreview((state) => state.saveLocalPhoto);
   const exportPhoto = useTripPreview((state) => state.exportLocalPhoto);
@@ -119,7 +132,8 @@ export function NativeTripCamera(
   const { upload } = useMemoryActions();
   const operationSession = useRef<number | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
-  const active = foreground && focused && !panelOpen && !props.suspended;
+  const active =
+    foreground && focused && !panelOpen && !props.suspended && !importSources;
   useEffect(() => {
     if (
       props.requestOnOpen &&
@@ -141,20 +155,24 @@ export function NativeTripCamera(
     requesting,
     request,
   ]);
+
   useEffect(() => {
     mounted.current = true;
     const subscription = AppState.addEventListener("change", (value) => {
       setForeground(value === "active");
     });
+
     return () => {
       mounted.current = false;
       subscription.remove();
     };
   }, []);
+
   const handleCameraRef = useCallback((instance: CameraView | null) => {
     camera.current = instance;
     if (!instance) setReady(false);
   }, []);
+
   useEffect(() => {
     if (!active || !permission?.granted || pending || ready || mountError)
       return;
@@ -162,16 +180,20 @@ export function NativeTripCamera(
       () => setMountError(true),
       CAMERA_READY_TIMEOUT_MS,
     );
+
     return () => clearTimeout(timer);
   }, [active, permission?.granted, pending, ready, mountError]);
+
   useEffect(() => {
     if (!saved) return;
     const timer = setTimeout(
       () => setSaved(false),
       theme.motion.photoViewerNoticeDuration,
     );
+
     return () => clearTimeout(timer);
   }, [saved, theme.motion.photoViewerNoticeDuration]);
+
   async function run(task: () => Promise<void>) {
     if (operation.current) return;
     operation.current = true;
@@ -189,15 +211,7 @@ export function NativeTripCamera(
           error instanceof PhotoActionError
             ? photoCopy[error.code]
             : error instanceof ApiError
-              ? error.code === "UPLOAD_002"
-                ? copy.tooLarge
-                : error.code === "UPLOAD_003"
-                  ? copy.invalidType
-                  : error.code === "UPLOAD_008"
-                    ? copy.imageTooLarge
-                    : error.code === "MEMORY_FUTURE_DATE"
-                      ? copy.futureDate
-                      : copy.uploadError
+              ? cameraApiErrorMessage(error, copy)
               : copy.photoError,
         );
     } finally {
@@ -205,6 +219,7 @@ export function NativeTripCamera(
       if (mounted.current) setBusy(false);
     }
   }
+
   async function persistPhoto(photo: {
     uri: string;
     id?: string;
@@ -220,6 +235,7 @@ export function NativeTripCamera(
     const existing = photo.id
       ? memories.find((item) => item.id === photo.id)
       : undefined;
+
     const memory =
       existing ??
       (await savePhoto({
@@ -258,6 +274,7 @@ export function NativeTripCamera(
         if (mounted.current) setWarning(copy.libraryCopyError);
       }
     }
+
     if (mounted.current) {
       setDeviceSaved(exported);
       setPending({ uri: memory.photo, id: memory.id, deviceSaved: exported });
@@ -276,6 +293,7 @@ export function NativeTripCamera(
         },
       });
     }
+
     if (mounted.current) {
       setPending(null);
       setReady(false);
@@ -283,6 +301,7 @@ export function NativeTripCamera(
       setError("");
     }
   }
+
   function capture() {
     if (pending) {
       void run(() => persistPhoto(pending));
@@ -304,30 +323,47 @@ export function NativeTripCamera(
       }
     });
   }
+
   function pick() {
     void run(async () => {
       // Mobile browsers require the picker to open directly from the press event.
       const result = await launchImageLibraryAsync({
         mediaTypes: ["images"],
         allowsEditing: false,
-        allowsMultipleSelection: false,
+        allowsMultipleSelection: true,
+        selectionLimit: MEMORY_IMPORT_LIMIT,
         quality: theme.layout.cameraPhotoQuality,
         exif: false,
       });
-      if (result.canceled || !result.assets[0] || !mounted.current) return;
-      const photo = await prepareCameraPhoto(result.assets[0]);
-      if (mounted.current) {
-        setPending(photo);
-        setReady(false);
-        await persistPhoto(photo);
-      }
+      if (result.canceled || !result.assets.length || !mounted.current) return;
+      if (result.assets.length > MEMORY_IMPORT_LIMIT)
+        throw new ApiError("UPLOAD_005");
+      if (
+        !props.quick &&
+        props.tripId &&
+        !trips.some((trip) => trip.id === props.tripId)
+      )
+        throw new ApiError("TRIP_001");
+      if (operationSession.current !== authSession.getVersion())
+        throw new ApiError("CANCELLED");
+      setImportSources(
+        result.assets.map(({ uri, width, height, mimeType }) => ({
+          uri,
+          width,
+          height,
+          mimeType,
+        })),
+      );
+      setReady(false);
     });
   }
+
   function retake() {
     setPending(null);
     setReady(false);
     setError("");
   }
+
   const notice = (
     title: string,
     hint: string,
@@ -371,6 +407,7 @@ export function NativeTripCamera(
       ) : null}
     </View>
   );
+
   const frame = pending ? (
     <Image
       accessible
@@ -415,16 +452,18 @@ export function NativeTripCamera(
         <Animated.View style={[StyleSheet.absoluteFill, previewMotion]}>
           <CameraView
             ref={handleCameraRef}
-            key={`${facing}:${attempt}`}
+            // Keep one native session while switching lenses. Remounting for every
+            // flip lets the old Android view's unbindAll close the new camera.
+            key={attempt}
             facing={facing}
             mode="picture"
             mirror={facing === "front"}
             flash={flashOn ? (facing === "front" ? "screen" : "on") : "off"}
-            ratio="1:1"
             zoom={0}
             style={StyleSheet.absoluteFill}
             onCameraReady={() => setReady(true)}
-            onMountError={() => {
+            onMountError={(event) => {
+              console.warn("WeGo camera could not start", event.message);
               setMountError(true);
               setReady(false);
             }}
@@ -454,9 +493,28 @@ export function NativeTripCamera(
       ) : null}
     </>
   );
+
   return (
     <CameraLayout
       {...props}
+      overlay={
+        importSources ? (
+          <PhotoImportSheet
+            sources={importSources}
+            trip={
+              !props.quick
+                ? trips.find((trip) => trip.id === props.tripId)
+                : undefined
+            }
+            date={props.date}
+            stopId={props.stopId}
+            onClose={() => {
+              setImportSources(null);
+              setReady(false);
+            }}
+          />
+        ) : undefined
+      }
       onBack={() => {
         if (!operation.current) props.onBack();
       }}

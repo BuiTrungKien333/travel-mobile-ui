@@ -25,6 +25,7 @@ export function DepartureClock({
       : days === 1
         ? copy.departureTomorrowShort
         : copy.departureDaysShort.replace("{count}", String(days));
+
   const minuteStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${progress.value * 360}deg` }],
   }));
@@ -120,12 +121,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     overflow: "hidden",
   },
+
   dial: {
     flexShrink: 0,
     borderWidth: StyleSheet.hairlineWidth,
     alignItems: "center",
     justifyContent: "center",
   },
+
   hand: { position: "absolute", left: "50%", bottom: "50%" },
   hourRotation: { transform: [{ rotate: "-50deg" }] },
 });

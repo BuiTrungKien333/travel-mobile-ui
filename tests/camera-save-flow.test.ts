@@ -18,6 +18,8 @@ function cameraFixture(quick = false) {
   let sessionVersion = 1;
   let changeAccountOnExport = false;
   const events: string[] = [];
+  let pickerAssets: { uri: string; width: number; height: number }[] = [];
+  let pickerOptions: Record<string, unknown> | undefined;
   const records: LocalMemory[] = [];
   const tokens = tripModuleLoader()<typeof import("../src/theme/tokens.ts")>(
     "src/theme/tokens.ts",
@@ -66,7 +68,8 @@ function cameraFixture(quick = false) {
         return [
           states[index],
           (value: unknown) => {
-            states[index] = value;
+            states[index] =
+              typeof value === "function" ? value(states[index]) : value;
           },
         ];
       },
@@ -80,7 +83,10 @@ function cameraFixture(quick = false) {
     "expo-camera": { CameraView: "CameraView" },
     "expo-image": { Image: "Image" },
     "expo-image-picker": {
-      launchImageLibraryAsync: async () => ({ canceled: true }),
+      launchImageLibraryAsync: async (options: Record<string, unknown>) => {
+        pickerOptions = options;
+        return { canceled: !pickerAssets.length, assets: pickerAssets };
+      },
     },
     "expo-router/react-navigation": {
       useIsFocused: () => true,
@@ -136,6 +142,7 @@ function cameraFixture(quick = false) {
       prepareCameraPhoto: async () => ({ uri: "file:///cache/camera.jpg" }),
     },
     "./camera-layout": { CameraLayout: "CameraLayout" },
+    "./photo-import-sheet": { PhotoImportSheet: "PhotoImportSheet" },
     "./camera-icon-button": { CameraIconButton: "CameraIconButton" },
   });
   const { NativeTripCamera } = load<
@@ -174,8 +181,17 @@ function cameraFixture(quick = false) {
   camera.props.onCameraReady();
   return {
     render,
+    preview: () => preview(render().props.frame),
     events,
     records,
+    selectPhotos: (count: number) => {
+      pickerAssets = Array.from({ length: count }, (_, index) => ({
+        uri: `file:///photo-${index}.jpg`,
+        width: 1200,
+        height: 800,
+      }));
+    },
+    getPickerOptions: () => pickerOptions,
     setDeviceFailure: (value: boolean) => {
       deviceFails = value;
     },
@@ -188,6 +204,28 @@ function cameraFixture(quick = false) {
   };
 }
 
+test("the library picker forwards all selected photos to the import flow", async () => {
+  const f = cameraFixture(true);
+  f.selectPhotos(3);
+  f.render().props.onLibrary();
+  await flush();
+  assert.equal(f.getPickerOptions()?.allowsMultipleSelection, true);
+  assert.equal(f.getPickerOptions()?.selectionLimit, 10);
+  const overlay = f.render().props.overlay;
+  assert.ok(isValidElement<{ sources: unknown[] }>(overlay));
+  assert.equal(overlay.props.sources.length, 3);
+  assert.equal(f.events.length, 0);
+});
+
+test("web picker over the import limit shows an error without silently discarding photos", async () => {
+  const f = cameraFixture(true);
+  f.selectPhotos(11);
+  f.render().props.onLibrary();
+  await flush();
+  assert.equal(f.render().props.overlay, undefined);
+  assert.match(String(f.render().props.error), /10 ảnh/);
+});
+
 test("a trip capture saves to the device before its single upload attempt", async () => {
   const f = cameraFixture();
   f.render().props.onCapture();
@@ -195,6 +233,24 @@ test("a trip capture saves to the device before its single upload attempt", asyn
   assert.deepEqual(f.events, ["save", "device", "upload"]);
   assert.equal(f.records[0].local.deviceSaved, true);
   assert.equal(f.render().props.pending, false);
+});
+
+test("flipping cameras changes the facing of one mounted native session", () => {
+  const f = cameraFixture();
+  const back = f.preview();
+  assert.ok(back);
+  f.render().props.onFlip();
+  const front = f.preview();
+  assert.ok(front);
+  assert.equal(
+    front.key,
+    back.key,
+    "Android must not unbind a new session through a removed view",
+  );
+  assert.equal((front.props as { facing?: string }).facing, "front");
+  f.render().props.onFlip();
+  const rear = f.preview();
+  assert.equal((rear?.props as { facing?: string }).facing, "back");
 });
 
 test("quick capture without a trip saves on device and never uploads", async () => {

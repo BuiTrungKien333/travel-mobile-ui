@@ -44,7 +44,7 @@ export function TripDayTools({
   routeMetrics?: { km: number; minutes: number };
   onEditDay?: () => void;
   transportLabel?: string;
-  transportIcon?: "car" | "walk" | "route";
+  transportIcon?: "car" | "walk" | "bicycle" | "route";
   actions?: ReactNode;
 }) {
   const theme = useAppTheme();
@@ -55,6 +55,7 @@ export function TripDayTools({
     ongoingWeatherSnapshot.tripId === trip.id &&
     ongoingWeatherSnapshot.date === day?.date &&
     day?.date === today;
+
   if (compactLayout) {
     return (
       <TripDayToolbar
@@ -76,6 +77,7 @@ export function TripDayTools({
       />
     );
   }
+
   const reorderLink =
     canEdit && day && day.stops.length > 1 ? (
       <Pressable
@@ -107,6 +109,7 @@ export function TripDayTools({
         />
       </Pressable>
     ) : null;
+
   return (
     <View
       style={{
@@ -309,6 +312,7 @@ export function TripDayTools({
 }
 
 type DateTab = { key: string; date: string; index: number };
+
 export function TripDaySelector({
   trip,
   selectedDate,
@@ -328,6 +332,7 @@ export function TripDaySelector({
     })),
   ];
   const width = theme.layout.tripDateTabWidth + theme.spacing.sm;
+
   return (
     <FlatList
       horizontal
@@ -350,6 +355,7 @@ export function TripDaySelector({
       }}
       renderItem={({ item }) => {
         const selected = item.date === selectedDate;
+
         return (
           <Pressable
             accessibilityRole="tab"
@@ -392,6 +398,7 @@ export function TripDaySelector({
     />
   );
 }
+
 const styles = StyleSheet.create({
   grow: { flex: 1, minWidth: 0 },
   inline: { flexDirection: "row", alignItems: "center", flexWrap: "wrap" },

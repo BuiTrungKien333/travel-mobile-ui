@@ -17,10 +17,12 @@ const condition = z.enum([
   "THUNDERSTORM",
   "UNKNOWN",
 ]);
+
 const risk = z.enum(["SAFE", "CAUTION", "HAZARDOUS"]);
 const temperature = z.number().min(-100).max(70);
 const chance = z.number().int().min(0).max(100);
 const localTime = z.iso.datetime({ local: true });
+
 const hour = z.object({
   time: localTime,
   temperature,
@@ -30,6 +32,7 @@ const hour = z.object({
   condition,
   riskLevel: risk,
 });
+
 const day = z.object({
   date: z.iso.date(),
   minTemperature: temperature,
@@ -40,6 +43,7 @@ const day = z.object({
   highestRiskLevel: risk,
   hourlyForecasts: z.array(hour).min(1).max(24),
 });
+
 export const tripWeatherSchema = z
   .object({
     date: z.iso.date(),
@@ -105,6 +109,7 @@ export const tripWeatherSchema = z
         code: "custom",
         message: "Forecast outside available dates",
       });
+
     for (const d of data.forecast?.dailySummaries ?? []) {
       if (
         d.minTemperature > d.maxTemperature ||
@@ -113,6 +118,7 @@ export const tripWeatherSchema = z
         ctx.addIssue({ code: "custom", message: "Invalid forecast day" });
     }
   });
+
 export type TripWeather = z.infer<typeof tripWeatherSchema>;
 
 export const weatherApi = {
@@ -126,14 +132,17 @@ export const weatherApi = {
       (date !== undefined && !z.iso.date().safeParse(date).success)
     )
       throw new ApiError("INVALID_TRIP");
+
     const response = await apiClient.get<unknown>(
       `/api/v1/trips/${tripId}/weather`,
       { params: date ? { date } : undefined, signal, timeout: 35_000 },
     );
+
     const result = z
       .object({ success: z.literal(true), data: tripWeatherSchema })
       .safeParse(response.data);
     if (!result.success) throw new ApiError("INVALID_RESPONSE");
+
     return result.data.data;
   },
 };
@@ -143,15 +152,18 @@ export function weatherIcon(condition: string): WeatherCondition {
     return "rain";
   return condition === "CLEAR_SKY" ? "sun" : "cloud";
 }
+
 export function weatherDays(data: TripWeather | undefined): ForecastDay[] {
   return (
     data?.forecast?.dailySummaries.map((d) => {
       const representative =
         d.hourlyForecasts.find((h) => h.time.slice(11, 13) === "12") ??
         d.hourlyForecasts[0];
+
       const peak = d.hourlyForecasts.reduce((max, h) =>
         h.precipitationProbability > max.precipitationProbability ? h : max,
       );
+
       return {
         date: d.date,
         low: d.minTemperature,

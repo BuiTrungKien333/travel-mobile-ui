@@ -1,4 +1,5 @@
 import type { PlaceScope } from "./place-discovery-api";
+
 export const placeDiscoveryKeys = {
   root: ["place-discovery"] as const,
   list: (

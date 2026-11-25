@@ -72,6 +72,7 @@ test("live Home keeps its logo header, uses a local cover fallback, and check-in
       }),
     },
     "@/components/ui/app-text": { AppText: "AppText" },
+    "@/hooks/use-i18n": { useI18n: () => ({ locale: "vi" }) },
     "../components/check-in-prompt": { CheckInPrompt: "CheckInPrompt" },
     "../components/home-primitives": { HomePage: "HomePage" },
     "../components/ongoing-trip-header": {

@@ -23,6 +23,7 @@ function WorkspaceTabs() {
     { name: "memories", title: copy.memories, icon: "memories" },
     { name: "profile", title: copy.profile, icon: "person" },
   ];
+
   return (
     <View
       style={{ flex: 1 }}

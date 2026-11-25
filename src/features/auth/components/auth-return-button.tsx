@@ -8,6 +8,7 @@ export function AuthReturnButton() {
   const authenticated = useAuthStore(
     (state) => state.status === "authenticated",
   );
+
   return (
     <AppButton
       variant="outline"

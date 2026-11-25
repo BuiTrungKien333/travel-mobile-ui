@@ -1,11 +1,9 @@
+import { SheetHeader } from "@/components/common/sheet-header";
 import { useMemo, useState } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
-import {
-  GestureDetector,
-  GestureHandlerRootView,
-} from "react-native-gesture-handler";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Animated from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useScreenInsets } from "@/hooks/use-screen-insets";
 import { usePickerSheetMotion } from "../hooks/use-picker-sheet-motion";
 import { useTripCopy } from "../i18n/trip-copy";
 import { formatDisplayDate } from "../utils/create-trip-formatters";
@@ -15,7 +13,7 @@ import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
 import { dayDistance } from "@/features/home/utils/select-home";
 import { useAppTheme } from "@/hooks/use-app-theme";
-import { spacing, typography, layout, radius } from "@/theme/tokens";
+import { spacing, typography, layout } from "@/theme/tokens";
 
 type DateRangeSheetProps = {
   visible: boolean;
@@ -41,7 +39,7 @@ function DateRangeSession({
   onClose,
 }: DateRangeSheetProps) {
   const theme = useAppTheme();
-  const insets = useSafeAreaInsets();
+  const insets = useScreenInsets();
 
   const [selectedStart, setSelectedStart] = useState(startDate);
   const [selectedEnd, setSelectedEnd] = useState(endDate);
@@ -66,6 +64,7 @@ function DateRangeSession({
     for (let i = 0; i < firstDayIndex; i++) {
       days.push(null);
     }
+
     for (let d = 1; d <= totalDays; d++) {
       const monthStr = String(month + 1).padStart(2, "0");
       const dayStr = String(d).padStart(2, "0");
@@ -74,6 +73,7 @@ function DateRangeSession({
         dayNum: d,
       });
     }
+
     return days;
   }, [currentMonth]);
 
@@ -128,10 +128,12 @@ function DateRangeSession({
     locale === "vi" ? "vi-VN" : "en-US",
     { month: "long", year: "numeric", timeZone: "UTC" },
   ).format(currentMonth);
+
   const weekHeaders =
     locale === "vi"
       ? ["T2", "T3", "T4", "T5", "T6", "T7", "CN"]
       : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
   const handleApply = () => {
     if (!selectedStart) return;
     const finalStart = selectedStart;
@@ -148,7 +150,16 @@ function DateRangeSession({
       onRequestClose={() => close()}
     >
       <GestureHandlerRootView style={styles.root}>
-        <View style={styles.backdrop}>
+        <View
+          style={[
+            styles.backdrop,
+            {
+              paddingTop: insets.top + theme.spacing.sm,
+              paddingLeft: insets.left,
+              paddingRight: insets.right,
+            },
+          ]}
+        >
           <Animated.View
             style={[
               StyleSheet.absoluteFill,
@@ -163,58 +174,20 @@ function DateRangeSession({
               sheetMotion,
               {
                 backgroundColor: theme.colors.surface,
-                borderTopLeftRadius: theme.radius.xxl,
-                borderTopRightRadius: theme.radius.xxl,
+                borderTopLeftRadius: theme.radius.xl,
+                borderTopRightRadius: theme.radius.xl,
                 paddingBottom:
                   Math.max(insets.bottom, theme.spacing.lg) + theme.spacing.md,
               },
             ]}
           >
             {/* Drag Handle & Header */}
-            <GestureDetector gesture={dragGesture}>
-              <View collapsable={false} style={styles.dragHeaderZone}>
-                <View style={styles.handleWrapper}>
-                  <View
-                    style={[
-                      styles.handle,
-                      { backgroundColor: theme.colors.borderStrong },
-                    ]}
-                  />
-                </View>
-
-                {/* Header */}
-                <View style={styles.headerRow}>
-                  <AppText
-                    variant="heading"
-                    style={[
-                      styles.headerTitle,
-                      {
-                        color: theme.colors.text,
-                        fontFamily: theme.typography.fontFamily.medium,
-                      },
-                    ]}
-                  >
-                    {copy.chooseDates}
-                  </AppText>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={copy.close}
-                    onPress={() => close()}
-                    hitSlop={12}
-                    style={({ pressed }) => [
-                      styles.closeButton,
-                      { opacity: pressed ? theme.motion.pressOpacity : 1 },
-                    ]}
-                  >
-                    <AppIcon
-                      name="close"
-                      size={20}
-                      color={theme.colors.textSecondary}
-                    />
-                  </Pressable>
-                </View>
-              </View>
-            </GestureDetector>
+            <SheetHeader
+              title={copy.chooseDates}
+              closeLabel={copy.close}
+              onClose={() => close()}
+              gesture={dragGesture}
+            />
 
             <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
               {/* Selected Range Banner */}
@@ -456,46 +429,19 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
   },
+
   backdrop: {
     flex: 1,
     justifyContent: "flex-end",
   },
+
   sheet: {
     width: "100%",
     maxHeight: "90%",
-    paddingHorizontal: spacing.lg + spacing.xs,
+    paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
   },
-  dragHeaderZone: {
-    width: "100%",
-  },
-  handleWrapper: {
-    alignItems: "center",
-    paddingVertical: spacing.sm,
-  },
-  handle: {
-    width: layout.sheetDragHandleWidth,
-    height: layout.sheetDragHandleHeight,
-    borderRadius: radius.full,
-    opacity: 0.35,
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: spacing.lg,
-  },
-  headerTitle: {
-    fontSize: typography.fontSize.lg,
-    lineHeight: typography.lineHeight.lg,
-  },
-  closeButton: {
-    minWidth: layout.compactTouchTarget,
-    minHeight: layout.compactTouchTarget,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: spacing.xs,
-  },
+
   rangeBanner: {
     flexDirection: "row",
     alignItems: "center",
@@ -504,20 +450,24 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     marginBottom: spacing.lg,
   },
+
   bannerColumn: {
     flex: 1,
     minWidth: 0,
     alignItems: "center",
     gap: spacing.xxs,
   },
+
   bannerDivider: {
     width: StyleSheet.hairlineWidth,
     height: 28,
   },
+
   bannerDate: {
     fontSize: typography.fontSize.sm,
     lineHeight: typography.lineHeight.sm,
   },
+
   monthNavRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -525,6 +475,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     paddingHorizontal: spacing.sm,
   },
+
   navArrow: {
     minWidth: layout.compactTouchTarget,
     minHeight: layout.compactTouchTarget,
@@ -532,45 +483,54 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: spacing.xs + spacing.xxs,
   },
+
   monthLabel: {
     fontSize: typography.fontSize.md,
     lineHeight: typography.lineHeight.md,
   },
+
   weekdayRow: {
     flexDirection: "row",
     marginBottom: spacing.sm,
   },
+
   weekdayCell: {
     flex: 1,
     textAlign: "center",
     fontSize: typography.fontSize.xs,
     lineHeight: typography.lineHeight.xs,
   },
+
   daysGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     marginBottom: spacing.lg,
   },
+
   dayCell: {
     width: "14.285%",
     height: layout.compactTouchTarget,
     alignItems: "center",
     justifyContent: "center",
   },
+
   dayCircle: {
     width: 32,
     height: 32,
     alignItems: "center",
     justifyContent: "center",
   },
+
   dayText: {
     fontSize: typography.fontSize.sm,
     lineHeight: typography.lineHeight.sm,
   },
+
   durationRow: {
     alignItems: "center",
     marginBottom: spacing.md,
   },
+
   durationText: {
     fontSize: typography.fontSize.sm,
     lineHeight: typography.lineHeight.sm,

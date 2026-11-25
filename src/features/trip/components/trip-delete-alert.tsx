@@ -40,6 +40,7 @@ export function TripDeleteAlert({
   const insets = useScreenInsets();
   const { copy } = useTripDetailsCopy();
   const cancelRef = useRef<View>(null);
+
   return (
     <Modal
       transparent

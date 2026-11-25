@@ -17,5 +17,6 @@ export function appendTripDayRange(trip: Trip) {
   next.setUTCDate(next.getUTCDate() + 1);
   const endDate = next.toISOString().slice(0, 10);
   if (!isCalendarDate(endDate)) return null;
+
   return { startDate: trip.startDate, endDate };
 }

@@ -40,6 +40,7 @@ const vi = {
   response: "Dữ liệu máy chủ chưa đúng cấu trúc. Vui lòng thử lại sau.",
   session: "Phiên đăng nhập không còn hợp lệ. Vui lòng đăng nhập lại.",
 };
+
 const en: typeof vi = {
   loading: "Loading trips…",
   retry: "Retry",
@@ -80,10 +81,12 @@ const en: typeof vi = {
     "The server returned an unexpected response. Please try again later.",
   session: "Your session is no longer valid. Please sign in again.",
 };
+
 export function useTripIntegrationCopy() {
   const { locale } = useI18n();
   return { copy: locale === "vi" ? vi : en, locale };
 }
+
 export function tripApiErrorMessage(error: unknown, copy: typeof vi): string {
   if (!(error instanceof ApiError)) return copy.generic;
   if (error.code === "TRIP_002") return copy.versionConflict;
@@ -99,5 +102,6 @@ export function tripApiErrorMessage(error: unknown, copy: typeof vi): string {
   if (error.code === "TRIP_001") return copy.missing;
   if (error.code === "INVALID_RESPONSE") return copy.response;
   if (error.status === 401 || error.status === 403) return copy.session;
+
   return copy.generic;
 }

@@ -79,6 +79,7 @@ export function PlacePickerScreen({
     focus?.locationType === "address"
       ? getPlaceMapRegion(previewPlaces)
       : region;
+
   const [coordinate, setCoordinate] = useState<PlaceCoordinate | null>(
     region ? { latitude: region.latitude, longitude: region.longitude } : null,
   );
@@ -95,15 +96,18 @@ export function PlacePickerScreen({
       }),
     ),
   });
+
   const existing = trip
     ? [
         ...trip.days.flatMap((day) => day.stops),
         ...(trip.unscheduledStops ?? []),
       ]
     : [];
+
   const chosen = selected.filter(
     (stop) => !existing.some((entry) => entry.id === stop.id),
   );
+
   const available = [
     ...catalog,
     ...(deferredQuery.trim()
@@ -115,6 +119,7 @@ export function PlacePickerScreen({
       (stop) => !catalog.some((entry) => entry.id === stop.id),
     ),
   ];
+
   const results = searchPlaces(
     (selectedOnly ? chosen : available).filter(
       (stop) => !existing.some((entry) => entry.id === stop.id),
@@ -132,6 +137,7 @@ export function PlacePickerScreen({
         : [...stops, place],
     );
   }
+
   function openPreview(place: TripStop | null) {
     Keyboard.dismiss();
     if (place && !place.location) {
@@ -143,30 +149,34 @@ export function PlacePickerScreen({
       const saved = selected.find((stop) => stop.id === place.id);
       reset({ name: saved?.name.vi ?? "" });
     }
+
     if (!place && region) {
       reset({ name: "" });
       setCoordinate({ latitude: region.latitude, longitude: region.longitude });
     }
   }
-  const chooseCustom = handleSubmit(({ name }) => {
-    if (!coordinate) return;
-    const stop: TripStop = {
-      id: `custom-${Date.now()}`,
-      time: "",
-      name: { vi: name, en: name },
-      kind: { vi: "Địa điểm riêng", en: "Private place" },
-      address: {
-        vi: "Vị trí đã chọn trên bản đồ",
-        en: "Location selected on the map",
-      },
-      location: coordinate,
-    };
-    setSelected((stops) => [...stops, stop]);
-    setSaveError(false);
-    setSelectedOnly(false);
-    setQuery("");
-    setFocus(undefined);
-  });
+
+  const chooseCustom = () =>
+    void handleSubmit(({ name }) => {
+      if (!coordinate) return;
+      const stop: TripStop = {
+        id: `custom-${Date.now()}`,
+        time: "",
+        name: { vi: name, en: name },
+        kind: { vi: "Địa điểm riêng", en: "Private place" },
+        address: {
+          vi: "Vị trí đã chọn trên bản đồ",
+          en: "Location selected on the map",
+        },
+        location: coordinate,
+      };
+      setSelected((stops) => [...stops, stop]);
+      setSaveError(false);
+      setSelectedOnly(false);
+      setQuery("");
+      setFocus(undefined);
+    })();
+
   function confirmPlace() {
     if (focus?.locationType === "address") {
       void handleSubmit(({ name }) => {
@@ -180,8 +190,10 @@ export function PlacePickerScreen({
         setFocus(undefined);
         Keyboard.dismiss();
       })();
+
       return;
     }
+
     if (!focus) {
       void chooseCustom();
       return;
@@ -190,6 +202,7 @@ export function PlacePickerScreen({
       setSelected((stops) => [...stops, focus]);
     setFocus(undefined);
   }
+
   function apply() {
     if (!canApply) return;
     Keyboard.dismiss();
@@ -215,6 +228,7 @@ export function PlacePickerScreen({
       )}
     />
   );
+
   return (
     <GestureHandlerRootView style={styles.fill}>
       <ScreenSafeArea
@@ -239,21 +253,19 @@ export function PlacePickerScreen({
                 {
                   gap: theme.spacing.sm,
                   paddingHorizontal: theme.spacing.md,
-                  paddingTop: theme.spacing.xxl,
+                  paddingTop: theme.spacing.xs,
                   paddingBottom: theme.spacing.xs,
                 },
               ]}
             >
               <DetailIconButton
                 name="back"
+                variant="plain"
                 label={inPreview ? copy.returnResults : copy.back}
                 onPress={() => (inPreview ? setFocus(undefined) : onClose())}
               />
               <View style={styles.fill}>
-                <AppText
-                  variant="heading"
-                  style={{ fontSize: theme.typography.fontSize.lg }}
-                >
+                <AppText variant="subheading" accessibilityRole="header">
                   {inPreview ? copy.mapTitle : copy.title}
                 </AppText>
               </View>
@@ -323,7 +335,7 @@ export function PlacePickerScreen({
                 contentContainerStyle={{
                   paddingHorizontal: theme.spacing.lg,
                   paddingBottom: theme.spacing.xl,
-                  gap: theme.spacing.md,
+                  gap: theme.spacing.sm,
                 }}
                 ListHeaderComponent={
                   <View
@@ -355,7 +367,7 @@ export function PlacePickerScreen({
                           justifyContent: "center",
                         }}
                       >
-                        <AppText variant="caption" tone="primary">
+                        <AppText variant="body" tone="primary">
                           {selectedOnly
                             ? copy.all
                             : `${copy.selected} (${chosen.length})`}
@@ -461,6 +473,7 @@ export function PlacePickerScreen({
                 }
                 renderItem={({ item }) => {
                   const checked = chosen.some((stop) => stop.id === item.id);
+
                   return (
                     <PlaceSearchResultRow
                       place={item}
@@ -555,6 +568,7 @@ export function PlacePickerScreen({
     </GestureHandlerRootView>
   );
 }
+
 const styles = StyleSheet.create({
   fill: { flex: 1, minWidth: 0 },
   row: { flexDirection: "row", alignItems: "center" },

@@ -1,3 +1,4 @@
+import { svgDataUri } from "@/utils/svg-data-uri";
 import { Image } from "expo-image";
 import { StyleSheet, View } from "react-native";
 
@@ -8,7 +9,7 @@ import { TripGlassBackdrop } from "./trip-glass-backdrop";
 export function WeatherAtmosphere() {
   const theme = useAppTheme();
   const { colors } = theme;
-  const uri = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
+  const uri = svgDataUri(
     `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="600" viewBox="0 0 400 600" preserveAspectRatio="none">
       <defs>
         <radialGradient id="mint"><stop stop-color="${colors.weatherAuroraMint}" stop-opacity=".75"/><stop offset="1" stop-color="${colors.weatherAuroraMint}" stop-opacity="0"/></radialGradient>
@@ -20,7 +21,8 @@ export function WeatherAtmosphere() {
       <ellipse cx="380" cy="20" rx="270" ry="340" fill="url(#lavender)"/>
       <ellipse cx="330" cy="580" rx="300" ry="230" fill="url(#amber)"/>
     </svg>`,
-  )}`;
+  );
+
   return (
     <View pointerEvents="none" aria-hidden style={StyleSheet.absoluteFill}>
       <Image

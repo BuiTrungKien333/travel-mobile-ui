@@ -74,6 +74,7 @@ export function TripEditForm({
       trip.preferences?.length
     ),
   );
+
   const card = {
     padding: theme.spacing.sm,
     borderRadius: theme.radius.md,
@@ -82,6 +83,7 @@ export function TripEditForm({
     backgroundColor: theme.colors.surface,
     gap: theme.spacing.sm,
   };
+
   return (
     <>
       <Pressable
@@ -325,6 +327,7 @@ export function TripEditForm({
                   >
                     {tripPreferenceIds.map((id) => {
                       const selected = field.value.includes(id);
+
                       return (
                         <Pressable
                           disabled={busy}
@@ -431,6 +434,7 @@ export function TripEditForm({
             const datesChanged =
               nextStart !== (defaultValues?.startDate ?? "") ||
               nextEnd !== (defaultValues?.endDate ?? "");
+
             await onCommit({
               kind: "info",
               values,
@@ -458,6 +462,7 @@ export function TripEditForm({
               fieldErrors.preferences
             )
               setMoreOpen(true);
+
             if (fieldErrors.destination) setPicker("destination");
             else if (fieldErrors.startDate || fieldErrors.endDate)
               setPicker("dates");
@@ -475,6 +480,7 @@ export function TripEditForm({
             setValue("destinationProvinceId", provinceId ?? null, {
               shouldDirty: true,
             });
+
             setValue("destination", value, {
               shouldDirty: true,
               shouldValidate: true,

@@ -15,6 +15,7 @@ export function useCameraAccess() {
   const refresh = useCallback(() => {
     if (requestInFlight.current) return Promise.resolve();
     const version = ++permissionVersion.current;
+
     return Camera.getCameraPermissionsAsync().then(
       (result) => {
         if (mounted.current && version === permissionVersion.current) {
@@ -31,12 +32,14 @@ export function useCameraAccess() {
       },
     );
   }, []);
+
   useEffect(() => {
     mounted.current = true;
     void refresh();
     const subscription = AppState.addEventListener("change", (state) => {
       if (state === "active") void refresh();
     });
+
     return () => {
       mounted.current = false;
       subscription.remove();
@@ -67,5 +70,6 @@ export function useCameraAccess() {
       if (mounted.current) setRequesting(false);
     }
   }
+
   return { permission, issue, requesting, request };
 }

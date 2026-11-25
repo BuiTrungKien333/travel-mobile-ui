@@ -63,6 +63,52 @@ test("explicit backend addresses are preserved and production never rewrites HTT
   );
 });
 
+test("standalone LAN demo accepts private IPv4 only with an explicit flag", () => {
+  const release = { ...dev, development: false, platform: "android" };
+  for (const origin of [
+    "http://192.168.1.9:18081",
+    "http://10.1.2.3:18081",
+    "http://172.16.0.2:18081",
+    "http://172.31.255.254:18081",
+  ]) {
+    assert.equal(resolveApiUrl(origin, release), undefined);
+    assert.equal(
+      resolveApiUrl(origin, { ...release, allowLanHttp: true }),
+      origin,
+    );
+  }
+  for (const origin of [
+    "http://localhost:18081",
+    "http://127.0.0.1:18081",
+    "http://8.8.8.8:18081",
+    "http://172.32.0.1:18081",
+    "http://api.example.com",
+    "http://user:pass@192.168.1.9:18081",
+    "http://192.168.1.9:18081/api/v1",
+  ]) {
+    assert.equal(
+      resolveApiUrl(origin, { ...release, allowLanHttp: true }),
+      undefined,
+    );
+  }
+  assert.equal(
+    resolveApiUrl("http://192.168.1.9:18081", {
+      ...release,
+      platform: "web",
+      allowLanHttp: true,
+    }),
+    "http://192.168.1.9:18081",
+  );
+  assert.equal(
+    resolveApiUrl("http://192.168.1.9:18081", {
+      ...release,
+      platform: "ios",
+      allowLanHttp: true,
+    }),
+    undefined,
+  );
+});
+
 test("invalid or credential-bearing API configuration is rejected", () => {
   for (const value of [
     undefined,

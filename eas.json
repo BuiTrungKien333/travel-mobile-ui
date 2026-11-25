@@ -5,6 +5,20 @@
       "distribution": "internal",
       "android": { "buildType": "apk" }
     },
-    "production": {}
+    "preview-lan": {
+      "developmentClient": false,
+      "distribution": "internal",
+      "android": { "buildType": "apk" },
+      "env": {
+        "EXPO_PUBLIC_UI_PREVIEW": "false",
+        "EXPO_PUBLIC_LAN_DEMO": "true"
+      }
+    },
+    "production": {
+      "env": {
+        "EXPO_PUBLIC_UI_PREVIEW": "false",
+        "EXPO_PUBLIC_LAN_DEMO": "false"
+      }
+    }
   }
 }

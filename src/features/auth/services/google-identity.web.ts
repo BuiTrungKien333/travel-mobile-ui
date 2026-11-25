@@ -61,5 +61,6 @@ export function loadGoogleIdentity(): Promise<GoogleIdentity> {
     script.onerror = fail;
     document.head.append(script);
   });
+
   return loading;
 }

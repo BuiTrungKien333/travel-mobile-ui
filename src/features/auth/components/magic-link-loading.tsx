@@ -6,6 +6,7 @@ import { AuthScaffold } from "./auth-scaffold";
 export function MagicLinkLoading() {
   const theme = useAppTheme();
   const { t } = useI18n();
+
   return (
     <AuthScaffold title={t("auth.email.openingLink")} subtitle="" footer={null}>
       <ActivityIndicator

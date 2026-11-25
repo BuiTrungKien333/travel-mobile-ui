@@ -16,6 +16,7 @@ export function MemoryLoadState({
   const theme = useAppTheme();
   const { copy } = useMemoriesCopy();
   if (!loading && !error) return null;
+
   return (
     <View
       style={{

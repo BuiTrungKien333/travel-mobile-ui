@@ -20,6 +20,7 @@ export function SampleItineraryPanel() {
   const orderedStops = swapped
     ? [...sampleItineraryStops].reverse()
     : sampleItineraryStops;
+
   const stops = orderedStops.map((stop, index) => ({
     ...stop,
     time: sampleItineraryStops[index].time,

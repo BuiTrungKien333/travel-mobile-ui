@@ -110,7 +110,9 @@ test("Trip transport uses the shared client, preserves create keys and forwards 
   assert.equal((calls[1]?.config as { signal: AbortSignal }).signal, signal);
   response = spec.components.schemas.TripPageResponse.example;
   await tripApi.list(2, signal);
-  const params = (calls[2]?.config as { params: { page: number; size: number; sort: string } }).params;
+  const params = (
+    calls[2]?.config as { params: { page: number; size: number; sort: string } }
+  ).params;
   assert.equal(params.page, 2);
   assert.equal(params.size, 20);
   assert.equal(params.sort, "createdAt,desc");

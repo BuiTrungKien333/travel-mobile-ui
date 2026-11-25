@@ -83,6 +83,7 @@ export function TripCompletionAction({
       {copy.action}
     </AppButton>
   );
+
   return (
     <>
       {confirmationOnly ? null : allVisited ? (

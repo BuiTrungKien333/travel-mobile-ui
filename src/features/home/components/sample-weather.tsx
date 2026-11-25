@@ -21,6 +21,7 @@ export function SampleWeather() {
   const sunStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${progress.get() * 20}deg` }],
   }));
+
   const cloudStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: -progress.get() * drift }],
   }));

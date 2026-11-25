@@ -34,6 +34,7 @@ export function GlassBackdrop({
           : clock
             ? theme.glass.clockBlurRadius
             : theme.glass.blurRadius;
+
   const saturation = weather
     ? theme.glass.weatherSaturation
     : clock
@@ -55,6 +56,7 @@ export function GlassBackdrop({
           : clock
             ? theme.colors.glassClockSurface
             : theme.colors.glassSurface;
+
   const border = camera
     ? theme.colors.cameraGlassBorder
     : photo

@@ -1,7 +1,8 @@
 import { router } from "expo-router";
 import { UI_PREVIEW_ENABLED } from "@/constants/development";
 import { ConnectedTripDetailsScreen } from "./connected-trip-details-screen";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { StyleSheet, View } from "react-native";
 import Animated, { useSharedValue } from "react-native-reanimated";
 import { ScreenSafeArea } from "@/components/common/screen-safe-area";
@@ -68,6 +69,7 @@ type TimelineRow =
       number: number;
     }
   | { kind: "backlog"; key: string; stop: TripStop; date: string | null };
+
 type Row =
   | TimelineRow
   | { kind: "planning-days"; key: string }
@@ -138,6 +140,7 @@ function PreviewTripDetailsScreen({
         </View>
       </ScreenSafeArea>
     );
+
   return (
     <TripDetailsContent
       key={trip.id}
@@ -188,6 +191,7 @@ function TripDetailsContent({
   } | null>(null);
   const [availableHeight, setAvailableHeight] = useState(0);
   const mapResizeLock = useSharedValue(0);
+  const mapScrollGesture = useMemo(() => Gesture.Native(), []);
   const [mapExpandRequest, setMapExpandRequest] = useState(expandMap ? 1 : 0);
   const [planningMapGeometry, setPlanningMapGeometry] =
     useState<PlanningMapGeometry>({
@@ -195,9 +199,11 @@ function TripDetailsContent({
       headerHeight:
         theme.layout.compactTouchTarget + theme.spacing.xxl + theme.spacing.sm,
     });
+
   const [selectorHeight, setSelectorHeight] = useState<number>(
     theme.layout.touchTarget,
   );
+
   const [undo, setUndo] = useState<{
     snapshot: TripScheduleSnapshot;
     message: string;
@@ -229,12 +235,14 @@ function TripDetailsContent({
         });
     },
   });
+
   const { list, jump, onScrollToIndexFailed } = useTripTimelineScroll<Row>(
     selectionKey,
     mapFirstLayout
       ? planningMapGeometry.headerHeight + selectorHeight + theme.spacing.lg
       : 0,
   );
+
   const progress = getDayProgress(
     timedStops,
     visited[`${trip.id}:${day?.date}`] ?? [],
@@ -243,16 +251,19 @@ function TripDetailsContent({
   const dayMemories = day
     ? tripMemories.filter((memory) => memory.date === day.date)
     : tripMemories;
+
   const mapHeight = availableHeight
     ? Math.min(
         theme.layout.tripMapPreviewHeight,
         availableHeight * theme.layout.tripMapHeightRatio,
       )
     : theme.layout.tripMapMinimumHeight;
+
   const showMap =
     !backlog &&
     !!day &&
     (mode === "planning" || mode === "live" || editHistory);
+
   const planningScroll = usePlanningMapCollapse<Row>({
     enabled: mapFirstLayout && showMap,
     selectionKey,
@@ -260,6 +271,7 @@ function TripDetailsContent({
     list,
     resizeLock: mapResizeLock,
   });
+
   const rows: TimelineRow[] = backlog
     ? unscheduled.map((entry) => ({ ...entry, kind: "backlog" }))
     : day
@@ -267,17 +279,16 @@ function TripDetailsContent({
           ...(hasStartNode
             ? [{ kind: "start", key: "start" } satisfies TimelineRow]
             : []),
-          ...timedStops.map(
-            (stop, index): TimelineRow => ({
-              kind: "stop",
-              key: stop.id,
-              stop,
-              previous: timedStops[index - 1],
-              number: index + 1,
-            }),
-          ),
+          ...timedStops.map((stop, index): TimelineRow => ({
+            kind: "stop",
+            key: stop.id,
+            stop,
+            previous: timedStops[index - 1],
+            number: index + 1,
+          })),
         ]
       : [];
+
   const listRows: Row[] = mapFirstLayout
     ? [
         { kind: "planning-days", key: "planning-days" },
@@ -312,8 +323,10 @@ function TripDetailsContent({
       }
       setSheet(null);
     }
+
     return success;
   }
+
   function openStop(stop: TripStop, date: string | null = day?.date ?? null) {
     setUndo(null);
     router.push({
@@ -325,12 +338,15 @@ function TripDetailsContent({
       },
     });
   }
+
   function openJournal() {
     openPanel({ kind: "journal", tripId: trip.id });
   }
+
   function addPlace() {
     openPlacePicker(backlog ? null : (day?.date ?? null));
   }
+
   function openPlacePicker(date: string | null) {
     setUndo(null);
     router.push({
@@ -338,11 +354,13 @@ function TripDetailsContent({
       params: { tripId: trip.id, ...(date ? { day: date } : {}) },
     });
   }
+
   function selectDate(date: string | null) {
     if (date === null ? !backlog : backlog || date !== day?.date) setUndo(null);
     setBacklog(date === null);
     if (date) router.setParams({ day: date });
   }
+
   function addDay() {
     const range = appendTripDayRange(trip);
     if (!range) {
@@ -351,6 +369,7 @@ function TripDetailsContent({
     }
     if (commit({ kind: "dates", ...range })) selectDate(range.endDate);
   }
+
   function selectStop(stop: TripStop) {
     if (!day) return;
     setHighlight({ date: day.date, id: stop.id });
@@ -359,6 +378,7 @@ function TripDetailsContent({
     );
     if (index >= 0) jump(index);
   }
+
   const header = (
     <TripDetailsHeader
       trip={trip}
@@ -379,6 +399,7 @@ function TripDetailsContent({
           onPress={() => openStop(item.stop, item.date)}
         />
       );
+
     if (item.kind === "start")
       return (
         <TripStartNode
@@ -392,6 +413,7 @@ function TripDetailsContent({
           onPress={() => setSheet({ kind: "day" })}
         />
       );
+
     return (
       <TripStopRow
         stop={item.stop}
@@ -513,6 +535,7 @@ function TripDetailsContent({
       onStart={() => jump(2)}
       onGeometryChange={setPlanningMapGeometry}
       resizeLock={mapResizeLock}
+      scrollGesture={mapScrollGesture}
       collapsedByScroll={planningScroll.hidden}
       expandRequest={mapExpandRequest}
     />
@@ -557,6 +580,7 @@ function TripDetailsContent({
           </View>
         </View>
       );
+
     if (item.kind === "summary")
       return (
         <View
@@ -575,6 +599,7 @@ function TripDetailsContent({
           ) : null}
         </View>
       );
+
     return (
       <View
         style={{
@@ -649,74 +674,78 @@ function TripDetailsContent({
                 },
               ]}
             >
-              <Animated.FlatList<Row>
-                key={selectionKey}
-                ref={list}
-                data={listRows}
-                keyExtractor={(item) => item.key}
-                renderItem={renderRow}
-                onScrollToIndexFailed={onScrollToIndexFailed}
-                initialNumToRender={8}
-                scrollEnabled={!timelineDrag.draggedId}
-                removeClippedSubviews={
-                  timelineDrag.draggedId ? false : undefined
-                }
-                CellRendererComponentStyle={({ item }) => ({
-                  zIndex:
-                    item.kind === "planning-days"
-                      ? 2
-                      : item.kind === "stop" &&
-                          timelineDrag.draggedId === item.stop.id
-                        ? 1
-                        : 0,
-                })}
-                ListHeaderComponent={
-                  mapFirstLayout ? planningHeader : listHeader
-                }
-                stickyHeaderIndices={mapFirstLayout ? [1] : undefined}
-                onScroll={mapFirstLayout ? planningScroll.onScroll : undefined}
-                scrollEventThrottle={16}
-                showsVerticalScrollIndicator={false}
-                style={styles.fill}
-                contentContainerStyle={{
-                  padding: mapFirstLayout ? 0 : theme.spacing.lg,
-                  paddingBottom:
-                    theme.spacing.xxl +
-                    (mode === "planning" ? insets.bottom : 0),
-                  minHeight:
-                    mapFirstLayout && showMap
-                      ? availableHeight + planningMapGeometry.height
-                      : undefined,
-                }}
-                ListEmptyComponent={
-                  backlog || !day ? (
-                    <TripTimelineEmpty
-                      backlog={backlog}
-                      canSetDates={!day && canEdit}
-                      onDates={() => setSheet({ kind: "dates" })}
-                    />
-                  ) : null
-                }
-                ListFooterComponent={
-                  !backlog ? (
-                    <View
-                      style={{
-                        paddingHorizontal: mapFirstLayout
-                          ? theme.spacing.lg
+              <GestureDetector gesture={mapScrollGesture}>
+                <Animated.FlatList<Row>
+                  key={selectionKey}
+                  ref={list}
+                  data={listRows}
+                  keyExtractor={(item) => item.key}
+                  renderItem={renderRow}
+                  onScrollToIndexFailed={onScrollToIndexFailed}
+                  initialNumToRender={8}
+                  scrollEnabled={!timelineDrag.draggedId}
+                  removeClippedSubviews={
+                    timelineDrag.draggedId ? false : undefined
+                  }
+                  CellRendererComponentStyle={({ item }) => ({
+                    zIndex:
+                      item.kind === "planning-days"
+                        ? 2
+                        : item.kind === "stop" &&
+                            timelineDrag.draggedId === item.stop.id
+                          ? 1
                           : 0,
-                      }}
-                    >
-                      <TripTimelineTail
-                        trip={trip}
-                        day={day}
-                        canEdit={canEdit}
-                        empty={!timedStops.length}
-                        onAdd={() => day && openPlacePicker(day.date)}
+                  })}
+                  ListHeaderComponent={
+                    mapFirstLayout ? planningHeader : listHeader
+                  }
+                  stickyHeaderIndices={mapFirstLayout ? [1] : undefined}
+                  onScroll={
+                    mapFirstLayout ? planningScroll.onScroll : undefined
+                  }
+                  scrollEventThrottle={16}
+                  showsVerticalScrollIndicator={false}
+                  style={styles.fill}
+                  contentContainerStyle={{
+                    padding: mapFirstLayout ? 0 : theme.spacing.lg,
+                    paddingBottom:
+                      theme.spacing.xxl +
+                      (mode === "planning" ? insets.bottom : 0),
+                    minHeight:
+                      mapFirstLayout && showMap
+                        ? availableHeight + planningMapGeometry.height
+                        : undefined,
+                  }}
+                  ListEmptyComponent={
+                    backlog || !day ? (
+                      <TripTimelineEmpty
+                        backlog={backlog}
+                        canSetDates={!day && canEdit}
+                        onDates={() => setSheet({ kind: "dates" })}
                       />
-                    </View>
-                  ) : null
-                }
-              />
+                    ) : null
+                  }
+                  ListFooterComponent={
+                    !backlog ? (
+                      <View
+                        style={{
+                          paddingHorizontal: mapFirstLayout
+                            ? theme.spacing.lg
+                            : 0,
+                        }}
+                      >
+                        <TripTimelineTail
+                          trip={trip}
+                          day={day}
+                          canEdit={canEdit}
+                          empty={!timedStops.length}
+                          onAdd={() => day && openPlacePicker(day.date)}
+                        />
+                      </View>
+                    ) : null
+                  }
+                />
+              </GestureDetector>
             </View>
           </View>
           {undo ? (
@@ -775,8 +804,10 @@ function TripDetailsContent({
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   fill: { flex: 1 },
+
   frame: {
     width: "100%",
     maxWidth: layout.contentMaxWidth,

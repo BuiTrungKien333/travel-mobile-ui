@@ -28,6 +28,7 @@ export function MemoriesScreen() {
   }));
   const selection = selectHome(trips, today);
   const activeTrip = selection.kind === "ongoing" ? selection.trip : null;
+
   return (
     <ScreenSafeArea
       edges={["top", "left", "right"]}
@@ -110,6 +111,7 @@ export function MemoriesScreen() {
     </ScreenSafeArea>
   );
 }
+
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { width: "100%", alignSelf: "center", flexGrow: 1 },

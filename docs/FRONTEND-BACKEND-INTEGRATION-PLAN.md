@@ -1,5 +1,26 @@
 # Kế hoạch hợp nhất frontend và backend WeGo
 
+### Phạm vi V1 báo cáo · 08/11/2026 — ưu tiên hiện tại
+
+- APK Android độc lập + web dự phòng; backend laptop cùng Wi-Fi. Ưu tiên sửa lỗi và nghiệm thu ổn định trước khi mở thêm tính năng.
+- Vali chọn lưu bền tại thiết bị theo tài khoản/chuyến, không xây API Packing. Thông báo/push hoãn ngoài V1. Các hợp đồng planned trước đây không phải yêu cầu phải làm cho bản này.
+- Kế hoạch/gate build và mạng demo: [V1-RELEASE-PLAN.md](V1-RELEASE-PLAN.md). Profile `preview-lan` có ngoại lệ HTTP cho API IPv4 private; production giữ HTTPS. Chưa coi V1 sẵn sàng chỉ từ unit test/bundle export.
+
+### QA-6 · Chọn và upload nhiều ảnh · 08/11/2026
+
+- Đã nối picker tối đa 10 ảnh → lưu local → upload 2 ảnh đồng thời → kết quả/retry từng ảnh. Chưa có chuyến vẫn local-only, dùng lại API đơn và core viewer. Giữ ID bền sau mất phản hồi; refresh một lượt cuối đợt.
+- API `/media/uploads` yêu cầu trip/memory và trả HTTP 200 với kết quả theo index, không giấu thành công một phần. Checklist/hợp đồng: [MULTI-PHOTO-UPLOAD-QA.md](MULTI-PHOTO-UPLOAD-QA.md). Còn nghiệm thu Android/iOS/web và cloud thật; chưa triển khai upload chạy nền.
+
+### QA-6 · Xóa ảnh Cloudinary và đồng bộ UI · 08/11/2026
+
+- Đã bổ sung xác nhận xóa asset trước DB, receipt bền để retry, dọn file của memory/chuyến đã ẩn và chặn upload cũ làm ảnh sống lại. Viewer chờ kết quả, có loading/lỗi/thử lại; ảnh local không upload để xóa.
+- Checklist/API: [MEDIA-DELETION-QA.md](MEDIA-DELETION-QA.md). Còn nghiệm thu provider thật, cache CDN và thiết bị; private delivery và đối soát orphan sau process crash chưa nằm trong thay đổi này.
+
+### QA-6 · Refactor thư viện Ảnh / Album · 08/11/2026
+
+- Đã dùng chung dữ liệu thật cho lưới 3 cột và album một cột, giữ core xem ảnh và Xem sau. Ảnh mẫu chỉ là lớp hiển thị cho chuyến trống; không ảnh hưởng số đếm/DB.
+- Tối ưu thumbnail/cache/ảo hóa và đọc summary chuyến không kèm membership. API metadata vẫn đọc các trang hiện có; API phân trang theo nhóm + số đếm tổng hợp chưa triển khai. Hướng dẫn: [MEMORY-LIBRARY-UI.md](MEMORY-LIBRARY-UI.md).
+
 ### Kết thúc chuyến đi chủ động · 08/11/2026
 
 - Đã thêm API xác nhận kết thúc LIVE, giữ lịch sử và ngày dự kiến, chống ghi đè bằng version; frontend có hành động menu và lời nhắc khi ghé hết điểm toàn chuyến. Không tự hoàn thành theo số check-in.
@@ -653,12 +674,9 @@ MemoryDetail {
 - Chỉ lấy hourly khi mở ngày/modal, không cả chuyến 365 ngày.
 - Weather lỗi chỉ ảnh hưởng widget.
 
-### API Packing mới
+### Vali V1 — lưu bền trên thiết bị (thay kế hoạch API)
 
-| API | Input | Output |
-| --- | --- | --- |
-| `GET /trips/{id}/packing` | Trip ID | Items, tiến độ, lý do |
-| `PUT /trips/{id}/packing/items/{key}` | `checked` | Checklist/progress mới |
+Không triển khai API Packing cho V1. Checklist lưu tại thiết bị theo `(userId, tripId)`, có schema/version và khôi phục khi mở lại; không chỉ giữ trong component. Trạng thái persistence chưa triển khai, sẽ xử lý sau các lỗi chặn độ ổn định.
 
 ```text
 PackingSummary {
@@ -668,6 +686,7 @@ PackingSummary {
 ```
 
 - Checklist cho **cả chuyến**, đúng copy đã chốt.
+- Gỡ app/xóa dữ liệu/đổi máy sẽ không giữ checklist; đổi tài khoản không dùng checklist của người khác. Không đồng bộ cloud trong V1.
 - Gợi ý rule nhiệt độ/mưa/UV, không cần LLM.
 - Forecast cập nhật không tự bỏ tick.
 - Chưa có forecast vẫn xem checklist cơ bản, ghi rõ chưa cá nhân hóa.
@@ -735,6 +754,8 @@ HomeSummary {
 **Nghiệm thu:** bốn trạng thái bằng DB; sửa/visit/xóa/ảnh mới đồng bộ các màn.
 
 ## 11. Phase 9 — Thông báo trong app và hồ sơ
+
+**Chốt 08/11/2026:** thông báo/push nằm ngoài V1 báo cáo; các API Notification bên dưới chỉ là thiết kế hoãn lại. Giữ luồng hồ sơ đã tích hợp, không xây thêm Notification trước khi chốt độ ổn định.
 
 **Module:** Notification và Profile.
 

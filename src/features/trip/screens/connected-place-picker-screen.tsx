@@ -4,6 +4,7 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   StyleSheet,
   View,
 } from "react-native";
@@ -99,12 +100,14 @@ export function ConnectedPlacePickerScreen({
       setSaving(false);
     }
   };
+
   const back = () => {
     if (!lock.current) {
       if (focus) setFocus(undefined);
       else onClose();
     }
   };
+
   return (
     <GestureHandlerRootView style={styles.fill}>
       <ScreenSafeArea
@@ -124,7 +127,10 @@ export function ConnectedPlacePickerScreen({
                   region={getPlaceMapRegion([focus])}
                   onBack={back}
                   suppliedDetails={{
-                    photo: null,
+                    photo: detail.data.photos[0]
+                      ? { uri: detail.data.photos[0].url }
+                      : null,
+                    photos: detail.data.photos.map((item) => item.url),
                     hours: detail.data.openingHours?.displayLines.join(" · "),
                     admission: detail.data.admission
                       ? {
@@ -176,22 +182,26 @@ export function ConnectedPlacePickerScreen({
                   {
                     gap: theme.spacing.sm,
                     paddingHorizontal: theme.spacing.md,
-                    paddingTop: theme.spacing.xxl,
+                    paddingTop: theme.spacing.xs,
+                    paddingBottom: theme.spacing.xs,
                   },
                 ]}
               >
                 <DetailIconButton
                   name="back"
+                  variant="plain"
                   label={copy.back}
                   onPress={back}
                 />
-                <AppText variant="subheading">{copy.title}</AppText>
+                <AppText variant="subheading" accessibilityRole="header">
+                  {copy.title}
+                </AppText>
               </View>
               <View
                 style={{
                   paddingHorizontal: theme.spacing.lg,
                   gap: theme.spacing.sm,
-                  paddingBottom: theme.spacing.sm,
+                  paddingBottom: theme.spacing.xs,
                 }}
               >
                 <AppText variant="label" tone="primary">
@@ -238,7 +248,7 @@ export function ConnectedPlacePickerScreen({
                 keyboardDismissMode="on-drag"
                 contentContainerStyle={{
                   paddingHorizontal: theme.spacing.lg,
-                  gap: theme.spacing.md,
+                  gap: theme.spacing.sm,
                   paddingBottom: theme.spacing.lg,
                 }}
                 ListHeaderComponent={
@@ -251,15 +261,24 @@ export function ConnectedPlacePickerScreen({
                             ? copy.results
                             : copy.suggestions}
                       </AppText>
-                      <AppButton
-                        variant="soft"
-                        size="small"
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: selectedOnly }}
                         onPress={() => setSelectedOnly((s) => !s)}
+                        style={({ pressed }) => ({
+                          minHeight: theme.layout.compactTouchTarget,
+                          minWidth: theme.layout.compactTouchTarget,
+                          justifyContent: "center",
+                          alignItems: "flex-end",
+                          opacity: pressed ? theme.motion.pressOpacity : 1,
+                        })}
                       >
-                        {selectedOnly
-                          ? copy.all
-                          : `${copy.selected} (${selected.length})`}
-                      </AppButton>
+                        <AppText variant="body" tone="primary">
+                          {selectedOnly
+                            ? copy.all
+                            : `${copy.selected} (${selected.length})`}
+                        </AppText>
+                      </Pressable>
                     </View>
                     {query.isError && !selectedOnly ? (
                       <View style={{ gap: theme.spacing.sm }}>
@@ -388,6 +407,7 @@ const styles = StyleSheet.create({
   fill: { flex: 1 },
   content: { flex: 1, width: "100%", alignSelf: "center" },
   row: { flexDirection: "row", alignItems: "center" },
+
   between: {
     flexDirection: "row",
     alignItems: "center",

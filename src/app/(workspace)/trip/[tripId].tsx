@@ -9,6 +9,7 @@ export default function TripDetailsRoute() {
     day: params.day,
     map: params.map,
   });
+
   return (
     <TripDetailsScreen
       tripId={parsed.success ? parsed.data.tripId : undefined}

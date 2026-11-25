@@ -37,12 +37,14 @@ export function AuthFooterLink({
           {
             minWidth: theme.layout.compactTouchTarget,
             minHeight: theme.layout.compactTouchTarget,
+            paddingHorizontal: theme.spacing.xs,
             paddingVertical: theme.spacing.sm,
             opacity: pressed ? theme.motion.pressOpacity : 1,
           },
         ]}
       >
         <AppText
+          numberOfLines={1}
           tone="primary"
           variant="link"
           style={[
@@ -67,6 +69,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+
   action: { maxWidth: "100%", justifyContent: "center" },
-  centered: { textAlign: "center" },
+  centered: { textAlign: "center", flexShrink: 0 },
 });

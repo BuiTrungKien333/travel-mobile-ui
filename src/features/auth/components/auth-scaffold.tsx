@@ -112,26 +112,33 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
   },
+
   scrollContent: {
     flexGrow: 1,
     alignItems: "center",
     justifyContent: "center",
   },
+
   container: {
     width: "100%",
   },
+
   header: {
     alignItems: "center",
   },
+
   languageRow: {
     alignItems: "flex-end",
   },
+
   title: {
     textAlign: "center",
   },
+
   subtitle: {
     textAlign: "center",
   },
+
   footer: {
     alignItems: "center",
   },

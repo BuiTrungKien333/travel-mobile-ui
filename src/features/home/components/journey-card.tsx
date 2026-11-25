@@ -13,6 +13,7 @@ export function JourneyCard({
   variant?: "default" | "neutral";
 }) {
   const theme = useAppTheme();
+
   return (
     <View
       style={[

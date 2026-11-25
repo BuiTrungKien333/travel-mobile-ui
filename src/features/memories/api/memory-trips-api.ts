@@ -8,7 +8,10 @@ import {
 } from "@/features/trip/api/trip-contract";
 import { toTripStop } from "@/features/trip/api/trip-adapters";
 
-export async function loadMemoryTrips(signal?: AbortSignal): Promise<Trip[]> {
+export async function loadMemoryTrips(
+  signal?: AbortSignal,
+  includePlaces = true,
+): Promise<Trip[]> {
   const summaries: TripSummaryDto[] = [];
   for (let page = 0; ; page++) {
     const result = await tripApi.list(page, signal);
@@ -20,9 +23,12 @@ export async function loadMemoryTrips(signal?: AbortSignal): Promise<Trip[]> {
     summaries.push(...result.content);
     if (page + 1 >= result.totalPages) break;
   }
+
   return Promise.all(
     summaries.map(async (summary) => {
-      const places = await tripPlacesApi.listPlaces(summary.id, signal);
+      const places = includePlaces
+        ? await tripPlacesApi.listPlaces(summary.id, signal)
+        : [];
       const stops = places.map(toTripStop);
       const days: Trip["days"] = [];
       if (summary.startDate && summary.endDate) {
@@ -37,6 +43,7 @@ export async function loadMemoryTrips(signal?: AbortSignal): Promise<Trip[]> {
             .slice(0, 10);
         }
       }
+
       return { ...tripViewModel(summary), days, unscheduledStops: stops };
     }),
   );

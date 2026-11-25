@@ -22,7 +22,9 @@ function uiHarness() {
   const theme = { ...tokens, colors: new Proxy({}, { get: () => "#123456" }) };
   const load = tripModuleLoader({
     "@/constants/development": { UI_PREVIEW_ENABLED: true },
-    "./connected-trips-screen": { ConnectedTripsScreen: "ConnectedTripsScreen" },
+    "./connected-trips-screen": {
+      ConnectedTripsScreen: "ConnectedTripsScreen",
+    },
     react: {
       useState: (initial: any) => {
         const index = cursor++;
@@ -188,9 +190,9 @@ test("TripsScreen displays all created trips from its actual store and opens the
     kind: "add",
     date: trip.days[0].date,
     stops: harness
-      .load<
-        typeof import("../src/features/trip/data/place-bank.ts")
-      >("src/features/trip/data/place-bank.ts")
+      .load<typeof import("../src/features/trip/data/place-bank.ts")>(
+        "src/features/trip/data/place-bank.ts",
+      )
       .getPlacesForDestination("Đà Lạt")
       .slice(0, 1),
   });
@@ -403,10 +405,29 @@ test("calendar uses localized labels, announces selection and applies a single-d
 
 test("editing server trips can correct past dates while creation keeps past dates disabled", () => {
   const h = uiHarness();
-  const { DateRangeSheet } = h.load<typeof import("../src/features/trip/components/date-range-sheet.tsx")>("src/features/trip/components/date-range-sheet.tsx");
-  const props = { visible: true, startDate: "2026-10-20", endDate: "2026-10-22", today: "2026-10-21", onApply: () => {}, onClose: () => {} };
-  let tree = h.render(DateRangeSheet,props);
-  assert.equal(nodes(tree,"Pressable").find((node) => node.props.accessibilityLabel?.includes("October 19, 2026"))?.props.disabled,true);
-  tree = h.render(DateRangeSheet,{ ...props,allowPastDates: true });
-  assert.equal(nodes(tree,"Pressable").find((node) => node.props.accessibilityLabel?.includes("October 19, 2026"))?.props.disabled,false);
+  const { DateRangeSheet } = h.load<
+    typeof import("../src/features/trip/components/date-range-sheet.tsx")
+  >("src/features/trip/components/date-range-sheet.tsx");
+  const props = {
+    visible: true,
+    startDate: "2026-10-20",
+    endDate: "2026-10-22",
+    today: "2026-10-21",
+    onApply: () => {},
+    onClose: () => {},
+  };
+  let tree = h.render(DateRangeSheet, props);
+  assert.equal(
+    nodes(tree, "Pressable").find((node) =>
+      node.props.accessibilityLabel?.includes("October 19, 2026"),
+    )?.props.disabled,
+    true,
+  );
+  tree = h.render(DateRangeSheet, { ...props, allowPastDates: true });
+  assert.equal(
+    nodes(tree, "Pressable").find((node) =>
+      node.props.accessibilityLabel?.includes("October 19, 2026"),
+    )?.props.disabled,
+    false,
+  );
 });

@@ -3,6 +3,7 @@ import { z } from "zod";
 const localDate = z.iso.date();
 const localDateTime = z.iso.datetime({ local: true });
 const instant = z.iso.datetime({ offset: true });
+
 export const daySettingsSchema = z
   .object({
     origin: z
@@ -21,6 +22,7 @@ export const daySettingsSchema = z
     travelMode: z.enum(["DRIVE", "WALK", "BICYCLE"]),
   })
   .refine((value) => !value.returnToStart || value.origin !== null);
+
 export type DaySettings = z.infer<typeof daySettingsSchema>;
 
 export const itineraryStopSchema = z.object({
@@ -53,6 +55,7 @@ export const itineraryResponseSchema = z.object({
   days: z.array(itineraryDaySchema),
   updatedAt: instant.nullable(),
 });
+
 export type ItineraryResponse = z.infer<typeof itineraryResponseSchema>;
 export type ItineraryStopResponse = z.infer<typeof itineraryStopSchema>;
 
@@ -71,7 +74,9 @@ export const saveItineraryDaySchema = z.object({
   settings: daySettingsSchema.optional(),
   expectedVisitedPlaceIds: z.array(z.guid()).max(100).optional(),
 });
+
 export type SaveItineraryDayRequest = z.infer<typeof saveItineraryDaySchema>;
+
 export const updateDayScheduleSchema = z.object({
   expectedTripVersion: z.number().int().nonnegative().safe(),
   expectedUpdatedAt: instant.nullable(),
@@ -85,6 +90,7 @@ export const updateDayScheduleSchema = z.object({
     )
     .max(100),
 });
+
 export type UpdateDayScheduleRequest = z.infer<typeof updateDayScheduleSchema>;
 
 export const saveItineraryRequestSchema = z.object({
@@ -97,6 +103,7 @@ export const saveItineraryRequestSchema = z.object({
     )
     .max(90),
 });
+
 export type SaveItineraryRequest = z.infer<typeof saveItineraryRequestSchema>;
 
 const optimizationItemSchema = z
@@ -133,6 +140,7 @@ export const itineraryOptimizationProposalSchema = z
     copilotRecommendations: z.unknown().optional(),
   })
   .passthrough();
+
 export type ItineraryOptimizationProposal = z.infer<
   typeof itineraryOptimizationProposalSchema
 >;
@@ -141,6 +149,7 @@ export const itineraryEnvelopeSchema = z.object({
   success: z.literal(true),
   data: itineraryResponseSchema,
 });
+
 export const optimizationEnvelopeSchema = z.object({
   success: z.literal(true),
   data: z.object({

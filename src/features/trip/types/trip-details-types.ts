@@ -4,6 +4,7 @@ export type TripScheduleSnapshot = Pick<
   Trip,
   "days" | "unscheduledStops" | "startDate" | "endDate"
 >;
+
 export type TripMutation =
   | {
       kind: "info";

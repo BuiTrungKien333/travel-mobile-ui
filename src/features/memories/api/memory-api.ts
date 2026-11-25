@@ -15,6 +15,7 @@ export const memoryEndpoints = {
   media: "/api/v1/media",
   limits: "/api/v1/media/limits",
 } as const;
+
 export const memoryQueryKeys = {
   list: (userId: string) =>
     [...homeMemoryQueryKeys.list(userId), "library"] as const,
@@ -23,6 +24,7 @@ export const memoryQueryKeys = {
 };
 
 const imageUrl = z.url().refine((value) => /^https?:\/\//i.test(value));
+
 export const mediaSchema = z.object({
   id: z.guid(),
   url: imageUrl,
@@ -31,6 +33,7 @@ export const mediaSchema = z.object({
   width: z.number().nullable(),
   height: z.number().nullable(),
 });
+
 export const serverMemorySchema = z.object({
   id: z.guid(),
   version: z.number().int().nonnegative(),
@@ -43,13 +46,17 @@ export const serverMemorySchema = z.object({
   mediaCount: z.number().int().nonnegative(),
   media: z.array(mediaSchema),
 });
+
 export type ServerMemory = z.infer<typeof serverMemorySchema>;
+
 export const uploadLimitsSchema = z.object({
   maxFileBytes: z.number().int().positive(),
   maxPixels: z.number().int().positive().default(MEMORY_MAX_PIXELS),
   maxDimension: z.number().int().positive().default(MEMORY_MAX_DIMENSION),
 });
+
 export type UploadLimits = z.infer<typeof uploadLimitsSchema>;
+
 const createSchema = z.object({
   clientRequestId: z.guid(),
   tripId: z.guid().optional(),
@@ -63,6 +70,7 @@ export function parseApiData<T>(schema: z.ZodType<T>, value: unknown): T {
     .object({ success: z.literal(true), data: schema })
     .safeParse(value);
   if (!result.success) throw new ApiError("INVALID_RESPONSE");
+
   return result.data.data;
 }
 
@@ -74,6 +82,7 @@ export const memoryApi = {
         params: { page, size: 50, sort: "experiencedAt,desc" },
         signal,
       });
+
       const data = parseApiData(
         z.object({
           content: z.array(serverMemorySchema),
@@ -93,6 +102,7 @@ export const memoryApi = {
       memoryEndpoints.memories,
       createSchema.parse(input),
     );
+
     return parseApiData(serverMemorySchema, response.data);
   },
   async detail(id: string) {
@@ -100,6 +110,7 @@ export const memoryApi = {
       `${memoryEndpoints.memories}/detail`,
       { params: { memoryId: z.guid().parse(id) } },
     );
+
     return parseApiData(serverMemorySchema, response.data);
   },
   async updateNote(id: string, version: number, note: string) {
@@ -110,6 +121,7 @@ export const memoryApi = {
         note: z.string().max(MEMORY_NOTE_MAX_LENGTH).parse(note),
       },
     );
+
     return parseApiData(serverMemorySchema, response.data);
   },
   async removePhoto(mediaId: string) {
@@ -145,6 +157,7 @@ export const memoryApi = {
         },
       },
     );
+
     return parseApiData(
       z.object({ mediaId: z.guid(), url: imageUrl }),
       response.data,

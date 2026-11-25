@@ -44,6 +44,7 @@ import { getSampleImage } from "../utils/trip-images";
 import { getPlaceMapRegion } from "../utils/place-search";
 import { useTripDetailsCopy } from "../i18n/trip-details-copy";
 import { useItineraryCopy } from "../i18n/itinerary-copy";
+import { useTripDirections } from "../hooks/use-trip-directions";
 import { usePlaceSearchCopy } from "../i18n/place-search-copy";
 import {
   tripApiErrorMessage,
@@ -67,6 +68,7 @@ export function ConnectedTripStopDetailsScreen({
   day?: string;
 }) {
   const theme = useAppTheme();
+  const directions = useTripDirections();
   const insets = useScreenInsets();
   const { copy, locale } = useTripDetailsCopy();
   const { copy: ongoing } = useOngoingCopy();
@@ -87,6 +89,7 @@ export function ConnectedTripStopDetailsScreen({
     () => (read ? toTrip(read.trip, places.data, itinerary.data) : undefined),
     [read, places.data, itinerary.data],
   );
+
   const stop = (
     day
       ? trip?.days.find((entry) => entry.date === day)?.stops
@@ -95,6 +98,7 @@ export function ConnectedTripStopDetailsScreen({
   const detail = usePlaceDetail(stop?.placeId, locale);
   const place = useMemo(() => {
     if (!stop) return undefined;
+
     return detail.data
       ? {
           ...discoveryStop(detail.data),
@@ -110,14 +114,15 @@ export function ConnectedTripStopDetailsScreen({
       : stop;
   }, [stop, detail.data]);
   const mapStops = useMemo(() => (place ? [place] : []), [place]);
+  const samplePhotoSeed = stop ? (stop.placeId ?? stop.id) : null;
   const samplePhotos = useMemo(
     () =>
-      stop
+      samplePhotoSeed !== null
         ? [0, 1, 2].map((index) =>
-            getSampleImage(`${stop.placeId ?? stop.id}:photo:${index}`),
+            getSampleImage(`${samplePhotoSeed}:photo:${index}`),
           )
         : [],
-    [stop?.placeId, stop?.id],
+    [samplePhotoSeed],
   );
   const ready = !!read && !!places.data && !!itinerary.data;
   const loadError = query.isError || places.isError || itinerary.isError;
@@ -128,6 +133,7 @@ export function ConnectedTripStopDetailsScreen({
     !!stop?.tripPlaceId &&
     (read.trip.mode === "PLANNING" ||
       (read.trip.mode === "LIVE" && day >= read.context.evaluatedDate));
+
   const canVisit =
     ready &&
     !loadError &&
@@ -135,9 +141,11 @@ export function ConnectedTripStopDetailsScreen({
     !!day &&
     read.trip.mode === "LIVE" &&
     day <= read.context.evaluatedDate;
+
   const conflict =
     save.error instanceof ApiError &&
     ["TRIP_007", "TRIP_008"].includes(save.error.code);
+
   const problem =
     save.error instanceof ApiError
       ? ({
@@ -149,6 +157,7 @@ export function ConnectedTripStopDetailsScreen({
       : save.error
         ? itineraryCopy.error
         : undefined;
+
   const back = () => {
     if (saving.current) return;
     if (router.canGoBack()) router.back();
@@ -162,17 +171,20 @@ export function ConnectedTripStopDetailsScreen({
       });
     else router.replace("/tabs/trips");
   };
+
   const reload = async () => {
     const refreshed = await Promise.all([
       query.refetch(),
       places.refetch(),
       itinerary.refetch(),
     ]);
+
     if (refreshed.every((result) => !result.isError)) {
       save.reset();
       setAction(undefined);
     }
   };
+
   const openAction = (kind: VisitAction["kind"]) => {
     if (!editable || !read || !itinerary.data || !stop) return;
     save.reset();
@@ -183,6 +195,7 @@ export function ConnectedTripStopDetailsScreen({
       stop,
     });
   };
+
   const persist = async (stops: SaveItineraryDayRequest["stops"]) => {
     if (!action || !day || saving.current || conflict) return;
     saving.current = true;
@@ -211,6 +224,7 @@ export function ConnectedTripStopDetailsScreen({
       saving.current = false;
     }
   };
+
   const toggleVisited = async () => {
     if (!canVisit || !stop?.placeId || visiting.current) return;
     visiting.current = true;
@@ -280,7 +294,7 @@ export function ConnectedTripStopDetailsScreen({
             showSavedName
             onBack={back}
             backLabel={copy.back}
-            topInset={insets.top}
+            topInset={insets.top + theme.spacing.lg}
             expandMapRequest={expandRequest}
             mapAction={<SharePlaceButton place={place} />}
             mapContent={
@@ -384,6 +398,9 @@ export function ConnectedTripStopDetailsScreen({
             }}
           >
             <GlassBackdrop borderRadius={theme.radius.none} />
+            {directions.error ? (
+              <AppText accessibilityRole="alert">{directions.error}</AppText>
+            ) : null}
             {!place.location ? (
               <AppText variant="caption" tone="muted">
                 {copy.stopMapUnavailable}
@@ -393,13 +410,13 @@ export function ConnectedTripStopDetailsScreen({
               <AppButton
                 size="small"
                 variant="raised"
-                disabled={!place.location}
+                loading={directions.busy}
                 style={[
                   styles.action,
                   { flexGrow: 60, paddingHorizontal: theme.spacing.sm },
                 ]}
-                accessibilityHint={copy.expandMap}
-                onPress={() => setExpandRequest((value) => value + 1)}
+                accessibilityHint={ongoing.directionsHint}
+                onPress={() => void directions.open(place, trip.destination)}
                 leadingIcon={
                   <AppIcon
                     name="navigation"
@@ -508,6 +525,7 @@ export function ConnectedTripStopDetailsScreen({
               void reload();
               return;
             }
+
             void persist(
               toDayStops(action.base, day).filter(
                 (entry) => entry.placeId !== action.stop.placeId,

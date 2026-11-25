@@ -65,6 +65,7 @@ export function MemoryDetailScreen({
         )}
       </MemoryPage>
     );
+
   return (
     <MemoryDetail key={memory.id} trip={trip} memory={memory} photos={photos} />
   );
@@ -92,6 +93,7 @@ function MemoryDetail({
     text: string;
     error?: boolean;
   } | null>(null);
+
   const {
     control,
     handleSubmit,
@@ -110,11 +112,13 @@ function MemoryDetail({
           year: "numeric",
         }).format(new Date(`${memory.date}T12:00:00`))
       : copy.noDate;
+
   const album = () =>
     router.dismissTo({
       pathname: "/memories/[tripId]",
       params: { tripId: trip.id },
     });
+
   const capture = () =>
     router.dismissTo({
       pathname: "/memories/quick-capture",
@@ -124,6 +128,7 @@ function MemoryDetail({
         stopId: "",
       },
     });
+
   async function handleShare(x: number, y: number) {
     if (!uri || sharing) return;
     setSharing(true);
@@ -147,6 +152,7 @@ function MemoryDetail({
       setSharing(false);
     }
   }
+
   return (
     <MemoryPage
       title={trip.destination}

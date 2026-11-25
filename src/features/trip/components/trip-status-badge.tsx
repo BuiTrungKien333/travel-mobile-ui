@@ -61,6 +61,8 @@ export function TripStatusBadge({
         styles.badge,
         {
           backgroundColor: config.bg,
+          borderWidth: 1,
+          borderColor: config.dotColor ?? theme.colors.borderStrong,
           borderRadius: theme.radius.full,
           paddingHorizontal: theme.spacing.sm,
         },
@@ -100,11 +102,13 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     gap: 5,
   },
+
   dot: {
     width: 6,
     height: 6,
     borderRadius: 3,
   },
+
   text: {
     fontSize: typography.fontSize.navigationLabel,
     lineHeight: typography.lineHeight.navigationLabel,

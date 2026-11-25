@@ -20,24 +20,28 @@ export function CameraIconButton({
   disabled?: boolean;
   active?: boolean;
   children?: ReactNode;
-  size?: "tiny" | "small" | "default" | "large";
+  size?: "tiny" | "small" | "header" | "default" | "large";
   bare?: boolean;
 }) {
   const theme = useAppTheme();
   const targetSize =
-    size === "small" || size === "tiny"
+    size === "small" || size === "tiny" || size === "header"
       ? theme.layout.compactTouchTarget
       : size === "large"
         ? theme.layout.cameraActionSize
         : theme.layout.cameraIconButtonSize;
+
   const surfaceSize =
     size === "tiny"
       ? theme.layout.cameraTinyControlSurface
-      : size === "small"
-        ? theme.layout.compactIconButtonSurfaceSize
-        : size === "large"
-          ? theme.layout.cameraActionSurfaceSize
-          : targetSize;
+      : size === "header"
+        ? theme.layout.compactIconButtonSurfaceSize + theme.spacing.xs
+        : size === "small"
+          ? theme.layout.compactIconButtonSurfaceSize
+          : size === "large"
+            ? theme.layout.cameraActionSurfaceSize
+            : targetSize;
+
   const iconSize =
     size === "tiny"
       ? theme.layout.cameraTinyControlIcon
@@ -46,6 +50,7 @@ export function CameraIconButton({
         : size === "large"
           ? theme.layout.cameraActionIconSize
           : theme.layout.iconMedium;
+
   return (
     <Pressable
       accessibilityRole="button"

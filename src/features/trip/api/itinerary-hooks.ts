@@ -6,8 +6,6 @@ import { tripQueryKeys } from "./trip-query-keys";
 import { itineraryApi } from "./itinerary-api";
 import { weatherQueryKeys } from "@/features/weather/api/weather-query-keys";
 import type {
-  ItineraryOptimizationProposal,
-  SaveItineraryRequest,
   SaveItineraryDayRequest,
   UpdateDayScheduleRequest,
   ItineraryResponse,
@@ -15,6 +13,7 @@ import type {
 
 export function useTripItineraryQuery(tripId: string | undefined) {
   const owner = useProfile().data?.id;
+
   return useQuery({
     queryKey: tripQueryKeys.itinerary(owner, tripId),
     enabled: !!owner && !!tripId,
@@ -24,23 +23,18 @@ export function useTripItineraryQuery(tripId: string | undefined) {
     },
   });
 }
-export function useSaveItineraryMutation(tripId: string) {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (request: SaveItineraryRequest) =>
-      itineraryApi.save(tripId, request),
-    onSuccess: () => client.invalidateQueries({ queryKey: tripQueryKeys.root }),
-  });
-}
+
 export function useSaveItineraryDayMutation(tripId: string) {
   return useDayWrite<SaveItineraryDayRequest>(tripId, itineraryApi.saveDay);
 }
+
 export function useUpdateDayScheduleMutation(tripId: string) {
   return useDayWrite<UpdateDayScheduleRequest>(
     tripId,
     itineraryApi.updateSchedule,
   );
 }
+
 function useDayWrite<Request>(
   tripId: string,
   write: (
@@ -52,6 +46,7 @@ function useDayWrite<Request>(
   const client = useQueryClient();
   const owner = useProfile().data?.id;
   const key = tripQueryKeys.itinerary(owner, tripId);
+
   return useMutation({
     retry: false,
     mutationFn: async ({
@@ -77,20 +72,8 @@ function useDayWrite<Request>(
           queryKey: weatherQueryKeys.forTrip(owner, tripId),
         }),
       ]);
+
       return result;
     },
-  });
-}
-export function useOptimizeItineraryMutation(tripId: string) {
-  return useMutation({ mutationFn: () => itineraryApi.optimize(tripId) });
-}
-export function useApplyItineraryOptimizationMutation(tripId: string) {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (input: {
-      expectedUpdatedAt: string;
-      proposal: ItineraryOptimizationProposal;
-    }) => itineraryApi.applyOptimization(tripId, input),
-    onSuccess: () => client.invalidateQueries({ queryKey: tripQueryKeys.root }),
   });
 }

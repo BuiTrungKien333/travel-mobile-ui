@@ -11,18 +11,31 @@ export function TripBacklogRow({
   stop,
   canEdit,
   onPress,
+  selected,
+  onLongPress,
 }: {
   stop: TripStop;
   canEdit: boolean;
   onPress: () => void;
+  selected?: boolean;
+  onLongPress?: () => void;
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useTripDetailsCopy();
+
   return (
     <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`${stop.name[locale]}, ${canEdit ? copy.schedule : copy.stopDetails}`}
+      accessibilityRole={selected === undefined ? "button" : "checkbox"}
+      accessibilityState={
+        selected === undefined ? undefined : { checked: selected }
+      }
+      accessibilityLabel={
+        selected === undefined
+          ? `${stop.name[locale]}, ${canEdit ? copy.schedule : copy.stopDetails}`
+          : stop.name[locale]
+      }
       onPress={onPress}
+      onLongPress={onLongPress}
       style={({ pressed }) => ({
         flexDirection: "row",
         alignItems: "center",
@@ -30,7 +43,11 @@ export function TripBacklogRow({
         padding: theme.spacing.sm,
         marginBottom: theme.spacing.sm,
         borderRadius: theme.radius.md,
-        backgroundColor: theme.colors.surface,
+        backgroundColor: selected
+          ? theme.colors.surfaceTint
+          : theme.colors.surface,
+        borderWidth: 1,
+        borderColor: selected ? theme.colors.primary : theme.colors.border,
         opacity: pressed ? theme.motion.pressOpacity : 1,
       })}
     >
@@ -51,7 +68,34 @@ export function TripBacklogRow({
           {canEdit ? copy.schedule : copy.noTime}
         </AppText>
       </View>
-      <AppIcon name="chevron" size={theme.layout.iconSmall} />
+      {selected === undefined ? (
+        <AppIcon name="chevron" size={theme.layout.iconSmall} />
+      ) : (
+        <View
+          style={{
+            width: theme.layout.iconMedium,
+            height: theme.layout.iconMedium,
+            borderRadius: theme.radius.sm,
+            borderWidth: 1,
+            borderColor: selected
+              ? theme.colors.primary
+              : theme.colors.borderStrong,
+            backgroundColor: selected
+              ? theme.colors.primary
+              : theme.colors.surface,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {selected ? (
+            <AppIcon
+              name="tick"
+              size={theme.layout.iconSmall}
+              color={theme.colors.onPrimary}
+            />
+          ) : null}
+        </View>
+      )}
     </Pressable>
   );
 }

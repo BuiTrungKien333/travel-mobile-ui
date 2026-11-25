@@ -54,6 +54,7 @@ export function TripOptimizationSheet({
   const byId = new Map(day?.stops.map((stop) => [stop.id, stop]));
   const stops = (order ?? []).flatMap((id) => {
     const stop = byId.get(id);
+
     return stop
       ? [
           {
@@ -63,6 +64,7 @@ export function TripOptimizationSheet({
         ]
       : [];
   });
+
   const drag = useTripTimelineDrag({
     stops,
     selectionKey: day?.date ?? "",
@@ -72,10 +74,12 @@ export function TripOptimizationSheet({
   const prefixValid = !proposal?.lockedPrefixIds?.some(
     (id, index) => order?.[index] !== id,
   );
+
   const changed =
     !!day &&
     !!order &&
     day.stops.some((stop, index) => stop.id !== order[index]);
+
   return (
     <TripDetailsSheet
       title={copy.optimizeTitle}
@@ -177,6 +181,7 @@ function TripOptimizationPreview({
       suggested: false,
     },
   ];
+
   return (
     <>
       {notice}
@@ -285,6 +290,7 @@ function TripOptimizationPreview({
               {section.ids.map((id, index) => {
                 const stop = byId.get(id);
                 if (!stop) return null;
+
                 return (
                   <View
                     key={id}

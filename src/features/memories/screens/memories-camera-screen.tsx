@@ -78,6 +78,7 @@ export function MemoriesCameraScreen(params: {
     (library.isPending || library.isError);
   const invalidTarget =
     !!(params.tripId || params.day || params.stopId) && !target;
+
   return (
     <>
       {available && !loadingTarget && !invalidTarget ? (

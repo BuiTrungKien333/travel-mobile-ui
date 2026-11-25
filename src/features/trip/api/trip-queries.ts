@@ -22,6 +22,7 @@ export { tripQueryKeys } from "./trip-query-keys";
 
 export function useTripsQuery() {
   const owner = useProfile().data?.id;
+
   return useInfiniteQuery({
     queryKey: tripQueryKeys.list(owner),
     enabled: !!owner,
@@ -31,8 +32,10 @@ export function useTripsQuery() {
       page.page + 1 < page.totalPages ? page.page + 1 : undefined,
   });
 }
+
 export function useTripQuery(id: string | undefined) {
   const owner = useProfile().data?.id;
+
   return useQuery<TripReadDto>({
     queryKey: tripQueryKeys.detail(owner, id),
     refetchInterval: (query) =>
@@ -46,15 +49,18 @@ export function useTripQuery(id: string | undefined) {
     },
   });
 }
+
 export function useCreateTripMutation() {
   const owner = useProfile().data?.id;
   const client = useQueryClient();
+
   return useMutation({
     mutationFn: async (payload: CreateTripPayload) => {
       const sessionVersion = authSession.getVersion();
       const result = await tripApi.create(payload);
       if (sessionVersion !== authSession.getVersion())
         throw new ApiError("CANCELLED");
+
       return result;
     },
     retry: false,
@@ -83,6 +89,7 @@ function useTripWriteMutation<T>(
 ) {
   const owner = useProfile().data?.id;
   const client = useQueryClient();
+
   return useMutation({
     retry: false,
     mutationFn: async (payload: T) => {
@@ -90,6 +97,7 @@ function useTripWriteMutation<T>(
       const result = await write(id, payload);
       if (sessionVersion !== authSession.getVersion())
         throw new ApiError("CANCELLED");
+
       return { read: result, sessionVersion };
     },
     onSuccess: async ({ read, sessionVersion }) => {
@@ -111,6 +119,7 @@ function useTripWriteMutation<T>(
     },
   });
 }
+
 export function useTripDatePreviewMutation(id: string) {
   return useMutation({
     retry: false,
@@ -122,9 +131,11 @@ export function useTripDatePreviewMutation(id: string) {
     },
   });
 }
+
 export function useDeleteTripMutation(id: string) {
   const owner = useProfile().data?.id;
   const client = useQueryClient();
+
   return useMutation({
     retry: false,
     mutationFn: async (version: number) => {
@@ -132,6 +143,7 @@ export function useDeleteTripMutation(id: string) {
       await tripApi.remove(id, version);
       if (sessionVersion !== authSession.getVersion())
         throw new ApiError("CANCELLED");
+
       return sessionVersion;
     },
     onSuccess: async (sessionVersion) => {

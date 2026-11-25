@@ -43,6 +43,7 @@ export const itineraryApi = {
     );
     const saved = parse(itineraryEnvelopeSchema, response.data);
     if (saved.tripId !== tripId) throw new ApiError("INVALID_RESPONSE");
+
     return saved;
   },
   async get(tripId: string, signal?: AbortSignal): Promise<ItineraryResponse> {
@@ -72,6 +73,7 @@ export const itineraryApi = {
     );
     const saved = parse(itineraryEnvelopeSchema, response.data);
     if (saved.tripId !== tripId) throw new ApiError("INVALID_RESPONSE");
+
     return saved;
   },
   async optimize(
@@ -87,6 +89,7 @@ export const itineraryApi = {
       { signal },
     );
     const data = parse(optimizationEnvelopeSchema, response.data);
+
     return { sourceUpdatedAt: data.sourceUpdatedAt, proposal: data.proposal };
   },
   async applyOptimization(
@@ -100,6 +103,7 @@ export const itineraryApi = {
       `${path(tripId)}/apply-optimization`,
       input,
     );
+
     return parse(itineraryEnvelopeSchema, response.data);
   },
 };

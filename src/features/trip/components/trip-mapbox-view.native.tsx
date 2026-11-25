@@ -50,6 +50,7 @@ export function TripMapboxView({
         if (active) onUnavailable();
       },
     );
+
     return () => {
       active = false;
     };
@@ -110,6 +111,7 @@ export function TripMapboxView({
       animationDuration: reduceMotion ? 0 : theme.motion.tabTransitionDuration,
     });
   };
+
   const locate = async () => {
     try {
       if (
@@ -128,11 +130,19 @@ export function TripMapboxView({
       centerOnLocation.current = false;
     }
   };
+
   return (
     <View style={{ flex: 1 }}>
       <MapView
         style={{ flex: 1 }}
+        // A SurfaceView detaches/flashes black when its clipped list header resizes.
+        // TextureView participates in the same Android composition as the sheet.
+        surfaceView={false}
         styleURL={TRIP_MAP_STYLE}
+        scaleBarEnabled={false}
+        zoomEnabled
+        scrollEnabled
+        requestDisallowInterceptTouchEvent
         rotateEnabled={false}
         pitchEnabled={false}
         onDidFinishLoadingMap={() => setLoaded(true)}
@@ -225,7 +235,7 @@ export function TripMapboxView({
           style={{
             position: "absolute",
             right: theme.spacing.sm,
-            bottom: theme.spacing.sm,
+            bottom: theme.layout.compactTouchTarget + theme.spacing.sm * 2,
           }}
         >
           <DetailIconButton

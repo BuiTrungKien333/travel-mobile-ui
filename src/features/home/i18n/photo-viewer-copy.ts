@@ -13,7 +13,13 @@ const vi = {
   remove: "Xóa ảnh",
   cancel: "Hủy",
   deleteTitle: "Xóa ảnh khỏi nhật ký?",
-  deleteHint: "Ảnh sẽ được gỡ khỏi nhật ký trong phiên xem thử này.",
+  deleteHint:
+    "Ảnh sẽ được xóa khỏi kỷ niệm. Bản đã lưu vào thư viện thiết bị vẫn được giữ.",
+  deleteFailed: "Chưa xóa được ảnh. Kiểm tra kết nối và thử lại.",
+  deletePending:
+    "Máy chủ đã lưu yêu cầu xóa và sẽ thử lại khi dịch vụ ảnh sẵn sàng.",
+  deleteIdentityMissing:
+    "Ảnh cũ này thiếu thông tin lưu trữ để xóa. Vui lòng liên hệ hỗ trợ.",
   imageHint:
     "Chạm để ẩn hoặc hiện công cụ. Vuốt ngang để chuyển ảnh. Chạm hai lần hoặc dùng hai ngón tay để phóng to. Kéo xuống để đóng.",
   zoomIn: "Phóng to",
@@ -33,6 +39,7 @@ const vi = {
   dateUnknown: "Chưa có ngày chụp",
   timeUnknown: "Chưa có giờ chụp",
 };
+
 const en: typeof vi = {
   back: "Back to album",
   previous: "Previous photo",
@@ -47,7 +54,12 @@ const en: typeof vi = {
   cancel: "Cancel",
   deleteTitle: "Delete this journal photo?",
   deleteHint:
-    "This photo will be removed from the journal in this preview session.",
+    "This photo will be removed from your memories. Copies saved to your device gallery will be kept.",
+  deleteFailed: "Couldn't delete the photo. Check your connection and retry.",
+  deletePending:
+    "The server saved your deletion request and will retry when image storage is available.",
+  deleteIdentityMissing:
+    "This older photo is missing storage information needed for deletion. Please contact support.",
   imageHint:
     "Tap to toggle controls. Swipe sideways to change photos. Double tap or pinch to zoom. Drag down to close.",
   zoomIn: "Zoom in",
@@ -67,6 +79,7 @@ const en: typeof vi = {
   dateUnknown: "Capture date unavailable",
   timeUnknown: "Capture time unavailable",
 };
+
 export function usePhotoViewerCopy() {
   const { locale } = useI18n();
   return { copy: locale === "vi" ? vi : en, locale };

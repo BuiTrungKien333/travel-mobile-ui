@@ -80,9 +80,11 @@ export function TripStopRow({
     arrival !== null &&
     before !== null &&
     arrival < before + (previous?.durationMinutes ?? 45) + (leg?.minutes ?? 0);
+
   const markerWidth = onVisited
     ? theme.layout.compactTouchTarget
     : theme.layout.sampleStopNumberSize;
+
   const marker = (
     <View
       style={{
@@ -126,6 +128,7 @@ export function TripStopRow({
       )}
     </View>
   );
+
   return (
     <TripStopDragFrame id={stop.id} drag={drag}>
       {previous || fromStart ? (
@@ -248,6 +251,7 @@ export function TripStopRow({
                     const index = drag.slots
                       .get()
                       .findIndex((slot) => slot.id === stop.id);
+
                     drag.finish(
                       stop.id,
                       index + (action === "moveUp" ? -1 : 1),
@@ -330,7 +334,12 @@ export function TripStopRow({
                         <AppIcon name="pin" size={theme.layout.iconSmall} />
                       ) : null}
                     </View>
-                    <AppText variant="sectionTitle">
+                    <AppText
+                      variant="label"
+                      style={{
+                        fontFamily: theme.typography.fontFamily.semibold,
+                      }}
+                    >
                       {stop.name[locale]}
                     </AppText>
                     <AppText variant="caption" tone="muted">
@@ -356,6 +365,7 @@ export function TripStopRow({
     </TripStopDragFrame>
   );
 }
+
 const styles = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "flex-start" },
   connector: { flexDirection: "row", alignItems: "center" },

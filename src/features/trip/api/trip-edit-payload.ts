@@ -18,6 +18,7 @@ export function tripEditPayload(
     "notes",
   ];
   const values = mutation.values;
+
   return {
     version,
     ...(fields.includes("title") ? { title: values.title ?? "" } : {}),

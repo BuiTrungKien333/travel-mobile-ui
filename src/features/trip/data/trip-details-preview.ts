@@ -17,6 +17,7 @@ const stopImages: Record<string, ImageSource | number> = {
   datanla: homeImages.datanlaWaterfall,
   "flower-garden": homeImages.dalatFlowerGarden,
 };
+
 export function getStopImage(id: string) {
   return stopImages[id] ?? getSampleImage(id);
 }
@@ -32,16 +33,19 @@ const legs: Record<string, { km: number } & Record<TravelMode, number>> = {
   "museum:station": { km: 1.2, car: 5, motorcycle: 4, walk: 16 },
   "station:datanla": { km: 8.5, car: 24, motorcycle: 20, walk: 115 },
 };
+
 export function getPreviewLeg(from: TripStop, to: TripStop, mode: TravelMode) {
   const leg = legs[`${from.id}:${to.id}`];
   return leg ? { km: leg.km, minutes: leg[mode] } : null;
 }
+
 export function getDayTravel(day: TripDay) {
   const segments = day.stops
     .slice(1)
     .map((stop, index) =>
       getPreviewLeg(day.stops[index], stop, day.transport ?? "car"),
     );
+
   return {
     complete:
       !day.startLocation &&
@@ -52,6 +56,7 @@ export function getDayTravel(day: TripDay) {
     minutes: segments.reduce((sum, leg) => sum + (leg?.minutes ?? 0), 0),
   };
 }
+
 const sampleOrder = [
   "lake",
   "square",
@@ -60,16 +65,19 @@ const sampleOrder = [
   "station",
   "datanla",
 ];
+
 export function suggestedDayOrder(day: TripDay): string[] | null {
   if (
     day.stops.length < 2 ||
     day.stops.some((stop) => !sampleOrder.includes(stop.id))
   )
     return null;
+
   const free = day.stops
     .filter((stop) => !stop.pinned)
     .sort((a, b) => sampleOrder.indexOf(a.id) - sampleOrder.indexOf(b.id));
   let cursor = 0;
+
   return day.stops.map((stop) => (stop.pinned ? stop.id : free[cursor++].id));
 }
 

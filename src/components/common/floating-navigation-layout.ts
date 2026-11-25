@@ -11,6 +11,7 @@ type NavigationMetricTokens = Pick<
   | "touchTarget"
   | "compactTouchTarget"
 >;
+
 type NavigationMetrics = { [Key in keyof NavigationMetricTokens]: number };
 
 /** Frame coordinates shared by Yoga, the browser and the active marker. */
@@ -36,10 +37,12 @@ export function floatingNavigationLayout(
   const right = sideWidth + cameraSlotWidth;
   // Move only the outer tabs, keeping the camera's adjacent controls in place.
   const outerOffset = Math.min(metrics.tabBarOuterTabOffset, Math.max(0, left));
+
   return {
     barHeight: Math.max(
       metrics.tabBarHeight,
       metrics.compactTouchTarget + metrics.tabBarPadding * 2,
+      metrics.tabBarCameraSize + metrics.tabBarPadding * 2,
     ),
     itemWidth,
     groupGap: groupGap + outerOffset,

@@ -1,8 +1,5 @@
 export function getCameraEnvironmentIssue():
-  | "insecure"
-  | "unsupported"
-  | "embedded"
-  | null {
+  "insecure" | "unsupported" | "embedded" | null {
   if (!window.isSecureContext) return "insecure";
   const policy =
     "permissionsPolicy" in document
@@ -10,6 +7,7 @@ export function getCameraEnvironmentIssue():
       : "featurePolicy" in document
         ? document.featurePolicy
         : undefined;
+
   if (
     window.self !== window.top &&
     policy &&
@@ -20,5 +18,6 @@ export function getCameraEnvironmentIssue():
   )
     return "embedded";
   if (!navigator.mediaDevices?.getUserMedia) return "unsupported";
+
   return null;
 }

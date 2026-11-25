@@ -1,4 +1,10 @@
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+} from "react-native";
 
 import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
@@ -21,6 +27,7 @@ export function WeatherDateSelector({
   const theme = useAppTheme();
   const { copy, locale } = useWeatherCopy();
   const inModal = variant === "modal";
+
   return (
     <ScrollView
       horizontal
@@ -29,6 +36,7 @@ export function WeatherDateSelector({
     >
       {days.map((day) => {
         const selected = day.date === selectedDate;
+
         return (
           <Pressable
             key={day.date}
@@ -87,6 +95,8 @@ export function WeatherDateSelector({
 export function HourlyForecast({ day }: { day: ForecastDay }) {
   const theme = useAppTheme();
   const { copy } = useWeatherCopy();
+  const { fontScale } = useWindowDimensions();
+
   return (
     <View style={{ gap: theme.spacing.sm }}>
       <AppText accessibilityRole="header" variant="label">
@@ -94,6 +104,7 @@ export function HourlyForecast({ day }: { day: ForecastDay }) {
       </AppText>
       <ScrollView
         horizontal
+        style={{ flexGrow: 0 }}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{
           gap: theme.spacing.sm,
@@ -108,41 +119,35 @@ export function HourlyForecast({ day }: { day: ForecastDay }) {
             style={[
               styles.hour,
               {
-                width: theme.layout.weatherHourCardWidth,
-                padding: theme.spacing.sm,
+                width:
+                  theme.layout.weatherHourCardWidth * Math.max(1, fontScale),
+                paddingHorizontal: theme.spacing.sm,
+                paddingVertical: theme.spacing.md,
                 gap: theme.spacing.xs,
                 borderRadius: theme.radius.sm,
-                borderColor: theme.colors.glassBorder,
+                borderColor: theme.colors.border,
                 backgroundColor:
                   hour.experience === "photo"
                     ? theme.colors.warningSurface
-                    : theme.colors.glassInset,
+                    : theme.colors.surface,
               },
             ]}
           >
-            <View
-              style={[
-                homeStyles.row,
-                styles.hourHeader,
-                { gap: theme.spacing.xs },
-              ]}
+            <AppText
+              variant="caption"
+              style={{ fontFamily: theme.typography.fontFamily.semibold }}
             >
-              <AppText
-                variant="caption"
-                style={{ fontFamily: theme.typography.fontFamily.semibold }}
-              >
-                {hour.time}
-              </AppText>
-              <AppIcon
-                name={hour.condition}
-                size={theme.layout.iconSmall}
-                color={
-                  hour.condition === "sun"
-                    ? theme.colors.weatherSun
-                    : theme.colors.primaryText
-                }
-              />
-            </View>
+              {hour.time}
+            </AppText>
+            <AppIcon
+              name={hour.condition}
+              size={theme.layout.iconMedium}
+              color={
+                hour.condition === "sun"
+                  ? theme.colors.weatherSun
+                  : theme.colors.primaryText
+              }
+            />
             <AppText variant="label">{hour.temperature}°</AppText>
             <View style={[homeStyles.row, { gap: theme.spacing.xs }]}>
               <AppIcon
@@ -167,7 +172,6 @@ export function HourlyForecast({ day }: { day: ForecastDay }) {
 }
 
 const styles = StyleSheet.create({
-  hour: { alignItems: "center", borderWidth: StyleSheet.hairlineWidth },
-  hourHeader: { width: "100%", justifyContent: "space-between" },
+  hour: { flexShrink: 0, alignItems: "center", borderWidth: 1 },
   center: { textAlign: "center" },
 });

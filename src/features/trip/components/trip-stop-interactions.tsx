@@ -44,6 +44,7 @@ export function TripStopInteractions({
     ...theme.motion.photoViewerSpring,
     reduceMotion: ReduceMotion.System,
   };
+
   const swipe = Gesture.Pan()
     .enabled(!!onRemove)
     .activeOffsetX([-theme.spacing.sm, theme.spacing.sm])
@@ -71,6 +72,7 @@ export function TripStopInteractions({
       if (!success)
         x.set(withSpring(drag?.active.get() === id ? 0 : start.get(), spring));
     });
+
   const reorder = Gesture.Pan()
     .enabled(!!drag && !pinned)
     .activateAfterLongPress(theme.motion.tripTimelineHoldDuration)
@@ -121,6 +123,7 @@ export function TripStopInteractions({
       if (drag && !success && drag.active.get() === id)
         scheduleOnRN(drag.reset);
     });
+
   useAnimatedReaction(
     () => drag?.openSwipe.get(),
     (open, previous) => {
@@ -130,12 +133,15 @@ export function TripStopInteractions({
       }
     },
   );
+
   const swipeStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: x.get() }],
   }));
+
   const draggingStyle = useAnimatedStyle(() => ({
     opacity: drag?.active.get() === id ? theme.motion.pressOpacity : 1,
   }));
+
   return (
     <View style={{ borderRadius: theme.radius.md, overflow: "hidden" }}>
       {onRemove ? (
@@ -220,6 +226,7 @@ export function TripStopDragFrame({
       if (from < index && index <= to) shift = -height;
       if (to <= index && index < from) shift = height;
     }
+
     return {
       transform: [
         {
@@ -236,6 +243,7 @@ export function TripStopDragFrame({
       ],
     };
   });
+
   return (
     <Animated.View
       onLayout={(event) => drag?.measure(id, event.nativeEvent.layout.height)}

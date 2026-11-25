@@ -63,6 +63,7 @@ export function OngoingTripPanels({
       openPanel: state.openPanel,
     }),
   );
+
   const [date, setDate] = useState(
     panel.kind === "journal" ? panel.date : undefined,
   );
@@ -74,6 +75,7 @@ export function OngoingTripPanels({
         <AppText tone="muted">{copy.noTrip}</AppText>
       </JourneySheet>
     );
+
   if (panel.kind === "current-weather")
     return (
       <JourneySheet
@@ -89,9 +91,11 @@ export function OngoingTripPanels({
         />
       </JourneySheet>
     );
+
   const journal = memories.filter(
     (memory) => memory.tripId === trip.id && (!date || memory.date === date),
   );
+
   return (
     <JourneySheet title={copy.tripJournal} onClose={closePanel}>
       <View style={{ gap: theme.spacing.xs }}>
@@ -257,6 +261,7 @@ function JournalNoteEditor({
   const schema = z.object({
     text: z.string().trim().max(500, copy.noteTooLong),
   });
+
   const {
     control,
     handleSubmit,
@@ -267,6 +272,7 @@ function JournalNoteEditor({
     defaultValues: { text: memory.text },
     mode: "onTouched",
   });
+
   return (
     <View style={{ gap: theme.spacing.sm }}>
       <Controller
@@ -360,7 +366,7 @@ export function JourneySheet({
     .activeOffsetY(theme.spacing.sm)
     .failOffsetX([-theme.spacing.lg, theme.spacing.lg])
     .onUpdate((event) => {
-      translateY.value = Math.max(0, event.translationY);
+      translateY.set(Math.max(0, event.translationY));
     })
     .onEnd((event) => {
       if (
@@ -370,19 +376,24 @@ export function JourneySheet({
       ) {
         scheduleOnRN(onClose);
       } else {
-        translateY.value = withTiming(0, {
-          duration: snapDuration,
-          reduceMotion: ReduceMotion.System,
-        });
+        translateY.set(
+          withTiming(0, {
+            duration: snapDuration,
+            reduceMotion: ReduceMotion.System,
+          }),
+        );
       }
     })
     .onFinalize((_event, success) => {
       if (!success)
-        translateY.value = withTiming(0, {
-          duration: snapDuration,
-          reduceMotion: ReduceMotion.System,
-        });
+        translateY.set(
+          withTiming(0, {
+            duration: snapDuration,
+            reduceMotion: ReduceMotion.System,
+          }),
+        );
     });
+
   return (
     <Modal
       visible
@@ -543,6 +554,7 @@ export function JourneySheet({
     </Modal>
   );
 }
+
 const styles = StyleSheet.create({
   root: { flex: 1 },
   overlay: { flex: 1, justifyContent: "flex-end", alignItems: "center" },

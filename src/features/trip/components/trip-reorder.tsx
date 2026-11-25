@@ -41,6 +41,7 @@ export function TripReorder({
       );
     },
   });
+
   return (
     <>
       <View style={{ gap: theme.spacing.xs }}>
@@ -92,6 +93,7 @@ export function TripReorder({
     </>
   );
 }
+
 export function TripReorderList({
   stops,
   slotTimes,
@@ -104,6 +106,7 @@ export function TripReorderList({
   variant?: "default" | "compact";
 }) {
   const theme = useAppTheme();
+
   return (
     <View>
       {stops.map((stop, index) => (
@@ -183,6 +186,7 @@ function ReorderRow({
           },
         }
       : {};
+
   const pan = Gesture.Pan()
     .enabled(
       !stop.pinned && (drag.draggedId === null || drag.draggedId === stop.id),
@@ -213,6 +217,7 @@ function ReorderRow({
     .onFinalize((_event, success) => {
       if (!success && drag.active.get() === stop.id) scheduleOnRN(drag.reset);
     });
+
   return (
     <View
       style={[

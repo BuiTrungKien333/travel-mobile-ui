@@ -12,5 +12,6 @@ export function utf8ByteLength(value: string): number {
             ? 3
             : 4;
   }
+
   return bytes;
 }

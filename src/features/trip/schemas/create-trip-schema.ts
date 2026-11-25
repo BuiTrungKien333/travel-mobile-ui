@@ -15,11 +15,13 @@ export type TripValidationCopy = {
   titleTooLong: string;
   invalidBudget: string;
 };
+
 export function createTripSchema(copy: TripValidationCopy, today: string) {
   const date = z
     .string()
     .min(1, copy.dateRequired)
     .refine((value) => !value || isCalendarDate(value), copy.invalidDate);
+
   return z
     .object({
       destinationProvinceId: z.guid().nullable().default(null),
@@ -54,6 +56,7 @@ export function createTripSchema(copy: TripValidationCopy, today: string) {
           path: ["startDate"],
           message: copy.pastDate,
         });
+
       if (value.endDate < value.startDate)
         context.addIssue({
           code: "custom",
@@ -71,5 +74,6 @@ export function createTripSchema(copy: TripValidationCopy, today: string) {
         });
     });
 }
+
 export type CreateTripInput = z.input<ReturnType<typeof createTripSchema>>;
 export type CreateTripOutput = z.output<ReturnType<typeof createTripSchema>>;

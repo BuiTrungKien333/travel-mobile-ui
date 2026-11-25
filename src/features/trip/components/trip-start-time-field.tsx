@@ -38,6 +38,7 @@ export function TripStartTimeField({
     setOpen(false);
     onBlur();
   }
+
   return (
     <View style={{ gap: compact ? theme.spacing.xs : theme.spacing.sm }}>
       <AppText variant="label">{label ?? copy.startTime}</AppText>

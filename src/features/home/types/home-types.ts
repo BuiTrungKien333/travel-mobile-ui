@@ -2,6 +2,7 @@ import type { ImageSource } from "expo-image";
 
 export type HomeScenario = "new" | "upcoming" | "ongoing" | "returning";
 export type LocalizedText = { vi: string; en: string };
+
 export type TripStop = {
   id: string;
   placeId?: string;
@@ -25,7 +26,9 @@ export type TripStop = {
     sample?: boolean;
   };
 };
+
 export type TravelMode = "car" | "motorcycle" | "walk";
+
 export type TripDay = {
   date: string;
   stops: TripStop[];
@@ -36,6 +39,7 @@ export type TripDay = {
   returnToStart?: boolean;
   transport?: TravelMode;
 };
+
 export type TripPreference =
   | "nature"
   | "food"
@@ -45,6 +49,7 @@ export type TripPreference =
   | "adventure"
   | "shopping"
   | "beach";
+
 export type Trip = {
   destinationProvinceId?: string | null;
   serverMode?: "PLANNING" | "LIVE" | "RECAP" | "CANCELLED";
@@ -66,11 +71,13 @@ export type Trip = {
   days: TripDay[];
   coverImage?: ImageSource | string | number;
 };
+
 export type HomeSelection =
   | { kind: "ongoing"; trip: Trip; dayIndex: number }
   | { kind: "upcoming"; trip: Trip }
   | { kind: "returning" }
   | { kind: "new" };
+
 export type Memory = {
   local?: {
     capturedAt: string;

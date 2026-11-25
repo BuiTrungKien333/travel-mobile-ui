@@ -7,6 +7,7 @@ export function decodeRoutePolyline(encoded: string): PlaceCoordinate[] {
   let cursor = 0,
     latitude = 0,
     longitude = 0;
+
   function delta(): number | null {
     let result = 0;
     for (let shift = 0; shift < 30 && cursor < encoded.length; shift += 5) {
@@ -15,8 +16,10 @@ export function decodeRoutePolyline(encoded: string): PlaceCoordinate[] {
       result |= (value & 31) << shift;
       if (value < 32) return result & 1 ? ~(result >> 1) : result >> 1;
     }
+
     return null;
   }
+
   while (cursor < encoded.length) {
     const lat = delta(),
       lng = delta();
@@ -28,5 +31,6 @@ export function decodeRoutePolyline(encoded: string): PlaceCoordinate[] {
       return [];
     points.push(point);
   }
+
   return points;
 }

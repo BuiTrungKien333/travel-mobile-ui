@@ -46,7 +46,7 @@ export function PhotoViewerToolbar({
   onClose: () => void;
   onShare: () => void;
   onSave: () => void;
-  onDelete: () => void;
+  onDelete?: () => void;
   onInfo: () => void;
 }) {
   const theme = useAppTheme();
@@ -56,6 +56,7 @@ export function PhotoViewerToolbar({
   const [favorites, setFavorites] = useState<Set<string>>(() => new Set());
   const favorite = favorites.has(memory.id);
   const disabled = !visible || busy !== null;
+
   return (
     <Animated.View
       pointerEvents={visible ? "box-none" : "none"}
@@ -170,13 +171,15 @@ export function PhotoViewerToolbar({
               loading={busy === "save"}
               surface="none"
             />
-            <PhotoIconButton
-              icon="trash"
-              label={copy.remove}
-              onPress={onDelete}
-              disabled={disabled}
-              surface="none"
-            />
+            {onDelete ? (
+              <PhotoIconButton
+                icon="trash"
+                label={copy.remove}
+                onPress={onDelete}
+                disabled={disabled}
+                surface="none"
+              />
+            ) : null}
           </View>
           <PhotoIconButton
             icon="info"
@@ -210,6 +213,7 @@ function PhotoIconButton({
   surface?: "circle" | "none";
 }) {
   const theme = useAppTheme();
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -234,7 +238,11 @@ function PhotoIconButton({
         <AppIcon
           name={icon}
           variant="light"
-          color={theme.colors.photoViewerText}
+          color={
+            icon === "heartFilled"
+              ? theme.colors.photoViewerFavorite
+              : theme.colors.photoViewerText
+          }
           size={iconSize ?? theme.layout.iconMedium}
         />
       )}
@@ -256,6 +264,7 @@ export function PhotoInfoPanel({
   const theme = useAppTheme();
   const insets = useScreenInsets();
   const { copy, locale } = usePhotoViewerCopy();
+
   return (
     <View
       style={[
@@ -337,9 +346,13 @@ export function PhotoInfoPanel({
 export function PhotoDeleteConfirmation({
   onCancel,
   onConfirm,
+  busy = false,
+  error,
 }: {
   onCancel: () => void;
   onConfirm: () => void;
+  busy?: boolean;
+  error?: string;
 }) {
   const theme = useAppTheme();
   const { copy } = usePhotoViewerCopy();
@@ -351,6 +364,8 @@ export function PhotoDeleteConfirmation({
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
+      disabled={busy}
+      accessibilityState={{ disabled: busy, busy: destructive && busy }}
       style={({ pressed }) => ({
         flex: 1,
         minHeight: theme.layout.touchTarget,
@@ -364,11 +379,19 @@ export function PhotoDeleteConfirmation({
         opacity: pressed ? theme.motion.pressOpacity : 1,
       })}
     >
-      <AppText variant="label" style={{ color: theme.colors.photoViewerText }}>
-        {text}
-      </AppText>
+      {busy && destructive ? (
+        <ActivityIndicator color={theme.colors.photoViewerText} />
+      ) : (
+        <AppText
+          variant="label"
+          style={{ color: theme.colors.photoViewerText }}
+        >
+          {text}
+        </AppText>
+      )}
     </Pressable>
   );
+
   return (
     <View
       style={[
@@ -381,6 +404,7 @@ export function PhotoDeleteConfirmation({
         accessible={false}
         style={StyleSheet.absoluteFill}
         onPress={onCancel}
+        disabled={busy}
       />
       <View
         accessibilityViewIsModal
@@ -409,6 +433,15 @@ export function PhotoDeleteConfirmation({
         >
           {copy.deleteHint}
         </AppText>
+        {error ? (
+          <AppText
+            accessibilityRole="alert"
+            variant="caption"
+            style={{ color: theme.colors.photoViewerDanger }}
+          >
+            {error}
+          </AppText>
+        ) : null}
         <View style={{ flexDirection: "row", gap: theme.spacing.sm }}>
           {button(copy.cancel, onCancel)}
           {button(copy.remove, onConfirm, true)}
@@ -420,6 +453,7 @@ export function PhotoDeleteConfirmation({
 
 const styles = StyleSheet.create({
   header: { position: "absolute", flexDirection: "row", alignItems: "center" },
+
   footer: {
     position: "absolute",
     bottom: 0,
@@ -427,9 +461,11 @@ const styles = StyleSheet.create({
     right: 0,
     alignItems: "center",
   },
+
   actions: {
     flexDirection: "row",
     justifyContent: "space-between",
   },
+
   confirmation: { alignItems: "center", justifyContent: "center" },
 });

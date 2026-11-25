@@ -25,20 +25,31 @@ const errorCode = compile(errorUrl);
 const anchor = { x: 0, y: 0, width: 48, height: 48 };
 
 function fixture({
-  modules = ["FileSystem", "ExpoMediaLibraryNext", "ExpoSharing"],
+  modules = [
+    "FileSystem",
+    "ExpoMediaLibraryNext",
+    "ExpoSharing",
+    "ExpoImageManipulator",
+  ],
   os = "android",
   version = 35,
   granted = true,
   sharingAvailable = true,
+  deferCopy = false,
 }: {
   modules?: string[];
   os?: string;
   version?: number;
   granted?: boolean;
   sharingAvailable?: boolean;
+  deferCopy?: boolean;
 } = {}) {
   const events: string[] = [];
   const loaded: string[] = [];
+  let finishCopy = () => {};
+  const copyGate = new Promise<void>((resolve) => {
+    finishCopy = resolve;
+  });
   const errorModule = { exports: {} };
   runInNewContext(errorCode, {
     exports: errorModule.exports,
@@ -61,6 +72,7 @@ function fixture({
     }
   }
   class File {
+    exists = true;
     uri: string;
     type = "image/jpeg";
     constructor(base: string | Directory, name?: string) {
@@ -70,6 +82,14 @@ function fixture({
     }
     async copy() {
       events.push("file:copy");
+      if (deferCopy) {
+        await copyGate;
+        events.push("file:copied");
+      }
+    }
+    delete() {
+      events.push("file:delete");
+      this.exists = false;
     }
   }
   const optional: Record<string, { nativeName: string; value: unknown }> = {
@@ -94,6 +114,21 @@ function fixture({
         },
       },
     },
+    "expo-image-manipulator": {
+      nativeName: "ExpoImageManipulator",
+      value: {
+        SaveFormat: { PNG: "png" },
+        ImageManipulator: {
+          manipulate: () => ({
+            renderAsync: async () => ({
+              saveAsync: async () => ({ uri: "file:///cache/decoded.png" }),
+              release: () => events.push("rendered:release"),
+            }),
+            release: () => events.push("context:release"),
+          }),
+        },
+      },
+    },
     "expo-sharing": {
       nativeName: "ExpoSharing",
       value: {
@@ -114,7 +149,15 @@ function fixture({
           requireOptionalNativeModule: (id: string) =>
             modules.includes(id) ? {} : null,
         };
-      if (name === "expo-image") return { Image: {} };
+      if (name === "expo-image")
+        return {
+          Image: {
+            loadAsync: async (uri: string) => {
+              events.push(`decode:${uri}`);
+              return { release: () => events.push("decoded:release") };
+            },
+          },
+        };
       if (name === "react-native")
         return { Platform: { OS: os, Version: version } };
       if (name === "./photo-action-error") return errorModule.exports;
@@ -131,6 +174,7 @@ function fixture({
       module.exports as typeof import("../src/features/home/services/journal-photo-actions.ts"),
     loaded,
     events,
+    finishCopy,
   };
 }
 
@@ -181,7 +225,7 @@ test("modern Android saves and removes its temporary copy without requesting lib
   assert.equal(events[1], "file:copy");
   assert.match(
     events[2],
-    /^save:file:\/\/\/cache\/wego-photo-\d+\/wego-photo.jpg$/,
+    /^save:file:\/\/\/cache\/wego-photo-\d+\/WeGo-\d+.jpg$/,
   );
   assert.equal(events[3], "directory:delete");
   assert.equal(events.length, 4);
@@ -213,7 +257,61 @@ test("sharing retains the temporary file while the recipient may still need it",
   assert.equal(events[1], "file:copy");
   assert.match(
     events[2],
-    /^share:file:\/\/\/cache\/wego-photo-\d+\/wego-photo.jpg$/,
+    /^share:file:\/\/\/cache\/wego-photo-\d+\/WeGo-\d+.jpg$/,
   );
   assert.equal(events.length, 3);
+});
+
+test("bundled Android assets export pixels to PNG instead of copying a non-file URI", async () => {
+  const { actions, events } = fixture();
+  await actions.saveJournalPhoto("asset:/sample.jpg");
+  assert.equal(events[0], "directory:create");
+  assert.ok(events.includes("decode:asset:/sample.jpg"));
+  assert.equal(events.filter((event) => event === "file:copy").length, 1);
+  assert.ok(events.includes("file:delete"));
+  assert.ok(events.includes("rendered:release"));
+  assert.ok(events.includes("context:release"));
+  assert.ok(events.includes("decoded:release"));
+  assert.match(
+    events.find((event) => event.startsWith("save:")) ?? "",
+    /WeGo-\d+\.png$/,
+  );
+  assert.equal(events.at(-1), "directory:delete");
+});
+
+test("Android 10 requests add-only access before the legacy media writer runs", async () => {
+  const { actions, events } = fixture({ version: 29 });
+  await actions.saveJournalPhoto("file:///photo.jpg");
+  assert.equal(events[0], "permission:true:0");
+  assert.equal(events.at(-1), "directory:delete");
+});
+
+test("sample exports decode the original bundled source rather than the renderer's event URL", async () => {
+  const { actions, events } = fixture();
+  await actions.saveJournalPhoto("res:/2131234", 321);
+  assert.ok(events.includes("decode:321"));
+  assert.ok(!events.includes("decode:res:/2131234"));
+  assert.match(
+    events.find((event) => event.startsWith("save:")) ?? "",
+    /WeGo-\d+\.png$/,
+  );
+});
+
+test("gallery creation and temporary deletion wait for the SDK's asynchronous file copy", async () => {
+  const { actions, events, finishCopy } = fixture({ deferCopy: true });
+  const saving = actions.saveJournalPhoto("res:/2131234", 321);
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  assert.ok(events.includes("file:copy"));
+  assert.ok(
+    !events.includes("file:delete"),
+    "never delete a source while it is still copying",
+  );
+  assert.ok(!events.some((event) => event.startsWith("save:")));
+  finishCopy();
+  await saving;
+  assert.ok(events.indexOf("file:copied") < events.indexOf("file:delete"));
+  assert.ok(
+    events.indexOf("file:copied") <
+      events.findIndex((event) => event.startsWith("save:")),
+  );
 });

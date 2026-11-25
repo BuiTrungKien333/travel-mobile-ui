@@ -66,6 +66,9 @@ export const translations = {
     "validation.confirmPasswordRequired": "Vui lòng xác nhận mật khẩu.",
     "validation.passwordMismatch": "Mật khẩu xác nhận chưa khớp.",
     "common.retry": "Thử lại",
+    "common.screenErrorTitle": "Chưa thể hiển thị màn hình này",
+    "common.screenErrorHint":
+      "Hãy thử mở lại. Nếu vẫn gặp lỗi, vui lòng đóng và mở lại ứng dụng.",
     "auth.profile.title": "Tài khoản của bạn",
     "auth.profile.edit": "Sửa thông tin cá nhân",
     "auth.profile.save": "Lưu thay đổi",
@@ -113,6 +116,7 @@ export const translations = {
     "auth.error.rateLimit":
       "Bạn thao tác quá nhanh. Vui lòng đợi một lát rồi thử lại.",
     "auth.error.fieldInvalid": "Thông tin chưa hợp lệ. Vui lòng kiểm tra lại.",
+    "auth.error.forbidden": "Bạn không có quyền thực hiện thao tác này.",
     "auth.error.generic": "Không thể hoàn tất thao tác. Vui lòng thử lại.",
     "validation.emailMax": "Email không được vượt quá 255 ký tự.",
     "validation.fullNameMax": "Họ và tên không được vượt quá 100 ký tự.",
@@ -220,6 +224,9 @@ export const translations = {
     "validation.confirmPasswordRequired": "Please confirm your password.",
     "validation.passwordMismatch": "The passwords do not match.",
     "common.retry": "Try again",
+    "common.screenErrorTitle": "This screen couldn't be displayed",
+    "common.screenErrorHint":
+      "Please try again. If the problem continues, close and reopen the app.",
     "auth.profile.title": "Your account",
     "auth.profile.edit": "Edit profile",
     "auth.profile.save": "Save changes",
@@ -270,6 +277,8 @@ export const translations = {
       "Too many requests. Please wait a moment and try again.",
     "auth.error.fieldInvalid":
       "Some information is invalid. Please check your entries.",
+    "auth.error.forbidden":
+      "You do not have permission to perform this action.",
     "auth.error.generic": "Cannot complete this action. Please try again.",
     "validation.emailMax": "Email must not exceed 255 characters.",
     "validation.fullNameMax": "Full name must not exceed 100 characters.",

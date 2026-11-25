@@ -48,6 +48,7 @@ const vi = {
     shoes: "Đi bộ ngoài trời khi có mưa",
   },
 };
+
 const en: typeof vi = {
   title: "Trip weather",
   viewForecast: "View forecast",

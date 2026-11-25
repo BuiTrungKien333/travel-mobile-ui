@@ -22,8 +22,10 @@ const previews: Record<string, { hours: string; admission: LocalizedText }> = {
     admission: { vi: "Tùy hoạt động", en: "Varies by activity" },
   },
 };
+
 export function getPlaceDetailsPreview(place: TripStop) {
   const preview = previews[place.id];
+
   return {
     photo: preview ? getStopImage(place.id) : null,
     hours: preview?.hours,

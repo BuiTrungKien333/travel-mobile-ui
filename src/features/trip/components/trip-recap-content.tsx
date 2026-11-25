@@ -23,6 +23,7 @@ export function TripRecapContent({
 }) {
   const theme = useAppTheme();
   const { copy } = useTripDetailsCopy();
+
   return (
     <View style={{ gap: theme.spacing.md, paddingBottom: theme.spacing.lg }}>
       {memories.some((memory) => !!memory.photo) ? (
@@ -121,6 +122,7 @@ export function ShareTripButton({ trip }: { trip: Trip }) {
       setSharing(false);
     }
   }
+
   return (
     <View>
       <AppButton

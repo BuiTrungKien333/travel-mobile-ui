@@ -262,3 +262,25 @@ test("API URL boundary rejects embedded credentials and token-like query or frag
     "https://api.example.com",
   );
 });
+
+test("guest discovery does not attach a bearer token or attempt refresh on a public 401", async () => {
+  const h = setup();
+  await h.login();
+  let authorization: unknown;
+  h.apiClient.defaults.adapter = async (config) => {
+    authorization = config.headers.get("Authorization");
+    throw new AxiosError("denied", "ERR_BAD_REQUEST", config, undefined, {
+      status: 401,
+      statusText: "Unauthorized",
+      headers: {},
+      config,
+      data: { code: "AUTH_001" },
+    });
+  };
+  await assert.rejects(h.apiClient.get("/api/v1/public/places"), {
+    code: "AUTH_001",
+  });
+  assert.equal(authorization, undefined);
+  assert.equal(h.state.refreshes, 0);
+  assert.equal(h.state.status, "authenticated");
+});

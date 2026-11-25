@@ -257,14 +257,12 @@ test("a timeline entry opens the stored place and edits only its own visit with 
   assert.equal(h.find("PlaceDetailsContent").place.name.vi, "Saved lake");
   assert.equal(h.find("ConnectedStopScheduleSheet"), undefined);
   h.find("TripVisitCard").onEdit();
-  await h
-    .find("ConnectedStopScheduleSheet")
-    .onSave({
-      date: h.date,
-      time: "10:15",
-      duration: "75",
-      note: "  New note  ",
-    });
+  await h.find("ConnectedStopScheduleSheet").onSave({
+    date: h.date,
+    time: "10:15",
+    duration: "75",
+    note: "  New note  ",
+  });
   assert.equal(h.saves.length, 1);
   const { request } = h.saves[0];
   assert.equal(request.expectedTripVersion, h.read.trip.version);

@@ -50,26 +50,34 @@ export function ConnectedTripRecap({
     void refetch();
   }, [refreshVersion, refetch]);
   const totalPages = query.data?.totalPages;
-  useEffect(() => {
-    if (totalPages !== undefined && page >= totalPages && page > 0)
-      setPage(Math.max(0, totalPages - 1));
-  }, [page, totalPages]);
+  const clampedPage =
+    totalPages !== undefined && page >= totalPages && page > 0
+      ? Math.max(0, totalPages - 1)
+      : page;
+
+  if (clampedPage !== page) {
+    setPage(clampedPage);
+  }
+
   const time = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Asia/Ho_Chi_Minh",
     hour: "2-digit",
     minute: "2-digit",
     hourCycle: "h23",
   });
+
   const memories: Memory[] = (query.data?.content ?? []).flatMap((m) => {
     const photos = m.media.filter((item) =>
       item.mimeType?.startsWith("image/"),
     );
+
     const meta = {
       date,
       tripId,
       destination,
       time: time.format(new Date(m.experiencedAt)),
     };
+
     return photos.length
       ? photos.map((item, index) => ({
           ...meta,
@@ -86,6 +94,7 @@ export function ConnectedTripRecap({
         {copy.memoriesLoading}
       </AppText>
     );
+
   if (query.isError)
     return (
       <View style={{ gap: theme.spacing.sm }}>
@@ -101,6 +110,7 @@ export function ConnectedTripRecap({
         </AppButton>
       </View>
     );
+
   return (
     <>
       <TripRecapContent

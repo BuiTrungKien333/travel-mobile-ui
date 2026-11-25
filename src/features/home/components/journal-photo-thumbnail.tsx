@@ -1,4 +1,4 @@
-import { Image } from "expo-image";
+import { Image, type ImageSource } from "expo-image";
 import {
   useCallback,
   useEffect,
@@ -21,6 +21,8 @@ export function JournalPhotoThumbnail({
   standalone = false,
   disabled = false,
   label,
+  variant = "framed",
+  thumbnailSource,
 }: {
   memory: Memory;
   hidden: boolean;
@@ -29,16 +31,20 @@ export function JournalPhotoThumbnail({
   standalone?: boolean;
   disabled?: boolean;
   label?: string;
+  variant?: "framed" | "grid";
+  thumbnailSource?: ImageSource | string | number;
 }) {
   const theme = useAppTheme();
   const { copy, locale } = useOngoingCopy();
   const [imageFailed, setImageFailed] = useState(false);
+  const [thumbnailFailed, setThumbnailFailed] = useState(false);
   const frame = useRef<ComponentRef<typeof View>>(null);
   const [photoInfo, setPhotoInfo] = useState<{
     uri: string;
     width: number;
     height: number;
   } | null>(null);
+
   const readSelection = useCallback((): PhotoSelection | null => {
     const rect = frame.current?.getBoundingClientRect();
     if (
@@ -49,6 +55,7 @@ export function JournalPhotoThumbnail({
       rect.height <= 0
     )
       return null;
+
     return {
       id: memory.id,
       uri: photoInfo.uri,
@@ -56,11 +63,13 @@ export function JournalPhotoThumbnail({
       origin: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
     };
   }, [memory.id, photoInfo, imageFailed]);
+
   useEffect(
     () => registerPhoto(memory.id, readSelection),
     [registerPhoto, memory.id, readSelection],
   );
   const unavailable = !memory.photo || imageFailed;
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -90,14 +99,18 @@ export function JournalPhotoThumbnail({
           padding: theme.spacing.none,
           borderRadius: theme.radius.none,
           backgroundColor: theme.colors.journalFrameSurface,
-          borderWidth: theme.layout.journalFrameBorderWidth,
+          borderWidth:
+            variant === "grid" ? 0 : theme.layout.journalFrameBorderWidth,
           borderColor: theme.colors.journalFrameBorder,
-          boxShadow: [
-            {
-              ...theme.elevation.glass,
-              color: theme.colors.journalFrameShadow,
-            },
-          ],
+          boxShadow:
+            variant === "grid"
+              ? undefined
+              : [
+                  {
+                    ...theme.elevation.glass,
+                    color: theme.colors.journalFrameShadow,
+                  },
+                ],
           opacity: hidden ? 0 : pressed ? theme.motion.pressOpacity : 1,
         },
       ]}
@@ -119,14 +132,31 @@ export function JournalPhotoThumbnail({
         ) : (
           <Image
             accessible={false}
-            source={memory.photo}
+            source={
+              !thumbnailFailed && thumbnailSource
+                ? thumbnailSource
+                : memory.photo
+            }
+            recyclingKey={memory.id}
             contentFit="cover"
             cachePolicy="memory-disk"
-            onError={() => setImageFailed(true)}
+            onError={() => {
+              if (
+                thumbnailSource &&
+                thumbnailSource !== memory.photo &&
+                !thumbnailFailed
+              )
+                setThumbnailFailed(true);
+              else setImageFailed(true);
+            }}
             onLoad={(event) => {
               const { url, width, height } = event.source;
               if (width > 0 && height > 0)
-                setPhotoInfo({ uri: url, width, height });
+                setPhotoInfo({
+                  uri: typeof memory.photo === "string" ? memory.photo : url,
+                  width,
+                  height,
+                });
             }}
             style={[
               StyleSheet.absoluteFill,

@@ -33,6 +33,7 @@ export function TripVisitCard({
       }).format(new Date(`${date}T12:00:00Z`))
     : "";
   const range = visitTimeRange(stop);
+
   return (
     <View
       style={{

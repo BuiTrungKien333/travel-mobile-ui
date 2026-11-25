@@ -136,6 +136,7 @@ export type AppColorTokens = {
   photoViewerControls: string;
   photoViewerText: string;
   photoViewerMuted: string;
+  photoViewerFavorite: string;
   photoViewerDanger: string;
   photoViewerBar: string;
   photoViewerButton: string;
@@ -263,6 +264,7 @@ export const lightColors: AppColorTokens = {
   photoViewerControls: "rgba(16, 24, 30, 0.76)",
   photoViewerText: "#FFFFFF",
   photoViewerMuted: "#D5E2E6",
+  photoViewerFavorite: "#F04452",
   photoViewerDanger: "#FFAAA2",
   photoViewerBar: "rgba(0, 0, 0, 0.78)",
   photoViewerButton: "rgba(20, 20, 20, 0.64)",
@@ -387,6 +389,7 @@ export const darkColors: AppColorTokens = {
   photoViewerControls: "rgba(16, 24, 30, 0.76)",
   photoViewerText: "#FFFFFF",
   photoViewerMuted: "#D5E2E6",
+  photoViewerFavorite: "#F04452",
   photoViewerDanger: "#FFAAA2",
   photoViewerBar: "rgba(0, 0, 0, 0.78)",
   photoViewerButton: "rgba(20, 20, 20, 0.64)",

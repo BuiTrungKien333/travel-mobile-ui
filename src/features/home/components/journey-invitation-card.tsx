@@ -26,6 +26,7 @@ export function JourneyInvitationCard({
   const tilt = theme.motion.firstTripIconTilt;
   const iconStyle = useAnimatedStyle(() => {
     const wave = Math.sin(progress.value * Math.PI * 4);
+
     return {
       transform: [
         { translateY: -wave * drift },
@@ -33,8 +34,10 @@ export function JourneyInvitationCard({
       ],
     };
   });
+
   const shadowStyle = useAnimatedStyle(() => {
     const wave = Math.sin(progress.value * Math.PI * 4);
+
     return {
       opacity: 0.6 - wave * 0.2,
       transform: [{ scaleX: 1 - wave * 0.15 }],
@@ -149,6 +152,7 @@ export function JourneyInvitationCard({
 
 const styles = StyleSheet.create({
   card: { overflow: "hidden", borderCurve: "continuous" },
+
   landscape: {
     position: "absolute",
     top: 0,
@@ -156,11 +160,13 @@ const styles = StyleSheet.create({
     right: 0,
     pointerEvents: "none",
   },
+
   iconFrame: {
     alignSelf: "center",
     alignItems: "center",
     justifyContent: "center",
   },
+
   iconShadow: { position: "absolute" },
   centeredText: { textAlign: "center" },
 });

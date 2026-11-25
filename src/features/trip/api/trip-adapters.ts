@@ -26,6 +26,7 @@ export function toDayStops(
 
 export function toTripStop(value: TripPlaceResponse): TripStop {
   const place = value.place;
+
   return {
     id: value.id,
     tripPlaceId: value.id,
@@ -47,6 +48,7 @@ export function toTripStop(value: TripPlaceResponse): TripStop {
     plannedOrder: value.plannedOrder,
   };
 }
+
 export function toTrip(
   value: TripDetailDto,
   places: TripPlaceResponse[] = [],
@@ -57,36 +59,42 @@ export function toTrip(
     places.map((place) => [place.placeId, toTripStop(place)]),
   );
   const scheduled = new Set<string>();
+  const daysByDate = new Map<string, ItineraryResponse["days"][number]>();
+  for (const day of itinerary?.days ?? []) {
+    if (!daysByDate.has(day.date)) daysByDate.set(day.date, day);
+  }
+
   return {
     ...base,
-    days: base.days.map((day) => ({
-      ...day,
-      ...daySettings(
-        itinerary?.days.find((entry) => entry.date === day.date)?.settings,
-      ),
-      stops: (
-        itinerary?.days.find((entry) => entry.date === day.date)?.stops ?? []
-      ).map((entry) => {
-        const stop = byPlaceId.get(entry.placeId) ?? {
-          id: entry.id,
-          placeId: entry.placeId,
-          name: { vi: entry.name, en: entry.name },
-          kind: { vi: entry.category ?? "", en: entry.category ?? "" },
-          address: entry.address
-            ? { vi: entry.address, en: entry.address }
-            : undefined,
-        };
-        scheduled.add(entry.placeId);
-        return {
-          ...stop,
-          itineraryItemId: entry.id,
-          time: entry.arrivalTime?.slice(11, 16) ?? "",
-          durationMinutes: entry.durationMinutes,
-          note: entry.note ?? undefined,
-          plannedOrder: entry.sequence,
-        };
-      }),
-    })),
+    days: base.days.map((day) => {
+      const schedule = daysByDate.get(day.date);
+
+      return {
+        ...day,
+        ...daySettings(schedule?.settings),
+        stops: (schedule?.stops ?? []).map((entry) => {
+          const stop = byPlaceId.get(entry.placeId) ?? {
+            id: entry.id,
+            placeId: entry.placeId,
+            name: { vi: entry.name, en: entry.name },
+            kind: { vi: entry.category ?? "", en: entry.category ?? "" },
+            address: entry.address
+              ? { vi: entry.address, en: entry.address }
+              : undefined,
+          };
+          scheduled.add(entry.placeId);
+
+          return {
+            ...stop,
+            itineraryItemId: entry.id,
+            time: entry.arrivalTime?.slice(11, 16) ?? "",
+            durationMinutes: entry.durationMinutes,
+            note: entry.note ?? undefined,
+            plannedOrder: entry.sequence,
+          };
+        }),
+      };
+    }),
     unscheduledStops: places
       .filter((place) => !scheduled.has(place.placeId))
       .map(toTripStop),
@@ -95,6 +103,7 @@ export function toTrip(
 
 function daySettings(settings: ItineraryResponse["days"][number]["settings"]) {
   if (!settings) return {};
+
   return {
     startLocation: settings.origin?.name,
     startAddress: settings.origin?.address ?? undefined,
@@ -115,6 +124,7 @@ function daySettings(settings: ItineraryResponse["days"][number]["settings"]) {
           : ("car" as const),
   };
 }
+
 export function toSaveItineraryRequest(trip: Trip): SaveItineraryRequest {
   const days = trip.days
     .filter((day) => day.stops.length > 0)
@@ -122,6 +132,7 @@ export function toSaveItineraryRequest(trip: Trip): SaveItineraryRequest {
       date: day.date,
       stops: day.stops.map((stop, sequence) => {
         if (!stop.placeId) throw new ApiError("INVALID_ITINERARY");
+
         return {
           placeId: stop.placeId,
           sequence,
@@ -135,5 +146,6 @@ export function toSaveItineraryRequest(trip: Trip): SaveItineraryRequest {
     }));
   const parsed = saveItineraryRequestSchema.safeParse({ days });
   if (!parsed.success) throw new ApiError("INVALID_ITINERARY");
+
   return parsed.data;
 }

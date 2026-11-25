@@ -2,10 +2,12 @@ import type { HomeScenario, Trip, TripStop } from "../types/home-types";
 
 // Fixed mock clock keeps all four previews reproducible, regardless of device date.
 export const MOCK_TODAY = "2026-10-21";
+
 export const mockProfile = {
   fullName: "Nguyễn Trung Kiên",
   email: "kien@example.com",
 };
+
 export const homeImages = {
   forest: require("@/assets/images/home/forest.jpg"),
   upcomingPhoto: require("@/assets/images/home/dalat-upcoming.jpg"),
@@ -20,6 +22,7 @@ export const homeImages = {
   rainCloud: require("@/assets/icons/weather/rain-cloud.svg"),
   glassSun: require("@/assets/icons/weather/glass-sun.svg"),
 };
+
 export const exampleStops: TripStop[] = [
   {
     id: "lake",
@@ -43,6 +46,7 @@ export const exampleStops: TripStop[] = [
     quickInfo: { closesAt: "17:00", sample: true },
   },
 ];
+
 export const sampleItineraryStops = [
   { ...exampleStops[0], image: homeImages.xuanHuongLake },
   { ...exampleStops[1], image: homeImages.lamVienSquare },
@@ -95,6 +99,7 @@ export const genericStops: TripStop[] = [
     kind: { vi: "Văn hóa · Địa điểm mẫu", en: "Culture · Sample place" },
   },
 ];
+
 const history: Trip = {
   id: "past-danang",
   destination: "Đà Nẵng",
@@ -103,6 +108,7 @@ const history: Trip = {
   endDate: "2026-08-14",
   days: [{ date: "2026-08-12", stops: genericStops }],
 };
+
 const dalat: Trip = {
   id: "dalat",
   destination: "Đà Lạt",
@@ -116,6 +122,7 @@ const dalat: Trip = {
     { date: "2026-10-27", stops: [] },
   ],
 };
+
 export const completedDalat: Trip = {
   ...dalat,
   id: "past-dalat",

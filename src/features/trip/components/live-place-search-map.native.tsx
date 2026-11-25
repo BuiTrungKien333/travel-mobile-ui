@@ -48,6 +48,7 @@ export function PlaceSearchMap({
   const routeCoordinates = route.data?.encodedPolyline
     ? decodeRoutePolyline(route.data.encodedPolyline)
     : [];
+
   const center = focused?.location ?? {
     latitude: region.latitude,
     longitude: region.longitude,
@@ -58,6 +59,7 @@ export function PlaceSearchMap({
     latitudeDelta: span * 1.5,
     longitudeDelta: span * 1.5,
   };
+
   useEffect(() => {
     map.current?.animateToRegion(
       {
@@ -75,6 +77,7 @@ export function PlaceSearchMap({
     reducedMotion,
     theme.motion.tabTransitionDuration,
   ]);
+
   const mapStyle = {
     flex: fitContainer ? 1 : undefined,
     height: fitContainer ? undefined : theme.layout.tripMapPreviewHeight,
@@ -82,6 +85,7 @@ export function PlaceSearchMap({
     overflow: "hidden" as const,
     borderRadius: fitContainer ? theme.radius.none : theme.radius.lg,
   };
+
   const onMapClick =
     custom && onMove
       ? (event: {

@@ -72,10 +72,12 @@ export function TripUndoNotice({
           }),
         );
     });
+
   const motion = useAnimatedStyle(() => ({
     transform: [{ translateX: offset.get() }],
     opacity: Math.max(0, 1 - Math.abs(offset.get()) / width.get()),
   }));
+
   return (
     <GestureDetector gesture={gesture}>
       <Animated.View

@@ -19,10 +19,12 @@ export const tripEndpoints = {
     `/api/v1/trips/${encodeURIComponent(id)}/date-change-preview`,
   complete: (id: string) => `/api/v1/trips/${encodeURIComponent(id)}/complete`,
 };
+
 const readEnvelope = z.object({
   success: z.literal(true),
   data: tripReadSchema,
 });
+
 const pageEnvelope = z.object({
   success: z.literal(true),
   data: tripPageSchema,
@@ -37,6 +39,7 @@ export const tripApi = {
     });
     const parsed = readEnvelope.safeParse(response.data);
     if (!parsed.success) throw new ApiError("INVALID_RESPONSE");
+
     return parsed.data.data;
   },
   async update(id: string, payload: UpdateTripPayload) {
@@ -48,6 +51,7 @@ export const tripApi = {
     );
     const parsed = readEnvelope.safeParse(response.data);
     if (!parsed.success) throw new ApiError("INVALID_RESPONSE");
+
     return parsed.data.data;
   },
   async previewDates(id: string, payload: DatePreviewRequest) {
@@ -57,10 +61,12 @@ export const tripApi = {
       tripEndpoints.datePreview(id),
       body.data,
     );
+
     const parsed = z
       .object({ success: z.literal(true), data: dateImpactSchema })
       .safeParse(response.data);
     if (!parsed.success) throw new ApiError("INVALID_RESPONSE");
+
     return parsed.data.data;
   },
   async remove(id: string, version: number) {
@@ -81,6 +87,7 @@ export const tripApi = {
     });
     const parsed = pageEnvelope.safeParse(response.data);
     if (!parsed.success) throw new ApiError("INVALID_RESPONSE");
+
     return parsed.data.data;
   },
   async detail(id: string, signal?: AbortSignal) {
@@ -89,6 +96,7 @@ export const tripApi = {
     });
     const parsed = readEnvelope.safeParse(response.data);
     if (!parsed.success) throw new ApiError("INVALID_RESPONSE");
+
     return parsed.data.data;
   },
 };

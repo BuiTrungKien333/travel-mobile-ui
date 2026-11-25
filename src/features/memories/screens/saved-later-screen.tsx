@@ -6,7 +6,6 @@ import {
   Alert,
   FlatList,
   Platform,
-  StyleSheet,
   View,
 } from "react-native";
 import { AppButton } from "@/components/ui/app-button";
@@ -15,7 +14,6 @@ import { ApiError } from "@/services/api/api-error";
 import { authSession } from "@/features/auth/services/auth-session";
 import { useCameraCopy } from "@/features/camera/i18n/camera-copy";
 import { JournalPhotoViewer } from "@/features/home/components/journal-photo-viewer";
-import { JournalPhotoThumbnail } from "@/features/home/components/journal-photo-thumbnail";
 import { useJournalPhotoGallery } from "@/features/home/hooks/use-journal-photo-gallery";
 import { useTripPreview } from "@/features/home/providers/trip-preview-provider";
 import { usePhotoViewerCopy } from "@/features/home/i18n/photo-viewer-copy";
@@ -24,6 +22,8 @@ import type { Memory, Trip } from "@/features/home/types/home-types";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { travelDateTime } from "@/utils/calendar-date";
 import { MemoryCapturePicker } from "../components/memory-capture-picker";
+import { SavedLaterPhotoRow } from "../components/saved-later-photo-row";
+import { AppIcon } from "@/components/ui/app-icon";
 import {
   MemoryEmpty,
   MemoryIconButton,
@@ -34,6 +34,7 @@ import { useLocalMemories, useMemoryActions } from "../hooks/use-memories";
 import type { LocalMemory } from "../schemas/local-memory-schema";
 
 type Selection = { tripId: string; day: string; stopId: string };
+
 type Action = {
   id: string;
   kind: "assign" | "upload" | "export";
@@ -131,10 +132,12 @@ export function SavedLaterScreen() {
       setNotice({ text: copy.assignmentError, error: true });
       return;
     }
+
     const timestamp = travelDateTime(
       selection.day,
       memory.time ?? "00:00",
     ).getTime();
+
     if (!Number.isFinite(timestamp) || timestamp > Date.now()) {
       Alert.alert(cameraCopy.futureDate);
       return;
@@ -192,7 +195,7 @@ export function SavedLaterScreen() {
   return (
     <MemoryPage
       title={copy.later}
-      subtitle={copy.laterHint}
+      subtitle={`${photos.length} ${copy.photos}`}
       action={
         <MemoryIconButton
           icon="camera"
@@ -225,21 +228,65 @@ export function SavedLaterScreen() {
           }}
           contentContainerStyle={{
             padding: theme.spacing.lg,
-            gap: theme.spacing.xl,
+            gap: theme.spacing.md,
             width: "100%",
             maxWidth: theme.layout.contentMaxWidth,
             alignSelf: "center",
             flexGrow: 1,
           }}
           ListEmptyComponent={
-            <MemoryEmpty title={copy.laterEmpty} hint={copy.laterEmptyHint}>
-              <AppButton onPress={() => router.push("/memories/quick-capture")}>
+            <View
+              style={{
+                alignItems: "center",
+                paddingVertical: theme.spacing.xxl,
+                paddingHorizontal: theme.spacing.lg,
+                gap: theme.spacing.md,
+              }}
+            >
+              <AppIcon
+                name="cameraGallery"
+                variant="light"
+                size={theme.layout.iconLarge}
+                color={theme.colors.primaryText}
+              />
+              <AppText variant="sectionTitle" style={{ textAlign: "center" }}>
+                {copy.laterEmpty}
+              </AppText>
+              <AppText
+                variant="body"
+                tone="muted"
+                style={{ textAlign: "center" }}
+              >
+                {copy.laterEmptyHint}
+              </AppText>
+              <AppButton
+                size="small"
+                variant="soft"
+                onPress={() => router.push("/memories/quick-capture")}
+              >
                 {cameraCopy.quick}
               </AppButton>
-            </MemoryEmpty>
+            </View>
           }
           ListHeaderComponent={
-            <View style={{ gap: theme.spacing.sm }}>
+            <View style={{ gap: theme.spacing.md }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "flex-start",
+                  gap: theme.spacing.sm,
+                }}
+              >
+                <AppIcon
+                  name="info"
+                  variant="light"
+                  size={theme.layout.iconSmall}
+                  color={theme.colors.textSecondary}
+                />
+                <AppText variant="caption" tone="muted" style={{ flex: 1 }}>
+                  {copy.laterHint}
+                </AppText>
+              </View>
               {notice ? (
                 <AppText
                   accessibilityRole={notice.error ? "alert" : undefined}
@@ -301,92 +348,40 @@ export function SavedLaterScreen() {
             </View>
           }
           renderItem={({ item, index }) => (
-            <View style={{ gap: theme.spacing.md }}>
-              {index === unassigned.length && item.tripId ? (
-                <View style={{ gap: theme.spacing.xs }}>
-                  <AppText variant="sectionTitle">
-                    {copy.pendingUploadTitle}
-                  </AppText>
-                  <AppText variant="caption" tone="muted">
-                    {copy.pendingUploadHint}
-                  </AppText>
-                </View>
+            <View style={{ gap: theme.spacing.sm }}>
+              {index === 0 && !item.tripId ? (
+                <AppText variant="label" tone="muted">
+                  {copy.unassignedPhotos} · {unassigned.length}
+                </AppText>
               ) : null}
-              <View
-                style={{
-                  gap: theme.spacing.md,
-                  padding: theme.spacing.md,
-                  borderRadius: theme.radius.lg,
-                  backgroundColor: theme.colors.surface,
-                  borderWidth: StyleSheet.hairlineWidth,
-                  borderColor: theme.colors.border,
+              {index === unassigned.length && item.tripId ? (
+                <AppText variant="label" tone="primary">
+                  {copy.pendingUploadTitle} · {pending.length}
+                </AppText>
+              ) : null}
+              <SavedLaterPhotoRow
+                memory={item}
+                hidden={gallery.activePhotoId === item.id}
+                busy={busy}
+                exporting={action?.kind === "export" && action.id === item.id}
+                uploading={action?.kind === "upload" && action.id === item.id}
+                registerPhoto={gallery.registerPhoto}
+                onOpen={(selection) => gallery.openPhoto(selection, photos)}
+                onAssign={() => {
+                  setNotice(null);
+                  setChoosing(item.id);
                 }}
-              >
-                <JournalPhotoThumbnail
-                  standalone
-                  memory={item}
-                  hidden={gallery.activePhotoId === item.id}
-                  disabled={busy}
-                  label={`${copy.viewPhoto}, ${item.date ?? copy.noDate}, ${item.time ?? ""}`}
-                  registerPhoto={gallery.registerPhoto}
-                  onOpen={(selection) => gallery.openPhoto(selection, photos)}
-                />
-                <AppText variant="caption" tone="muted">
-                  {item.date ?? copy.noDate} · {item.time}
-                </AppText>
-                <AppText variant="caption" tone="primary">
-                  {item.tripId ? copy.pendingUpload : copy.localOnly}
-                </AppText>
-                {item.local && !item.local.deviceSaved ? (
-                  <AppButton
-                    variant="outline"
-                    size="small"
-                    loading={action?.kind === "export" && action.id === item.id}
-                    disabled={busy}
-                    onPress={() => handleExport(item)}
-                  >
-                    {copy.saveDevice}
-                  </AppButton>
-                ) : null}
-                {item.tripId ? (
-                  <>
-                    <AppButton
-                      loading={
-                        action?.id === item.id && action.kind === "upload"
-                      }
-                      disabled={busy}
-                      onPress={() =>
-                        void perform(
-                          item,
-                          "upload",
-                          (assertSession) => sync(item, assertSession),
-                          () => copy.uploadError,
-                        )
-                      }
-                    >
-                      {copy.retryUpload}
-                    </AppButton>
-                    <AppButton
-                      variant="outline"
-                      size="small"
-                      disabled={busy}
-                      onPress={() => openAlbum(item.tripId)}
-                    >
-                      {copy.openAssignedAlbum}
-                    </AppButton>
-                  </>
-                ) : (
-                  <AppButton
-                    disabled={busy}
-                    onPress={() => {
-                      setNotice(null);
-                      setChoosing(item.id);
-                    }}
-                  >
-                    {copy.assign}
-                  </AppButton>
-                )}
-              </View>
+                onRetry={() =>
+                  void perform(
+                    item,
+                    "upload",
+                    (assertSession) => sync(item, assertSession),
+                    () => copy.uploadError,
+                  )
+                }
+                onExport={() => handleExport(item)}
+                onAlbum={() => openAlbum(item.tripId)}
+              />
             </View>
           )}
         />

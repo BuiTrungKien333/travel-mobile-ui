@@ -35,16 +35,22 @@ export function CheckInPrompt({
   const slideStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: offset.value }],
   }));
+
   useEffect(() => {
-    offset.value = withTiming(0, {
-      duration,
-      reduceMotion: ReduceMotion.System,
-    });
+    offset.set(
+      withTiming(0, {
+        duration,
+        reduceMotion: ReduceMotion.System,
+      }),
+    );
+
     return () => cancelAnimation(offset);
   }, [duration, offset]);
+
   useEffect(() => {
     AccessibilityInfo.announceForAccessibility(message);
   }, [message]);
+
   return (
     <View
       pointerEvents="box-none"
@@ -113,6 +119,7 @@ export function CheckInPrompt({
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   dock: { position: "absolute", alignItems: "center" },
   card: { overflow: "hidden" },

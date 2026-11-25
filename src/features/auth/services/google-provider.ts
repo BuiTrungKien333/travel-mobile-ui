@@ -20,6 +20,7 @@ export async function getGoogleIdToken(
   } catch {
     throw new ApiError("GOOGLE_BUILD_REQUIRED");
   }
+
   try {
     sdk.GoogleOneTapSignIn.configure({
       webClientId: challenge.webClientId,
@@ -39,6 +40,7 @@ export async function getGoogleIdToken(
       result = await sdk.GoogleOneTapSignIn.createAccount();
     if (sdk.isCancelledResponse(result)) throw new ApiError("CANCELLED");
     if (!sdk.isSuccessResponse(result)) throw new ApiError("GOOGLE_FAILED");
+
     return result.data.idToken;
   } catch (error) {
     if (error instanceof ApiError) throw error;

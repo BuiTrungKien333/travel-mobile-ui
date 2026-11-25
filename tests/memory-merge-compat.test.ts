@@ -93,6 +93,13 @@ test("memory choices read all Trip pages using the current paginated API", async
   assert.equal(trips.length, 2);
   assert.equal(places.length, 2);
   assert.ok(trips.every((item) => item.days.length > 0));
+  places.length = 0;
+  const summaries = await loadMemoryTrips(undefined, false);
+  assert.equal(summaries.length, trips.length);
+  assert.equal(places.length, 0);
+  assert.ok(
+    summaries.every((item) => item.days.every((day) => day.stops.length === 0)),
+  );
 });
 
 test("memory cache keys inherit the current Trip and journal invalidation prefixes", () => {

@@ -51,6 +51,7 @@ export function PlaceDetailsContent({
   /** Explicit server content; absence is reserved for the UI-preview caller. */
   suppliedDetails?: {
     photo: ReturnType<typeof getPlaceDetailsPreview>["photo"];
+    photos?: string[];
     hours?: string;
     admission?: LocalizedText;
   };
@@ -63,8 +64,7 @@ export function PlaceDetailsContent({
   const details = suppliedDetails ?? getPlaceDetailsPreview(place);
   const isAddress = place.locationType === "address";
   const photo = details.photo ?? (isAddress ? defaultLocationImage : null);
-  const headerTopSpacing =
-    topInset !== undefined ? topInset + theme.spacing.xl : theme.spacing.xxl;
+  const headerTopSpacing = topInset ?? theme.spacing.none;
   const header = (
     <View
       pointerEvents="box-none"
@@ -72,6 +72,7 @@ export function PlaceDetailsContent({
         styles.row,
         {
           gap: theme.spacing.sm,
+          justifyContent: "space-between",
           paddingTop: headerTopSpacing,
           paddingBottom: theme.spacing.xs,
         },
@@ -82,8 +83,10 @@ export function PlaceDetailsContent({
         label={backLabel ?? copy.returnResults}
         onPress={onBack}
       />
+      {mapAction}
     </View>
   );
+
   const info = [
     {
       icon: "clock" as const,
@@ -104,6 +107,7 @@ export function PlaceDetailsContent({
           : copy.unavailable,
     },
   ];
+
   return (
     <View
       style={styles.fill}
@@ -120,23 +124,7 @@ export function PlaceDetailsContent({
           expandRequest={expandMapRequest}
           mapContent={
             mapContent ? (
-              <View style={styles.fill}>
-                {mapContent}
-                {mapAction ? (
-                  <View
-                    style={{
-                      position: "absolute",
-                      right: theme.spacing.sm,
-                      top:
-                        headerTopSpacing +
-                        theme.layout.touchTarget +
-                        theme.spacing.xs,
-                    }}
-                  >
-                    {mapAction}
-                  </View>
-                ) : null}
-              </View>
+              <View style={styles.fill}>{mapContent}</View>
             ) : region ? (
               <PlaceSearchMap
                 places={places}
@@ -144,8 +132,11 @@ export function PlaceDetailsContent({
                 focused={place}
                 custom={false}
                 fitContainer
-                controlsTop={headerTopSpacing}
-                extraControl={mapAction}
+                controlsTop={
+                  headerTopSpacing +
+                  theme.layout.compactTouchTarget +
+                  theme.spacing.xs
+                }
               />
             ) : null
           }
@@ -210,6 +201,35 @@ export function PlaceDetailsContent({
             </View>
           ) : null}
         </View>
+        {suppliedDetails?.photos?.length ? (
+          <View style={{ gap: theme.spacing.sm }}>
+            <AppText variant="label">{copy.placePhotos}</AppText>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ gap: theme.spacing.sm }}
+            >
+              {suppliedDetails.photos.map((url, index) => (
+                <Image
+                  key={url}
+                  source={url}
+                  accessible
+                  accessibilityLabel={copy.photoLabel.replace(
+                    "{index}",
+                    String(index + 1),
+                  )}
+                  contentFit="cover"
+                  cachePolicy="memory-disk"
+                  style={{
+                    width: theme.layout.journalThumbnailSize,
+                    aspectRatio: theme.layout.journalPhotoAspectRatio,
+                    borderRadius: theme.radius.sm,
+                  }}
+                />
+              ))}
+            </ScrollView>
+          </View>
+        ) : null}
         {status}
         {nameInput}
         <View style={{ gap: theme.spacing.sm }}>
@@ -269,6 +289,7 @@ export function PlaceDetailsContent({
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   fill: { flex: 1, minHeight: 0, minWidth: 0 },
   row: { flexDirection: "row", alignItems: "center" },

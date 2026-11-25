@@ -40,6 +40,7 @@ export function TripRecapCard({
           }).format(new Date(`${trip.startDate}T12:00:00Z`))
         : formatTripDates(trip, locale)
       : undefined;
+
   return (
     <JourneyCard variant="neutral">
       <View

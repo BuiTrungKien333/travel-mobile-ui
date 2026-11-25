@@ -27,13 +27,20 @@ export function useTripTimelineDrag({
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const sizes = useRef<Record<string, number>>({});
   const estimate = theme.layout.tripTimelineEstimatedRowHeight;
+  const [prevSelectionKey, setPrevSelectionKey] = useState(selectionKey);
+
+  if (prevSelectionKey !== selectionKey) {
+    setPrevSelectionKey(selectionKey);
+    setDraggedId(null);
+  }
+
   useEffect(() => {
     sizes.current = {};
     active.set(null);
     openSwipe.set(null);
     offset.set(0);
-    setDraggedId(null);
   }, [selectionKey, active, openSwipe, offset]);
+
   useEffect(() => {
     slots.set(
       stops.map((stop) => ({
@@ -43,17 +50,20 @@ export function useTripTimelineDrag({
       })),
     );
   }, [stops, selectionKey, slots, estimate]);
+
   function reset() {
     active.set(null);
     offset.set(0);
     setDraggedId(null);
     onDragEnd?.();
   }
+
   function finish(id: string, to: number) {
     const ids = moveTimelineStop(stops, id, to);
     if (ids) onReorder(ids);
     reset();
   }
+
   function measure(id: string, height: number) {
     if (height <= 0 || sizes.current[id] === height) return;
     sizes.current[id] = height;
@@ -61,6 +71,7 @@ export function useTripTimelineDrag({
       slots.get().map((slot) => (slot.id === id ? { ...slot, height } : slot)),
     );
   }
+
   return {
     slots,
     active,

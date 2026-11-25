@@ -99,8 +99,7 @@ test("optimization API accepts a visited prefix and rejects a changed or malform
 test("optimization sheet locks visited rows and cannot apply a dragged order crossing that prefix", () => {
   let state: string[] | undefined;
   let drag:
-    | { stops: TripStop[]; onReorder: (ids: string[]) => void }
-    | undefined;
+    { stops: TripStop[]; onReorder: (ids: string[]) => void } | undefined;
   const applied: string[][] = [];
   const tokens = tripModuleLoader()<typeof import("../src/theme/tokens.ts")>(
     "src/theme/tokens.ts",

@@ -6,9 +6,12 @@ import { AppIcon } from "@/components/ui/app-icon";
 import { AppText } from "@/components/ui/app-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { getTripCoverImage } from "@/features/trip/utils/trip-images";
-import { getTotalTripStops } from "@/features/trip/utils/trip-formatters";
+import {
+  getTotalTripStops,
+  getTripDisplayStatus,
+} from "@/features/trip/utils/trip-formatters";
 import { TripStatusBadge } from "@/features/trip/components/trip-status-badge";
-import { getTripDisplayStatus } from "@/features/trip/utils/trip-formatters";
+
 import { useHomeCopy } from "../i18n/home-copy";
 import { useTripPreview } from "../providers/trip-preview-provider";
 import { useHomeAmbientMotion } from "../hooks/use-home-ambient-motion";
@@ -168,5 +171,6 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderCurve: "continuous",
   },
+
   countdownPosition: { position: "absolute", maxWidth: "70%" },
 });

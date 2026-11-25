@@ -1,9 +1,11 @@
+import { accessCopy } from "@/features/access/access-copy";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { router, useLocalSearchParams } from "expo-router";
 import { useRef } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Keyboard, Pressable, StyleSheet, TextInput, View } from "react-native";
 
+import { canConfigureServer } from "@/services/api/server-connection";
 import { AppButton } from "@/components/ui/app-button";
 import { AppInput } from "@/components/ui/app-input";
 import { AppText } from "@/components/ui/app-text";
@@ -66,12 +68,17 @@ export function LoginScreen() {
   return (
     <AuthScaffold
       footer={
-        <AuthFooterLink
-          action={t("auth.login.register")}
-          label={t("auth.login.noAccount")}
-          disabled={isSubmitting || google.isPending}
-          onPress={() => router.push("/(auth)/register")}
-        />
+        <View style={{ gap: theme.spacing.md }}>
+          <AppButton variant="outline" onPress={() => router.push("/explore")}>
+            {accessCopy(locale).explore}
+          </AppButton>
+          <AuthFooterLink
+            action={t("auth.login.register")}
+            label={t("auth.login.noAccount")}
+            disabled={isSubmitting || google.isPending}
+            onPress={() => router.push("/(auth)/register")}
+          />
+        </View>
       }
       showLogo
       subtitle={t("auth.login.subtitle")}
@@ -196,6 +203,15 @@ export function LoginScreen() {
           }}
         />
         <GoogleFeedback error={google.error} outcome={google.data} />
+        {canConfigureServer ? (
+          <AppButton
+            variant="outline"
+            size="small"
+            onPress={() => router.push("/connection")}
+          >
+            {locale === "vi" ? "Kết nối máy chủ" : "Server connection"}
+          </AppButton>
+        ) : null}
       </View>
     </AuthScaffold>
   );
@@ -207,6 +223,7 @@ const styles = StyleSheet.create({
     alignSelf: "flex-end",
     justifyContent: "center",
   },
+
   pressed: {
     opacity: 0.62,
   },

@@ -9,6 +9,7 @@ import type {
 import { reorderDayStops } from "../utils/itinerary-day-order";
 
 type DayStops = SaveItineraryDayRequest["stops"];
+
 type Snapshot = {
   key: string;
   date: string;
@@ -16,7 +17,12 @@ type Snapshot = {
   stops: TripStop[];
   request: SaveItineraryDayRequest;
 };
+
 type Operation = Snapshot & { kind: "change" | "undo" };
+
+function setSavingFlag(ref: RefObject<boolean>, value: boolean) {
+  ref.current = value;
+}
 
 export function useConnectedTimelineActions({
   selectionKey,
@@ -54,10 +60,16 @@ export function useConnectedTimelineActions({
     mutation.error instanceof ApiError &&
     ["TRIP_006", "TRIP_007", "TRIP_008"].includes(mutation.error.code);
 
-  useEffect(() => {
-    currentSelection.current = selectionKey;
+  const [prevSelectionKey, setPrevSelectionKey] = useState(selectionKey);
+
+  if (prevSelectionKey !== selectionKey) {
+    setPrevSelectionKey(selectionKey);
     setUndo(null);
     setFailed(null);
+  }
+
+  useEffect(() => {
+    currentSelection.current = selectionKey;
     dragSnapshot.current = null;
   }, [selectionKey]);
 
@@ -65,6 +77,7 @@ export function useConnectedTimelineActions({
     if (!editable || !date || !itinerary || tripVersion === undefined)
       return null;
     const before = toDayStops(itinerary, date);
+
     return {
       key: selectionKey,
       date,
@@ -86,7 +99,7 @@ export function useConnectedTimelineActions({
       operation.key !== currentSelection.current
     )
       return;
-    saving.current = true;
+    setSavingFlag(saving, true);
     mutation.reset();
     setPending(operation);
     setFailed(null);
@@ -96,6 +109,7 @@ export function useConnectedTimelineActions({
         date: operation.date,
         request: operation.request,
       });
+
       if (operation.kind === "change")
         setUndo({
           ...operation,
@@ -131,6 +145,7 @@ export function useConnectedTimelineActions({
       )
     )
       return;
+
     void commit({
       ...base,
       kind: "change",
@@ -161,6 +176,7 @@ export function useConnectedTimelineActions({
         const stop =
           byPlace.get(entry.placeId) ??
           activePending.stops.find((s) => s.placeId === entry.placeId);
+
         return stop
           ? [{ ...stop, time: entry.arrivalTime?.slice(11, 16) ?? "" }]
           : [];

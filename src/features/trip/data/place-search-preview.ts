@@ -43,6 +43,7 @@ const locations: Record<string, [number, number, string]> = {
 export function getPlaceSearchPreview(destination: string): TripStop[] {
   return getPlacesForDestination(destination).map((stop) => {
     const entry = locations[stop.id];
+
     return entry
       ? {
           ...stop,

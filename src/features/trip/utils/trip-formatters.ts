@@ -6,12 +6,7 @@ import {
 } from "../../home/utils/select-home.ts";
 
 export type TripDisplayStatus =
-  | "ongoing"
-  | "upcoming"
-  | "planning"
-  | "draft"
-  | "completed"
-  | "cancelled";
+  "ongoing" | "upcoming" | "planning" | "draft" | "completed" | "cancelled";
 
 export function getTripDisplayStatus(
   trip: Trip,
@@ -25,6 +20,7 @@ export function getTripDisplayStatus(
       RECAP: "completed",
       CANCELLED: "cancelled",
     } as const;
+
     return labels[trip.serverMode];
   }
   if (trip.status === "cancelled") return "cancelled";
@@ -39,12 +35,15 @@ export function getTripDisplayStatus(
   ) {
     return "ongoing";
   }
+
   if (trip.status === "planned" && trip.startDate && trip.startDate > today) {
     return preparationStatus(trip.startDate, today);
   }
+
   if (trip.status === "planned" && trip.endDate && trip.endDate < today) {
     return "completed";
   }
+
   return "draft";
 }
 
@@ -61,11 +60,13 @@ export function getTripTitle(trip: Trip, locale: "vi" | "en" = "vi"): string {
   if (trip.title && trip.title.trim().length > 0) {
     return trip.title;
   }
+
   if (trip.status === "draft") {
     return locale === "vi"
       ? `Kế hoạch ${trip.destination}`
       : `${trip.destination} Draft`;
   }
+
   return locale === "vi"
     ? `Khám phá ${trip.destination}`
     : `Explore ${trip.destination}`;
@@ -74,6 +75,7 @@ export function getTripTitle(trip: Trip, locale: "vi" | "en" = "vi"): string {
 export function getTotalTripStops(trip: Trip): number {
   if (trip.serverStopCount !== undefined) return trip.serverStopCount;
   if (!trip.days || !Array.isArray(trip.days)) return 0;
+
   return trip.days.reduce(
     (acc, day) => acc + (day.stops?.length ?? 0),
     trip.unscheduledStops?.length ?? 0,
@@ -120,5 +122,6 @@ export function formatTripDates(
   if (!formatted) {
     return locale === "vi" ? "Chưa chọn ngày" : "Dates not set";
   }
+
   return formatted;
 }

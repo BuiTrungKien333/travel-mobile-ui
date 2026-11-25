@@ -1,3 +1,4 @@
+import { svgDataUri } from "@/utils/svg-data-uri";
 import { useEffect, type ReactNode } from "react";
 import { Image } from "expo-image";
 import { StyleSheet, View } from "react-native";
@@ -61,22 +62,26 @@ export function PlaceSearchMap({
     const point = focused?.location
       ? projectPlace(focused.location, region)
       : { x: 0.5, y: 0.5 };
+
     focusX.set(
       withTiming(point.x, {
         duration,
         reduceMotion: ReduceMotion.System,
       }),
     );
+
     focusY.set(
       withTiming(point.y, {
         duration,
         reduceMotion: ReduceMotion.System,
       }),
     );
+
     scale.set(
       withTiming(initialZoom, { duration, reduceMotion: ReduceMotion.System }),
     );
   }, [focused, region, initialZoom, focusX, focusY, scale, duration]);
+
   const motion = useAnimatedStyle(() => ({
     transform: [
       {
@@ -88,6 +93,7 @@ export function PlaceSearchMap({
       { scale: scale.get() },
     ],
   }));
+
   function commitPosition(
     offsetX: number,
     offsetY: number,
@@ -102,6 +108,7 @@ export function PlaceSearchMap({
         ),
       );
   }
+
   function changeZoom(step: number) {
     const current = scale.get();
     const next = Math.max(1, Math.min(4, current + step));
@@ -111,6 +118,7 @@ export function PlaceSearchMap({
     y.set(withTiming(y.get() * ratio, config));
     scale.set(withTiming(next, config));
   }
+
   const pan = Gesture.Pan()
     .minDistance(theme.spacing.sm)
     .onStart(() => {
@@ -129,6 +137,7 @@ export function PlaceSearchMap({
           ),
         ),
       );
+
       y.set(
         Math.max(
           (-height.get() * scale.get()) / 2,
@@ -143,6 +152,7 @@ export function PlaceSearchMap({
       if (custom) scheduleOnRN(commitPosition, x.get(), y.get(), scale.get());
     });
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" preserveAspectRatio="none"><rect width="400" height="300" fill="${theme.colors.surfaceTint}"/><path d="M260 0Q210 90 290 150T300 300H400V0Z" fill="${theme.colors.weatherGlassTint}"/><path d="M20 20H130V120H20ZM40 190H170V280H40Z" fill="${theme.colors.successSurface}"/><g fill="none" stroke="${theme.colors.surface}" stroke-width="10"><path d="M-50 50L450 240M70 -30L230 350M330 -30L100 350M-30 220L430 40"/></g><g fill="none" stroke="${theme.colors.border}" stroke-width="1"><path d="M-50 50L450 240M70 -30L230 350M330 -30L100 350M-30 220L430 40"/></g></svg>`;
+
   return (
     <View
       style={{
@@ -182,10 +192,12 @@ export function PlaceSearchMap({
             const nextY =
               y.get() +
               (name === "north" ? step : name === "south" ? -step : 0);
+
             const boundedX = Math.max(
               (-width.get() * scale.get()) / 2,
               Math.min((width.get() * scale.get()) / 2, nextX),
             );
+
             const boundedY = Math.max(
               (-height.get() * scale.get()) / 2,
               Math.min((height.get() * scale.get()) / 2, nextY),
@@ -199,7 +211,7 @@ export function PlaceSearchMap({
             <Image
               accessible={false}
               source={{
-                uri: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`,
+                uri: svgDataUri(svg),
               }}
               contentFit="fill"
               style={StyleSheet.absoluteFill}
@@ -318,6 +330,7 @@ function PlaceMapMarker({
       },
     ],
   }));
+
   return (
     <Animated.View
       pointerEvents="none"

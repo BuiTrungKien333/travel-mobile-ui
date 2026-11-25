@@ -60,6 +60,7 @@ function PreviewTripCameraScreen({
         </View>
       </ScreenSafeArea>
     );
+
   const props = {
     title: getTripTitle(trip, locale),
     count,
@@ -72,11 +73,13 @@ function PreviewTripCameraScreen({
       }),
     onJournal: () => openPanel({ kind: "journal", tripId: trip.id }),
   };
+
   const available =
     Platform.OS === "web" ||
     ["ExpoCamera", "ExpoImageManipulator", "ExponentImagePicker"].every(
       (name) => !!requireOptionalNativeModule(name),
     );
+
   if (!available)
     return (
       <CameraLayout
@@ -119,6 +122,7 @@ function PreviewTripCameraScreen({
       />
     );
   const native: typeof import("../components/native-trip-camera") = require("../components/native-trip-camera");
+
   return (
     <native.NativeTripCamera
       key={`${trip.id}:${date}`}

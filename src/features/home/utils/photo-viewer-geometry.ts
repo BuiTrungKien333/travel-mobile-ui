@@ -1,5 +1,6 @@
 export type PhotoSize = { width: number; height: number };
 export type PhotoRect = PhotoSize & { x: number; y: number };
+
 export type PhotoSelection = {
   id: string;
   uri: string;
@@ -31,6 +32,7 @@ export function photoPageDestination(
     Math.abs(displacement) > minimumFling && Math.abs(velocity) > flingVelocity;
   if (!passesDistance && !passesVelocity) return index;
   const direction = passesVelocity ? velocity : displacement;
+
   return clampPhoto(
     index + (direction < 0 ? 1 : -1),
     0,
@@ -46,6 +48,7 @@ export function fitPhoto(image: PhotoSize, viewport: PhotoSize): PhotoRect {
   );
   const width = image.width * ratio;
   const height = image.height * ratio;
+
   return {
     x: (viewport.width - width) / 2,
     y: (viewport.height - height) / 2,
@@ -60,6 +63,7 @@ export function panLimits(
   scale: number,
 ) {
   "worklet";
+
   return {
     x: Math.max(0, (image.width * scale - viewport.width) / 2),
     y: Math.max(0, (image.height * scale - viewport.height) / 2),
@@ -77,6 +81,7 @@ export function rubberBand(
   "worklet";
   const edge = clampPhoto(value, min, max);
   const excess = value - edge;
+
   return (
     edge + (excess * factor) / (1 + Math.abs(excess) / Math.max(1, extent))
   );

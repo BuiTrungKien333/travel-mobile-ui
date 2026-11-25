@@ -6,10 +6,12 @@ import { ApiError } from "@/services/api/api-error";
 
 const metric = z.number().nonnegative();
 const leg = z.object({ distanceMeters: metric, durationSeconds: metric });
+
 const route = leg.extend({
   encodedPolyline: z.string().min(1).max(250000),
   legs: z.array(leg).max(24),
 });
+
 const result = z.discriminatedUnion("status", [
   z.object({
     status: z.literal("READY"),
@@ -29,7 +31,9 @@ const result = z.discriminatedUnion("status", [
     route: z.null(),
   }),
 ]);
+
 const envelope = z.object({ success: z.literal(true), data: result });
+
 const proposal = z
   .object({
     order: z.array(z.guid()).min(1).max(100),
@@ -63,6 +67,7 @@ const proposal = z
       });
     }
   });
+
 const proposalEnvelope = z.object({ success: z.literal(true), data: proposal });
 export type DayRoute = z.infer<typeof route>;
 export type DayRouteProposal = z.infer<typeof proposal>;
@@ -86,6 +91,7 @@ export function useTripDayRoute({
   enabled: boolean;
 }) {
   const owner = useProfile().data?.id;
+
   return useQuery({
     queryKey: ["trip-day-routes", owner, tripId, date, mode, waypointKey],
     enabled: enabled && !!owner && !!tripId && !!date,
@@ -100,6 +106,7 @@ export function useTripDayRoute({
       });
       const parsed = envelope.safeParse(response.data);
       if (!parsed.success) throw new ApiError("INVALID_RESPONSE");
+
       return parsed.data.data;
     },
   });
@@ -120,6 +127,7 @@ export function useOptimizeDayRoute(tripId: string) {
         new Set(parsed.data.data.order).size !== parsed.data.data.order.length
       )
         throw new ApiError("INVALID_RESPONSE");
+
       return parsed.data.data;
     },
   });

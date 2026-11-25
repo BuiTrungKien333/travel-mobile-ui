@@ -13,7 +13,7 @@ type Props = {
 type Pan = {
   start?: () => void;
   update?: (event: { translationY: number }) => void;
-  end?: (event: { velocityY: number }) => void;
+  end?: (event: { velocityY: number; translationY: number }) => void;
   finalize?: (event: unknown, success: boolean) => void;
 };
 
@@ -48,6 +48,9 @@ function harness() {
   const resizeLock = makeShared(0);
   const handlers: Pan = {};
   const pan = {
+    blocksExternalGesture: () => pan,
+    maxPointers: () => pan,
+    onBegin: () => pan,
     activeOffsetY: () => pan,
     failOffsetX: () => pan,
     onStart: (callback: Pan["start"]) => {
@@ -122,10 +125,17 @@ function harness() {
         if (callback) springs.push(callback);
         return target;
       },
-      withTiming: (target: number, config: { duration: number }): Timer => ({
-        target,
-        delay: config.duration,
-      }),
+      withTiming: (
+        target: number,
+        config: { duration: number },
+        callback?: (finished: boolean) => void,
+      ): Timer | number => {
+        if (callback) {
+          springs.push(callback);
+          return target;
+        }
+        return { target, delay: config.duration };
+      },
       withDelay: (delay: number, timer: Timer): Timer => ({
         ...timer,
         delay: timer.delay + delay,
@@ -204,7 +214,7 @@ test("a pan release followed by a press cannot toggle the expanded map closed", 
   assert.equal(h.render().accessibilityLabel, "Mở rộng bản đồ");
   h.handlers.start?.();
   h.handlers.update?.({ translationY: 300 });
-  h.handlers.end?.({ velocityY: 0 });
+  h.handlers.end?.({ velocityY: 0, translationY: 300 });
   h.handlers.finalize?.({}, true);
   assert.equal(h.resizeLock.get(), 1);
   const expanded = h.render();
@@ -228,5 +238,23 @@ test("cancelling a map drag restores its snap point and guards its release tap",
   assert.equal(h.render().accessibilityLabel, "Mở rộng bản đồ");
   h.settle();
   h.render().onPress?.();
+  assert.equal(h.render().accessibilityLabel, "Thu gọn bản đồ");
+});
+
+test("a short high-velocity release does not reverse the map's snap state", () => {
+  const h = harness();
+  h.render();
+  h.handlers.start?.();
+  h.handlers.update?.({ translationY: 9 });
+  h.handlers.end?.({ velocityY: 1400, translationY: 9 });
+  h.handlers.finalize?.({}, true);
+  assert.equal(h.render().accessibilityLabel, "Mở rộng bản đồ");
+  h.settle();
+  h.render().onPress?.();
+  h.settle();
+  h.handlers.start?.();
+  h.handlers.update?.({ translationY: -10 });
+  h.handlers.end?.({ velocityY: -1600, translationY: -10 });
+  h.handlers.finalize?.({}, true);
   assert.equal(h.render().accessibilityLabel, "Thu gọn bản đồ");
 });
