@@ -102,9 +102,12 @@ export function JournalPhotoViewer({
   const loading = !photoStates[memory.id];
   const [showSpinner, setShowSpinner] = useState(false);
   const [attempt, setAttempt] = useState(0);
-  useEffect(() => {
+  const [prevFailed, setPrevFailed] = useState(failed);
+
+  if (failed !== prevFailed) {
+    setPrevFailed(failed);
     if (failed) setControls(true);
-  }, [failed]);
+  }
   const active = useRef(true);
   const actionInFlight = useRef(false);
   const presented = useRef(false);
@@ -125,11 +128,15 @@ export function JournalPhotoViewer({
     return () => clearTimeout(timer);
   }, [notice, theme.motion.photoViewerNoticeDuration]);
 
+  const [prevLoading, setPrevLoading] = useState(loading);
+
+  if (loading !== prevLoading) {
+    setPrevLoading(loading);
+    if (!loading) setShowSpinner(false);
+  }
+
   useEffect(() => {
-    if (!loading) {
-      setShowSpinner(false);
-      return;
-    }
+    if (!loading) return;
 
     const timer = setTimeout(
       () => setShowSpinner(true),

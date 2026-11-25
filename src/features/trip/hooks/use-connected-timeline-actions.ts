@@ -20,6 +20,10 @@ type Snapshot = {
 
 type Operation = Snapshot & { kind: "change" | "undo" };
 
+function setSavingFlag(ref: RefObject<boolean>, value: boolean) {
+  ref.current = value;
+}
+
 export function useConnectedTimelineActions({
   selectionKey,
   date,
@@ -56,10 +60,16 @@ export function useConnectedTimelineActions({
     mutation.error instanceof ApiError &&
     ["TRIP_006", "TRIP_007", "TRIP_008"].includes(mutation.error.code);
 
-  useEffect(() => {
-    currentSelection.current = selectionKey;
+  const [prevSelectionKey, setPrevSelectionKey] = useState(selectionKey);
+
+  if (prevSelectionKey !== selectionKey) {
+    setPrevSelectionKey(selectionKey);
     setUndo(null);
     setFailed(null);
+  }
+
+  useEffect(() => {
+    currentSelection.current = selectionKey;
     dragSnapshot.current = null;
   }, [selectionKey]);
 
@@ -89,7 +99,7 @@ export function useConnectedTimelineActions({
       operation.key !== currentSelection.current
     )
       return;
-    saving.current = true;
+    setSavingFlag(saving, true);
     mutation.reset();
     setPending(operation);
     setFailed(null);

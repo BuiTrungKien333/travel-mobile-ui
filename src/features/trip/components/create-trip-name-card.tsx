@@ -13,6 +13,10 @@ import {
   webInputReset,
 } from "./create-trip-styles";
 
+function markTitleEdited(ref: RefObject<boolean>) {
+  ref.current = true;
+}
+
 type Props = {
   tripTitle: string;
   titleEdited: RefObject<boolean>;
@@ -67,10 +71,12 @@ export function CreateTripNameCard({
           allowFontScaling
           value={tripTitle}
           onChangeText={(text) => {
-            titleEdited.current = true;
+            markTitleEdited(titleEdited);
             titleField.onChange(text);
           }}
-          ref={titleField.ref}
+          ref={(node) => {
+            titleField.ref(node);
+          }}
           accessibilityLabel={copy.tripTitle}
           maxLength={tripFormLimits.title}
           onFocus={() => setIsTitleFocused(true)}
@@ -97,7 +103,7 @@ export function CreateTripNameCard({
             accessibilityRole="button"
             accessibilityLabel={copy.clearTitle}
             onPress={() => {
-              titleEdited.current = true;
+              markTitleEdited(titleEdited);
               titleField.onChange("");
             }}
             hitSlop={8}

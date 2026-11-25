@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type RefObject } from "react";
 import { Keyboard, useWindowDimensions } from "react-native";
 import { Gesture } from "react-native-gesture-handler";
 import {
@@ -12,6 +12,12 @@ import {
 import { scheduleOnRN } from "react-native-worklets";
 
 import { useAppTheme } from "@/hooks/use-app-theme";
+
+function consumeCommit(ref: RefObject<(() => void) | undefined>) {
+  const apply = ref.current;
+  ref.current = undefined;
+  apply?.();
+}
 
 /** Mount one session per opening; apply commits only after the exit animation finishes. */
 export function useSheetMotion(onClose: () => void, dismissDisabled = false) {
@@ -41,9 +47,12 @@ export function useSheetMotion(onClose: () => void, dismissDisabled = false) {
 
   function finishClose() {
     Keyboard.dismiss();
-    const apply = commit.current;
-    commit.current = undefined;
-    apply?.();
+    consumeCommit(commit);
+    onClose();
+  }
+
+  function dismissFromGesture() {
+    Keyboard.dismiss();
     onClose();
   }
 
@@ -77,10 +86,10 @@ export function useSheetMotion(onClose: () => void, dismissDisabled = false) {
     .activeOffsetY(theme.spacing.sm)
     .failOffsetX([-theme.spacing.lg, theme.spacing.lg])
     .onUpdate((event) => {
-      if (!closing.get()) translateY.set(Math.max(0, event.translationY));
+      if (!closing.value) translateY.set(Math.max(0, event.translationY));
     })
     .onEnd((event) => {
-      if (closing.get()) return;
+      if (closing.value) return;
       if (
         event.translationY >= dismissDistance ||
         (event.translationY > minimumSwipe &&
@@ -92,7 +101,7 @@ export function useSheetMotion(onClose: () => void, dismissDisabled = false) {
             height,
             { duration: exitDuration, reduceMotion: ReduceMotion.System },
             (finished) => {
-              if (finished) scheduleOnRN(finishClose);
+              if (finished) scheduleOnRN(dismissFromGesture);
             },
           ),
         );
@@ -105,7 +114,7 @@ export function useSheetMotion(onClose: () => void, dismissDisabled = false) {
         );
     })
     .onFinalize((_event, success) => {
-      if (!success && !closing.get())
+      if (!success && !closing.value)
         translateY.set(
           withTiming(0, {
             duration: enterDuration,

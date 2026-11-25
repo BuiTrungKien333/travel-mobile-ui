@@ -222,7 +222,12 @@ export function ConnectedTripDetailsScreen({
   const selectedBacklog = pool.filter(
     (stop) => !!stop.placeId && backlogSelection?.includes(stop.id),
   );
-  useEffect(() => setBacklogSelection(null), [selectionKey]);
+  const [prevSelectionKey, setPrevSelectionKey] = useState(selectionKey);
+
+  if (prevSelectionKey !== selectionKey) {
+    setPrevSelectionKey(selectionKey);
+    setBacklogSelection(null);
+  }
   const day = trip?.days.find((entry) => entry.date === activeDate);
   const sourceRows = backlog ? pool : (day?.stops ?? NO_STOPS);
   const ready =

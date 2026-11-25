@@ -39,9 +39,16 @@ export function usePlanningMapCollapse<T>({
   const dragOffset = useSharedValue(0);
   const dragging = useSharedValue(false);
   const offset = useSharedValue(0);
+  const resetKey = `${enabled}:${selectionKey}`;
+  const [prevResetKey, setPrevResetKey] = useState(resetKey);
+
+  if (prevResetKey !== resetKey) {
+    setPrevResetKey(resetKey);
+    setHidden(false);
+  }
+
   useEffect(() => {
     collapsed.set(false);
-    setHidden(false);
     target.set(-1);
     previousOffset.set(0);
     dragStart.set(0);

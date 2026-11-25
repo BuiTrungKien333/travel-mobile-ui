@@ -44,10 +44,12 @@ export function NavigationCameraButton({
   }));
 
   const setPressScale = (scale: number) => {
-    pressed.value = withTiming(scale, {
-      duration: theme.motion.shutterPressDuration,
-      reduceMotion: ReduceMotion.System,
-    });
+    pressed.set(
+      withTiming(scale, {
+        duration: theme.motion.shutterPressDuration,
+        reduceMotion: ReduceMotion.System,
+      }),
+    );
   };
 
   const gradientUri = svgDataUri(

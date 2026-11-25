@@ -3,6 +3,11 @@ import { useSharedValue, type SharedValue } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 import { useAppTheme } from "@/hooks/use-app-theme";
 
+function nowMs() {
+  "worklet";
+  return Date.now();
+}
+
 /** Refresh is an intentional pull held briefly, separate from map pan/resize. */
 export function useTripPullRefresh({
   scrollGesture,
@@ -29,7 +34,7 @@ export function useTripPullRefresh({
     .activeOffsetY(theme.spacing.md)
     .failOffsetX([-theme.spacing.lg, theme.spacing.lg])
     .onBegin((event) => {
-      beganAt.set(Date.now());
+      beganAt.set(nowMs());
       // A pull on the map belongs to Mapbox, not to the list's refresh action.
       eligible.set(enabled && offset.get() <= 1 && event.y > mapHeight);
     })
@@ -37,7 +42,7 @@ export function useTripPullRefresh({
       if (
         eligible.get() &&
         event.translationY >= distance &&
-        Date.now() - beganAt.get() >= hold
+        nowMs() - beganAt.get() >= hold
       )
         scheduleOnRN(onRefresh);
     })

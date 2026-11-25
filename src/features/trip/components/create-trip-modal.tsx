@@ -184,11 +184,80 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
     );
   const handleBudgetChange = (text: string) =>
     budgetField.onChange(text.replace(/\D/g, ""));
-  const submitForm = handleSubmit(
-    async (values) => {
-      Keyboard.dismiss();
-      if (!UI_PREVIEW_ENABLED) {
-        const payload: Omit<CreateTripPayload, "clientRequestId"> = {
+  const submitForm = () =>
+    handleSubmit(
+      async (values) => {
+        Keyboard.dismiss();
+        if (!UI_PREVIEW_ENABLED) {
+          const payload: Omit<CreateTripPayload, "clientRequestId"> = {
+            title:
+              values.title ||
+              generateDefaultTitle(
+                values.destination,
+                values.startDate,
+                values.endDate,
+                copy,
+              ),
+            destination: {
+              name: values.destination,
+              provinceId: values.destinationProvinceId,
+            },
+            startDate: values.startDate,
+            endDate: values.endDate,
+            timeZone: "Asia/Ho_Chi_Minh",
+            budget:
+              values.budget === undefined
+                ? null
+                : { amount: values.budget, currency: "VND" },
+            preferences: values.preferences,
+            initialPlaceIds: values.initialStops.map(
+              (stop) => stop.placeId ?? stop.id,
+            ),
+          };
+          const fingerprint = JSON.stringify(payload);
+          if (createAttempt.current?.fingerprint !== fingerprint)
+            createAttempt.current = { fingerprint, id: createTripRequestId() };
+          try {
+            const read = await createMutation.mutateAsync({
+              ...payload,
+              clientRequestId: createAttempt.current.id,
+            });
+            onClose();
+            router.push({
+              pathname: "/trip/[tripId]",
+              params: { tripId: read.trip.id },
+            });
+          } catch (failure) {
+            if (failure instanceof ApiError && failure.fields) {
+              for (const key of [
+                "title",
+                "startDate",
+                "endDate",
+                "budget",
+                "preferences",
+              ] as const) {
+                if (failure.fields[key])
+                  setError(key, { message: integrationCopy.invalid });
+              }
+              if (failure.fields["destination.name"])
+                setError("destination", { message: integrationCopy.invalid });
+              if (
+                failure.fields["budget.amount"] ||
+                failure.fields["budget.currency"]
+              )
+                setError("budget", { message: integrationCopy.invalid });
+            }
+
+            setError("root", {
+              message: tripApiErrorMessage(failure, integrationCopy),
+            });
+          }
+
+          return;
+        }
+
+        const success = createDraft({
+          ...values,
           title:
             values.title ||
             generateDefaultTitle(
@@ -197,97 +266,29 @@ function CreateTripForm({ onClose }: Omit<CreateTripModalProps, "visible">) {
               values.endDate,
               copy,
             ),
-          destination: {
-            name: values.destination,
-            provinceId: values.destinationProvinceId,
-          },
-          startDate: values.startDate,
-          endDate: values.endDate,
-          timeZone: "Asia/Ho_Chi_Minh",
-          budget:
-            values.budget === undefined
-              ? null
-              : { amount: values.budget, currency: "VND" },
-          preferences: values.preferences,
-          initialPlaceIds: values.initialStops.map(
-            (stop) => stop.placeId ?? stop.id,
-          ),
-        };
-        const fingerprint = JSON.stringify(payload);
-        if (createAttempt.current?.fingerprint !== fingerprint)
-          createAttempt.current = { fingerprint, id: createTripRequestId() };
-        try {
-          const read = await createMutation.mutateAsync({
-            ...payload,
-            clientRequestId: createAttempt.current.id,
-          });
-          onClose();
-          router.push({
-            pathname: "/trip/[tripId]",
-            params: { tripId: read.trip.id },
-          });
-        } catch (failure) {
-          if (failure instanceof ApiError && failure.fields) {
-            for (const key of [
-              "title",
-              "startDate",
-              "endDate",
-              "budget",
-              "preferences",
-            ] as const) {
-              if (failure.fields[key])
-                setError(key, { message: integrationCopy.invalid });
-            }
-            if (failure.fields["destination.name"])
-              setError("destination", { message: integrationCopy.invalid });
-            if (
-              failure.fields["budget.amount"] ||
-              failure.fields["budget.currency"]
-            )
-              setError("budget", { message: integrationCopy.invalid });
-          }
-
-          setError("root", {
-            message: tripApiErrorMessage(failure, integrationCopy),
-          });
+        });
+        // The store switches directly from this form to the created trip's plan.
+        if (!success) setError("root", { message: copy.capacity });
+      },
+      (fieldErrors) => {
+        Keyboard.dismiss();
+        if (fieldErrors.destination) setShowDestSheet(true);
+        else if (fieldErrors.startDate || fieldErrors.endDate)
+          setShowDateSheet(true);
+        else if (fieldErrors.title) setFocus("title");
+        else if (fieldErrors.budget) {
+          setIsAccordionOpen(true);
+          requestAnimationFrame(() => setFocus("budget"));
         }
 
-        return;
-      }
-
-      const success = createDraft({
-        ...values,
-        title:
-          values.title ||
-          generateDefaultTitle(
-            values.destination,
-            values.startDate,
-            values.endDate,
-            copy,
-          ),
-      });
-      // The store switches directly from this form to the created trip's plan.
-      if (!success) setError("root", { message: copy.capacity });
-    },
-    (fieldErrors) => {
-      Keyboard.dismiss();
-      if (fieldErrors.destination) setShowDestSheet(true);
-      else if (fieldErrors.startDate || fieldErrors.endDate)
-        setShowDateSheet(true);
-      else if (fieldErrors.title) setFocus("title");
-      else if (fieldErrors.budget) {
-        setIsAccordionOpen(true);
-        requestAnimationFrame(() => setFocus("budget"));
-      }
-
-      if (
-        fieldErrors.destination ||
-        fieldErrors.startDate ||
-        fieldErrors.endDate
-      )
-        scrollRef.current?.scrollTo({ y: 0, animated: !reduceMotion });
-    },
-  );
+        if (
+          fieldErrors.destination ||
+          fieldErrors.startDate ||
+          fieldErrors.endDate
+        )
+          scrollRef.current?.scrollTo({ y: 0, animated: !reduceMotion });
+      },
+    )();
 
   const submit = async () => {
     // Guard before async validation, rather than waiting for the next loading-state render.

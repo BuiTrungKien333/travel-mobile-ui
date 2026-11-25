@@ -156,25 +156,26 @@ export function PlacePickerScreen({
     }
   }
 
-  const chooseCustom = handleSubmit(({ name }) => {
-    if (!coordinate) return;
-    const stop: TripStop = {
-      id: `custom-${Date.now()}`,
-      time: "",
-      name: { vi: name, en: name },
-      kind: { vi: "Địa điểm riêng", en: "Private place" },
-      address: {
-        vi: "Vị trí đã chọn trên bản đồ",
-        en: "Location selected on the map",
-      },
-      location: coordinate,
-    };
-    setSelected((stops) => [...stops, stop]);
-    setSaveError(false);
-    setSelectedOnly(false);
-    setQuery("");
-    setFocus(undefined);
-  });
+  const chooseCustom = () =>
+    void handleSubmit(({ name }) => {
+      if (!coordinate) return;
+      const stop: TripStop = {
+        id: `custom-${Date.now()}`,
+        time: "",
+        name: { vi: name, en: name },
+        kind: { vi: "Địa điểm riêng", en: "Private place" },
+        address: {
+          vi: "Vị trí đã chọn trên bản đồ",
+          en: "Location selected on the map",
+        },
+        location: coordinate,
+      };
+      setSelected((stops) => [...stops, stop]);
+      setSaveError(false);
+      setSelectedOnly(false);
+      setQuery("");
+      setFocus(undefined);
+    })();
 
   function confirmPlace() {
     if (focus?.locationType === "address") {

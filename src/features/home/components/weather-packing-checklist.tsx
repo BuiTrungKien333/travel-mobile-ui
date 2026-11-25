@@ -103,23 +103,27 @@ export function WeatherPackingChecklist({
   });
 
   useEffect(() => {
-    progress.value = withTiming(ratio, {
-      duration: progressDuration,
-      reduceMotion: ReduceMotion.System,
-    });
+    progress.set(
+      withTiming(ratio, {
+        duration: progressDuration,
+        reduceMotion: ReduceMotion.System,
+      }),
+    );
 
     return () => cancelAnimation(progress);
   }, [ratio, progressDuration, progress]);
 
   useEffect(() => {
     if (complete && !wasComplete.current && !reduceMotion) {
-      burst.value = 0;
-      burst.value = withTiming(1, {
-        duration: burstDuration,
-        reduceMotion: ReduceMotion.System,
-      });
+      burst.set(0);
+      burst.set(
+        withTiming(1, {
+          duration: burstDuration,
+          reduceMotion: ReduceMotion.System,
+        }),
+      );
     } else if (!complete || reduceMotion) {
-      burst.value = 0;
+      burst.set(0);
     }
     wasComplete.current = complete;
 
@@ -429,18 +433,20 @@ function PackingCheckbox({
 
   function handlePress() {
     cancelAnimation(scale);
-    scale.value = checked
-      ? 1
-      : withSequence(
-          withTiming(1.15, {
-            duration: theme.motion.packingCheckDuration,
-            reduceMotion: ReduceMotion.System,
-          }),
-          withTiming(1, {
-            duration: theme.motion.packingCheckDuration,
-            reduceMotion: ReduceMotion.System,
-          }),
-        );
+    scale.set(
+      checked
+        ? 1
+        : withSequence(
+            withTiming(1.15, {
+              duration: theme.motion.packingCheckDuration,
+              reduceMotion: ReduceMotion.System,
+            }),
+            withTiming(1, {
+              duration: theme.motion.packingCheckDuration,
+              reduceMotion: ReduceMotion.System,
+            }),
+          ),
+    );
     onToggle();
   }
 

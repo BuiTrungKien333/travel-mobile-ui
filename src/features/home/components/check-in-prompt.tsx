@@ -37,10 +37,12 @@ export function CheckInPrompt({
   }));
 
   useEffect(() => {
-    offset.value = withTiming(0, {
-      duration,
-      reduceMotion: ReduceMotion.System,
-    });
+    offset.set(
+      withTiming(0, {
+        duration,
+        reduceMotion: ReduceMotion.System,
+      }),
+    );
 
     return () => cancelAnimation(offset);
   }, [duration, offset]);

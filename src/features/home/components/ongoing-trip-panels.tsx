@@ -366,7 +366,7 @@ export function JourneySheet({
     .activeOffsetY(theme.spacing.sm)
     .failOffsetX([-theme.spacing.lg, theme.spacing.lg])
     .onUpdate((event) => {
-      translateY.value = Math.max(0, event.translationY);
+      translateY.set(Math.max(0, event.translationY));
     })
     .onEnd((event) => {
       if (
@@ -376,18 +376,22 @@ export function JourneySheet({
       ) {
         scheduleOnRN(onClose);
       } else {
-        translateY.value = withTiming(0, {
-          duration: snapDuration,
-          reduceMotion: ReduceMotion.System,
-        });
+        translateY.set(
+          withTiming(0, {
+            duration: snapDuration,
+            reduceMotion: ReduceMotion.System,
+          }),
+        );
       }
     })
     .onFinalize((_event, success) => {
       if (!success)
-        translateY.value = withTiming(0, {
-          duration: snapDuration,
-          reduceMotion: ReduceMotion.System,
-        });
+        translateY.set(
+          withTiming(0, {
+            duration: snapDuration,
+            reduceMotion: ReduceMotion.System,
+          }),
+        );
     });
 
   return (

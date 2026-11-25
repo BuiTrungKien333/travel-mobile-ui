@@ -138,7 +138,9 @@ export function CreateTripOptionsCard({
                 allowFontScaling
                 value={budget}
                 onChangeText={handleBudgetChange}
-                ref={budgetField.ref}
+                ref={(node) => {
+                  budgetField.ref(node);
+                }}
                 accessibilityLabel={copy.budget}
                 maxLength={20}
                 onFocus={() => setIsBudgetFocused(true)}
