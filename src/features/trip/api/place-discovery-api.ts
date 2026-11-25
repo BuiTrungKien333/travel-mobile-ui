@@ -20,8 +20,13 @@ const fields = {
   provinceId: z.guid().nullable(),
   category,
 };
+const photo = z.object({
+  url: z.url(),
+  source: z.string(),
+  attributions: z.array(z.object({ kind: z.string(), label: z.string(), url: z.string() })),
+});
 export const placeSummarySchema = z
-  .object({ ...fields, photo: z.null() })
+  .object({ ...fields, photo: photo.nullable() })
   .refine((p) => p.id === p.reference.placeId && p.source === p.reference.kind);
 export const placeDetailSchema = z
   .object({
@@ -35,7 +40,7 @@ export const placeDetailSchema = z
       .nullable(),
     openingStatus: z.enum(["OPEN", "CLOSED", "UNKNOWN"]),
     admission: z.object({ text: z.string() }).nullable(),
-    photos: z.array(z.unknown()).max(0),
+    photos: z.array(photo).max(8),
     evaluatedAt: z.iso.datetime(),
   })
   .refine((p) => p.id === p.reference.placeId && p.source === p.reference.kind);

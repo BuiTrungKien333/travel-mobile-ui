@@ -59,7 +59,7 @@ export function TripPlanningForm({ trip, initial, pending, onSubmit }: {
   const excluded = values.excluded ?? [];
   const additionalText = values.additionalText ?? "";
   const selectedOrigin = useWatch({ control, name: "origin" });
-  const searchTerm = originSearch.trim().length > 1 ? originSearch : suggestionsOpen ? (locale === "vi" ? "Đà Nẵng" : "Da Nang") : "";
+  const searchTerm = originSearch.trim().length > 1 ? originSearch : suggestionsOpen ? trip.destination.name : "";
   const { query: search, isDebouncing } = usePlaceDiscovery({ tripId: trip.id }, searchTerm, locale, searchTerm.length > 1);
   const matches = !isDebouncing ? search.data?.pages.flatMap(page => page.content.map(discoveryStop)).slice(0, 4) ?? [] : [];
   const field = (name: "additionalText", label: string, helper?: string) => (

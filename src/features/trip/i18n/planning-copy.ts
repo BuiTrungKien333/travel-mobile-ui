@@ -1,7 +1,7 @@
 import { useI18n } from "@/hooks/use-i18n";
 
 const vi = {
-  title: "Gợi ý lịch trình", close: "Quay lại", scope: (dayCount?: number) => dayCount ? `Đà Nẵng · ${dayCount} ngày · Lịch trình mới` : "Đà Nẵng · Lịch trình mới",
+  title: "Gợi ý lịch trình", close: "Quay lại", scope: (destination?: string, dayCount?: number) => destination ? `${destination} · ${dayCount ? `${dayCount} ngày · ` : ""}Lịch trình mới` : "Lịch trình mới",
   intro: "Lịch trình chỉ được lưu khi bạn chọn Áp dụng.",
   origin: "Điểm xuất phát", originHint: "Chọn địa điểm trong danh sách hoặc tìm theo tên.", originPlaceholder: "Nhập địa điểm xuất phát",
   quickSearch: "Gợi ý tìm nhanh", quickSearchEmpty: "Chưa có gợi ý địa điểm. Thử tìm theo tên.",
@@ -36,13 +36,13 @@ const vi = {
   conflict: "Chuyến đi hoặc địa điểm đã thay đổi. Tải lại dữ liệu mới trước khi tạo hoặc áp dụng bản nháp.",
   expired: "Bản nháp đã hết hạn và không thể áp dụng. Hãy tạo bản nháp mới.", pending: "Yêu cầu trước đang xử lý hoặc đã bị gián đoạn. Trạng thái sẽ tự cập nhật; nếu vẫn chờ, hãy tải lại sau ít phút.",
   failed: "Yêu cầu trước chưa hoàn tất. Hãy chỉnh lại yêu cầu và tạo bản nháp mới; lịch trình hiện tại vẫn được giữ nguyên.",
-  unsupported: "Hiện hỗ trợ chuyến chưa có lịch trình tại Đà Nẵng, 1–3 ngày và chưa khởi hành.", limited: "Bạn đã tạo nhiều yêu cầu. Chờ một phút rồi thử lại.",
+  unsupported: "Gợi ý AI áp dụng cho chuyến đang lên kế hoạch từ 1–3 ngày, có tỉnh/thành hợp lệ và chưa khởi hành.", limited: "Bạn đã tạo nhiều yêu cầu. Chờ một phút rồi thử lại.",
   tooManyDays: (count: number) => `Gợi ý AI hiện hỗ trợ chuyến từ 1 đến 3 ngày. Chuyến này có ${count} ngày; hãy chọn chuyến tối đa 3 ngày để tiếp tục.`,
   unavailable: "Chức năng gợi ý chưa được bật trên máy chủ này.", invalid: "Kiểm tra các thông tin đã nhập.",
   advanced: "Thêm tùy chọn", less: "Thu gọn tùy chọn", chooseInterest: "Chọn sở thích hoặc mô tả thêm nhu cầu.",
 };
 const en: typeof vi = {
-  title: "Suggest an itinerary", close: "Back", scope: (dayCount?: number) => dayCount ? `Da Nang · ${dayCount} day${dayCount === 1 ? "" : "s"} · New itinerary` : "Da Nang · New itinerary",
+  title: "Suggest an itinerary", close: "Back", scope: (destination?: string, dayCount?: number) => destination ? `${destination} · ${dayCount ? `${dayCount} day${dayCount === 1 ? "" : "s"} · ` : ""}New itinerary` : "New itinerary",
   intro: "Your itinerary changes only when you apply the proposal.",
   origin: "Starting point", originHint: "Choose a place from the list or search by name.", originPlaceholder: "Enter a starting place",
   quickSearch: "Quick suggestions", quickSearchEmpty: "No suggested places yet. Try searching by name.", current: "Use current location",
@@ -76,7 +76,7 @@ const en: typeof vi = {
   conflict: "The trip or places have changed. Reload the latest data before creating or applying a draft.",
   expired: "This draft has expired and can no longer be applied. Generate a new draft.", pending: "The previous request is still processing or was interrupted. Status updates automatically; if it remains pending, reload in a few minutes.",
   failed: "The previous request did not complete. Edit the request and create a new draft; your current itinerary is unchanged.",
-  unsupported: "Available for empty 1–3 day planning trips to Da Nang that have not started.", limited: "Too many requests. Wait a minute and retry.",
+  unsupported: "AI suggestions are available for planning trips of 1–3 days with a valid province and no departure yet.", limited: "Too many requests. Wait a minute and retry.",
   tooManyDays: (count: number) => `AI itinerary suggestions currently support trips of 1–3 days. This trip has ${count} days; choose a trip of up to 3 days to continue.`,
   unavailable: "AI planning is not enabled on this server.", invalid: "Check your input and try again.",
   advanced: "More options", less: "Fewer options", chooseInterest: "Choose an interest or describe your request.",

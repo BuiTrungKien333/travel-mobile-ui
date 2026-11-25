@@ -77,7 +77,7 @@ export function TripPlanningScreen({ tripId }: { tripId?: string }) {
           </Pressable>
           <AppText variant="title">{copy.title}</AppText>
         </View>
-        <AppText variant="body" tone="muted">{copy.scope(trip.data?.trip.dayCount)}</AppText>
+        <AppText variant="body" tone="muted">{copy.scope(trip.data?.trip.destination.name, trip.data?.trip.dayCount)}</AppText>
         {problem ? <TripPlanningErrorCard title={copy.errorTitle} message={problem}>
           {canRetryRequest ? <AppButton variant="outline" disabled={pending} onPress={() => void generate()}>{copy.retry}</AppButton> : null}
           {failure && !request && draft?.canApply ? <AppButton variant="outline" disabled={pending} onPress={() => void applyDraft()}>{copy.retryApply}</AppButton> : null}

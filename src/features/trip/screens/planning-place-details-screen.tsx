@@ -121,7 +121,8 @@ export function PlanningPlaceDetailsScreen(props: PlanningPlaceDetailsScreenProp
           mapAction={<SharePlaceButton place={place} />}
           mapContent={<TripDayMap stops={[place]} focusedId={place.id} onSelect={() => setExpandRequest(value => value + 1)} />}
           suppliedDetails={{
-            photo: null,
+            photo: details.photos[0] ? { uri: details.photos[0].url } : null,
+            photos: details.photos.map((item) => item.url),
             hours: details.openingHours?.displayLines.join(" · "),
             admission: details.admission ? { vi: details.admission.text, en: details.admission.text } : undefined,
           }}

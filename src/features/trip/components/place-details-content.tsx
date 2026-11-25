@@ -51,6 +51,7 @@ export function PlaceDetailsContent({
   /** Explicit server content; absence is reserved for the UI-preview caller. */
   suppliedDetails?: {
     photo: ReturnType<typeof getPlaceDetailsPreview>["photo"];
+    photos?: string[];
     hours?: string;
     admission?: LocalizedText;
   };
@@ -198,6 +199,24 @@ export function PlaceDetailsContent({
             </View>
           ) : null}
         </View>
+        {suppliedDetails?.photos?.length ? (
+          <View style={{ gap: theme.spacing.sm }}>
+            <AppText variant="label">{copy.placePhotos}</AppText>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: theme.spacing.sm }}>
+              {suppliedDetails.photos.map((url, index) => (
+                <Image
+                  key={url}
+                  source={url}
+                  accessible
+                  accessibilityLabel={copy.photoLabel.replace("{index}", String(index + 1))}
+                  contentFit="cover"
+                  cachePolicy="memory-disk"
+                  style={{ width: theme.layout.journalThumbnailSize, aspectRatio: theme.layout.journalPhotoAspectRatio, borderRadius: theme.radius.sm }}
+                />
+              ))}
+            </ScrollView>
+          </View>
+        ) : null}
         {status}
         {nameInput}
         <View style={{ gap: theme.spacing.sm }}>

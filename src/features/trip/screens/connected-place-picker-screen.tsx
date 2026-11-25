@@ -125,7 +125,8 @@ export function ConnectedPlacePickerScreen({
                   region={getPlaceMapRegion([focus])}
                   onBack={back}
                   suppliedDetails={{
-                    photo: null,
+                    photo: detail.data.photos[0] ? { uri: detail.data.photos[0].url } : null,
+                    photos: detail.data.photos.map((item) => item.url),
                     hours: detail.data.openingHours?.displayLines.join(" · "),
                     admission: detail.data.admission
                       ? {
